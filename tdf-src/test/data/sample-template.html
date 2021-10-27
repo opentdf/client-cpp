@@ -1,0 +1,37 @@
+<html>
+<head>
+    <style>
+        body { background-color: rgb(60,60,90); }
+        * { font-family: arial; color: white; }
+    </style>
+</head>
+<body>
+<input id="data-input" type="hidden"></input>
+<!-- Use single quotes around value, since manifest is a JSON string -->
+<input id="data-manifest" type="hidden"></input>
+<iframe width="500" height="500"></iframe>
+
+<script>
+    var data = document.getElementById('data-input').value;
+
+    var ifr = document.querySelector('iframe');
+    var otherWindow = ifr.contentWindow;
+
+    ifr.addEventListener("load", iframeLoaded, false);
+
+    function iframeLoaded() {
+        var channel = new MessageChannel();
+        otherWindow.postMessage({
+            type: 'tdf.html',
+            data: data
+        }, '*', [channel.port2]);
+
+        channel.port1.onmessage = handleMessage;
+
+        function handleMessage(e) {
+            console.log('Sent!!!');
+        }
+    }
+</script>
+</body>
+</html>
