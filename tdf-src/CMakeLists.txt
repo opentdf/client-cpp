@@ -19,6 +19,10 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /ignore:4099")
 endif()
 
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DJSON_HAS_CPP_14=1")
+endif()
+
 if(EXISTS "${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
   include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 endif()

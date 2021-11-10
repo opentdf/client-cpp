@@ -35,12 +35,8 @@
 constexpr auto user = "user1";
 constexpr auto user2 = "user2";
 constexpr auto easUrl = "http://localhost:8000/";
-//constexpr auto user = "Charlie_1234";
-//constexpr auto user2 = "bob_5678";
-//constexpr auto easUrl = "https://etheria.local/eas";
-//constexpr auto user = "Alice_1234";
-//constexpr auto easUrl = "https://eas.eternos.xyz";
-//constexpr auto easUrl = "http://192.168.86.50:4010";
+constexpr auto OIDC_ENDPOINT = "https://localhost:8443";
+constexpr auto KAS_URL = "http://localhost:8080/kas";
 
 using namespace virtru::network;
 using namespace virtru::crypto;
@@ -152,7 +148,7 @@ void testTDFOperations(TDFClientBase* client) {
     }
 }
 
-void testNanoTDFOperations(TDFClientBase* client1, TDFClient* client2) {
+void testNanoTDFOperations(TDFClientBase* client1, NanoTDFClient* client2) {
 
     // IV - 3 bytes, Max Auth tag - 32 bytes, so total of 35 bytes overhead for the payload 
     std::array<std::uint32_t, 10u> fileSizeArray{0, 1, 1024 * 1024, 2 * 1024 * 1024, 4 * 1024 * 1024,
@@ -296,8 +292,8 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
 #if 0 // Enable once the PE authz is supported
             OIDCCredentials userCreds;
             userCreds.setUserCredentials("browsertest", "user1",
-                                         "password", "tdf", "https://localhost:8443");
-            auto tdfOIDCClient = std::make_unique<TDFClient>(userCreds, "http://localhost:8080/kas");
+                                         "password", "tdf", OIDC_ENDPOINT);
+            auto tdfOIDCClient = std::make_unique<TDFClient>(userCreds, KAS_URL);
 
             auto attributes = tdfOIDCClient->getSubjectAttributes();
             std::cout << "The subject attributes:" << std::endl;
@@ -316,9 +312,9 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
 #endif
 
             OIDCCredentials clientCreds;
-            clientCreds.setClientCredentials("tdf-client", "598b7252-1dc2-4035-aff7-f94bf16301f7",
-                                             "tdf", "https://localhost:8443");
-            auto oidcClientTDF = std::make_unique<TDFClient>(clientCreds, "http://localhost:8080/kas");
+            clientCreds.setClientCredentials("tdf-client", "123-456",
+                                             "tdf", OIDC_ENDPOINT);
+            auto oidcClientTDF = std::make_unique<TDFClient>(clientCreds, KAS_URL);
 
             auto attributes = oidcClientTDF->getSubjectAttributes();
             std::cout << "The subject attributes:" << std::endl;
@@ -370,12 +366,12 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
 #if TEST_OIDC
 
         OIDCCredentials clientCreds;
-        clientCreds.setClientCredentials("tdf-client", "598b7252-1dc2-4035-aff7-f94bf16301f7",
-                                         "tdf", "https://localhost:8443");
+        clientCreds.setClientCredentials("tdf-client", "123-456",
+                                         "tdf", OIDC_ENDPOINT);
 
-        auto encryptNanoTDFClientOIDC = std::make_unique<NanoTDFClient>(clientCreds, "http://localhost:8080/kas");
+        auto encryptNanoTDFClientOIDC = std::make_unique<NanoTDFClient>(clientCreds, KAS_URL);
         //client1->shareWithUsers({user, user2});
-        auto decryptNanoTDFClientOIDC = std::make_unique<NanoTDFClient>(clientCreds, "http://localhost:8080/kas");
+        auto decryptNanoTDFClientOIDC = std::make_unique<NanoTDFClient>(clientCreds, KAS_URL);
 
         auto attributes = encryptNanoTDFClientOIDC->getSubjectAttributes();
         std::cout << "The subject attributes:" << std::endl;
@@ -547,7 +543,7 @@ aviKeWq6GU4X5AJ/ZHmZmPqZjdpwsQxUiaVAFMrWjj4v3iwNeJD2fhjI
             dataStore.emplace_back(tdf);
 
             // save eo and key so the camera can encrypt data when thers is no connectivity
-            eoAsString = initPhaseClient.getEntityObjectAsJsonString();
+            eoAsString = initPhaseClient.getEntityObject().toJsonString();
             auto pairOfKeyAndCurve = initPhaseClient.getEntityPrivateKeyAndCurve();
             entityPrivateKey = pairOfKeyAndCurve.first;
         }

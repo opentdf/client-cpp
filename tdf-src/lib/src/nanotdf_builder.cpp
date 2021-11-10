@@ -6,7 +6,7 @@
 //
 
 #include <fstream>
-#include <tao/json.hpp>
+#include "nlohmann/json.hpp"
 
 #include "tdf_logging_interface.h"
 #include "nanotdf_builder_impl.h"

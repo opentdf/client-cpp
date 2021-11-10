@@ -42,7 +42,7 @@ namespace virtru {
 
         /// Generate and return manifest.
         /// \return - The manifest representation of json object.
-        tao::json::value getManifest() override;
+        nlohmann::json getManifest() override;
 
         /// Encrypt the data using the cipher.
         /// \param data - A buffer which contains data to be encrypted

@@ -11,7 +11,7 @@
 #include "sdk_constants.h"
 
 #include <memory>
-#include <tao/json.hpp>
+#include "nlohmann/json.hpp"
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
@@ -47,29 +47,28 @@ namespace virtru {
         PolicyObject policyObject{};
 
         try {
-            tao::json::value policyObjectJson = tao::json::from_string(policyObjectJsonStr);
+            nlohmann::json policyObjectJson = nlohmann::json::parse(policyObjectJsonStr);
 
             // Get uuid
-            policyObject.m_uuid = policyObjectJson.as<std::string_view>(kUid);
+            policyObject.m_uuid = policyObjectJson[kUid];
 
             // Get dissems
             policyObject.m_dissems.clear();
-            auto& dissmesArray = policyObjectJson[kBody][kDissem].get_array();
-            for (auto& dissem : dissmesArray) {
+            for (auto dissem : policyObjectJson[kBody][kDissem]) {
                 // NOTE: Not sure we want to check if the dissem is always the
                 // email address could be cert CN
                 //checkIsValidEmailAndThrow(dissem.get_string());
 
-                policyObject.m_dissems.insert(dissem.get_string());
+                policyObject.m_dissems.insert(dissem.get<std::string>());
             }
 
             // Get attribute objects
-            auto& attributeObjects = policyObjectJson[kBody][kDataAttributes].get_array();
-            for (auto& attributeObject : attributeObjects) {
+            for (auto attributeObject : policyObjectJson[kBody][kDataAttributes]) {
                 policyObject.m_attributeObjects.emplace_back(AttributeObject(to_string(attributeObject)));
             }
 
         } catch (...) {
+            LogError("Exception in PolicyObject::CreatePolicyObjectFromJson");
             ThrowException(boost::current_exception_diagnostic_information());
         }
 
@@ -110,23 +109,30 @@ namespace virtru {
 
     /// Return a json string representation of this policy object.
     std::string PolicyObject::toJsonString(bool prettyPrint) const {
-        tao::json::value policy;
+        nlohmann::json policy;
 
-        policy[kUid] = m_uuid;
-        auto& body = policy[kBody];
+        try {
+            policy[kUid] = m_uuid;
+            auto& body = policy[kBody];
 
-        body[kDataAttributes] = tao::json::empty_array;
-        for (auto& artributeObject : m_attributeObjects) {
-            body[kDataAttributes].emplace_back(tao::json::from_string(artributeObject.toJsonString(prettyPrint)));
-        }
+            body[kDataAttributes] = nlohmann::json::array();
+            for (auto& artributeObject : m_attributeObjects) {
+                body[kDataAttributes].emplace_back(nlohmann::json::parse(artributeObject.toJsonString(prettyPrint)));
+            }
 
-        body[kDissem] = tao::json::empty_array;
-        for (auto& dissem : m_dissems) {
-            body[kDissem].emplace_back(dissem);
+            body[kDissem] = nlohmann::json::array();
+            for (auto& dissem : m_dissems) {
+                body[kDissem].emplace_back(dissem);
+            }
+        } catch (...) {
+            LogError("Exception in PolicyObject::toJsonString");
+            ThrowException(boost::current_exception_diagnostic_information());
         }
 
         if (prettyPrint) {
-            return to_string(policy, 2);
+            std::ostringstream oss;
+            oss << std::setw(2) << policy << std::endl;
+            return oss.str();
         } else {
             return to_string(policy);
         }

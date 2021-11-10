@@ -49,6 +49,19 @@ namespace virtru {
         m_nanoTdfClient->initNanoTDFBuilder();
     }
 
+    /// Constructor
+    NanoTDFDatasetClient::NanoTDFDatasetClient(const OIDCCredentials& oidcCredentials,
+                                               const std::string &kasUrl,
+                                                uint32_t maxKeyIterations)
+                                                :m_MaxKeyIterations(maxKeyIterations) {
+
+        m_nanoTdfClient = std::make_unique<NanoTDFClient>(oidcCredentials, kasUrl);
+
+        m_nanoTdfClient->m_nanoTdfBuilder->setOffline(m_offline);
+
+        m_nanoTdfClient->initNanoTDFBuilder();
+    }
+
     /// Destructor
     NanoTDFDatasetClient::~NanoTDFDatasetClient() = default;
 
@@ -73,8 +86,6 @@ namespace virtru {
 
         initializeNanoTDF();
 
-        checkEntityObject();
-
         m_nanoTdf->decryptFile(inFilepath, outFilepath);
     }
 
@@ -82,8 +93,6 @@ namespace virtru {
     std::string_view NanoTDFDatasetClient::decryptString(const std::string& encryptedData) {
 
         initializeNanoTDF();
-
-        checkEntityObject();
 
         return std::string_view{m_nanoTdf->decryptString(encryptedData)};
     }
@@ -148,15 +157,6 @@ namespace virtru {
             // Create a policy object.
             auto policyObject = m_nanoTdfClient->createPolicyObject();
             m_nanoTdf = m_nanoTdfClient->m_nanoTdfBuilder->setPolicyObject(policyObject).buildNanoTDFDataset(m_MaxKeyIterations);
-        }
-    }
-
-    // Check if the EO needs to updated.
-    void NanoTDFDatasetClient::checkEntityObject() {
-        auto impl = m_nanoTdfClient->m_nanoTdfBuilder->m_impl.get();
-        if (impl->m_publicKey != impl->m_entityObject.getPublicKey() && !impl->m_offlineMode) {
-            LogInfo("Updating entity object");
-            m_nanoTdfClient->fetchEntityObject();
         }
     }
 }

@@ -5,7 +5,7 @@
 //  Copyright 2019 Virtru Corporation
 //
 
-#include <jwt/jwt.h>
+#include <jwt-cpp/jwt.h>
 
 #include "tdf_exception.h"
 #include "logger.h"

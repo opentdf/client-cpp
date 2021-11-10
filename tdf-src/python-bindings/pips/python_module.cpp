@@ -74,7 +74,7 @@ PYBIND11_MODULE(opentdf, tdf) {
 
     // TDF Client python wrapper.
     // NOTE: Intentionally have long lines because sed script need to parse for arguments
-    py::class_<TDFClient>(tdf, "TDFClientBase")
+    py::class_<TDFClient>(tdf, "TDFClient")
         .def(py::init([](const std::string &easUrl, const std::string &user) {
                  return new TDFClient(easUrl, user);
              }),

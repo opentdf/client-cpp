@@ -10,7 +10,7 @@
 #include <logger.h>
 #include <regex>
 #include <string>
-#include <tao/json.hpp>
+#include "nlohmann/json.hpp"
 #include <vector>
 #include "oidc_credentials.h"
 #include "utils.h"

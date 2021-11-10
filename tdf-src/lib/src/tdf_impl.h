@@ -15,7 +15,7 @@
 #include "libxml2_deleters.h"
 
 #include <boost/filesystem.hpp>
-#include <tao/json.hpp>
+#include "nlohmann/json.hpp"
 
 namespace virtru {
 
@@ -114,32 +114,32 @@ namespace virtru {
         /// Build an Upsert v2 payload based on the manifest
         /// \param requestPayload - A payload object with policy and key access already added
         /// \return string - The signed jwt
-        std::string buildUpsertV2Payload(tao::json::value& requestPayload) const;
+        std::string buildUpsertV2Payload(nlohmann::json& requestPayload) const;
 
         /// Build an Upsert v1 payload based on the manifest
         /// \param requestPayload - A payload object with policy and key access already added
-        void buildUpsertV1Payload(tao::json::value& requestPayload) const;
+        void buildUpsertV1Payload(nlohmann::json& requestPayload) const;
 
         /// Build a Rewrap v2 payload based on the manifest
         /// \param requestPayload - A payload object with policy and key access already added
         /// \return string - The signed jwt
-        std::string buildRewrapV2Payload(tao::json::value& requestPayload) const;
+        std::string buildRewrapV2Payload(nlohmann::json& requestPayload) const;
 
         /// Build a Rewrap v1 payload based on the manifest
         /// \param requestPayload - A payload object with policy and key access already added
-        void buildRewrapV1Payload(tao::json::value& requestPayload) const;
+        void buildRewrapV1Payload(nlohmann::json& requestPayload) const;
 
         /// Upsert the key information.
         /// \param manifest - The manifest of the tdf.
         /// \param ignoreKeyAccessType - If true skips the key access type before
         /// syncing.
         // ignoreType if true skips the key access type check when syncing
-        void upsert(tao::json::value& manifest, bool ignoreKeyAccessType = false) const ;
+        void upsert(nlohmann::json& manifest, bool ignoreKeyAccessType = false) const ;
 
         /// Unwrap the key from the manifest.
         /// \param manifest - Manifest of the encrypted tdf
         /// \return - Wrapped key.
-        WrappedKey unwrapKey(tao::json::value& manifest) const;
+        WrappedKey unwrapKey(nlohmann::json& manifest) const;
 
         /// Parse the response and retrieve the wrapped key.
         /// \param unwrapResponse - The response string from '/rewrap'

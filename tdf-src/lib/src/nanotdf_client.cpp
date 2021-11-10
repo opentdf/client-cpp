@@ -19,9 +19,9 @@
 #include "nanotdf_client.h"
 #include "nanotdf_impl.h"
 
-#include <jwt/jwt.h>
+#include <jwt-cpp/jwt.h>
 #include <sstream>
-#include <tao/json.hpp>
+#include "nlohmann/json.hpp"
 
 namespace virtru {
 
@@ -317,7 +317,7 @@ namespace virtru {
                                {kVirtruClientKey, clientValue}};
 
         // Construct the body for fetching the entity object.
-        tao::json::value publicKeyBody;
+        nlohmann::json publicKeyBody;
         publicKeyBody[kUserId] = m_user;
         publicKeyBody[kPublicKey] = m_nanoTdfBuilder->m_impl->m_publicKey;
 

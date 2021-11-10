@@ -10,7 +10,8 @@
 #include "logger.h"
 
 #include <memory>
-#include <tao/json.hpp>
+#include <iostream>
+#include "nlohmann/json.hpp"
 
 #include <exception>
 #include <typeinfo>
@@ -54,25 +55,25 @@ namespace virtru {
     /// throw an virtru::Exception
     AttributeObject::AttributeObject(const std::string& attributeObjectJsonStr) {
         try {
-            tao::json::value attributeObjectJson = tao::json::from_string(attributeObjectJsonStr);
+            nlohmann::json attributeObjectJson = nlohmann::json::parse(attributeObjectJsonStr);
 
             // Get attribute
-            m_attribute = attributeObjectJson.as<std::string_view>(kAttribute);
+            m_attribute = attributeObjectJson[kAttribute];
 
             // Get isDefault
             m_isDefault = false;
-            if (attributeObjectJson[kIsDefault]) {
-                m_isDefault = attributeObjectJson.as<bool>(kIsDefault);
+            if (attributeObjectJson.contains(kIsDefault)) {
+                m_isDefault = attributeObjectJson[kIsDefault];
             }
 
             // Get display name
-            m_displayName = attributeObjectJson.as<std::string_view>(kDisplayName);
+            m_displayName = attributeObjectJson[kDisplayName];
 
             // Get kas public key
-            m_kasPublicKey = attributeObjectJson.as<std::string_view>(kPubKey);
+            m_kasPublicKey = attributeObjectJson[kPubKey];
 
             // Get kas base url
-            m_kasBaseURL = attributeObjectJson.as<std::string_view>(kKasURL);
+            m_kasBaseURL = attributeObjectJson[kKasURL];
         } catch (...) {
             ThrowException(boost::current_exception_diagnostic_information());
         }
@@ -105,7 +106,7 @@ namespace virtru {
 
     /// Return a json string representation of this attribute object.
     std::string AttributeObject::toJsonString(bool prettyPrint) const {
-        tao::json::value attribute;
+        nlohmann::json attribute;
 
         attribute[kAttribute] = m_attribute;
         attribute[kDisplayName] = m_displayName;
@@ -118,7 +119,9 @@ namespace virtru {
         }
 
         if (prettyPrint) {
-            return to_string(attribute, 2);
+            std::ostringstream oss;
+            oss << std::setw(2) << attribute << std::endl;
+            return oss.str();
         } else {
             return to_string(attribute);
         }

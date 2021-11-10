@@ -11,7 +11,7 @@
 #include "crypto/crypto_utils.h"
 #include "sdk_constants.h"
 
-#include <tao/json.hpp>
+#include "nlohmann/json.hpp"
 #include <iostream>
 #include <vector>
 
@@ -121,7 +121,7 @@ namespace virtru {
     /// Return policy information which will be used to construct the manifest.
     std::string RemoteKeyAccess::policyForManifest() {
 
-        tao::json::value policyForManifest;
+        nlohmann::json policyForManifest;
         policyForManifest[kUid] = m_policyObject.getUuid();
 
         return base64Encode(to_string(policyForManifest));

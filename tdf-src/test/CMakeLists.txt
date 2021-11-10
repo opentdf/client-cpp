@@ -33,6 +33,7 @@ endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DJSON_HAS_CPP_14=1")
     set(OTHERLIBS pthread dl rt)
 endif()
 
