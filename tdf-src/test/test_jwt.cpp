@@ -7,7 +7,7 @@
 
 #define BOOST_TEST_MODULE test_jwt_suite
 
-#include <jwt/jwt.h>
+#include <jwt-cpp/jwt.h>
 #include <chrono>
 
 #include <boost/test/included/unit_test.hpp>

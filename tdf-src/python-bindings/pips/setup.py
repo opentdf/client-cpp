@@ -119,7 +119,7 @@ setup(
     author_email='developers@virtru.com',
     url='https://developer.virtru.com/',
     license='MIT',
-    description='Python Wrapper for OpenTDF SDK',
+    description='Python Wrapper for openTDF SDK',
     long_description=load_readme(),
     long_description_content_type='text/markdown',
     install_requires=[],
@@ -137,6 +137,7 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
         'Topic :: Software Development',
         'Topic :: Software Development :: Libraries :: Application Frameworks'
         ],

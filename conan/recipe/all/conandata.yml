@@ -1,0 +1,4 @@
+sources:
+  "0.1.0":
+    url: https://github.com/opentdf/client/archive/refs/tags/v0.1.0-alpha.zip
+    sha256: "84e0b1665317735afcb79c18bc99d87c5e2e0dd6e6007c90c1a2918b9d341b65"

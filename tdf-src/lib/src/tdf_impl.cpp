@@ -25,7 +25,7 @@
 #include <boost/beast/core/detail/base64.hpp>
 #include <boost/interprocess/streams/bufferstream.hpp>
 #include <istream>
-#include <jwt/jwt.h>
+#include <jwt-cpp/jwt.h>
 #include <memory>
 #include <regex>
 #include <streambuf>
@@ -460,7 +460,7 @@ namespace virtru {
         auto manifestStr = tdfArchiveReader.getManifest();
         LogDebug("Manifest:" + manifestStr);
 
-        auto manifest = tao::json::from_string(manifestStr);
+        auto manifest = nlohmann::json::parse(manifestStr);
 
 #if LOGTIME
         auto unwrapKeyT1 = std::chrono::high_resolution_clock::now();
@@ -478,8 +478,8 @@ namespace virtru {
         LogInfo(os.str());
 #endif
         // Get the algorithm and key type.
-        auto algorithm = manifest[kEncryptionInformation][kMethod].as<std::string>(kCipherAlgorithm);
-        auto keyType = manifest[kEncryptionInformation].as<std::string>(kEncryptKeyType);
+        std::string algorithm = manifest[kEncryptionInformation][kMethod][kCipherAlgorithm];
+        std::string keyType = manifest[kEncryptionInformation][kEncryptKeyType];
 
         CipherType chiperType = CipherType::Aes265CBC;
         if (boost::iequals(algorithm, kCipherAlgorithmGCM)) {
@@ -495,14 +495,15 @@ namespace virtru {
         splitKey.setWrappedKey(wrappedKey);
 
         auto &rootSignature = manifest[kEncryptionInformation][kIntegrityInformation][kRootSignature];
-        auto rootSignatureAlg = rootSignature.as<std::string>(kRootSignatureAlg);
-        auto rootSignatureSig = rootSignature.as<std::string>(kRootSignatureSig);
+        std::string rootSignatureAlg = rootSignature[kRootSignatureAlg];
+        std::string rootSignatureSig = rootSignature[kRootSignatureSig];
 
         // Get the hashes from the segments and combine.
         std::string aggregateHash;
-        auto &segmentInfos = manifest[kEncryptionInformation][kIntegrityInformation][kSegments].get_array();
-        for (auto &segment : segmentInfos) {
-            auto hash = segment.as<std::string>(kHash);
+        nlohmann::json segmentInfos = nlohmann::json::array();
+        segmentInfos = manifest[kEncryptionInformation][kIntegrityInformation][kSegments];
+        for (nlohmann::json segment : segmentInfos) {
+            std::string hash = segment[kHash];
             aggregateHash.append(base64Decode(hash));
         }
 
@@ -517,16 +518,16 @@ namespace virtru {
         auto &integrityInformation = manifest[kEncryptionInformation][kIntegrityInformation];
 
         // Check for default segment size.
-        if (!integrityInformation.find(kSegmentSizeDefault)) {
+        if (!integrityInformation.contains(kSegmentSizeDefault)) {
             ThrowException("SegmentSizeDefault is missing in tdf");
         }
-        auto segmentSizeDefault = integrityInformation.as<int>(kSegmentSizeDefault);
+        int segmentSizeDefault = integrityInformation[kSegmentSizeDefault];
 
         // Check for default encrypted segment size.
-        if (!integrityInformation.find(kEncryptedSegSizeDefault)) {
+        if (!integrityInformation.contains(kEncryptedSegSizeDefault)) {
             ThrowException("EncryptedSegmentSizeDefault is missing in tdf");
         }
-        auto defaultEncryptedSegmentSize = integrityInformation.as<int>(kEncryptedSegSizeDefault);
+        int defaultEncryptedSegmentSize = integrityInformation[kEncryptedSegSizeDefault];
 
         ///
         // Create buffers for reading from file and for performing decryption.
@@ -535,20 +536,20 @@ namespace virtru {
         std::vector<gsl::byte> readBuffer(defaultEncryptedSegmentSize);
         std::vector<gsl::byte> decryptedBuffer(segmentSizeDefault);
 
-        auto segmentHashAlg = integrityInformation.as<std::string>(kSegmentHashAlg);
+        std::string segmentHashAlg = integrityInformation[kSegmentHashAlg];
         for (auto &segment : segmentInfos) {
 
             // Adjust read buffer size
             auto readBufferSpan = WriteableBytes{readBuffer};
-            if (segment.find(kEncryptedSegmentSize)) {
-                auto encryptedSegmentSize = segment.as<int>(kEncryptedSegmentSize);
+            if (segment.contains(kEncryptedSegmentSize)) {
+                int encryptedSegmentSize = segment[kEncryptedSegmentSize];
                 readBufferSpan = WriteableBytes{readBufferSpan.data(), encryptedSegmentSize};
             }
 
             // Adjust decrypt buffer size
             auto outBufferSpan = WriteableBytes{decryptedBuffer};
-            if (segment.find(kSegmentSize)) {
-                auto segmentSize = segment.as<int>(kSegmentSize);
+            if (segment.contains(kSegmentSize)) {
+                int segmentSize = segment[kSegmentSize];
                 outBufferSpan = WriteableBytes{outBufferSpan.data(), segmentSize};
             }
 
@@ -559,7 +560,7 @@ namespace virtru {
             splitKey.decrypt(readBufferSpan, outBufferSpan);
 
             auto payloadSigStr = getSignature(readBufferSpan, splitKey, segmentHashAlg);
-            auto hash = segment.as<std::string>(kHash);
+            std::string hash = segment[kHash];
 
             // Validate the hash.
             if (hash != base64Encode(payloadSigStr)) {
@@ -621,7 +622,7 @@ namespace virtru {
 
         auto encryptionInformationJson = splitKey.getManifest();
 
-        tao::json::value payloadTypeObject;
+        nlohmann::json payloadTypeObject;
 
         auto protocol = (m_tdfBuilder.m_impl->m_protocol == Protocol::Zip) ? kPayloadZipProtcol : kPayloadHtmlProtcol;
         payloadTypeObject[kPayloadReferenceType] = kPayloadReference;
@@ -630,7 +631,7 @@ namespace virtru {
         payloadTypeObject[kPayloadMimeType] = m_tdfBuilder.m_impl->m_mimeType;
         payloadTypeObject[kPayloadIsEncrypted] = true;
 
-        tao::json::value manifest;
+        nlohmann::json manifest;
 
         manifest[kPayload] = payloadTypeObject;
         manifest[kEncryptionInformation] = encryptionInformationJson;
@@ -664,7 +665,7 @@ namespace virtru {
         /// Read the file in chucks of 'segmentSize'
         ///
         std::string aggregateHash{};
-        tao::json::value segmentInfos = tao::json::empty_array;
+        nlohmann::json segmentInfos = nlohmann::json::array();
 
         /// Calculate the actual size of the TDF payload.
         /// Formula totalSegment = quotient + possible one(if the data size is not exactly divisible by segment size)
@@ -707,7 +708,7 @@ namespace virtru {
             // Append the aggregate payload signature.
             aggregateHash.append(payloadSigStr);
 
-            tao::json::value segmentInfo;
+            nlohmann::json segmentInfo;
             segmentInfo[kHash] = base64Encode(payloadSigStr);
             segmentInfo[kSegmentSize] = readBuffer.size();
             segmentInfo[kEncryptedSegmentSize] = encryptedSize;
@@ -903,9 +904,9 @@ namespace virtru {
             manifestStr.append(tdfData.begin(), tdfData.end());
         }
 
-        auto manifest = tao::json::from_string(manifestStr);
+        auto manifest = nlohmann::json::parse(manifestStr);
 
-        if (!manifest.find(kEncryptionInformation)) {
+        if (!manifest.contains(kEncryptionInformation)) {
             std::string errorMsg{"'encryptionInformation' not found in the manifest of tdf -"};
             errorMsg.append(encryptedTdfFilepath);
             ThrowException(std::move(errorMsg));
@@ -913,20 +914,21 @@ namespace virtru {
 
         auto &encryptionInformation = manifest[kEncryptionInformation];
 
-        if (!encryptionInformation.find(kKeyAccess)) {
+        if (!encryptionInformation.contains(kKeyAccess)) {
             std::string errorMsg{"'keyAccess' not found in the manifest of tdf -"};
             errorMsg.append(encryptedTdfFilepath);
             ThrowException(std::move(errorMsg));
         }
 
-        auto &keyAccessObjects = encryptionInformation[kKeyAccess].get_array();
+        nlohmann::json keyAccessObjects = nlohmann::json::array();
+        keyAccessObjects = encryptionInformation[kKeyAccess];
         if (keyAccessObjects.size() != 1) {
             ThrowException("Only supports one key access object.");
         }
 
         // First object
         auto &keyAccess = keyAccessObjects.at(0);
-        auto encryptedKeyType = keyAccess.as<std::string>(kEncryptKeyType);
+        std::string encryptedKeyType = keyAccess[kEncryptKeyType];
 
         if (!boost::iequals(encryptedKeyType, kKeyAccessWrapped)) {
             LogWarn("Sync should be performed only on 'wrapped' encrypted key type.");
@@ -968,21 +970,21 @@ namespace virtru {
         }
     }
 
-    std::string TDFImpl::buildUpsertV2Payload(tao::json::value &requestBody) const {
+    std::string TDFImpl::buildUpsertV2Payload(nlohmann::json &requestBody) const {
 
         requestBody[kClientPublicKey] = m_tdfBuilder.m_impl->m_publicKey;
 
         auto now = std::chrono::system_clock::now();
-        auto requestBodyAsStr = tao::json::to_string(requestBody);
+        std::string requestBodyAsStr = requestBody;
 
         // Generate a token which expires in a min.
         auto builder = jwt::create()
                 .set_type(kAuthTokenType)
                 .set_issued_at(now)
                 .set_expires_at(now + std::chrono::seconds{60})
-                .set_payload_claim(kRequestBody, requestBodyAsStr);
+                .set_payload_claim(kRequestBody, jwt::claim(requestBodyAsStr));
 
-        tao::json::value signedTokenRequestBody;
+        nlohmann::json signedTokenRequestBody;
         std::string signedToken;
 
         signedToken = builder.sign(jwt::algorithm::rs256(m_tdfBuilder.m_impl->m_requestSignerPublicKey,
@@ -994,7 +996,7 @@ namespace virtru {
         return signedTokenRequestBodyStr;
     }
 
-    void TDFImpl::buildUpsertV1Payload(tao::json::value &requestBody) const {
+    void TDFImpl::buildUpsertV1Payload(nlohmann::json &requestBody) const {
 
         // Generate a token which expires in a min.
         auto now = std::chrono::system_clock::now();
@@ -1008,22 +1010,23 @@ namespace virtru {
         requestBody[kAuthToken] = authToken;
 
         // Add entity object
-        auto entityJson = tao::json::from_string(m_tdfBuilder.m_impl->m_entityObject.toJsonString());
+        auto entityJson = nlohmann::json::parse(m_tdfBuilder.m_impl->m_entityObject.toJsonString());
         requestBody[kEntity] = entityJson;
     }
 
     /// Upsert the key information.
-    void TDFImpl::upsert(tao::json::value &manifest, bool ignoreKeyAccessType) const {
+    void TDFImpl::upsert(nlohmann::json &manifest, bool ignoreKeyAccessType) const {
 
         if (!ignoreKeyAccessType && m_tdfBuilder.m_impl->m_keyAccessType == KeyAccessType::Wrapped) {
             LogDebug("Bypass upsert for wrapped key type.");
             return;
         }
 
-        tao::json::value requestBody;
+        nlohmann::json requestBody;
         std::string upsertUrl;
 
-        auto &keyAccessObjects = manifest[kEncryptionInformation][kKeyAccess].get_array();
+        nlohmann::json keyAccessObjects = nlohmann::json::array();
+        keyAccessObjects = manifest[kEncryptionInformation][kKeyAccess];
         if (keyAccessObjects.size() != 1) {
             ThrowException("Only supports one key access object - upsert");
         }
@@ -1121,7 +1124,7 @@ namespace virtru {
         }
 
         // Remove the 'encryptedMetadata' and  'wrappedkey' from manifest.
-        auto encryptedMetaData = keyAccess.find(kEncryptedMetadata);
+        auto encryptedMetaData = keyAccess.contains(kEncryptedMetadata);
         if (encryptedMetaData) {
             keyAccess.erase(kEncryptedMetadata);
         }
@@ -1130,21 +1133,21 @@ namespace virtru {
         keyAccess.erase(kPolicyBinding);
     }
 
-    std::string TDFImpl::buildRewrapV2Payload(tao::json::value &requestBody) const {
+    std::string TDFImpl::buildRewrapV2Payload(nlohmann::json &requestBody) const {
 
         requestBody[kClientPublicKey] = m_tdfBuilder.m_impl->m_publicKey;
 
         auto now = std::chrono::system_clock::now();
-        auto requestBodyAsStr = tao::json::to_string(requestBody);
+        std::string requestBodyAsStr = requestBody;
 
         // Generate a token which expires in a min.
         auto builder = jwt::create()
                 .set_type(kAuthTokenType)
                 .set_issued_at(now)
                 .set_expires_at(now + std::chrono::seconds{60})
-                .set_payload_claim(kRequestBody, requestBodyAsStr);
+                .set_payload_claim(kRequestBody, jwt::claim(requestBodyAsStr));
 
-        tao::json::value signedTokenRequestBody;
+        nlohmann::json signedTokenRequestBody;
         std::string signedToken;
 
         signedToken = builder.sign(jwt::algorithm::rs256(m_tdfBuilder.m_impl->m_requestSignerPublicKey,
@@ -1156,7 +1159,7 @@ namespace virtru {
         return signedTokenRequestBodyStr;
     }
 
-    void TDFImpl::buildRewrapV1Payload(tao::json::value &requestBody) const {
+    void TDFImpl::buildRewrapV1Payload(nlohmann::json &requestBody) const {
         // Generate a token which expires in a min.
         auto now = std::chrono::system_clock::now();
         auto authToken = jwt::create()
@@ -1167,14 +1170,15 @@ namespace virtru {
                                                          m_tdfBuilder.m_impl->m_privateKey));
 
         // Add entity object
-        auto entityJson = tao::json::from_string(m_tdfBuilder.m_impl->m_entityObject.toJsonString());
+        auto entityJson = nlohmann::json::parse(m_tdfBuilder.m_impl->m_entityObject.toJsonString());
         requestBody[kEntity] = entityJson;
         requestBody[kAuthToken] = authToken;
     }
 
     /// Unwrap the key from the manifest.
-    WrappedKey TDFImpl::unwrapKey(tao::json::value &manifest) const {
-        auto &keyAccessObjects = manifest[kEncryptionInformation][kKeyAccess].get_array();
+    WrappedKey TDFImpl::unwrapKey(nlohmann::json &manifest) const {
+        nlohmann::json keyAccessObjects = nlohmann::json::array();
+        keyAccessObjects = manifest[kEncryptionInformation][kKeyAccess];
         if (keyAccessObjects.size() != 1) {
             ThrowException("Only supports one key access object - unwrap");
         }
@@ -1183,7 +1187,7 @@ namespace virtru {
         auto &keyAccess = keyAccessObjects.at(0);
 
         // Request body
-        tao::json::value requestBody;
+        nlohmann::json requestBody;
         std::string rewrapUrl;
         requestBody[kKeyAccess] = keyAccess;
 
@@ -1280,8 +1284,8 @@ namespace virtru {
     /// Parse the response and retrive the wrapped key.
     WrappedKey TDFImpl::getWrappedKey(const std::string &unwrapResponse) const {
 
-        auto rewrappedObj = tao::json::from_string(unwrapResponse);
-        auto entityWrappedKey = rewrappedObj.as<std::string>(kEntityWrappedKey);
+        auto rewrappedObj = nlohmann::json::parse(unwrapResponse);
+        std::string entityWrappedKey = rewrappedObj[kEntityWrappedKey];
         auto entityWrappedKeyDecode = base64Decode(entityWrappedKey);
 
         auto decoder = AsymDecryption::create(m_tdfBuilder.m_impl->m_privateKey);
@@ -1436,30 +1440,30 @@ namespace virtru {
 
     /// Retrive the policy uuid(id) from the manifest.
     std::string TDFImpl::getPolicyIdFromManifest(const std::string &manifestStr) const {
-        auto manifest = tao::json::from_string(manifestStr);
+        auto manifest = nlohmann::json::parse(manifestStr);
 
-        if (!manifest.find(kEncryptionInformation)) {
+        if (!manifest.contains(kEncryptionInformation)) {
             std::string errorMsg{"'encryptionInformation' not found in the manifest of tdf."};
             ThrowException(std::move(errorMsg));
         }
 
         auto &encryptionInformation = manifest[kEncryptionInformation];
 
-        if (!encryptionInformation.find(kPolicy)) {
+        if (!encryptionInformation.contains(kPolicy)) {
             std::string errorMsg{"'policy' not found in the manifest of tdf."};
             ThrowException(std::move(errorMsg));
         }
 
         // Get policy
-        auto base64Policy = encryptionInformation.as<std::string>(kPolicy);
+        std::string base64Policy = encryptionInformation[kPolicy];
         auto policyStr = base64Decode(base64Policy);
-        auto policy = tao::json::from_string(policyStr);
+        auto policy = nlohmann::json::parse(policyStr);
 
-        if (!policy.find(kUid)) {
+        if (!policy.contains(kUid)) {
             std::string errorMsg{"'uuid' not found in the policy of tdf."};
             ThrowException(std::move(errorMsg));
         }
 
-        return policy.as<std::string>(kUid);
+        return policy[kUid];
     }
 } // namespace virtru

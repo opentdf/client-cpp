@@ -10,7 +10,7 @@
 #include "logger.h"
 #include "sdk_constants.h"
 
-#include <tao/json.hpp>
+#include "nlohmann/json.hpp"
 #include <boost/exception/diagnostic_information.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -122,21 +122,28 @@ namespace virtru {
 
     /// Return a json string representation of the key access object.
     std::string KeyAccessObject::toJsonString(bool prettyPrint) const {
-        tao::json::value keyAccess;
+        nlohmann::json keyAccess;
 
-        keyAccess[kKeyAccessType] = getKeyAccessTypeAsStr();
-        keyAccess[kUrl] = m_kasUrl;
-        keyAccess[kProtocol] = getProtocolAsStr();
-        keyAccess[kWrappedKey] = m_wrappedKey;
+        try {
+            keyAccess[kKeyAccessType] = getKeyAccessTypeAsStr();
+            keyAccess[kUrl] = m_kasUrl;
+            keyAccess[kProtocol] = getProtocolAsStr();
+            keyAccess[kWrappedKey] = m_wrappedKey;
 
-        keyAccess[kPolicyBinding] = m_policyBindingHash;
+            keyAccess[kPolicyBinding] = m_policyBindingHash;
 
-        if (!m_encryptedMetadata.empty()) {
-            keyAccess[kEncryptedMetadata] = m_encryptedMetadata;
+            if (!m_encryptedMetadata.empty()) {
+                keyAccess[kEncryptedMetadata] = m_encryptedMetadata;
+            }
+        } catch (...) {
+            LogError("Exception in KeyAccessObject::toJsonString");
+            ThrowException(boost::current_exception_diagnostic_information());
         }
 
         if (prettyPrint) {
-            return to_string(keyAccess, 2);
+            std::ostringstream oss;
+            oss << std::setw(2) << keyAccess << std::endl;
+            return oss.str();
         } else {
             return to_string(keyAccess);
         }
@@ -157,10 +164,10 @@ namespace virtru {
 
         try {
 
-            tao::json::value keyAccessObjectJson = tao::json::from_string(keyAccessObjectJsonStr);
+            nlohmann::json keyAccessObjectJson = nlohmann::json::parse(keyAccessObjectJsonStr);
 
             // Get key access type.
-            std::string keyAccessKeyAsStr = keyAccessObjectJson.as<std::string>(kKeyAccessType);
+            std::string keyAccessKeyAsStr = keyAccessObjectJson[kKeyAccessType];
             if (boost::iequals(keyAccessKeyAsStr, kKeyAccessRemote)) {
                 keyAccessObject.m_keyAccessType = KeyAccessType::Remote;
             } else if (boost::iequals(keyAccessKeyAsStr, kKeyAccessWrapped)) {
@@ -170,10 +177,10 @@ namespace virtru {
             }
 
             // Get kas url.
-            keyAccessObject.m_kasUrl = keyAccessObjectJson.as<std::string_view>(kUrl);
+            keyAccessObject.m_kasUrl = keyAccessObjectJson[kUrl];
 
             // Get the protocol
-            auto protocolAsStr = keyAccessObjectJson.as<std::string>(kProtocol);
+            std::string protocolAsStr = keyAccessObjectJson[kProtocol];
             if (boost::iequals(protocolAsStr, kKasProtocol)) {
                 keyAccessObject.m_protocol = KeyAccessProtocol::Kas;
             } else {
@@ -181,18 +188,19 @@ namespace virtru {
             }
 
             // Get the wrapped key.
-            keyAccessObject.m_wrappedKey = keyAccessObjectJson.as<std::string_view>(kWrappedKey);
+            keyAccessObject.m_wrappedKey = keyAccessObjectJson[kWrappedKey];
 
             // Get policy binding hash.
-            keyAccessObject.m_policyBindingHash = keyAccessObjectJson.as<std::string_view>(kPolicyBinding);
+            keyAccessObject.m_policyBindingHash = keyAccessObjectJson[kPolicyBinding];
 
-            auto encryptedMetadata = keyAccessObjectJson.as<std::string>(kEncryptedMetadata);
+            auto encryptedMetadata = keyAccessObjectJson[kEncryptedMetadata];
             if (!encryptedMetadata.empty()) {
                 // Get the encrypted meta data.
                 keyAccessObject.m_encryptedMetadata = encryptedMetadata;
             }
 
         } catch (...) {
+            LogError("Exception in KeyAccessObject::createKeyAccessObjectFromJson");
             ThrowException(boost::current_exception_diagnostic_information());
         }
 

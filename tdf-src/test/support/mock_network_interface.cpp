@@ -14,7 +14,7 @@
 #include "numeric"
 #include "mock_network_interface.h"
 #include "tuple"
-#include <tao/json.hpp>
+#include "nlohmann/json.hpp"
 #include "sdk_constants.h"
 #include "logger.h"
 

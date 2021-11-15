@@ -15,6 +15,8 @@ class TDFLibConan(ConanFile):
         self.requires("libxml2/2.9.10@")
         self.requires("pybind11/2.6.2@")
         self.requires("libarchive/3.5.1@")
+        self.requires("nlohmann_json/3.10.4@")
+        self.requires("jwt-cpp/0.4.0@")
 
     def build(self):
         cmake = CMake(self)

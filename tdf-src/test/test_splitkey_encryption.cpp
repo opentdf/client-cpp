@@ -22,7 +22,7 @@
 #include "tdf_exception.h"
 #include "sdk_constants.h"
 
-#include <tao/json.hpp>
+#include "nlohmann/json.hpp"
 #include <boost/test/included/unit_test.hpp>
 #include <memory>
 
@@ -110,10 +110,10 @@ BOOST_AUTO_TEST_SUITE(test_splitkey_encryption_suite)
                                                                                   policyObject, metaData)};
         BOOST_CHECK_THROW(splitKey.addKeyAccess(std::move(keyAccess)), Exception);
 
-        auto manifest = to_string(splitKey.getManifest());
+        std::string manifest = to_string(splitKey.getManifest());
         std::cout << "Manifest:" << manifest << std::endl;
 
-        tao::json::value manifestJson = tao::json::from_string(manifest);
+        nlohmann::json manifestJson = nlohmann::json::parse(manifest);
         auto keyAccessObject = KeyAccessObject::createKeyAccessObjectFromJson(to_string(manifestJson[kKeyAccess][0]));
 
         std::cout << "WrappedKey:" << keyAccessObject.getWrappedKey() << std::endl;
@@ -131,9 +131,11 @@ BOOST_AUTO_TEST_SUITE(test_splitkey_encryption_suite)
         ///
         // Test if the meta data matches after decryption - symmetric.
         auto encryptedMetadata = base64Decode(keyAccessObject.getEncryptedMetadata());
-        tao::json::value metadataObj = tao::json::from_string(encryptedMetadata);
-        auto cipherText = base64Decode(metadataObj.as<std::string>(kCiphertext));
-        auto binaryIV = base64Decode(metadataObj.as<std::string>(kIV));
+        nlohmann::json metadataObj = nlohmann::json::parse(encryptedMetadata);
+        std::string cipherTextAsStr = metadataObj[kCiphertext];
+        auto cipherText = base64Decode(cipherTextAsStr);
+        std::string ivAsStr = metadataObj[kIV];
+        auto binaryIV = base64Decode(ivAsStr);
         BOOST_CHECK(binaryIV.size() == kGcmIvSize);
 
         // Copy the auth tag from the cipherText.

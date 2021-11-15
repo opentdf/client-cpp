@@ -13,7 +13,7 @@
 #include <string>
 #include <iostream>
 
-#include <tao/json.hpp>
+#include "nlohmann/json.hpp"
 #include <boost/test/included/unit_test.hpp>
 
 BOOST_AUTO_TEST_SUITE(test_http_client_service_suite)
@@ -91,7 +91,7 @@ BOOST_AUTO_TEST_SUITE(test_http_client_service_suite)
                                    "qQIDAQAB\n"
                                    "-----END PUBLIC KEY-----";
 
-        tao::json::value publicKeyBody;
+        nlohmann::json publicKeyBody;
         publicKeyBody["publicKey"] = publicKey;
 
         IOContext ioContext;

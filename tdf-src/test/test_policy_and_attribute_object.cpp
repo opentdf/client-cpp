@@ -5,7 +5,7 @@
 //  Copyright 2019 Virtru Corporation
 //
 
-#define BOOST_TEST_MODULE test_policy_object_suit
+#define BOOST_TEST_MODULE test_policy_object_suite
 
 #include "policy_object.h"
 #include "attribute_object.h"
@@ -183,6 +183,7 @@ BOOST_AUTO_TEST_SUITE(test_policy_and_attribute_object_suite)
         BOOST_TEST(attributeObject4.isDefault() == true);
     }
 
+    // nlohmann does not throw an exception if you access an element that does not exist
     BOOST_AUTO_TEST_CASE(test_policy_object_negative_test)
     {
         try {
@@ -197,13 +198,15 @@ BOOST_AUTO_TEST_SUITE(test_policy_and_attribute_object_suite)
                                               "  \"uuid\": \"6d9bedfa-e389-4b8a-895d-cb72902ea77f\"\n"
                                               "}";
             auto policyObject = PolicyObject::CreatePolicyObjectFromJson(invalidPolicyStr);
-            BOOST_FAIL("We should not get here - invalid policy json");
+
+            // invalid/incomplete json will not throw an exception, but it won't populate values in the object
+            auto dissems = policyObject.getDissems();
+            if (dissems.size() != 0) {
+                BOOST_FAIL("malformed json should not yield any dissems");
+            }
         } catch ( const virtru::Exception& exception) {
-            BOOST_TEST_MESSAGE("Expected virtru exception");
+            BOOST_FAIL("We should not get here should be no exceptions thrown - invalid policy json");
             std :: cout << exception.what() << std::endl;
-        } catch ( ... ) {
-            BOOST_FAIL("Virtru exception should be thrown" );
-            std :: cout << "...\n";
         }
     }
 

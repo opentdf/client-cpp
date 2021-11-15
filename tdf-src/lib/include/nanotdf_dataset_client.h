@@ -9,6 +9,8 @@
 #ifndef TDF_SRC_NANOTDF_DATASET_CLIENT_H
 #define TDF_SRC_NANOTDF_DATASET_CLIENT_H
 
+#include "oidc_credentials.h"
+
 namespace virtru {
 
     /// Forward declaration.
@@ -17,19 +19,19 @@ namespace virtru {
 
     class NanoTDFDatasetClient {
     public:
-        /// Constructs a nano TDF client instance.
+        /// Constructs a  NanoTDF dataset client instance.
         /// \param maxKeyIterations - Maximum number of encrypt operations before a new key is generated.
         /// NOTE: should me used for only offline decrypt operation.
         explicit NanoTDFDatasetClient(uint32_t maxKeyIterations = kNTDFMaxKeyIterations);
 
-        /// Constructs a nano TDF client instance.
+        /// Constructs a  NanoTDF dataset client instance.
         /// \param easUrl - The eas URL.
         /// \param user - The registered user on EAS.
         /// \param maxKeyIterations - Maximum number of encrypt operations before a new key is generated.
         NanoTDFDatasetClient(const std::string& easUrl, const std::string& user,
                 uint32_t maxKeyIterations = kNTDFMaxKeyIterations);
 
-        /// Constructs a nano TDF client instance.
+        /// Constructs a  NanoTDF dataset client instance.
         /// \param easUrl - The eas URL.
         /// \param user - The registered user on EAS.
         /// \param clientKeyFileName -  Path to client key file.
@@ -38,6 +40,13 @@ namespace virtru {
         /// \param maxKeyIterations - Maximum number of encrypt operations before a new key is generated.
         NanoTDFDatasetClient(const std::string& easUrl, const std::string& user, const std::string& clientKeyFileName,
                       const std::string& clientCertFileName, const std::string& sdkConsumerCertAuthority,
+                      uint32_t maxKeyIterations = kNTDFMaxKeyIterations);
+
+        /// Constructs a NanoTDF dataset client instance.
+        /// \param oidcCredentials - OIDC credentials
+        /// \param kasUrl -  The KAS backend url
+        /// \param maxKeyIterations - Maximum number of encrypt operations before a new key is generated.
+        NanoTDFDatasetClient(const OIDCCredentials& oidcCredentials, const std::string &kasUrl,
                       uint32_t maxKeyIterations = kNTDFMaxKeyIterations);
 
         /// Destroy the Client instance.
@@ -144,9 +153,6 @@ namespace virtru {
     private:
         // Initialize the NanoTDF
         void initializeNanoTDF();
-
-        // Check if the EO needs to updated.
-        void checkEntityObject();
 
     private: /// Data
         bool m_offline{false};

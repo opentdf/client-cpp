@@ -39,6 +39,10 @@ BOOST_AUTO_TEST_SUITE(test_logger_suite)
                 std::string logTime = os.str();
 
                 switch (logMessage.level) {
+                    case LogLevel::Current:
+                        // no-op here to avoid compiler warning about unhandled case for 'Current'
+                        break;
+
                     case LogLevel::Trace:
                         std::clog << logTime << "[Trace] " << logMessage.message << std::endl;
                         BOOST_FAIL("Testing external logger - Failed(log level is Info)");

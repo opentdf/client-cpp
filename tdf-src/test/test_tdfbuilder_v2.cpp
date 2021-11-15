@@ -27,7 +27,7 @@
 #include <boost/test/included/unit_test.hpp>
 #include <iostream>
 #include <stdio.h>
-#include <tao/json.hpp>
+#include "nlohmann/json.hpp"
 
 #ifdef _WINDOWS
 #include <direct.h>
@@ -254,9 +254,10 @@ static std::string BuildFakedRewrapResponse(
     std::tuple<std::string, std::string> kasKeypair,
     std::tuple<std::string, std::string> clientKeypair) {
 
-    auto parsedBody = tao::json::from_string(precedingUpsertRequest);
+    auto parsedBody = nlohmann::json::parse(precedingUpsertRequest);
 
-    auto decodedWrappedKey = base64Decode(parsedBody[kKeyAccess][kWrappedKey].get_string());
+    std::string wrappedKeyAsStr = parsedBody[kKeyAccess][kWrappedKey];
+    auto decodedWrappedKey = base64Decode(wrappedKeyAsStr);
 
     auto rewrappedKey = FauxKASKeyRewrap(decodedWrappedKey, std::get<1>(kasKeypair), std::get<0>(clientKeypair));
 
@@ -300,10 +301,10 @@ static std::string BuildFakedRewrapResponse(
                     }
                 })";
 
-    auto rewrapResponse = tao::json::from_string(fakedRewrapResponseJSON);
+    auto rewrapResponse = nlohmann::json::parse(fakedRewrapResponseJSON);
     rewrapResponse[kEntityWrappedKey] = rewrappedKey;
 
-    return tao::json::to_string(rewrapResponse);
+    return rewrapResponse;
 }
 
 BOOST_AUTO_TEST_CASE(test_tdf_builder_basic) {
