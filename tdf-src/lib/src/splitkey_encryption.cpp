@@ -5,6 +5,7 @@
 //  Copyright 2019 Virtru Corporation
 //
 
+#include <iostream>
 #include "tdf_exception.h"
 #include "crypto/gcm_encryption.h"
 #include "crypto/gcm_decryption.h"
@@ -40,7 +41,7 @@ namespace virtru {
     }
 
     /// Generate the manifest.
-    tao::json::value SplitKey::getManifest() {
+    nlohmann::json SplitKey::getManifest() {
 
         if (m_keyAccessObjects.empty()) {
             ThrowException("'Key Access Object' is missing.");
@@ -88,7 +89,7 @@ namespace virtru {
             auto writeableBytes = WriteableBytes{encryptedData};
             encrypt(toBytes(iv), toBytes(metadata), writeableBytes);
 
-            tao::json::value encryptedMetadataObj;
+            nlohmann::json encryptedMetadataObj;
             encryptedMetadataObj[kCiphertext] = base64Encode(writeableBytes);
             encryptedMetadataObj[kIV] = base64IV;
 
@@ -100,12 +101,12 @@ namespace virtru {
         // Create policy string for manifest.
         auto policyForManifest = m_keyAccessObjects[0]->policyForManifest();
 
-        tao::json::value manifest;
+        nlohmann::json manifest;
         manifest[kKeyAccessType] = kKeyType;
-        manifest[kKeyAccess] = tao::json::empty_array;
-        manifest[kKeyAccess].emplace_back(tao::json::from_string(keyAccessObject.toJsonString()));
+        manifest[kKeyAccess] = nlohmann::json::array();
+        manifest[kKeyAccess].emplace_back(nlohmann::json::parse(keyAccessObject.toJsonString()));
 
-        tao::json::value method;
+        nlohmann::json method;
         method[kIsStreamable] = false;
         method[kIV] = base64IV;
         if (m_cipherType == CipherType::Aes256GCM) {
@@ -116,15 +117,15 @@ namespace virtru {
 
         manifest[kMethod] = method;
 
-        tao::json::value rootSignature;
+        nlohmann::json rootSignature;
         rootSignature[kRootSignatureAlg] = kRootSignatureAlgDefault;
         rootSignature[kRootSignatureSig] = std::string{};
 
-        tao::json::value integrityInformation;
+        nlohmann::json integrityInformation;
         integrityInformation[kRootSignature] = rootSignature;
         integrityInformation[kSegmentSizeDefault] = std::string{};
         integrityInformation[kSegmentHashAlg] = std::string{};
-        integrityInformation[kSegments] = tao::json::empty_array;
+        integrityInformation[kSegments] = nlohmann::json::array();
 
         manifest[kIntegrityInformation] = integrityInformation;
         manifest[kPolicy] = policyForManifest;

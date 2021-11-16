@@ -10,8 +10,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 ### Added
+0.1.3
+- PLAT-1160 support python 3.9
+
+0.1.2
+- PLAT-1291 upgrade json library
+- PLAT-1290 upgrade jwt library
+
 0.1.1
-- PLAT-1381 Change all TDF mentions to TDF
+- PLAT-1381 Change all TDF3 mentions to TDF
 
 0.1.0
 - Change version numbering in preparation for opentdf

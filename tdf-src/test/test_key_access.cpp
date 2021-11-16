@@ -7,6 +7,7 @@
 
 #define BOOST_TEST_MODULE test_key_access_suite
 
+#include <iostream>
 #include "key_access.h"
 #include "key_access_object.h"
 #include "policy_object.h"
@@ -21,7 +22,7 @@
 #include "bytes.h"
 #include "tdf_exception.h"
 
-#include <tao/json.hpp>
+#include "nlohmann/json.hpp"
 #include <boost/test/included/unit_test.hpp>
 #include <memory>
 
@@ -72,7 +73,6 @@ BOOST_AUTO_TEST_SUITE(test_key_access_suite)
 
         auto keyAccess = std::unique_ptr<KeyAccess>{std::make_unique<WrappedKeyAccess>(kasUrl, kasPublicKeyAsX509,
                                                                                        policyObject, metaData)};
-
         auto&& keyAccessObject = keyAccess->construct(symmetricKey2, metaData);
 
         BOOST_TEST(keyAccessObject.getKasUrl() == kasUrl);

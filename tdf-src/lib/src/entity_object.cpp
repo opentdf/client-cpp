@@ -10,7 +10,7 @@
 #include "logger.h"
 #include "sdk_constants.h"
 
-#include <tao/json.hpp>
+#include "nlohmann/json.hpp"
 #include <boost/exception/diagnostic_information.hpp>
 
 namespace virtru {
@@ -103,21 +103,21 @@ namespace virtru {
 
     /// Return a json string representation of the entity object.
     std::string EntityObject::toJsonString(bool prettyPrint) const {
-        tao::json::value entityObject;
+        nlohmann::json entityObject;
 
         // Add userId
         entityObject[kUserId] = m_userId;
 
         // Add aliases
-        entityObject[kAliases] = tao::json::empty_array;
+        entityObject[kAliases] = nlohmann::json::array();
         for (auto& alias : m_aliases) {
             entityObject[kAliases].emplace_back(alias);
         }
 
         // Add attributes
-        entityObject[kAttributes] = tao::json::empty_array;
+        entityObject[kAttributes] = nlohmann::json::array();
         for (auto& attribute : m_attributesAsJWT) {
-            tao::json::value attributeJwt;
+            nlohmann::json attributeJwt;
             attributeJwt[kJWt] = attribute;
             entityObject[kAttributes].emplace_back(attributeJwt);
         }
@@ -134,7 +134,9 @@ namespace virtru {
         }
 
         if (prettyPrint) {
-            return to_string(entityObject, 2);
+            std::ostringstream oss;
+            oss << std::setw(2) << entityObject << std::endl;
+            return oss.str();
         }
         return to_string(entityObject);
 
@@ -152,32 +154,30 @@ namespace virtru {
     EntityObject EntityObject::createEntityObjectFromJson(const std::string& entityObjectJsonStr) {
         EntityObject entityObject {};
         try {
-            tao::json::value entityObjectJson = tao::json::from_string(entityObjectJsonStr);
+            nlohmann::json entityObjectJson = nlohmann::json::parse(entityObjectJsonStr);
 
             // Get userId.
-            entityObject.m_userId =  entityObjectJson.as<std::string_view>(kUserId);
+            entityObject.m_userId =  entityObjectJson[kUserId];
 
             // Get aliases
-            auto& aliases = entityObjectJson[kAliases].get_array();
-            for (auto& alias : aliases) {
-                entityObject.m_aliases.push_back(alias.get_string());
+            for (const auto& alias : entityObjectJson[kAliases]) {
+                entityObject.m_aliases.push_back(alias.get<std::string>());
             }
 
             // Get attributes
-            auto& attributes = entityObjectJson[kAttributes].get_array();
-            for (auto& attribute : attributes) {
-                entityObject.m_attributesAsJWT.push_back(attribute.as<std::string>(kJWt));
+            for (auto& attribute : entityObjectJson[kAttributes]) {
+                entityObject.m_attributesAsJWT.push_back(attribute[kJWt].get<std::string>());
             }
 
             // Get entity public key.
-            entityObject.m_publicKey =  entityObjectJson.as<std::string_view>(kPublicKey);
+            entityObject.m_publicKey =  entityObjectJson[kPublicKey];
 
             // Get cert.
-            entityObject.m_cert =  entityObjectJson.as<std::string_view>(kCert);
+            entityObject.m_cert =  entityObjectJson[kCert];
 
             // Get signer public key.
-            if(entityObjectJson[kSignerPublicKey].type() != tao::json::type::UNINITIALIZED) {
-                entityObject.m_signerPublicKey = entityObjectJson.as<std::string_view>(kSignerPublicKey);
+            if(entityObjectJson.contains(kSignerPublicKey)) {
+                entityObject.m_signerPublicKey = entityObjectJson[kSignerPublicKey];
             }
 
         } catch (...) {

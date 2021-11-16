@@ -4,10 +4,10 @@
 
 #include <iostream>
 #include <future>
-#include <tao/json.hpp>
+#include "nlohmann/json.hpp"
 #include <utility>
 
-#include <jwt/jwt.h>
+#include <jwt-cpp/jwt.h>
 #include "network/http_service_provider.h"
 #include "tdf_exception.h"
 #include "utils.h"
@@ -75,8 +75,8 @@ namespace virtru {
         }
 
         auto decoded_token = jwt::decode(m_accessToken);
-        tao::json::value tokenAsJson = tao::json::from_string(decoded_token.get_payload());
-        m_preferredUsername = tokenAsJson[kPreferredUsername].get_string();
+        nlohmann::json tokenAsJson = nlohmann::json::parse(decoded_token.get_payload());
+        m_preferredUsername = tokenAsJson[kPreferredUsername];
 
         LogDebug("Preffered username: " +  m_preferredUsername);
         LogDebug("Authorization = " + authHeaderStream.str());
@@ -90,13 +90,15 @@ namespace virtru {
         }
 
         auto decoded_token = jwt::decode(m_accessToken);
-        tao::json::value tokenAsJson = tao::json::from_string(decoded_token.get_payload());
-        auto& subjectAttributes = tokenAsJson[kTDFClaims][kSubjectAttributes].get_array();
+        nlohmann::json tokenAsJson = nlohmann::json::parse(decoded_token.get_payload());
+        nlohmann::json subjectAttributes = nlohmann::json::array();
+        subjectAttributes = tokenAsJson[kTDFClaims][kSubjectAttributes];
 
         std::vector<std::string> attributes;
         attributes.reserve(subjectAttributes.size());
         for (const auto &subjectAttribute: subjectAttributes) {
-            attributes.push_back(subjectAttribute.as<std::string>(kAttribute));
+            std::string attribute = subjectAttribute[kAttribute];
+            attributes.push_back(attribute);
         }
 
         return attributes;
@@ -186,17 +188,17 @@ namespace virtru {
         }
 
         LogDebug("Got OIDC fetchAccessToken response: " + responseJson);
-        auto tokens = tao::json::from_string(responseJson);
-        if (!tokens.find(kAccessToken)) {
+        nlohmann::json tokens = nlohmann::json::parse(responseJson);
+        if (!tokens.contains(kAccessToken)) {
             std::string exceptionMsg = "OIDC access token not found in /openid-connect/token response";
             ThrowException(std::move(exceptionMsg));
         }
 
-        m_accessToken = tokens.as<std::string>(kAccessToken);
+        m_accessToken = tokens[kAccessToken];
 
         //credential exchange does not always return a refresh token,
-        if (tokens.find(kRefreshToken)) {
-            m_refreshToken = tokens.as<std::string>(kRefreshToken);
+        if (tokens.contains(kRefreshToken)) {
+            m_refreshToken = tokens[kRefreshToken];
         } else {
             LogDebug("OIDC refresh token not found in /openid-connect/token response");
         }
@@ -257,17 +259,17 @@ namespace virtru {
         LogDebug("Got OIDC refreshAccessToken response: " + responseJson);
 
         std::cout << "OIDC Responce :" << responseJson << std::endl;
-        auto tokens = tao::json::from_string(responseJson);
-        if (!tokens.find(kAccessToken)) {
+        auto tokens = nlohmann::json::parse(responseJson);
+        if (!tokens.contains(kAccessToken)) {
             std::string exceptionMsg = "OIDC access token not found in /openid-connect/token response";
             ThrowException(std::move(exceptionMsg));
         }
 
-        m_accessToken = tokens.as<std::string>(kAccessToken);
+        m_accessToken = tokens[kAccessToken];
 
         //credential exchange does not always return a refresh token,
-        if (tokens.find(kRefreshToken)) {
-            m_refreshToken = tokens.as<std::string>(kRefreshToken);
+        if (tokens.contains(kRefreshToken)) {
+            m_refreshToken = tokens[kRefreshToken];
         } else {
             LogDebug("OIDC refresh token not found in /openid-connect/token response");
         }

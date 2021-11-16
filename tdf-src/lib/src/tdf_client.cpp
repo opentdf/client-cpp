@@ -22,9 +22,9 @@
 #include "oidc_service.h"
 #include "utils.h"
 
-#include <jwt/jwt.h>
+#include <jwt-cpp/jwt.h>
 #include <sstream>
-#include <tao/json.hpp>
+#include "nlohmann/json.hpp"
 
 namespace virtru {
 
@@ -211,7 +211,7 @@ namespace virtru {
         if (entityObjectNotSet && !oidcMode) {
 
             // Construct the body
-            tao::json::value publicKeyBody;
+            nlohmann::json publicKeyBody;
             publicKeyBody[kUserId] = m_user;
             publicKeyBody[kPublicKey] = m_tdfBuilder->m_impl->m_publicKey;
 

@@ -11,8 +11,7 @@
 #include "utils.h"
 
 #include <fstream>
-#include <tao/json.hpp>
-#include <tao/json/contrib/traits.hpp>
+#include "nlohmann/json.hpp"
 
 namespace virtru {
     /// Constructor
@@ -266,7 +265,7 @@ namespace virtru {
     /// Set any meta data information than be leveraged by KAS/EAS server.
     TDFBuilder &TDFBuilder::setMetaData(const std::unordered_map<std::string, std::string> &properties) {
 
-        const tao::json::value metaData = properties;
+        const nlohmann::json metaData = properties;
 
         std::string metaDataAsJsonStr = to_string(metaData);
 

@@ -8,8 +8,9 @@
 #include <boost/endian/arithmetic.hpp>
 #include <fstream>
 #include <iostream>
-#include <jwt/jwt.h>
-#include <tao/json.hpp>
+#include "nlohmann/json.hpp"
+#include <jwt-cpp/jwt.h>
+
 
 #include "nanotdf/resource_locator.h"
 #include "nanotdf/ecc_mode.h"
@@ -168,7 +169,12 @@ namespace virtru {
 
             // Reset the IV after max iterations
             if (m_maxKeyIterations == m_keyIterationCount) {
+
                 m_iv = 1;
+
+                if (m_datasetMode) {
+                    m_keyIterationCount = 0;
+                }
             }
 
             auto ivBufferSpan = toWriteableBytes(iv).last(kNanoTDFIvSize);
@@ -470,10 +476,6 @@ namespace virtru {
             m_tdfBuilder.setPolicyObject(policyObject);
 
             LogDebug("Max iteration reached - create new header for dataset");
-            m_keyIterationCount = 0;
-
-            // NOTE: Since the key is not stored on the KAS no need to fetch new EO even though
-            // new SDK key pair is created.
         }
 
 
@@ -579,7 +581,7 @@ namespace virtru {
         }
 
         // Request body as part of JWT payload
-        tao::json::value requestBody;
+        nlohmann::json requestBody;
 
         // Add the EC algorithm
         // NOTE: For now we only support 'secp256r1'
@@ -591,7 +593,7 @@ namespace virtru {
         header.writeIntoBuffer(headerData);
         auto base64EncodedHeader = base64Encode(toBytes(headerData));
 
-        tao::json::value keyAccess;
+        nlohmann::json keyAccess;
         keyAccess[kNanoTDFHeader] = base64EncodedHeader;
         keyAccess[kKeyAccessType] = kKeyAccessRemote;
         keyAccess[kUrl] = m_tdfBuilder.m_impl->m_kasUrl;
@@ -608,21 +610,21 @@ namespace virtru {
             rewrapUrl = m_tdfBuilder.m_impl->m_kasUrl + kRewrap;
 
             // Add entity object
-            auto entityJson = tao::json::from_string(m_tdfBuilder.m_impl->m_entityObject.toJsonString());
+            auto entityJson = nlohmann::json::parse(m_tdfBuilder.m_impl->m_entityObject.toJsonString());
             requestBody[kEntity] = entityJson;
         }
 
         auto now = std::chrono::system_clock::now();
-        auto requestBodyAsStr = tao::json::to_string(requestBody);
+        std::string requestBodyAsStr = requestBody;
 
         // Generate a token which expires in a min.
         auto builder = jwt::create()
                 .set_type(kAuthTokenType)
                 .set_issued_at(now)
                 .set_expires_at(now + std::chrono::seconds{60})
-                .set_payload_claim(kRequestBody, requestBodyAsStr);
+                .set_payload_claim(kRequestBody, jwt::claim(requestBodyAsStr));
 
-        tao::json::value signedTokenRequestBody;
+        nlohmann::json signedTokenRequestBody;
         std::string signedToken;
 
         auto ecKeySize = ECCMode::GetECKeySize(m_tdfBuilder.m_impl->m_ellipticCurveType);
@@ -733,9 +735,20 @@ namespace virtru {
         auto payloadConfig = header.getPayloadConfig();
         auto authTagSize = SymmetricAndPayloadConfig::SizeOfAuthTagForCipher(payloadConfig.getCipherType());
 
-        auto jsonResponse = tao::json::from_string(rewrapResponse);
-        const auto& sessionPublicKey = jsonResponse.as<std::string>(kSessionPublicKey);
-        const auto& wrappedKey = jsonResponse.as<std::string>(kEntityWrappedKey);
+        auto jsonResponse = nlohmann::json::parse(rewrapResponse);
+        if (!jsonResponse.contains(kSessionPublicKey)) {
+            const char* noPubkeyMsg = "No session public key in rewrap response";
+            LogError(noPubkeyMsg);
+            ThrowException(noPubkeyMsg);
+        }
+        const std::string sessionPublicKey = jsonResponse[kSessionPublicKey];
+
+        if (!jsonResponse.contains(kEntityWrappedKey)) {
+            const char* noKeyMsg = "No wrapped key in rewrap response";
+            LogError(noKeyMsg);
+            ThrowException(noKeyMsg);
+        }
+        const std::string wrappedKey = jsonResponse[kEntityWrappedKey];
         const auto& sdkPrivateKey = m_tdfBuilder.m_impl->m_privateKey;
 
         auto sessionKey = ECKeyPair::ComputeECDHKey(sessionPublicKey, sdkPrivateKey);

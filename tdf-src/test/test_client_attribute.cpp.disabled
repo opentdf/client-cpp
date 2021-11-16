@@ -12,8 +12,8 @@
 #include "sdk_constants.h"
 #include "crypto/bytes.h"
 
-#include <tao/json.hpp>
-#include <jwt/jwt.h>
+#include "nlohmann/json.hpp"
+#include <jwt-cpp/jwt.h>
 #include <boost/test/included/unit_test.hpp>
 #include <boost/filesystem.hpp>
 #include <stdio.h>

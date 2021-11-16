@@ -11,8 +11,8 @@
 #include "entity_object.h"
 #include "tdf_exception.h"
 
-#include <jwt/jwt.h>
-#include <jwt/picojson.h>
+#include <jwt-cpp/jwt.h>
+#include <picojson.h>
 #include <string>
 #include <iostream>
 
@@ -91,11 +91,11 @@ DCzGcDpkNVkPR58v1BvBs4zZ
 
             auto token = jwt::create()
                     .set_type("JWT")
-                    .set_payload_claim(kAttribute, kDefaultAttribute)
-                    .set_payload_claim(kDisplayName, kDisplayNameValue)
-                    .set_payload_claim(kPubKey, std::string{rsa2048PublicKey})
-                    .set_payload_claim(kKasURL, kKasURLValue)
-                    .set_payload_claim(kIsDefault, picojson::value{true})
+                    .set_payload_claim(kAttribute, jwt::claim(kDefaultAttribute))
+                    .set_payload_claim(kDisplayName, jwt::claim(kDisplayNameValue))
+                    .set_payload_claim(kPubKey, jwt::claim(std::string{rsa2048PublicKey}))
+                    .set_payload_claim(kKasURL, jwt::claim(kKasURLValue))
+                    .set_payload_claim(kIsDefault, jwt::claim(picojson::value{true}))
                     .set_expires_at(std::chrono::system_clock::now() + std::chrono::seconds{60})
                     .sign(jwt::algorithm::rs256(rsa2048PublicKey, rsa2048PrivateKey));
 
@@ -108,11 +108,11 @@ DCzGcDpkNVkPR58v1BvBs4zZ
             for (auto& attribute : attributes) {
                 token = jwt::create()
                         .set_type("JWT")
-                        .set_payload_claim(kAttribute, attribute)
-                        .set_payload_claim(kDisplayName, kDisplayNameValue)
-                        .set_payload_claim(kPubKey, std::string{rsa2048PublicKey})
-                        .set_payload_claim(kKasURL, kKasURLValue)
-                        .set_payload_claim(kIsDefault, picojson::value{false})
+                        .set_payload_claim(kAttribute, jwt::claim(attribute))
+                        .set_payload_claim(kDisplayName, jwt::claim(kDisplayNameValue))
+                        .set_payload_claim(kPubKey, jwt::claim(std::string{rsa2048PublicKey}))
+                        .set_payload_claim(kKasURL, jwt::claim(kKasURLValue))
+                        .set_payload_claim(kIsDefault, jwt::claim(picojson::value{false}))
                         .set_expires_at(std::chrono::system_clock::now() + std::chrono::seconds{60})
                         .sign(jwt::algorithm::rs256(rsa2048PublicKey, rsa2048PrivateKey));
                 entityObject.setAttributeAsJwt(token);
