@@ -65,27 +65,9 @@ namespace virtru {
         return subjectAttributes;
     }
 
-    ///Add single data attribute
-    void TDFClientBase::withSingleDataAttribute(const std::string &dataAttributes, const std::string &displayName, const std::string &kasPubKey, const std::string &kasURL) {
-        m_dataAttributeObjects.emplace_back(dataAttributes, displayName, kasPubKey, kasURL);
-    }
-
-    ///Add data attributes
-    void TDFClientBase::withDataAttributes(const std::vector<std::string> &dataAttributes) {
-        //find default attribute
-        auto entityAttributeObjects = getSubjectAttrObjects();
-        const auto defaultEntityAttribute = getDefaultAttributeObject(entityAttributeObjects);
-
-        //get info from that attribute
-        const auto kasPubKey = defaultEntityAttribute.getKasPublicKey();
-        const std::string displayName;
-        const auto kasURL = defaultEntityAttribute.getKasBaseUrl();
-
-        //for each URI in vector
-        for (const auto &attrUri : dataAttributes) {
-            //add attributeObject to m_dataAttributeObjects
-            m_dataAttributeObjects.emplace_back(attrUri, displayName, kasPubKey, kasURL);
-        }
+    ///Add data attribute
+    void TDFClientBase::withDataAttribute(const std::string &dataAttribute, const std::string &displayName, const std::string &kasPubKey, const std::string &kasURL) {
+        m_dataAttributeObjects.emplace_back(dataAttribute, displayName, kasPubKey, kasURL);
     }
 
     ///Read data attributes associated with client

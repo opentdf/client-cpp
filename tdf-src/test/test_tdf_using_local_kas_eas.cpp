@@ -303,7 +303,7 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
 
             if (!attributes.empty()) {
                 auto attribute = attributes.front();
-                tdfOIDCClient->withDataAttributes({{attribute}});
+                tdfOIDCClient->withDataAttribute(attribute, "", "", "");
             }
 
             // Test tdf with user creds
@@ -324,12 +324,12 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
 
             if (!attributes.empty()) {
                 auto attribute = attributes.front();
-                oidcClientTDF->withDataAttributes({{attribute}});
+                tdfOIDCClient->withDataAttribute(attribute, "", "", "");
             }
 
             if (!attributes.empty()) {
                 auto attribute = attributes.front();
-                oidcClientTDF->withDataAttributes({{attribute}});
+                tdfOIDCClient->withDataAttribute(attribute, "", "", "");
             }
 
             // Test tdf with user creds
