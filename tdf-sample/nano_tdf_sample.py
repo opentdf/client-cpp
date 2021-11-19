@@ -72,7 +72,7 @@ def run_camera_use_case():
     init_phase_client.enable_console_logging(LogLevel.Info)
 
     # TODO: Once KAS work is completed.
-    #nano_tdf_client.add_data_attrinutes()
+    #nano_tdf_client.add_data_attribute()
 
     # Install success
     inital_tdf = init_phase_client.encrypt_string("Installed success!!")
