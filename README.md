@@ -14,4 +14,4 @@ Minimal c/c++ client to generate and access TDF files
     conan build .. --build-folder .
     ```
     
-    For more details on conan and publishing, see [client-cpp/conan/README.md](client-cpp/conan/README.md)
+    For more details on conan and publishing, see [conan/README.md](conan/README.md)
