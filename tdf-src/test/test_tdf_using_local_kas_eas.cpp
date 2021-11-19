@@ -536,7 +536,7 @@ aviKeWq6GU4X5AJ/ZHmZmPqZjdpwsQxUiaVAFMrWjj4v3iwNeJD2fhjI
             NanoTDFClient initPhaseClient{easUrl, user2};
 
             // TODO: Add data attributes.
-            //collectInfoClient.addDataAttributes({""});
+            //collectInfoClient.addDataAttribute("");
 
             auto tdf = initPhaseClient.encryptString(cameraData[0]);
 
@@ -555,7 +555,7 @@ aviKeWq6GU4X5AJ/ZHmZmPqZjdpwsQxUiaVAFMrWjj4v3iwNeJD2fhjI
             collectInfoClient.setEntityObjectAsJsonString(eoAsString);
 
             // TODO: Add data attributes.
-            //collectInfoClient.addDataAttributes({""});
+            //collectInfoClient.addDataAttribute("");
 
             auto tdf = collectInfoClient.encryptString(cameraData[1]);
             dataStore.emplace_back(tdf);
