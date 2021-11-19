@@ -114,7 +114,12 @@ namespace virtru {
 
     /// Allow user to add data attributes
     void NanoTDFDatasetClient::withDataAttributes(const std::vector<std::string>& dataAttributes) {
-        m_nanoTdfClient->withDataAttributes(dataAttributes);
+        //for each URI in vector
+        //TODO should this be extended to take attr friendly descriptions?
+        //TODO should this be extended to take KAS URLs and keys for each attr?
+        for (const auto &attrUri : dataAttributes) {
+            m_nanoTdfClient->withDataAttribute(attrUri, "", "", "");
+        }
     }
 
     ///Allow user to read data attributes associated with this instances of client (to be replaced by inspectDataAttributes)
