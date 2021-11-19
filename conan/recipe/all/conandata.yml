@@ -1,4 +1,7 @@
 sources:
   "0.1.0":
-    url: https://github.com/opentdf/client/archive/refs/tags/v0.1.0-alpha.zip
+    url: https://github.com/opentdf/client-cpp/archive/refs/tags/v0.1.0-alpha.zip
     sha256: "84e0b1665317735afcb79c18bc99d87c5e2e0dd6e6007c90c1a2918b9d341b65"
+  "0.2.0":
+    url: https://github.com/opentdf/client-cpp/archive/refs/tags/0.2.0.zip
+    sha256: "cb9c1594fb08447501e1f63ea1103a8efa6bfc7d2079c6a4b161712593dee871"
