@@ -136,7 +136,7 @@ BOOST_AUTO_TEST_SUITE(test_client_attribute_suite)
     }
 
 
-    BOOST_AUTO_TEST_CASE(test_client_with_data_attr) {
+    BOOST_AUTO_TEST_CASE(test_client_add_data_attr) {
 
 #if ETERNOS_SETUP
         try{
@@ -144,8 +144,10 @@ BOOST_AUTO_TEST_SUITE(test_client_attribute_suite)
             NanoTDFClient nanoTDFClient{easUrl, user};
 
             std::vector<std::string> attributes = {"https://kas.eternos.xyz/attr/testclassification", "https://kas.eternos.xyz/attr/testotherclassification"};
-            client.withDataAttributes(attributes);
-            nanoTDFClient.withDataAttributes(attributes);
+            for (const auto &attrUri : attributes) {
+                client.addDataAttribute(attrUri);
+                nanoTDFClient.addDataAttribute(attrUri);
+            }
 
             //check if stored
             auto dataAttributes = client.getDataAttributes();
@@ -195,7 +197,7 @@ BOOST_AUTO_TEST_SUITE(test_client_attribute_suite)
 //                 //}
 //             //}
 
-            BOOST_TEST_MESSAGE("TDFClient basic withDataAttributes test passed.");
+            BOOST_TEST_MESSAGE("TDFClient basic addDataAttribute test passed.");
         }
         catch (const Exception &exception) {
             BOOST_FAIL(exception.what());

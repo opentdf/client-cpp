@@ -303,7 +303,7 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
 
             if (!attributes.empty()) {
                 auto attribute = attributes.front();
-                tdfOIDCClient->withDataAttribute(attribute, "", "", "");
+                tdfOIDCClient->addDataAttribute(attribute, "", "", "");
             }
 
             // Test tdf with user creds
@@ -324,12 +324,12 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
 
             if (!attributes.empty()) {
                 auto attribute = attributes.front();
-                tdfOIDCClient->withDataAttribute(attribute, "", "", "");
+                tdfOIDCClient->addDataAttribute(attribute, "", "", "");
             }
 
             if (!attributes.empty()) {
                 auto attribute = attributes.front();
-                tdfOIDCClient->withDataAttribute(attribute, "", "", "");
+                tdfOIDCClient->addDataAttribute(attribute, "", "", "");
             }
 
             // Test tdf with user creds
@@ -381,7 +381,7 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
 
         if (!attributes.empty()) {
             auto attribute = attributes.front();
-            encryptNanoTDFClientOIDC->withDataAttributes({{attribute}});
+            encryptNanoTDFClientOIDC->addDataAttribute(attribute, "", "", "");
         }
 
         testNanoTDFOperations(encryptNanoTDFClientOIDC.get(), decryptNanoTDFClientOIDC.get());
@@ -536,7 +536,7 @@ aviKeWq6GU4X5AJ/ZHmZmPqZjdpwsQxUiaVAFMrWjj4v3iwNeJD2fhjI
             NanoTDFClient initPhaseClient{easUrl, user2};
 
             // TODO: Add data attributes.
-            //collectInfoClient.withDataAttributes({""});
+            //collectInfoClient.addDataAttribute("");
 
             auto tdf = initPhaseClient.encryptString(cameraData[0]);
 
@@ -555,7 +555,7 @@ aviKeWq6GU4X5AJ/ZHmZmPqZjdpwsQxUiaVAFMrWjj4v3iwNeJD2fhjI
             collectInfoClient.setEntityObjectAsJsonString(eoAsString);
 
             // TODO: Add data attributes.
-            //collectInfoClient.withDataAttributes({""});
+            //collectInfoClient.addDataAttribute("");
 
             auto tdf = collectInfoClient.encryptString(cameraData[1]);
             dataStore.emplace_back(tdf);
