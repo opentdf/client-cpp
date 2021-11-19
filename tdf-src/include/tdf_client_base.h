@@ -124,21 +124,15 @@ namespace virtru {
         /// \return Return vector of attributes in claims object
         std::vector<std::string> getSubjectAttributes();
 
-        /// Allow user to add data attributes one at a time (for the c# bindings)
-        /// \param dataAttributes - uri of the attribute
+        /// Allow user to add data attribute
+        /// \param dataAttribute - uri of the attribute
         /// \param displayName - display name of attribute
         /// \param kasPublicKey - kas public key (with begin and end certificate)
         /// \param kasUrl - kas url
-        void withSingleDataAttribute(const std::string &dataAttributes,
+        void withDataAttribute(const std::string &dataAttribute,
                                      const std::string &displayName,
                                      const std::string &kasPubKey,
                                      const std::string &kasURL);
-
-#ifndef SWIG
-        /// Allow user to add data attributes
-        ///\ \param dataAttributes - add attributes objects for each attribute URI in this vector
-        void withDataAttributes(const std::vector<std::string> &dataAttributes);
-#endif
 
         ///Allow user to read data attributes associated with this instances of client (to be replaced by inspectDataAttributes)
         /// \return Return vector of dataAttributes -- unique resource locater of each data attribute
