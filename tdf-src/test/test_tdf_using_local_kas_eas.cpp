@@ -381,7 +381,7 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
 
         if (!attributes.empty()) {
             auto attribute = attributes.front();
-            encryptNanoTDFClientOIDC->withDataAttributes({{attribute}});
+            encryptNanoTDFClientOIDC->withDataAttribute(attribute, "", "", "");
         }
 
         testNanoTDFOperations(encryptNanoTDFClientOIDC.get(), decryptNanoTDFClientOIDC.get());
