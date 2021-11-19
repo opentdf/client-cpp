@@ -183,7 +183,7 @@ PYBIND11_MODULE(opentdf, tdf) {
               Returns:
                  Subject attribute URIs.
             )pbdoc")
-        .def("with_data_attribute", &TDFClient::withDataAttribute, py::arg("data_attribute"), py::arg("display_name"), py::arg("kas_public_key"), py::arg("kas_url"), R"pbdoc(
+        .def("add_data_attribute", &TDFClient::addDataAttribute, py::arg("data_attribute"), py::arg("display_name"), py::arg("kas_public_key"), py::arg("kas_url"), R"pbdoc(
                Add data attribute
 
               Args:
@@ -365,7 +365,7 @@ PYBIND11_MODULE(opentdf, tdf) {
               Returns:
                  Subject attribute URIs.
             )pbdoc")
-        .def("with_data_attribute", &NanoTDFClient::withDataAttribute, py::arg("data_attribute"), py::arg("display_name"), py::arg("kas_public_key"), py::arg("kas_url"), R"pbdoc(
+        .def("add_data_attribute", &NanoTDFClient::addDataAttribute, py::arg("data_attribute"), py::arg("display_name"), py::arg("kas_public_key"), py::arg("kas_url"), R"pbdoc(
                Add data attribute
 
               Args:
@@ -513,7 +513,7 @@ PYBIND11_MODULE(opentdf, tdf) {
               Args:
                  log_level(LogLevel): The log level
             )pbdoc")
-        .def("with_data_attribute", &TDFClient::withDataAttribute, py::arg("data_attribute"), py::arg("display_name"), py::arg("kas_public_key"), py::arg("kas_url"), R"pbdoc(
+        .def("add_data_attribute", &TDFClient::addDataAttribute, py::arg("data_attribute"), py::arg("display_name"), py::arg("kas_public_key"), py::arg("kas_url"), R"pbdoc(
                Add data attribute
 
               Args:

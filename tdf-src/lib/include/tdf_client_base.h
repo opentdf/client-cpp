@@ -129,7 +129,7 @@ namespace virtru {
         /// \param displayName - display name of attribute
         /// \param kasPublicKey - kas public key (with begin and end certificate)
         /// \param kasUrl - kas url
-        void withDataAttribute(const std::string &dataAttribute,
+        void addDataAttribute(const std::string &dataAttribute,
                                      const std::string &displayName,
                                      const std::string &kasPubKey,
                                      const std::string &kasURL);

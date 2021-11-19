@@ -118,7 +118,7 @@ namespace virtru {
         /// \param displayName - Can be empty string
         /// \param kasPublicKey - Can be empty string
         /// \param kasUrl - Can be empty string
-        void withDataAttribute(const std::string& dataAttribute, const std::string& displayName, const std::string& kasPublicKey, const std::string& kasUrl);
+        void addDataAttribute(const std::string& dataAttribute, const std::string& displayName, const std::string& kasPublicKey, const std::string& kasUrl);
 
         ///Allow user to read data attributes associated with this instances of client (to be replaced by inspectDataAttributes)
         /// \return Return vector of dataAttributes -- unique resource locater of each data attribute

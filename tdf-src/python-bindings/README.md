@@ -29,7 +29,7 @@ OpenTDF enables the access control of the data by enabling attributes. The key a
 Applying a data attribute to the TDF can be done using this SDK api.
 
 ```python
-client.with_data_attributes(["https://example.com/attr/Classification/value/S"])
+client.add_data_attribute("https://example.com/attr/Classification/value/S", "Classification", "optionalKasKey", "optionalKasUrl")
 ```
 
 

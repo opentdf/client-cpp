@@ -66,7 +66,7 @@ namespace virtru {
     }
 
     ///Add single data attribute
-    void TDFClientBase::withDataAttribute(const std::string &dataAttribute, const std::string &displayName, const std::string &kasPubKey, const std::string &kasURL) {
+    void TDFClientBase::addDataAttribute(const std::string &dataAttribute, const std::string &displayName, const std::string &kasPubKey, const std::string &kasURL) {
         m_dataAttributeObjects.emplace_back(dataAttribute, displayName, kasPubKey, kasURL);
     }
 

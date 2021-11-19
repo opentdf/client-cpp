@@ -114,8 +114,8 @@ namespace virtru {
 
     /// Allow user to add data attributes
     /// friendly name, kas pubkey, and kas URL can be empty strings
-    void NanoTDFDatasetClient::withDataAttribute(const std::string& dataAttribute, const std::string& displayName, const std::string& kasPublicKey, const std::string& kasUrl) {
-        m_nanoTdfClient->withDataAttribute(dataAttribute, displayName, kasPublicKey, kasUrl);
+    void NanoTDFDatasetClient::addDataAttribute(const std::string& dataAttribute, const std::string& displayName, const std::string& kasPublicKey, const std::string& kasUrl) {
+        m_nanoTdfClient->addDataAttribute(dataAttribute, displayName, kasPublicKey, kasUrl);
     }
 
     ///Allow user to read data attributes associated with this instances of client (to be replaced by inspectDataAttributes)

@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 0.2.0
-- PLAT-1452 drop legacy `withDataAttributes` API and stick with (simpler) withDataAttribute
+- PLAT-1452 drop legacy `withDataAttributes` API and stick with (simpler) `addDataAttribute`
 
 0.1.3
 - PLAT-1160 support python 3.9
