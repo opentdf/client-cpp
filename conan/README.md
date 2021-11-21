@@ -26,7 +26,7 @@ To test the recipe locally
 `cd <directory containing this README.md>`
 `conan create recipe/all opentdf-client/<Version number such as 1.0.0>@ -pr:b=default --build=opentdf-client`
 
-To ensure a clean test, delete the `~/.conan/data/opentdf-client` and the `all/test_package/build` directories to remove the cached data first.
+To ensure a clean test, run `conan remove opentdf-client` to delete it from conan's cache and delete the `recipe/all/test_package/build` directory to remove stale test package build artifacts.
 
 Do not check in the `all/test_package/build` directory, ignore or delete it before submitting changes
 
