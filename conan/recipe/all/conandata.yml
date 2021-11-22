@@ -9,6 +9,5 @@ sources:
     url: https://github.com/opentdf/client-cpp/archive/refs/tags/0.2.1.zip
     sha256: "TBD"
   "0.2.2":
-    #url: https://github.com/opentdf/client-cpp/archive/refs/tags/0.2.2.zip
-    url: http://localhost:3000/client-cpp-0.2.2.zip
-    sha256: "TBD"
+    url: https://github.com/opentdf/client-cpp/archive/refs/tags/0.2.2.zip
+    sha256: "4668df4dfb71fff38d245691b0b5771f374cd9f14f13c890fe2f1d1c7df48a32"
