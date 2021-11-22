@@ -513,7 +513,7 @@ PYBIND11_MODULE(opentdf, tdf) {
               Args:
                  log_level(LogLevel): The log level
             )pbdoc")
-        .def("add_data_attribute", &TDFClient::addDataAttribute, py::arg("data_attribute"), py::arg("display_name"), py::arg("kas_public_key"), py::arg("kas_url"), R"pbdoc(
+        .def("add_data_attribute", &NanoTDFDatasetClient::addDataAttribute, py::arg("data_attribute"), py::arg("display_name"), py::arg("kas_public_key"), py::arg("kas_url"), R"pbdoc(
                Add data attribute
 
               Args:
