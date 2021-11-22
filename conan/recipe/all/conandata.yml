@@ -5,3 +5,10 @@ sources:
   "0.2.0":
     url: https://github.com/opentdf/client-cpp/archive/refs/tags/0.2.0.zip
     sha256: "cb9c1594fb08447501e1f63ea1103a8efa6bfc7d2079c6a4b161712593dee871"
+  "0.2.1":
+    url: https://github.com/opentdf/client-cpp/archive/refs/tags/0.2.1.zip
+    sha256: "TBD"
+  "0.2.2":
+    #url: https://github.com/opentdf/client-cpp/archive/refs/tags/0.2.2.zip
+    url: http://localhost:3000/client-cpp-0.2.2.zip
+    sha256: "TBD"

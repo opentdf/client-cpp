@@ -35,7 +35,8 @@ class OpenTDFConan(ConanFile):
         self.requires("gsl_microsoft/20180102@bincrafters/stable")
         self.requires("libxml2/2.9.10@")
         self.requires("libarchive/3.5.1@")
-        self.requires("pybind11/2.6.2@")
+        self.requires("nlohmann_json/3.10.4@")
+        self.requires("jwt-cpp/0.4.0@")
 
     def source(self):
         tools.get(**self.conan_data["sources"][self.version], destination=self._source_subfolder, strip_root=True)
@@ -64,4 +65,4 @@ class OpenTDFConan(ConanFile):
         self.cpp_info.components["libopentdf"].names["cmake_find_package"] = "opentdf-client"
         self.cpp_info.components["libopentdf"].names["cmake_find_package_multi"] = "opentdf-client"
         self.cpp_info.components["libopentdf"].names["pkg_config"] = "opentdf-client"
-        self.cpp_info.components["libopentdf"].requires = ["openssl::openssl", "boost::boost", "libiconv::libiconv", "zlib::zlib", "gsl_microsoft::gsl_microsoft", "pybind11::pybind11", "libxml2::libxml2", "libarchive::libarchive"]
+        self.cpp_info.components["libopentdf"].requires = ["openssl::openssl", "boost::boost", "libiconv::libiconv", "zlib::zlib", "gsl_microsoft::gsl_microsoft", "libxml2::libxml2", "libarchive::libarchive", "jwt-cpp::jwt-cpp", "nlohmann_json::nlohmann_json"]
