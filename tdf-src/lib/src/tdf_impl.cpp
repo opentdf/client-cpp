@@ -57,6 +57,8 @@ namespace virtru {
     /// Constructor
     TDFImpl::TDFImpl(TDFBuilder &tdfBuilder) : m_tdfBuilder(tdfBuilder) {
 
+        LogTrace("TDFImpl::TDFImpl");
+
         // Reserve the size for buffers for .html protocol.
         if (m_tdfBuilder.m_impl->m_protocol == Protocol::Html) {
             m_zipReadBuffer.reserve(kZipReadSize);
@@ -67,6 +69,8 @@ namespace virtru {
     /// Encrypt the file to tdf format.
     void TDFImpl::encryptFile(const std::string &inFilepath,
                                const std::string &outFilepath) {
+
+        LogTrace("TDFImpl::EncryptFile");
 
         // Open the input file for reading.
         std::ifstream inStream{inFilepath, std::ios_base::in | std::ios_base::binary};
@@ -89,6 +93,8 @@ namespace virtru {
 
     /// Encrypt the stream data to tdf format.
     void TDFImpl::encryptStream(std::istream &inputStream, std::ostream &outStream) {
+
+        LogTrace("TDFImpl::EncryptStream");
 
         // Reset the input stream.
         const auto final = gsl::finally([&inputStream] {
@@ -150,6 +156,8 @@ namespace virtru {
 
     /// Encrypt the data that is retrieved from the source callback.
     void TDFImpl::encryptData(TDFDataSourceCb sourceCb, TDFDataSinkCb sinkCb) {
+
+        LogTrace("TDFImpl::encryptData");
 
 #if LOGTIME
         auto t1 = std::chrono::high_resolution_clock::now();
@@ -232,6 +240,8 @@ namespace virtru {
     /// Decrypt the tdf stream data.
     void TDFImpl::decryptStream(std::istream &inStream, std::ostream &outStream) {
 
+        LogTrace("TDFImpl::decryptStream");
+
         // Reset the input stream.
         const auto final = gsl::finally([&inStream] {
             inStream.clear();
@@ -303,9 +313,12 @@ namespace virtru {
     void TDFImpl::decryptFile(const std::string &inFilepath,
                                const std::string &outFilepath) {
 
+        LogTrace("TDFImpl::decryptFile");
+
 #if LOGTIME
         auto t1 = std::chrono::high_resolution_clock::now();
 #endif
+
 
         // Open the input file for reading.
         std::ifstream inStream{inFilepath, std::ios_base::in | std::ios_base::binary};
@@ -374,6 +387,8 @@ namespace virtru {
 
     /// Decrypt the data that is retrieved from the source callback.
     void TDFImpl::decryptData(TDFDataSourceCb sourceCb, TDFDataSinkCb sinkCb) {
+
+        LogTrace("TDFImpl::decryptData");
 
 #if LOGTIME
         auto t1 = std::chrono::high_resolution_clock::now();
@@ -456,6 +471,8 @@ namespace virtru {
     }
 
     void TDFImpl::decryptStream(TDFArchiveReader &tdfArchiveReader, DataSinkCb &&sinkCB) {
+
+        LogTrace("TDFImpl::decryptStream");
 
         auto manifestStr = tdfArchiveReader.getManifest();
         LogDebug("Manifest:" + manifestStr);
@@ -578,6 +595,8 @@ namespace virtru {
 
     /// Encrypt the data in the input stream.
     std::string TDFImpl::encryptStream(std::istream &inputStream, std::streampos dataSize, DataSinkCb &&sinkCB) {
+
+        LogTrace("TDFImpl::encryptStream");
 
         // Check if there is a policy object
         if (m_tdfBuilder.m_impl->m_policyObject.getUuid().empty()) {
@@ -743,6 +762,8 @@ namespace virtru {
                                    std::istream &inputStream,
                                    std::ostream &outStream) {
 
+        LogTrace("TDFImpl::generateHtmlTdf");
+
         using namespace boost::beast::detail::base64;
 
         auto const &token1 = m_tdfBuilder.m_impl->m_htmlTemplateTokens[0];
@@ -822,6 +843,8 @@ namespace virtru {
     /// Return the policy uuid from the tdf file.
     std::string TDFImpl::getPolicyUUID(const std::string &tdfFilePath) {
 
+        LogTrace("TDFImpl::getPolicyUUID file");
+
         std::string manifestStr;
 
         bool zipFormat = isZipFormat(tdfFilePath);
@@ -848,6 +871,8 @@ namespace virtru {
 
     /// Return the policy uuid from the tdf input stream.
     std::string TDFImpl::getPolicyUUID(std::istream &inStream) {
+
+        LogTrace("TDFImpl::getPolicyUUID stream");
 
         // Reset the input stream.
         const auto final = gsl::finally([&inStream] {
@@ -885,6 +910,8 @@ namespace virtru {
 
     /// Sync the tdf file, with symmetric wrapped key and Policy Object.
     void TDFImpl::sync(const std::string &encryptedTdfFilepath) const {
+
+        LogTrace("TDFImpl::sync");
 
         std::string manifestStr;
         bool zipFormat = isZipFormat(encryptedTdfFilepath);
@@ -940,6 +967,8 @@ namespace virtru {
     /// Generate a signature of the payload base on integrity algorithm.
     std::string TDFImpl::getSignature(Bytes payload, SplitKey &splitkey, IntegrityAlgorithm alg) const {
 
+        LogTrace("TDFImpl::getSignature IA alg");
+
         constexpr auto kGmacPayloadLength = 16;
 
         switch (alg) {
@@ -963,6 +992,8 @@ namespace virtru {
     /// Generate a signature of the payload base on integrity algorithm.
     std::string TDFImpl::getSignature(Bytes payload, SplitKey &splitkey, const std::string &alg) const {
 
+        LogTrace("TDFImpl::getSignature string alg");
+
         if (boost::iequals(alg, kHmacIntegrityAlgorithm)) {
             return getSignature(payload, splitkey, IntegrityAlgorithm::HS256);
         } else {
@@ -971,6 +1002,8 @@ namespace virtru {
     }
 
     std::string TDFImpl::buildUpsertV2Payload(nlohmann::json &requestBody) const {
+
+        LogTrace("TDFImpl::buildUpsertV2Payload");
 
         requestBody[kClientPublicKey] = m_tdfBuilder.m_impl->m_publicKey;
 
@@ -998,6 +1031,8 @@ namespace virtru {
 
     void TDFImpl::buildUpsertV1Payload(nlohmann::json &requestBody) const {
 
+        LogTrace("TDFImpl::buildUpsertV1Payload");
+
         // Generate a token which expires in a min.
         auto now = std::chrono::system_clock::now();
         auto authToken = jwt::create()
@@ -1016,6 +1051,8 @@ namespace virtru {
 
     /// Upsert the key information.
     void TDFImpl::upsert(nlohmann::json &manifest, bool ignoreKeyAccessType) const {
+
+        LogTrace("TDFImpl::upsert");
 
         if (!ignoreKeyAccessType && m_tdfBuilder.m_impl->m_keyAccessType == KeyAccessType::Wrapped) {
             LogDebug("Bypass upsert for wrapped key type.");
@@ -1135,10 +1172,12 @@ namespace virtru {
 
     std::string TDFImpl::buildRewrapV2Payload(nlohmann::json &requestBody) const {
 
+        LogTrace("TDFImpl::buildRewrapV2Payload");
+
         requestBody[kClientPublicKey] = m_tdfBuilder.m_impl->m_publicKey;
 
         auto now = std::chrono::system_clock::now();
-        std::string requestBodyAsStr = requestBody;
+        std::string requestBodyAsStr = requestBody.dump();
 
         // Generate a token which expires in a min.
         auto builder = jwt::create()
@@ -1160,6 +1199,9 @@ namespace virtru {
     }
 
     void TDFImpl::buildRewrapV1Payload(nlohmann::json &requestBody) const {
+
+        LogTrace("TDFImpl::buildRewrapV1Payload");
+
         // Generate a token which expires in a min.
         auto now = std::chrono::system_clock::now();
         auto authToken = jwt::create()
@@ -1177,6 +1219,9 @@ namespace virtru {
 
     /// Unwrap the key from the manifest.
     WrappedKey TDFImpl::unwrapKey(nlohmann::json &manifest) const {
+
+        LogTrace("TDFImpl::unwrapKey");
+
         nlohmann::json keyAccessObjects = nlohmann::json::array();
         keyAccessObjects = manifest[kEncryptionInformation][kKeyAccess];
         if (keyAccessObjects.size() != 1) {
@@ -1284,6 +1329,8 @@ namespace virtru {
     /// Parse the response and retrive the wrapped key.
     WrappedKey TDFImpl::getWrappedKey(const std::string &unwrapResponse) const {
 
+        LogTrace("TDFImpl::getWrappedKey");
+
         auto rewrappedObj = nlohmann::json::parse(unwrapResponse);
         std::string entityWrappedKey = rewrappedObj[kEntityWrappedKey];
         auto entityWrappedKeyDecode = base64Decode(entityWrappedKey);
@@ -1303,6 +1350,8 @@ namespace virtru {
     /// Return tdf zip data by parsing html tdf file.
     std::vector<std::uint8_t> TDFImpl::getTDFZipData(const std::string &htmlTDFFilepath,
                                                       bool manifestData) const {
+        LogTrace("TDFImpl::getTDFZipData file");
+
         /// Protocol is .html
         XMLDocFreePtr xmlDoc{htmlReadFile(htmlTDFFilepath.data(), nullptr,
                                           HTML_PARSE_RECOVER | HTML_PARSE_NOWARNING |
@@ -1321,6 +1370,8 @@ namespace virtru {
     /// Return tdf zip data by parsing html tdf file.
     std::vector<std::uint8_t> TDFImpl::getTDFZipData(Bytes bytes, bool manifestData) {
 
+        LogTrace("TDFImpl::getTDFZipData memory");
+
         XMLDocFreePtr xmlDoc{htmlReadMemory(reinterpret_cast<const char *>(bytes.data()), bytes.size(),
                                             nullptr, nullptr,
                                             HTML_PARSE_RECOVER | HTML_PARSE_NOWARNING |
@@ -1336,6 +1387,8 @@ namespace virtru {
 
     /// Return tdf zip data from XMLDoc object.
     std::vector<std::uint8_t> TDFImpl::getTDFZipData(XMLDocFreePtr xmlDocPtr, bool manifestData) const {
+
+        LogTrace("TDFImpl::getTDFZipData xmlDoc");
 
         // Create xpath context
         XMLXPathContextFreePtr context{xmlXPathNewContext(xmlDocPtr.get())};
@@ -1396,6 +1449,8 @@ namespace virtru {
     /// Check if the given tdf file is encrypted with zip protocol.
     bool TDFImpl::isZipFormat(const std::string &tdfFilePath) const {
 
+        LogTrace("TDFImpl::isZipFormat file");
+
         // Open the input file for reading.
         std::ifstream inputStream{tdfFilePath, std::ios_base::in | std::ios_base::binary};
         if (!inputStream) {
@@ -1419,6 +1474,8 @@ namespace virtru {
 
     /// Check if the given input stream data is encrypted with zip protocol.
     bool TDFImpl::isZipFormat(std::istream &tdfInStream) const {
+        LogTrace("TDFImpl::isZipFormat stream");
+
         static constexpr auto twoChar = 2;
 
         // set to the start.
@@ -1440,6 +1497,8 @@ namespace virtru {
 
     /// Retrive the policy uuid(id) from the manifest.
     std::string TDFImpl::getPolicyIdFromManifest(const std::string &manifestStr) const {
+        LogTrace("TDFImpl::getPolicyIdFromManifest");
+
         auto manifest = nlohmann::json::parse(manifestStr);
 
         if (!manifest.contains(kEncryptionInformation)) {

@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 ### Added
+0.2.3
+- PLAT-1458 Added trace calls, fixed bug in json conversion
+
 0.2.2
 - Reworked dataAttribute method
 

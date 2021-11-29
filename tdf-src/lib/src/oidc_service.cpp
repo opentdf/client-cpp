@@ -44,6 +44,8 @@ namespace virtru {
                              const HttpHeaders& headers,
                              const std::string& clientSigningPubkey)
                              : m_oidcCredentials(std::move(oidcCredentials)) {
+        LogTrace("OIDCService::OIDCService");
+
         m_clientSigningPubkey = base64UrlEncode(clientSigningPubkey);
         m_networkServiceProvider = std::make_unique<HTTPServiceProvider>(headers);
     }
@@ -85,6 +87,9 @@ namespace virtru {
 
     // Return the attributes that are in claims object(part of access token)
     std::vector<std::string> OIDCService::getClaimsObjectAttributes() {
+
+        LogTrace("OIDCService::getClaimsObjectAttributes");
+
         if (m_accessToken.empty()) {
             ThrowException("Access token missing from OIDC service");
         }
@@ -109,6 +114,8 @@ namespace virtru {
     /// trigger a refresh using the refresh token.
     /// If THAT fails, then bail
     void OIDCService::getAccessToken() {
+
+        LogTrace("OIDCService::getAccessToken");
 
         if (m_accessToken.empty()) {
             //We don't have cached tokens, fetch
@@ -144,6 +151,7 @@ namespace virtru {
     void OIDCService::fetchAccessToken() {
 
         LogTrace("OIDCService::fetchAccessToken");
+
         unsigned status = kHTTPBadRequest;
         std::promise<void> netPromise;
         auto netFuture = netPromise.get_future();
@@ -207,6 +215,7 @@ namespace virtru {
     /// Exchange the token with OIDC server.
     void OIDCService::refreshAccessToken() {
         LogTrace("OIDCService::refreshAccessToken");
+
         unsigned status = kHTTPBadRequest;
         std::promise<void> netPromise;
         auto netFuture = netPromise.get_future();
@@ -258,7 +267,6 @@ namespace virtru {
 
         LogDebug("Got OIDC refreshAccessToken response: " + responseJson);
 
-        std::cout << "OIDC Responce :" << responseJson << std::endl;
         auto tokens = nlohmann::json::parse(responseJson);
         if (!tokens.contains(kAccessToken)) {
             std::string exceptionMsg = "OIDC access token not found in /openid-connect/token response";
@@ -278,6 +286,7 @@ namespace virtru {
     /// Check if the access token is valid(check with /userinfo)
     void OIDCService::checkAccessToken()  {
         LogTrace("OIDCService::checkAccessToken");
+
         unsigned status = kHTTPBadRequest;
         std::promise<void> netPromise;
         auto netFuture = netPromise.get_future();
@@ -313,6 +322,8 @@ namespace virtru {
     }
 
     void OIDCService::addFormData(std::ostringstream &ss, const std::string& key, const std::string& val) {
+        LogTrace("OIDCService::addFormData");
+
         //Unless this is the first kvp, append with an ampersand
         if (ss.tellp() != 0) {
             ss << "&";
