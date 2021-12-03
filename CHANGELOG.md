@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 ### Added
+0.2.4
+- PLAT-1466 Split conan out to its own repo
+- PLAT-1467 Split python out to its own repo
+- PLAT-1458 fixed bug in json conversion
+
 0.2.3
 - PLAT-1458 Added trace calls, fixed bug in json conversion
 
