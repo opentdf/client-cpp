@@ -101,7 +101,7 @@ endif()
 if("$ENV{VBUILD_UNIT_TESTS}" MATCHES "true")
   # Build unit tests.
   enable_testing()
-  add_subdirectory(test)
+  add_subdirectory(tests)
 endif()
 
 if("$ENV{VIRTRU_RUN_E2E_TESTS}" STREQUAL "true")

@@ -615,7 +615,7 @@ namespace virtru {
         }
 
         auto now = std::chrono::system_clock::now();
-        std::string requestBodyAsStr = requestBody;
+        std::string requestBodyAsStr = requestBody.dump();
 
         // Generate a token which expires in a min.
         auto builder = jwt::create()
