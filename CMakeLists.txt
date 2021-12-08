@@ -18,5 +18,5 @@ find_package("libarchive")
 
 include_directories(${CONAN_INCLUDE_DIRS})
 
-add_subdirectory(tdf-src)
+add_subdirectory(src)
 

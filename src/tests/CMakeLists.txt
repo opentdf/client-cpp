@@ -57,7 +57,7 @@ include_directories(
     ${PROJECT_SOURCE_DIR}/../lib/src
     ${PROJECT_SOURCE_DIR}/../lib/src/crypto
     ${PROJECT_SOURCE_DIR}/../thirdparty-libs/common
-    ${PROJECT_SOURCE_DIR}/../test/support
+    ${PROJECT_SOURCE_DIR}/../tests/support
     ${CONAN_INCLUDE_DIRS}
     )
 
