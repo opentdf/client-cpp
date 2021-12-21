@@ -23,6 +23,7 @@ namespace virtru {
 
     /// Forward declaration
     class TDFBuilder;
+    class TDFWriter;
     class SplitKey;
     class TDFZIPReader;
 
@@ -89,12 +90,19 @@ namespace virtru {
         /// \param dataSize - The amount of data in the input stream.
         /// \param sinkCB - A data sink callback which is called with tdf data.
         /// \return string - The manifest of the tdf.
-        std::string encryptStream(std::istream& inputStream, std::streampos dataSize, DataSinkCb&& sinkCB);
 
-        /// Decrypt the data in TDFArchiveReader and write to the out stream.
-        /// \param tdfArchiveReader - The TDF archive reader instance.
+        /// Encrypt the data in the input stream to tdf format and return the manifest.
+        /// \param inputStream - The input steam
+        /// \param dataSize - The amount of data in the input stream.
+        /// \param writer - The writer to which tdf data will write to
+        /// \param sinkCB - A data sink callback which is called with tdf data.
+        /// \return string - The manifest of the tdf.
+        std::string encryptStream(std::istream& inputStream, std::streampos dataSize, TDFWriter& writer);
+
+        /// Decrypt the data in TDFReader and write to the out stream.
+        /// \param tdfReader - The TDF reader instance.
         /// \param outStream - The stream containing the decrypted data.
-        void decryptStream(TDFArchiveReader& tdfArchiveReader, DataSinkCb&& sinkCB);
+        void decryptStream(TDFReader& tdfReader, DataSinkCb&& sinkCB);
 
     private:
         /// Generate a signature of the payload base on integrity algorithm.
@@ -173,15 +181,15 @@ namespace virtru {
         /// \return - TDF zip data.
         std::vector<std::uint8_t> getTDFZipData(XMLDocFreePtr xmlDocPtr, bool manifestData) const;
 
-        /// Check if the given tdf file is encrypted with zip protocol.
+        // Return the TDF protocol used to encrypt the file
         /// \param inTdfFilePath - The tdf file path
-        /// \return True if the tdf file is encrypted with zip protocol.
-        bool isZipFormat(const std::string& inTdfFilePath) const;
-        
-        /// Check if the given input stream data is encrypted with zip protocol.
-        /// \param inStream - The stream holding the tdf data
-        /// \return True if the input stream data is encrypted with zip protocol.
-        bool isZipFormat(std::istream& tdfInStream) const;
+        /// \return TDF protocol used to encrypt the file
+        Protocol encryptedWithProtocol(const std::string& inTdfFilePath) const;
+
+        // Return the TDF protocol used to encrypt the input stream data
+        /// \param inTdfFilePath - The tdf file path
+        /// \return TDF protocol used to encrypt the input stream data
+        Protocol encryptedWithProtocol(std::istream& tdfInStream) const;
 
         /// Retrive the policy uuid(id) from the manifest.
         /// \param manifestStr - The tdf manifest.

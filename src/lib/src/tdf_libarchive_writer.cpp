@@ -14,10 +14,8 @@ namespace virtru {
     /// Constructor for TDFArchiveWriter
     TDFArchiveWriter::TDFArchiveWriter(DataSinkCb&& sinkCb,
                                        std::string manifestFilename,
-                                       std::string payloadFileName,
-                                       int64_t payloadSize) : m_sink { std::move(sinkCb) },
-                                       m_manifestFilename{std::move(manifestFilename)}, m_payloadFileName{std::move(payloadFileName)},
-                                       m_payloadSize{payloadSize} {
+                                       std::string payloadFileName) : m_sink { std::move(sinkCb) },
+                                       m_manifestFilename{std::move(manifestFilename)}, m_payloadFileName{std::move(payloadFileName)} {
 
         // Initialize archive
         ArchiveFreePtr archive { archive_write_new() };

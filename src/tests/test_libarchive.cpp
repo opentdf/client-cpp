@@ -54,7 +54,8 @@ BOOST_AUTO_TEST_SUITE(test_tdf_archive_writer_suite)
 
         auto t1 = std::chrono::high_resolution_clock::now();
 
-        TDFArchiveWriter writer(datasinkCB, manifestFile, paylaodFile, (kPreambleText.size() + (totalMbs * oneMBSize)));
+        TDFArchiveWriter writer(datasinkCB, manifestFile, paylaodFile);
+        writer.setPayloadSize(kPreambleText.size() + (totalMbs * oneMBSize));
         auto inputBuffer = toBytes(buffer);
 
         // Add preamble

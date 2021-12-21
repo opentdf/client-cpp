@@ -15,6 +15,7 @@
 #include <string>
 #include <memory>
 
+#include "tdf_reader.h"
 #include "crypto/bytes.h"
 
 
@@ -29,7 +30,7 @@ namespace virtru {
     /// to unarchive the stream of data.
     ///
     /// NOTE: Requires a few changes like passing the TDF type to order the manifest append operation.
-    class TDFArchiveReader {
+    class TDFArchiveReader : public TDFReader {
     public:
 
         /// Constructor for TDFArchiveReader
@@ -47,28 +48,29 @@ namespace virtru {
         /// Destructor
         ~TDFArchiveReader() = default;
 
-        /// Get the manifest contents of the archive.
-        /// \return manifest - Contents of the manifest file.
-        const std::string& getManifest() const { return m_manifest; }
-
-        /// Read the payload contents into the buffer.
-        /// The size of buffer could be less than requested size.
-        /// \param buffer - WriteableBytes
-        void readPayload(WriteableBytes& buffer);
-
         /// Read the exact size of payload contents into the buffer.
         /// \param buffer - WriteableBytes
         void readPayloadExact(WriteableBytes buffer);
-
-        /// Get the size of the payload.
-        /// \return std::uint64_t - Size of the payload.
-        std::int64_t getPayloadSize() { return m_payloadSize; }
 
         /// Not supported.
         TDFArchiveReader(const TDFArchiveReader &) = delete;
         TDFArchiveReader(TDFArchiveReader &&) = delete;
         TDFArchiveReader & operator=(const TDFArchiveReader &) = delete;
         TDFArchiveReader & operator=(TDFArchiveReader &&) = delete;
+
+    public: // From TDFReader
+        /// Get the manifest content.
+        /// \return - Return the manifest as string.
+        const std::string& getManifest() override { return m_manifest; };
+
+        /// Read the payload contents into the buffer.
+        /// The size of buffer could be less than requested size.
+        /// \param buffer - WriteableBytes
+        void readPayload(WriteableBytes& buffer) override;
+
+        /// Get the size of the payload.
+        /// \return std::uint64_t - Size of the payload.
+        std::int64_t getPayloadSize() const override { return m_payloadSize; };
 
     private: /// static
 

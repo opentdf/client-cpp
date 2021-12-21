@@ -117,6 +117,10 @@ namespace virtru {
         /// return value.
         std::vector<VBYTE> decryptData(const std::vector<VBYTE> &encryptedData) override;
 
+      public:
+        /// Create TDFs in XML format instead of zip format.
+        void setXMLFormat();
+
       private: /// Helpers
         /// Initialize the TDF builder which is used for creating the TDF instance
         /// used for encrypt and decrypt.

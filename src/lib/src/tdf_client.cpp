@@ -289,4 +289,8 @@ namespace virtru {
         return subjectAttributesObjects;
     }
 
+    /// Create TDFs in XML format instead of zip format.
+    void TDFClient::setXMLFormat() {
+        m_tdfBuilder->setProtocol(Protocol::Xml);
+    }
 } // namespace virtru
