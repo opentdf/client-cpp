@@ -72,13 +72,6 @@ namespace virtru {
         return subjectAttributes;
     }
 
-    ///Add data attribute
-    void TDFClientBase::addDataAttribute(const std::string &dataAttribute, const std::string &displayName, const std::string &kasPubKey, const std::string &kasURL) {
-        LogTrace("TDFClientBase::addDataAttribute");
-
-        m_dataAttributeObjects.emplace_back(dataAttribute, displayName, kasPubKey, kasURL);
-    }
-
     ///Read data attributes associated with client
     std::vector<std::string> TDFClientBase::getDataAttributes() {
         LogTrace("TDFClientBase::getDataAttributes");

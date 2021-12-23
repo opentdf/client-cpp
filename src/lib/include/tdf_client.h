@@ -117,6 +117,11 @@ namespace virtru {
         /// return value.
         std::vector<VBYTE> decryptData(const std::vector<VBYTE> &encryptedData) override;
 
+        /// Allow user to add data attribute
+        /// \param dataAttribute - uri of the attribute
+        /// \param kasUrl - kas url
+        void addDataAttribute(const std::string &dataAttribute, const std::string &kasURL) override;
+
       public:
         /// Create TDFs in XML format instead of zip format.
         void setXMLFormat();

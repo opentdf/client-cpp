@@ -128,6 +128,11 @@ namespace virtru {
         /// \param signerPublicKey - The PEM-encoded public key as a string.
         void validateSignature(const std::string& signerPublicKey);
 
+        /// Allow user to add data attribute
+        /// \param dataAttribute - uri of the attribute
+        /// \param kasUrl - kas url
+        void addDataAttribute(const std::string &dataAttribute, const std::string &kasURL) override;
+
     public: /// Interface to save the state and later use when there is no network connectivity.
         /// Set the entity private key(In PEM format), which will be used by this SDK for encryption/decryption of
         /// the payload/policy. The private key should be from one of predefined curves defined in tdf_constants.h

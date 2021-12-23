@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 ### Added
+0.2.7
+- PLAT-1490 Fix API for adding the data attributes for C++ SDK 
+
 0.2.6
 - PLAT-1431 SDK XML interoperability 
   

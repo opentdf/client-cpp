@@ -303,7 +303,7 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
 
             if (!attributes.empty()) {
                 auto attribute = attributes.front();
-                tdfOIDCClient->addDataAttribute(attribute, "", "", "");
+                tdfOIDCClient->addDataAttribute(attribute, "");
             }
 
             // Test tdf with user creds
@@ -324,14 +324,8 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
 
             if (!attributes.empty()) {
                 auto attribute = attributes.front();
-                tdfOIDCClient->addDataAttribute(attribute, "", "", "");
+                oidcClientTDF->addDataAttribute(attribute, "");
             }
-
-            if (!attributes.empty()) {
-                auto attribute = attributes.front();
-                tdfOIDCClient->addDataAttribute(attribute, "", "", "");
-            }
-
             // Test tdf with user creds
             testTDFOperations(oidcClientTDF.get());
 #endif
@@ -370,12 +364,7 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
 
             if (!attributes.empty()) {
                 auto attribute = attributes.front();
-                oidcClientTDF->addDataAttribute(attribute, "", "", "");
-            }
-
-            if (!attributes.empty()) {
-                auto attribute = attributes.front();
-                oidcClientTDF->addDataAttribute(attribute, "", "", "");
+                oidcClientTDF->addDataAttribute(attribute, "");
             }
 
             // Test tdf with user creds
@@ -422,7 +411,7 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
 
         if (!attributes.empty()) {
             auto attribute = attributes.front();
-            encryptNanoTDFClientOIDC->addDataAttribute(attribute, "", "", "");
+            encryptNanoTDFClientOIDC->addDataAttribute(attribute, "");
         }
 
         testNanoTDFOperations(encryptNanoTDFClientOIDC.get(), decryptNanoTDFClientOIDC.get());

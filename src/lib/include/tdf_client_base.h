@@ -104,6 +104,12 @@ namespace virtru {
         /// return value.
         virtual std::vector<VBYTE> decryptData(const std::vector<VBYTE> &encryptedData) = 0;
 
+        /// Allow user to add data attribute
+        /// \param dataAttribute - uri of the attribute
+        /// \param kasUrl - kas url
+        virtual void addDataAttribute(const std::string &dataAttribute,
+                              const std::string &kasURL) = 0;
+
     public: /// Interface
         /// Enable the internal logger class to write logs to the console for given LogLevel.
         /// The default Loglevel is 'Warn' if not specified.
@@ -123,16 +129,6 @@ namespace virtru {
         /// Allow user to read attributes from OIDC
         /// \return Return vector of attributes in claims object
         std::vector<std::string> getSubjectAttributes();
-
-        /// Allow user to add data attribute
-        /// \param dataAttribute - uri of the attribute
-        /// \param displayName - display name of attribute
-        /// \param kasPublicKey - kas public key (with begin and end certificate)
-        /// \param kasUrl - kas url
-        void addDataAttribute(const std::string &dataAttribute,
-                                     const std::string &displayName,
-                                     const std::string &kasPubKey,
-                                     const std::string &kasURL);
 
         ///Allow user to read data attributes associated with this instances of client (to be replaced by inspectDataAttributes)
         /// \return Return vector of dataAttributes -- unique resource locater of each data attribute
