@@ -171,6 +171,24 @@ namespace virtru {
         return plainData;
     }
 
+    ///Add data attribute
+    void TDFClient::addDataAttribute(const std::string &dataAttribute, const std::string &kasURL) {
+        LogTrace("TDFClient::addDataAttribute");
+
+        std::string userKasURL{kasURL};
+        if (userKasURL.empty()) {
+            userKasURL = m_tdfBuilder->m_impl->m_kasUrl;
+        }
+
+        if (userKasURL != m_tdfBuilder->m_impl->m_kasUrl){
+            LogWarn("Multi KAS is supported");
+        }
+
+        std::string displayName;
+        m_dataAttributeObjects.emplace_back(dataAttribute, displayName,
+                                            m_tdfBuilder->m_impl->m_kasPublicKey, userKasURL);
+    }
+
     /// Initialize the TDF builder which is used for creating the TDF instance
     /// used for encrypt and decrypt.
     void TDFClient::initTDFBuilder() {
@@ -289,4 +307,8 @@ namespace virtru {
         return subjectAttributesObjects;
     }
 
+    /// Create TDFs in XML format instead of zip format.
+    void TDFClient::setXMLFormat() {
+        m_tdfBuilder->setProtocol(Protocol::Xml);
+    }
 } // namespace virtru

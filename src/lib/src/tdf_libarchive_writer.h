@@ -13,6 +13,7 @@
 #include <string>
 #include <memory>
 
+#include "tdf_writer.h"
 #include "tdf_constants.h"
 #include "crypto/bytes.h"
 
@@ -28,7 +29,7 @@ namespace virtru {
     /// to archive the stream of data and invokes a callback after compression is done
     ///
     /// NOTE: Requires a few changes like passing the TDF type to order the manifest append operation.
-    class TDFArchiveWriter {
+    class TDFArchiveWriter: public TDFWriter{
     public:
 
         /// Constructor for TDFArchiveWriter
@@ -36,9 +37,8 @@ namespace virtru {
         /// \param manifestFilename - A manifest file name to be used in the TDF file (manifest.xml - TDF2,
         ///                           manifest.json - TDF).
         /// \param payloadFileName - A payload file name to be used in the TDF file
-        /// \param payloadSize - Payload size.
         TDFArchiveWriter(DataSinkCb&& sinkCb, std::string manifestFilename,
-                         std::string payloadFileName, int64_t payloadSize);
+                         std::string payloadFileName);
 
         /// Delete default constructor
         TDFArchiveWriter() = delete;
@@ -46,15 +46,9 @@ namespace virtru {
         /// Destructor
         ~TDFArchiveWriter() = default;
 
-        /// Append the manifest contents to the archive.
-        /// \param manifest - Contents of the manifest file.
-        /// NOTE: Manifest should be always be added at the end after writing the payload for TDF.
-        /// NOTE: Manifest should be always be added before writing the payload for TDF2.
-        void appendManifest(std::string&& manifest);
 
         /// Append the manifest contents to the archive.
         /// \param payload - encrypted payload.
-        void appendPayload(Bytes payload);
         template <typename Payload,typename = ExplicitlyConvertibleToBytes <Payload>>
         void appendPayload(const Payload & payload) {
             appendPayload( crypto::toDynamicBytes(payload));
@@ -68,6 +62,21 @@ namespace virtru {
         TDFArchiveWriter(TDFArchiveWriter &&) = delete;
         TDFArchiveWriter & operator=(const TDFArchiveWriter &) = delete;
         TDFArchiveWriter & operator=(TDFArchiveWriter &&) = delete;
+
+    public: // From TDFWriter
+        /// Set the payload size of the TDF
+        /// \param payloadSize
+        void setPayloadSize(int64_t payloadSize) override { m_payloadSize = payloadSize; }
+
+        /// Append the manifest contents to the archive.
+        /// \param manifest - Contents of the manifest file.
+        /// NOTE: Manifest should be always be added at the end after writing the payload for TDF.
+        /// NOTE: Manifest should be always be added before writing the payload for TDF2.
+        void appendManifest(std::string&& manifest) override;
+
+        /// Append the manifest contents to the archive.
+        /// \param payload - encrypted payload.
+        void appendPayload(Bytes payload) override;
 
     private: /// static
         /// Libarchive callback after the archive operation is complete.

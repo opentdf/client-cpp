@@ -155,6 +155,18 @@ namespace virtru {
                                                      "dissemination list. This will allow any entity with a "
                                                      "valid Entity Object to access this TDF.";
 
+    // XML TDF elements
+    static constexpr auto kTrustedDataObjectElement = "TrustedDataObject";
+    static constexpr auto kEncryptionInformationElement = "EncryptionInformation";
+    static constexpr auto kBase64BinaryPayloadElement = "Base64BinaryPayload";
+    static constexpr auto kMediaTypeAttribute = "mediaType";
+    static constexpr auto kFilenameAttribute = "filename";
+    static constexpr auto kIsEncryptedAttribute = "isEncrypted";
+    static constexpr auto kTextPlainMediaType = "text/plain";
+    static constexpr auto kAttributeValueAsTrue = "true";
+
+
+
 }  // namespace virtru
 
 #endif //VIRTRU_JSON_CONSTANTS_H

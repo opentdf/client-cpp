@@ -145,8 +145,8 @@ BOOST_AUTO_TEST_SUITE(test_client_attribute_suite)
 
             std::vector<std::string> attributes = {"https://kas.eternos.xyz/attr/testclassification", "https://kas.eternos.xyz/attr/testotherclassification"};
             for (const auto &attrUri : attributes) {
-                client.addDataAttribute(attrUri);
-                nanoTDFClient.addDataAttribute(attrUri);
+                client.addDataAttribute(attrUri, "");
+                nanoTDFClient.addDataAttribute(attrUri, "");
             }
 
             //check if stored

@@ -303,7 +303,7 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
 
             if (!attributes.empty()) {
                 auto attribute = attributes.front();
-                tdfOIDCClient->addDataAttribute(attribute, "", "", "");
+                tdfOIDCClient->addDataAttribute(attribute, "");
             }
 
             // Test tdf with user creds
@@ -324,14 +324,8 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
 
             if (!attributes.empty()) {
                 auto attribute = attributes.front();
-                tdfOIDCClient->addDataAttribute(attribute, "", "", "");
+                oidcClientTDF->addDataAttribute(attribute, "");
             }
-
-            if (!attributes.empty()) {
-                auto attribute = attributes.front();
-                tdfOIDCClient->addDataAttribute(attribute, "", "", "");
-            }
-
             // Test tdf with user creds
             testTDFOperations(oidcClientTDF.get());
 #endif
@@ -350,7 +344,43 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
             BOOST_FAIL("Unknown exception...");
             std::cout << "Unknown..." << std::endl;
         }
+    }
 
+    BOOST_AUTO_TEST_CASE(test_tdf_xml_kas_eas_local) {
+        try {
+#if TEST_OIDC
+
+            OIDCCredentials clientCreds;
+            clientCreds.setClientCredentials("tdf-client", "123-456",
+                                             "tdf", OIDC_ENDPOINT);
+            auto oidcClientTDF = std::make_unique<TDFClient>(clientCreds, KAS_URL);
+            oidcClientTDF->setXMLFormat();
+
+            auto attributes = oidcClientTDF->getSubjectAttributes();
+            std::cout << "The subject attributes:" << std::endl;
+            for(const auto& attribute: attributes) {
+                std::cout << attribute << std::endl;
+            }
+
+            if (!attributes.empty()) {
+                auto attribute = attributes.front();
+                oidcClientTDF->addDataAttribute(attribute, "");
+            }
+
+            // Test tdf with user creds
+            testTDFOperations(oidcClientTDF.get());
+#endif
+
+        }
+        catch (const Exception &exception) {
+            BOOST_FAIL(exception.what());
+        } catch (const std::exception &exception) {
+            BOOST_FAIL(exception.what());
+            std::cout << exception.what() << std::endl;
+        } catch (...) {
+            BOOST_FAIL("Unknown exception...");
+            std::cout << "Unknown..." << std::endl;
+        }
     }
 
     BOOST_AUTO_TEST_CASE(test_nano_tdf_boost_endian) {
@@ -381,7 +411,7 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
 
         if (!attributes.empty()) {
             auto attribute = attributes.front();
-            encryptNanoTDFClientOIDC->addDataAttribute(attribute, "", "", "");
+            encryptNanoTDFClientOIDC->addDataAttribute(attribute, "");
         }
 
         testNanoTDFOperations(encryptNanoTDFClientOIDC.get(), decryptNanoTDFClientOIDC.get());

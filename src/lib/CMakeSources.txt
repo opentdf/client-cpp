@@ -69,6 +69,12 @@ set (TDF_CPP_SDK_SOURCE_FILES_BASE
         ${TDF_CPP_SDK_SOURCE_DIR}/src/oidc_service.cpp
         ${TDF_CPP_SDK_SOURCE_DIR}/src/network/http_service_provider.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/network/http_service_provider.cpp
+        ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_reader.h
+        ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_writer.h
+        ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_xml_writer.cpp
+        ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_xml_writer.h
+        ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_xml_reader.cpp
+        ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_xml_reader.h
     )
 
 set (TDF_CPP_SDK_SOURCE_FILES_NANOTDF

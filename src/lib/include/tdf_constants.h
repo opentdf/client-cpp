@@ -45,6 +45,7 @@ namespace virtru {
     enum class Protocol {
         Zip  /// TDF format is zip
         ,Html  /// Default format is HTML
+        ,Xml
     };
 
     /// Defines a log level.

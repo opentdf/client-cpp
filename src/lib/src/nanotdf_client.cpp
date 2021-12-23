@@ -173,6 +173,23 @@ namespace virtru {
         return plainData;
     }
 
+    ///Add data attribute
+    void NanoTDFClient::addDataAttribute(const std::string &dataAttribute, const std::string &kasURL) {
+        LogTrace("NanoTDFClient::addDataAttribute");
+
+        std::string userKasURL{kasURL};
+        if (userKasURL.empty()) {
+            userKasURL = m_nanoTdfBuilder->m_impl->m_kasUrl;
+        }
+
+        if (userKasURL != m_nanoTdfBuilder->m_impl->m_kasUrl){
+            LogWarn("Multi KAS is supported");
+        }
+
+        std::string displayName;
+        m_dataAttributeObjects.emplace_back(dataAttribute, displayName,
+                                            m_nanoTdfBuilder->m_impl->m_kasPublicKey, userKasURL);
+    }
 
     /// Get vector of entity attribute objects
     std::vector<AttributeObject> NanoTDFClient::getEntityAttrObjects() {

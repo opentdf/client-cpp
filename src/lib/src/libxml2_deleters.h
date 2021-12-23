@@ -14,6 +14,7 @@
 #include <libxml/xpath.h>
 #include <libxml/xmlsave.h>
 #include <libxml/parser.h>
+#include <libxml/xmlwriter.h>
 
 namespace virtru {
 
@@ -28,6 +29,13 @@ namespace virtru {
 
     struct XMLCharDeleter { void operator()(xmlChar* xml) {::xmlFree(xml);} };
     using XMLCharFreePtr = std::unique_ptr<xmlChar, XMLCharDeleter>;
+
+    struct xmlTextWriterDelete { void operator()(xmlTextWriter* writer) {::xmlFreeTextWriter(writer);} };
+    using xmlTextWriterFreePtr = std::unique_ptr<xmlTextWriter, xmlTextWriterDelete>;
+
+    struct XMLBufferDelete { void operator()(xmlBuffer* buffer) {::xmlBufferFree(buffer);} };
+    using xmlBufferFreePtr = std::unique_ptr<xmlBuffer, XMLBufferDelete>;
+
 }  // namespace virtru
 
 #endif //VIRTRU_LIBXML2_DELETERS_H
