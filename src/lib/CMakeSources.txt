@@ -5,12 +5,12 @@
 # in the virtru-tdf-cpp build process.
 ###########################################################
 set (TDF_CPP_SDK_SOURCE_FILES_BASE
-        ${TDF_CPP_SDK_SOURCE_DIR}/src/crypto/rsa_key_pair.h
+        ${TDF_CPP_SDK_SOURCE_DIR}/include/crypto/rsa_key_pair.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/crypto/rsa_key_pair.cpp
         ${TDF_CPP_SDK_SOURCE_DIR}/src/crypto/crypto_utils.cpp
-        ${TDF_CPP_SDK_SOURCE_DIR}/src/crypto/crypto_utils.h
+        ${TDF_CPP_SDK_SOURCE_DIR}/include/crypto/crypto_utils.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/network/http_client_service.cpp
-        ${TDF_CPP_SDK_SOURCE_DIR}/src/network/http_client_service.h
+        ${TDF_CPP_SDK_SOURCE_DIR}/include/network/http_client_service.h
         ${TDF_CPP_SDK_SOURCE_DIR}/include/tdf_exception.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf.cpp
         ${TDF_CPP_SDK_SOURCE_DIR}/include/tdf.h
@@ -19,13 +19,13 @@ set (TDF_CPP_SDK_SOURCE_FILES_BASE
         ${TDF_CPP_SDK_SOURCE_DIR}/src/policy_object.cpp
         ${TDF_CPP_SDK_SOURCE_DIR}/include/policy_object.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/network/network_util.cpp
-        ${TDF_CPP_SDK_SOURCE_DIR}/src/network/network_util.h
+        ${TDF_CPP_SDK_SOURCE_DIR}/include/network/network_util.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/attribute_object.cpp
         ${TDF_CPP_SDK_SOURCE_DIR}/include/attribute_object.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/attribute_objects_cache.cpp
         ${TDF_CPP_SDK_SOURCE_DIR}/src/attribute_objects_cache.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/logger.cpp
-        ${TDF_CPP_SDK_SOURCE_DIR}/src/logger.h
+        ${TDF_CPP_SDK_SOURCE_DIR}/include/logger.h
         ${TDF_CPP_SDK_SOURCE_DIR}/include/tdf_logging_interface.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/key_access_object.cpp
         ${TDF_CPP_SDK_SOURCE_DIR}/include/key_access_object.h
@@ -36,21 +36,21 @@ set (TDF_CPP_SDK_SOURCE_FILES_BASE
         ${TDF_CPP_SDK_SOURCE_DIR}/include/tdf_constants.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/tdfbuilder_impl.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/encryption_strategy.h
-        ${TDF_CPP_SDK_SOURCE_DIR}/src/crypto/bytes.h
+        ${TDF_CPP_SDK_SOURCE_DIR}/include/crypto/bytes.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/key_access.cpp
         ${TDF_CPP_SDK_SOURCE_DIR}/src/key_access.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/splitkey_encryption.cpp
         ${TDF_CPP_SDK_SOURCE_DIR}/src/splitkey_encryption.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/crypto/asym_encryption.cpp
         ${TDF_CPP_SDK_SOURCE_DIR}/src/crypto/asym_encryption.h
-        ${TDF_CPP_SDK_SOURCE_DIR}/src/crypto/openssl_deleters.h
+        ${TDF_CPP_SDK_SOURCE_DIR}/include/crypto/openssl_deleters.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/crypto/asym_decryption.cpp
         ${TDF_CPP_SDK_SOURCE_DIR}/src/crypto/asym_decryption.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/crypto/gcm_encryption.cpp
         ${TDF_CPP_SDK_SOURCE_DIR}/src/crypto/gcm_encryption.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/crypto/gcm_decryption.cpp
         ${TDF_CPP_SDK_SOURCE_DIR}/src/crypto/gcm_decryption.h
-        ${TDF_CPP_SDK_SOURCE_DIR}/src/sdk_constants.h
+        ${TDF_CPP_SDK_SOURCE_DIR}/include/sdk_constants.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/libxml2_deleters.h
         ${TDF_CPP_SDK_SOURCE_DIR}/include/network_interface.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_libarchive_writer.cpp

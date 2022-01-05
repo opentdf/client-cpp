@@ -54,10 +54,11 @@ endif()
 # Include paths
 include_directories(
     ${PROJECT_SOURCE_DIR}/../lib/include
+    ${PROJECT_SOURCE_DIR}/../lib/include/crypto
     ${PROJECT_SOURCE_DIR}/../lib/src
     ${PROJECT_SOURCE_DIR}/../lib/src/crypto
     ${PROJECT_SOURCE_DIR}/../thirdparty-libs/common
-    ${PROJECT_SOURCE_DIR}/../tests/support
+    ${PROJECT_SOURCE_DIR}/../lib/include/test
     ${CONAN_INCLUDE_DIRS}
     )
 
