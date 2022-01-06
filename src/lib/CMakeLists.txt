@@ -41,6 +41,8 @@ set(TAO_CPP_JSON_DIR ${PROJECT_SOURCE_DIR}/../thirdparty-libs/common)
 
 include_directories(
     ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/include/crypto
+    ${PROJECT_SOURCE_DIR}/include/network
     ${PROJECT_SOURCE_DIR}/src
     ${TAO_CPP_JSON_DIR}
     ${CONAN_INCLUDE_DIRS}
