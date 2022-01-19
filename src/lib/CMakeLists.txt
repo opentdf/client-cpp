@@ -153,19 +153,26 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             COMMENT "Combining libs and creating ${TDF_COMBINED_LIB_FILENAME}...")
 
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    # special case for msvc with /Debug or /Release suffix
-    if($ENV{VBUILDMODE} MATCHES $ENV{VBUILDRELEASE})
-        set(MSVC_LIBRARY_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/Release)
+    if(DEFINED ENV{VBUILDMODE})
+      message(STATUS "Setting out dir based on VBUILDMODE")
+      # special case for msvc with /Debug or /Release suffix
+      if($ENV{VBUILDMODE} MATCHES $ENV{VBUILDRELEASE})
+          set(MSVC_LIBRARY_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/Release)
+      else()
+          set(MSVC_LIBRARY_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/Debug)
+  		set(DEBUGSUFFIX d)
+      endif()
     else()
-        set(MSVC_LIBRARY_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/Debug)
-		set(DEBUGSUFFIX d)
+      # conan recipe build - VBUILDxxx is not set
+      message(STATUS "Setting out dir based on conan recipe build")
+      set(MSVC_LIBRARY_OUTPUT_DIR ${CMAKE_BINARY_DIR}/lib)
     endif()
     message(STATUS "msvc lib out path: ${MSVC_LIBRARY_OUTPUT_DIR}")
     set(TDF_STATIC_LIB_FULL_PATH_MSVC ${MSVC_LIBRARY_OUTPUT_DIR}/${TDF_STATIC_LIB_FILENAME})
     message(STATUS "msvc lib full path: ${TDF_STATIC_LIB_FULL_PATH_MSVC}")
 
     add_custom_command(TARGET ${PROJECT_NAME}static POST_BUILD
-        COMMAND lib -out:${TDF_COMBINED_LIB_FILENAME} 
+        COMMAND lib -out:${TDF_COMBINED_LIB_FULL_PATH} 
         ${TDF_STATIC_LIB_FULL_PATH_MSVC}
         ${CONAN_LIB_DIRS_OPENSSL}/${WLIB}crypto${DEBUGSUFFIX}.lib
         ${CONAN_LIB_DIRS_OPENSSL}/${WLIB}ssl${DEBUGSUFFIX}.lib

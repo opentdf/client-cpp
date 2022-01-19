@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 ### Added
+0.2.9
+- PLAT-1454 Fix windows conan build
+
 0.2.8
 - PLAT-1454 Expose more header files to published include area
 
