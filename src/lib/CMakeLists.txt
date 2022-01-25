@@ -1,4 +1,9 @@
 ###########################################################
+#
+# Copyright 2019 Virtru Corporation
+#
+# SPDX - License - Identifier: MIT
+#
 # Core library
 ###########################################################
 cmake_minimum_required (VERSION 3.8)

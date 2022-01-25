@@ -1,3 +1,9 @@
+/*
+* Copyright 2019 Virtru Corporation
+*
+* SPDX - License - Identifier: MIT
+*
+*/
 #include <iostream>
 #include <unordered_map>
 

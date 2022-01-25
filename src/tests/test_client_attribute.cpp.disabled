@@ -1,3 +1,9 @@
+/*
+* Copyright 2019 Virtru Corporation
+*
+* SPDX - License - Identifier: MIT
+*
+*/
 #define BOOST_TEST_MODULE test_client_attribute_suite
 
 #include "tdfbuilder.h"

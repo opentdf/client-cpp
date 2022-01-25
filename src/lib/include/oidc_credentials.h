@@ -1,3 +1,9 @@
+/*
+* Copyright 2019 Virtru Corporation
+*
+* SPDX - License - Identifier: MIT
+*
+*/
 //
 // Created by Sujan Reddy on 7/16/21.
 //

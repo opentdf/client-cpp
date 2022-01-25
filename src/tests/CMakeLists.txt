@@ -1,4 +1,8 @@
 ###########################################################
+# Copyright 2019 Virtru Corporation
+#
+# SPDX - License - Identifier: MIT
+#
 # Unit tests
 ###########################################################
 cmake_minimum_required(VERSION 3.8)

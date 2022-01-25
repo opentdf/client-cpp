@@ -1,8 +1,13 @@
+/*
+* Copyright 2019 Virtru Corporation
+*
+* SPDX - License - Identifier: MIT
+*
+*/
 //
 //  TDF SDK
 //
 //  Created by Sujan Reddy on 2019/03/02.
-//  Copyright 2019 Virtru Corporation
 //
 
 #include "rsa_key_pair.h"
