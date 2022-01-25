@@ -1,3 +1,7 @@
+# Copyright 2019 Virtru Corporation
+#
+# SPDX - License - Identifier: MIT
+#
 # sample encrypt/decrypt
 import sys
 from opentdf import NanoTDFClient, LogLevel

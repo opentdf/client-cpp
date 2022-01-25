@@ -1,5 +1,5 @@
 /*
-* Copyright 2018 Virtru Corporation
+* Copyright 2020 Virtru Corporation
 *
 * SPDX - License - Identifier: MIT
 *
@@ -8,7 +8,6 @@
 //  TDF SDK
 //
 //  Created by Sujan Reddy on 2020/06/02
-//  Copyright 2020 Virtru Corporation
 //
 
 #ifndef VIRTRU_NANO_TDF_BUILDER_H

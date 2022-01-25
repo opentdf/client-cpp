@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Virtru Corporation
+ * Copyright 2019 Virtru Corporation
  *
  * SPDX - License - Identifier: MIT
  *

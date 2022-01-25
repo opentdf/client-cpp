@@ -1,4 +1,8 @@
 ###########################################################
+# Copyright 2019 Virtru Corporation
+#
+# SPDX - License - Identifier: MIT
+#
 # Source files for core library
 # This file is included in the CMakeLists.txt file.
 # This is separated here so that this list can also be used
