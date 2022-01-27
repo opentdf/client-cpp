@@ -22,10 +22,10 @@ namespace virtru {
     class OIDCCredentials {
     public:
         enum class AuthType {
-            Client,
+            ClientSecret,
             User,
             PKI,
-            AccessToken,
+            ExternalAccessToken,
             None
         };
       
@@ -49,15 +49,15 @@ namespace virtru {
         OIDCCredentials& operator=(OIDCCredentials && oidcCredentials);
 
     public: // Public methods
-        /// Set the client credentials that will be use for authz with OIDC server
+        /// Set the secret client credentials that will be use for authn with OIDC server
         /// \param clientId - The client id
         /// \param clientSecret - The client secret
         /// \param organizationName - The OIDC realm or organization the client belongs to
         /// \param oidcEndpoint - The OIDC server url
-        void setClientCredentials(const std::string &clientId,
-                                  const std::string &clientSecret,
-                                  const std::string &organizationName,
-                                  const std::string &oidcEndpoint);
+        void setClientCredentialsClientSecret(const std::string &clientId,
+                                        const std::string &clientSecret,
+                                        const std::string &organizationName,
+                                        const std::string &oidcEndpoint);
 
         /// Return the client id.
         /// \return - The client id as string
@@ -91,18 +91,44 @@ namespace virtru {
         /// \return - The OIDC token and set it as the Bearer token for all requests this client will make.
         std::string getAccessToken() const;
 
+        /// Set the PKI client credentials that will be use for authn with OIDC server
+        /// \param clientId - The client id
+        /// \param clientKeyFileName - The name of the file containing the client key
+        /// \param clientCertFileName - The name of the file containing the client certificate
+        /// \param certificateAuthority - The certificate authority to be used
+        /// \param organizationName - The OIDC realm or organization the client belongs to
+        /// \param oidcEndpoint - The OIDC server url
+        void setClientCredentialsPKI(const std::string &clientId,
+                                     const std::string& clientKeyFileName, 
+                                     const std::string& clientCertFileName,
+                                     const std::string& certificateAuthority,
+                                     const std::string &organizationName,
+                                     const std::string &oidcEndpoint);
+
+        /// Return the client key file name
+        /// \return - The client key file name as string
+        std::string getClientKeyFileName() const;
+
+        /// Return the client certificate file name
+        /// \return - The client certificate file name as string
+        std::string getClientCertFileName() const;
+
+        /// Return the certificate authority
+        /// \return - The certificate authority as string
+        std::string getCertificateAuthority() const;
+
         /// Return the description of this object.
         /// \return The description of this object.
         std::string str() const;
 
     private: // Disable the PE support for now
-        /// Set the user credentials that will be use for authz with OIDC server
+        /// Set the user credentials that will be use for authn with OIDC server
         /// \param clientId - The client id
         /// \param username - The registered username
         /// \param password - The password associated with the user
         /// \param organizationName - The OIDC realm or organization the client belongs to
         /// \param oidcEndpoint - The OIDC server url
-        void setUserCredentials(const std::string &clientId,
+        void setUserCredentialsUser(const std::string &clientId,
                                 const std::string &username,
                                 const std::string &password,
                                 const std::string &organizationName,
@@ -120,6 +146,9 @@ namespace virtru {
         std::string m_password;
         std::string m_orgName;
         std::string m_oidcEndpoint;
+        std::string m_clientKeyFileName;
+        std::string m_clientCertFileName;
+        std::string m_certificateAuthority;
         std::string m_accessToken;
         AuthType m_authType{AuthType::None};
     };

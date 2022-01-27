@@ -308,7 +308,8 @@ namespace virtru {
                 HttpHeaders oidcHeaders = {{kUserAgentKey,    UserAgentValuePostFix}};
                 m_oidcService = std::make_unique<OIDCService>(*m_oidcCredentials,
                                                               oidcHeaders,
-                                                              m_nanoTdfBuilder->m_impl->m_requestSignerPublicKey);
+                                                              m_nanoTdfBuilder->m_impl->m_requestSignerPublicKey,
+                                                              m_nanoTdfBuilder->m_impl->m_networkServiceProvider);
             }
 
             auto authHeaders = m_oidcService->generateAuthHeaders();
@@ -327,6 +328,14 @@ namespace virtru {
         }
 
         m_nanoTdfBuilder->enableConsoleLogging(m_logLevel);
+    }
+
+    /// Set the callback interface which will invoked for all the http network operations.
+    void NanoTDFClient::setHTTPServiceProvider(std::weak_ptr<INetwork> httpServiceProvider) {
+
+        LogTrace("NanoTDFClient::setHTTPServiceProvider");
+        m_nanoTdfBuilder->setHTTPServiceProvider(httpServiceProvider);
+
     }
 
     /// Fetch EntityObject

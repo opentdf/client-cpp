@@ -307,9 +307,9 @@ namespace virtru {
     }
 
     /// Set the cert authority which will be used in SSL handshake for all the network I/O..
-    TDFBuilder &TDFBuilder::setCertAuthority(const std::string &certAutority) {
+    TDFBuilder &TDFBuilder::setCertAuthority(const std::string &certAuthority) {
 
-        m_impl->m_rootCAs = std::move(certAutority);
+        m_impl->m_rootCAs = std::move(certAuthority);
 
         // TODO: Not implemented yet
         LogError("TDFBuilder::setCertAuthority - NOT IMPLEMENTED");
@@ -318,9 +318,9 @@ namespace virtru {
     }
 
     /// Set the cert authority which will be used in SSL handshake for all the network I/O.
-    TDFBuilder &TDFBuilder::setCertAuthority(std::string &&certAutority) noexcept {
+    TDFBuilder &TDFBuilder::setCertAuthority(std::string &&certAuthority) noexcept {
 
-        m_impl->m_rootCAs = std::move(certAutority);
+        m_impl->m_rootCAs = std::move(certAuthority);
 
         // TODO: Not implemented yet
         LogError("TDFBuilder::setCertAuthority - NOT IMPLEMENTED");
@@ -368,13 +368,15 @@ namespace virtru {
 
         // When using OIDC mode, EO and EAS are not set and should not be assumed.
         if (m_impl->m_oidcMode) {
+            LogDebug("Establishing EO and EAS for OIDC");
             if (m_impl->m_kasUrl.empty()) {
                 ThrowException("KAS URL must be set in OIDC mode");
             }
             if (m_impl->m_kasPublicKey.empty()) {
                 auto kasKeyUrl = m_impl->m_kasUrl + kKasPubKeyPath;
-                auto kasPublicKey = Utils::getKasPubkeyFromURL(kasKeyUrl);
-                LogTrace("KAS public key was set, fetched from provided KAS URL: " + kasPublicKey);
+                LogDebug("KAS public key was not set, fetching from provided KAS URL: " + kasKeyUrl);
+                auto kasPublicKey = Utils::getKasPubkeyFromURLsp(kasKeyUrl, m_impl->m_networkServiceProvider);
+                LogDebug("KAS public key fetched");
                 m_impl->m_kasPublicKey = kasPublicKey;
             }
             if (!m_impl->m_easUrl.empty()) {

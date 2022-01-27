@@ -170,6 +170,22 @@ namespace virtru {
     static constexpr auto kTextPlainMediaType = "text/plain";
     static constexpr auto kAttributeValueAsTrue = "true";
 
+    // OIDC constants
+    static constexpr auto kBearerToken = "Bearer";
+    static constexpr auto kClientCredentials = "client_credentials";
+    static constexpr auto kPasswordCredentials = "password";
+    static constexpr auto kClientID = "client_id";
+    static constexpr auto kClientSecret = "client_secret";
+    static constexpr auto kUsername = "username";
+    static constexpr auto kPassword = "password";
+    static constexpr auto kRefreshToken = "refresh_token";
+    static constexpr auto kAccessToken = "access_token";
+    static constexpr auto kGrantType = "grant_type";
+    static constexpr auto kKCRealmPath = "/auth/realms/";
+    static constexpr auto kOIDCTokenPath = "/protocol/openid-connect/token";
+    static constexpr auto kOIDCUserinfoPath = "/protocol/openid-connect/userinfo";
+    static constexpr auto kKeycloakPubkeyHeader = "X-VirtruPubKey";
+    static constexpr auto kContentTypeUrlFormEncode = "application/x-www-form-urlencoded";
 
 
 }  // namespace virtru
