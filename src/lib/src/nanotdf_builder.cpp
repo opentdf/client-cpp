@@ -233,6 +233,14 @@ namespace virtru {
         return *this;
     }
 
+    /// Set the callback interface which will invoked for all the http network operations.
+    NanoTDFBuilder& NanoTDFBuilder::setHTTPServiceProvider(std::weak_ptr<INetwork> httpServiceProvider) {
+
+        m_impl->m_networkServiceProvider = std::move(httpServiceProvider);
+
+        return *this;
+    }
+
     /// Destructor
     NanoTDFBuilder::~NanoTDFBuilder() = default;
 

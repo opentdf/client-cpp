@@ -40,90 +40,129 @@ namespace virtru {
     OIDCCredentials::OIDCCredentials(OIDCCredentials&&) = default;
     OIDCCredentials& OIDCCredentials::operator=(OIDCCredentials&&) = default;
 
-    /// Set the client credentials that will be use for authz with OIDC server
-    void OIDCCredentials::setClientCredentials(const std::string &clientId,
+    /// Set the client credentials that will be use for authn with OIDC server
+    void OIDCCredentials::setClientCredentialsClientSecret(const std::string &clientId,
                                                const std::string &clientSecret,
                                                const std::string &organizationName,
                                                const std::string &oidcEndpoint) {
-        m_authType = AuthType::Client;
+        m_authType = AuthType::ClientSecret;
+
         m_clientId = clientId;
         m_clientSecret = clientSecret;
         m_orgName = organizationName;
         m_oidcEndpoint = oidcEndpoint;
 
-        LogTrace("OIDCCredentials is of auth type as client");
+        LogTrace("OIDCCredentials is of auth type client");
     }
 
-    /// Set the user credentials that will be use for authz with OIDC server
-    void OIDCCredentials::setUserCredentials(const std::string &clientId,
+    /// Set the user credentials that will be use for authn with OIDC server
+    void OIDCCredentials::setUserCredentialsUser(const std::string &clientId,
                                              const std::string &username,
                                              const std::string &password,
                                              const std::string &organizationName,
                                              const std::string &oidcEndpoint) {
         m_authType = AuthType::User;
+
         m_clientId = clientId;
         m_username = username;
         m_password = password;
         m_orgName = organizationName;
         m_oidcEndpoint = oidcEndpoint;
 
-        LogTrace("OIDCCredentials is of auth type as user");
+        LogTrace("OIDCCredentials is of auth type user");
+    }
+
+    /// Set the PKI client credentials that will be use for authn with OIDC server
+    void OIDCCredentials::setClientCredentialsPKI(const std::string &clientId,
+                                             const std::string& clientKeyFileName,
+                                             const std::string& clientCertFileName,
+                                             const std::string& certificateAuthority,
+                                             const std::string &organizationName,
+                                             const std::string &oidcEndpoint) {
+
+        m_authType = AuthType::PKI;
+
+        m_clientId = clientId;
+        m_clientKeyFileName = clientKeyFileName;
+        m_clientCertFileName = clientCertFileName;
+        m_certificateAuthority = certificateAuthority;
+        m_orgName = organizationName;
+        m_oidcEndpoint = oidcEndpoint;
+
+        LogTrace("OIDCCredentials is of auth type PKI");
+        LogDebug("clientId=" + clientId);
+        LogDebug("clientKeyFileName=" + clientKeyFileName);
+        LogDebug("clientCertFileName=" + clientCertFileName);
+        LogDebug("certificateAuthority=" + certificateAuthority);
+        LogDebug("organizationName=" + organizationName);
+        LogDebug("oidcEndpoint=" + oidcEndpoint);
     }
 
     /// Set the access token that will be used for communicating with the backend.
     void OIDCCredentials::setAccessToken(const std::string &accessToken) {
-        m_authType = AuthType::AccessToken;
+        m_authType = AuthType::ExternalAccessToken;
         m_accessToken = accessToken;
 
-        LogTrace("OIDCCredentials is of auth type as as access token");
+        LogTrace("OIDCCredentials is of auth type access token");
     }
 
     /// Return the client id.
     std::string OIDCCredentials::getClientId() const {
+        LogTrace("OIDCCredentials::getClientId");
+        LogDebug("clientId=" + m_clientId);
         return m_clientId;
     }
 
     /// Return the client secret.
     std::string OIDCCredentials::getClientSecret() const {
+        LogTrace("OIDCCredentials::getClientSecret");
         return m_clientSecret;
     }
 
     /// Return the password for associated user
     std::string OIDCCredentials::getPassword() const {
+        LogTrace("OIDCCredentials::getPassword");
         return m_password;
     }
 
     /// Return the username.
     std::string OIDCCredentials::getUsername() const {
+        LogTrace("OIDCCredentials::getUsername");
+        LogDebug("username=" + m_username);
         return m_username;
     }
 
     /// Return the auth type
     /// \return The auth type
     OIDCCredentials::AuthType OIDCCredentials::getAuthType() const {
+        LogTrace("OIDCCredentials::getAuthType");
         return m_authType;
     }
 
     /// Return the OIDC realm or organization the client belongs to
     std::string OIDCCredentials::getOrgName() const {
+        LogTrace("OIDCCredentials::getOrgName");
+        LogDebug("orgName=" + m_orgName);
         return m_orgName;
     }
 
     /// Return the OIDC server url
     std::string OIDCCredentials::getOIDCEndpoint() const {
+        LogTrace("OIDCCredentials::getOIDCEndpoint");
+        LogDebug("oidcEndpoint=" + m_oidcEndpoint);
         return m_oidcEndpoint;
     }
 
     /// Return the OIDC token ONLY if the user constructed the OIDCCredentials object with token.
     std::string OIDCCredentials::getAccessToken() const {
+        LogTrace("OIDCCredentials::getAccessToken");
         return m_accessToken;
     }
 
     /// Return the description of this object.
     std::string OIDCCredentials::str() const {
+        LogTrace("OIDCCredentials::str");
         std::ostringstream osRetval;
-
-
 
         if (m_accessToken.empty()) {
             osRetval << "OIDC Credentials Object ";
@@ -136,5 +175,26 @@ namespace virtru {
         }
 
         return osRetval.str();
+    }
+
+    /// Return the client key file name
+    std::string OIDCCredentials::getClientKeyFileName() const {
+        LogTrace("OIDCCredentials::getClientKeyFileName");
+        LogDebug("clientKeyFileName=" + m_clientKeyFileName);
+        return m_clientKeyFileName;
+    }
+
+    /// Return the client certificate file name
+    std::string OIDCCredentials::getClientCertFileName() const {
+        LogTrace("OIDCCredentials::getClientCertFileName");
+        LogDebug("clientCertFileName=" + m_clientCertFileName);
+        return m_clientCertFileName;
+    }
+
+    /// Return the certificate authority
+    std::string OIDCCredentials::getCertificateAuthority() const {
+        LogTrace("OIDCCredentials::getCertificateAuthority");
+        LogDebug("certificateAuthority=" + m_certificateAuthority);
+        return m_certificateAuthority;
     }
 }

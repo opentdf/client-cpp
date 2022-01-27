@@ -40,23 +40,24 @@ namespace virtru {
             /// \param url - The url (e.g., "https://developer.virtru.com/docs/sdk").
             /// \param headers - The http headers used by network service when performing HTTP operation.
             /// \param callback - The response callback.
-            virtual void executeGet(const std::string &url, const HttpHeaders &headers, HTTPServiceCallback &&callback) = 0;
+            virtual void executeGet(const std::string &url, const HttpHeaders &headers, HTTPServiceCallback &&callback,
+                                    const std::string &certAuth = "", const std::string &clientKeyFileName = "", const std::string &clientCertFileName = "") = 0;
 
             /// Execute a post request and on completion the callback is executed.
             /// \param url - The url (e.g., "https://api.virtru.com/api/entityobject").
             /// \param headers - The http headers used by network service when performing HTTP operation.
             /// \param body - The HTTP body part of the request
             /// \param callback - The response callback.
-            virtual void executePost(const std::string &url, const HttpHeaders &headers,
-                                     std::string &&body, HTTPServiceCallback &&callback) = 0;
+            virtual void executePost(const std::string &url, const HttpHeaders &headers, std::string &&body, HTTPServiceCallback &&callback,
+                                     const std::string &certAuth = "", const std::string &clientKeyFileName = "", const std::string &clientCertFileName = "") = 0;
 
             /// Execute a patch request and on completion the callback is executed.
             /// \param url - The url (e.g., "https://api.virtru.com/api/policies").
             /// \param headers - The http headers used by network service when performing HTTP operation.
             /// \param body - The HTTP body part of the request
             /// \param callback - The response callback.
-            virtual void executePatch(const std::string &url, const HttpHeaders &headers,
-                                      std::string &&body, HTTPServiceCallback &&callback) = 0;
+            virtual void executePatch(const std::string &url, const HttpHeaders &headers, std::string &&body, HTTPServiceCallback &&callback,
+                                      const std::string &certAuth = "", const std::string &clientKeyFileName = "", const std::string &clientCertFileName = "") = 0;
     };
 
 } // namespace virtru

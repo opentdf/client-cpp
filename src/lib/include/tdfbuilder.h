@@ -218,20 +218,20 @@ namespace virtru {
 
     public: /// Optional - configure root CA's
         /// Set the cert authority which will be used in SSL handshake for all the network I/O.
-        /// \param certAutority - A string which holds the cert authority which will be used in SSL handshake
+        /// \param certAuthority - A string which holds the cert authority which will be used in SSL handshake
         ///                       for all the network I/O
         /// \return - Return a reference of this instance.
         /// NOTE: This is the optional interface. if the consumer of the SDK didn't provide one, the SDK
         /// will use the default ones packaged in library.
-        TDFBuilder& setCertAuthority(const std::string& certAutority);
+        TDFBuilder& setCertAuthority(const std::string& certAuthority);
 
         /// Set the cert authority which will be used in SSL handshake for all the network I/O.
-        /// \param certAutority - A string(R-value) which holds the cert authority which will be used in SSL handshake
+        /// \param certAuthority - A string(R-value) which holds the cert authority which will be used in SSL handshake
         ///                       for all the network I/O
         /// \return - Return a reference of this instance.
         /// NOTE: This is the optional interface. if the consumer of the SDK didn't provide one, the SDK
         /// will use the default ones packaged in library.
-        TDFBuilder& setCertAuthority(std::string&& certAutority) noexcept;
+        TDFBuilder& setCertAuthority(std::string&& certAuthority) noexcept;
 
         /// Destructor
         ~TDFBuilder();

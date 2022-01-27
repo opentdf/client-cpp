@@ -176,6 +176,11 @@ namespace virtru {
         /// \return - Return true if it's valid NanoTDF format.
         static bool isValidNanoTDFData(const std::string& nanoTDFData);
 
+        /// Set the callback interface which will invoked for all the http network operations.
+        /// \param httpServiceProvider - A callback interface which the caller has to implement for performing the
+        /// network http operations.
+        void setHTTPServiceProvider(std::weak_ptr<INetwork> httpServiceProvider);
+
     private: /// Helpers
         /// Initialize the nano TDF builder which is used for creating the nano TDF
         /// instance used for encrypt and decrypt.

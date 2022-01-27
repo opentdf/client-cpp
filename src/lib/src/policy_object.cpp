@@ -42,12 +42,15 @@ namespace virtru {
 
     /// Default constructor for creating an instance of PolicyObject.
     PolicyObject::PolicyObject()  {
+        LogTrace("PolicyObject::PolicyObject");
         m_uuid = to_string(boost::uuids::random_generator{}());
     }
 
     /// Constructs PolicyObject by parsing 'policyObjectStr' json string. On error
     /// throw an virtru::Exception
     PolicyObject PolicyObject::CreatePolicyObjectFromJson(const std::string& policyObjectJsonStr) {
+
+        LogTrace("PolicyObject::CreatePolicyObjectFromJson");
 
         PolicyObject policyObject{};
 
@@ -83,6 +86,9 @@ namespace virtru {
     /// Add dissem(user/entity) to this policy object.
     PolicyObject& PolicyObject::addDissem(const std::string& dissem) {
     
+        LogTrace("PolicyObject::addDissem");
+        LogDebug("dissem="+dissem);
+
         // NOTE: Not sure we want to check if the dissem is always the
         // email address could be cert CN
         //checkIsValidEmailAndThrow(dissem);
@@ -93,6 +99,7 @@ namespace virtru {
 
     /// Add attribute object to this policy object.
     PolicyObject& PolicyObject::addAttributeObject(const AttributeObject& attributeObject) {
+        LogTrace("PolicyObject::addAttributeObject");
         m_attributeObjects.emplace_back(attributeObject);
         return *this;
     }
