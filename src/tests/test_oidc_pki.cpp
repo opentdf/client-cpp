@@ -20,7 +20,6 @@
 
 #include <boost/test/included/unit_test.hpp>
 #include <iostream>
-#include <stdio.h>
 
 using namespace virtru;
 
@@ -261,10 +260,10 @@ BOOST_AUTO_TEST_CASE(test_pki) {
         BOOST_FAIL(exception.what());
     } catch (const std::exception &exception) {
         BOOST_FAIL(exception.what());
-        std ::cout << exception.what() << std::endl;
+        std::cout << exception.what() << std::endl;
     } catch (...) {
         BOOST_FAIL("Unknown exception...");
-        std ::cout << "Unknown..." << std::endl;
+        std::cout << "Unknown..." << std::endl;
     }
 }
 

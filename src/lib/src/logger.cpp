@@ -13,7 +13,6 @@
 #include "logger.h"
 
 #include <chrono>
-#include <stdio.h>
 
 #if ENABLE_BOOST_LOG_FRAMEWORK
 #include <boost/log/utility/setup/console.hpp>

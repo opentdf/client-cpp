@@ -130,7 +130,7 @@ BOOST_AUTO_TEST_SUITE(test_nano_tdf_policy_info)
         PolicyInfo plainTextPolicy2{toBytes(policyData), mode};
         auto policyAsBytes = plainTextPolicy2.getEmbeddedPlainTextPolicy();
         std::string policyAsStr2(reinterpret_cast<const char *>(policyAsBytes.data()),
-                                 policyAsBytes.length());
+                                 policyAsBytes.size());
 
         std::array<std::uint8_t, 8u> actualBinding;
         auto bindingBytes = plainTextPolicy2.getPolicyBinding();
@@ -165,7 +165,7 @@ BOOST_AUTO_TEST_SUITE(test_nano_tdf_policy_info)
 
             auto policyAsBytes = plainTextPolicy.getEmbeddedPlainTextPolicy();
             std::string policyAsStr(reinterpret_cast<const char *>(policyAsBytes.data()),
-                    policyAsBytes.length());
+                    policyAsBytes.size());
             BOOST_TEST(policyAsStr == policy);
         }
     }

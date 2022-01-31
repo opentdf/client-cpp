@@ -158,7 +158,7 @@ BOOST_AUTO_TEST_SUITE(test_asym_decoding_suite)
         auto writeableBytes = vc::toWriteableBytes(outBuffer);
         decoder->decrypt(vc::toBytes(cipherText), writeableBytes);
 
-        std::string decryptedMessage(reinterpret_cast<const char *>(&writeableBytes[0]), writeableBytes.length());
+        std::string decryptedMessage(reinterpret_cast<const char *>(&writeableBytes[0]), writeableBytes.size());
         BOOST_TEST(plainTextMessage == decryptedMessage);
         
         outBuffer.resize(0);
@@ -175,7 +175,7 @@ BOOST_AUTO_TEST_SUITE(test_asym_decoding_suite)
         auto writeableBytes = vc::toWriteableBytes(outBuffer);
         decoder->decrypt(vc::toBytes(cipherText), writeableBytes);
         
-        std::string decryptedMessage(reinterpret_cast<const char *>(&writeableBytes[0]), writeableBytes.length());
+        std::string decryptedMessage(reinterpret_cast<const char *>(&writeableBytes[0]), writeableBytes.size());
         BOOST_TEST(plainTextMessage != decryptedMessage); // should fail
 
         // wrongKey
@@ -195,7 +195,7 @@ BOOST_AUTO_TEST_SUITE(test_asym_decoding_suite)
         auto writeableBytes = vc::toWriteableBytes(outBuffer);
         decoder->decrypt(vc::toBytes(cipherText), writeableBytes);
         
-        std::string decryptedMessage(reinterpret_cast<const char *>(&writeableBytes[0]), writeableBytes.length());
+        std::string decryptedMessage(reinterpret_cast<const char *>(&writeableBytes[0]), writeableBytes.size());
         BOOST_TEST(plainTextMessage == decryptedMessage);
     }
 

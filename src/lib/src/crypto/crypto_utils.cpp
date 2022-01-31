@@ -234,7 +234,7 @@ namespace virtru::crypto {
         for (i =0; i < 64; i++) T[base64_url_alphabet[i]] = i;
     
         int val = 0, valb = -8;
-        for (i = 0; i < in.length(); i++) {
+        for (i = 0; i < in.size(); i++) {
             unsigned char c = static_cast<unsigned char>(in[i]);
             if (T[c] == -1) break;
             val = (val<<6) + T[c];
