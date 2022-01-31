@@ -39,6 +39,7 @@ namespace virtru {
 
     TDFClient::TDFClient(const std::string &backendUrl, const std::string &user)
             : TDFClient(backendUrl, user, "", "", "") {
+        LogTrace("TDFClient::TDFClient(url,user)");
     }
 
     //NOTE this constructor shenaniganiry is for the purpose of maintaining back compat with
@@ -49,6 +50,7 @@ namespace virtru {
                            const std::string &sdkConsumerCertAuthority)
         : TDFClientBase(backendUrl, user, clientKeyFileName, clientCertFileName, sdkConsumerCertAuthority) {
 
+        LogTrace("TDFClient::TDFClient(url,user,key,cert,ca)");
         m_tdfBuilder = std::make_unique<TDFBuilder>(m_user);
         m_tdfBuilder->setEasUrl(backendUrl);
     }
@@ -56,7 +58,8 @@ namespace virtru {
     /// Constructor
     /// \param oidcCredentials - OIDC credentials
     TDFClient::TDFClient(const OIDCCredentials& oidcCredentials, const std::string &kasUrl)
-        :TDFClientBase(kasUrl, "", "", "", "") {
+        :TDFClientBase(kasUrl, "", oidcCredentials.getClientKeyFileName(), oidcCredentials.getClientCertFileName(), oidcCredentials.getCertificateAuthority()) {
+        LogTrace("TDFClient::TDFClient(cred,url)");
         m_tdfBuilder = std::make_unique<TDFBuilder>(oidcCredentials.getClientId());
         m_tdfBuilder->setKasUrl(kasUrl);
         m_tdfBuilder->enableOIDC(true);
@@ -70,6 +73,7 @@ namespace virtru {
     /// Encrypt the file to tdf format.
     void TDFClient::encryptFile(const std::string &inFilepath, const std::string &outFilepath) {
 
+        LogTrace("TDFClient::encryptFile");
         // Initialize the TDF builder
         initTDFBuilder();
 
@@ -81,6 +85,7 @@ namespace virtru {
 
     /// Encrypt the data to tdf format.
     std::string TDFClient::encryptString(const std::string &plainData) {
+        LogTrace("TDFClient::encryptString");
 
         // Initialize the TDF builder
         initTDFBuilder();
@@ -101,6 +106,7 @@ namespace virtru {
 
     /// Encrypt the bytes to tdf format.
     std::vector<VBYTE> TDFClient::encryptData(const std::vector<VBYTE> &plainData) {
+        LogTrace("TDFClient::encryptData");
         // Initialize the TDF builder
         initTDFBuilder();
 
@@ -125,6 +131,7 @@ namespace virtru {
     /// Decrypt file.
     void TDFClient::decryptFile(const std::string &inFilepath, const std::string &outFilepath) {
 
+        LogTrace("TDFClient::decryptFile");
         // Initialize the TDF builder
         initTDFBuilder();
 
@@ -136,6 +143,7 @@ namespace virtru {
 
     /// Decrypt data from tdf format.
     std::string TDFClient::decryptString(const std::string &encryptedData) {
+        LogTrace("TDFClient::decryptString");
         // Initialize the TDF builder
         initTDFBuilder();
 
@@ -155,6 +163,7 @@ namespace virtru {
 
     /// Decrypt the bytes from tdf format.
     std::vector<VBYTE> TDFClient::decryptData(const std::vector<VBYTE> &encryptedData) {
+        LogTrace("TDFClient::decryptData");
         // Initialize the TDF builder
         initTDFBuilder();
 
@@ -174,6 +183,14 @@ namespace virtru {
         const std::string& str = ioStream.str();
         std::vector<VBYTE> plainData(str.begin(), str.end());
         return plainData;
+    }
+
+    /// Set the callback interface which will invoked for all the http network operations.
+    void TDFClient::setHTTPServiceProvider(std::weak_ptr<INetwork> httpServiceProvider) {
+
+        LogTrace("TDFClient::setHTTPServiceProvider");
+        m_tdfBuilder->setHTTPServiceProvider(httpServiceProvider);
+
     }
 
     ///Add data attribute
@@ -197,6 +214,7 @@ namespace virtru {
     /// Initialize the TDF builder which is used for creating the TDF instance
     /// used for encrypt and decrypt.
     void TDFClient::initTDFBuilder() {
+        LogTrace("TDFClient::initTDFBuilder");
 
         auto oidcMode = m_tdfBuilder->m_impl->m_oidcMode;
         auto entityObjectNotSet = m_tdfBuilder->m_impl->m_entityObject.getUserId().empty();
@@ -249,8 +267,7 @@ namespace virtru {
 
             m_tdfBuilder->setEntityObject(entityObject);
 
-            m_tdfBuilder->enableConsoleLogging(m_logLevel)
-                    .setHttpHeaders(headers);
+            m_tdfBuilder->setHttpHeaders(headers);
         }
 
         if (oidcMode) {
@@ -259,7 +276,8 @@ namespace virtru {
                 HttpHeaders oidcHeaders = {{kUserAgentKey,    UserAgentValuePostFix}};
                 m_oidcService = std::make_unique<OIDCService>(*m_oidcCredentials,
                                                               oidcHeaders,
-                                                              m_tdfBuilder->m_impl->m_requestSignerPublicKey);
+                                                              m_tdfBuilder->m_impl->m_requestSignerPublicKey,
+                                                              m_tdfBuilder->m_impl->m_networkServiceProvider);
             }
 
             auto authHeaders = m_oidcService->generateAuthHeaders();
@@ -268,13 +286,13 @@ namespace virtru {
             }
 
             m_tdfBuilder->m_impl->m_user = m_oidcService->getPreferredUsername();
-            m_tdfBuilder->enableConsoleLogging(m_logLevel)
-                    .setHttpHeaders(headers);
+            m_tdfBuilder->setHttpHeaders(headers);
             }
         }
 
     /// Get vector of entity attribute objects
     std::vector<AttributeObject> TDFClient::getEntityAttrObjects() {
+        LogTrace("TDFClient::getEntityAttrObjects");
         std::vector<AttributeObject> entityAttributesObjects;
 
         initTDFBuilder();
@@ -295,6 +313,7 @@ namespace virtru {
     /// Get vector of subject attribute objects
     std::vector<AttributeObject> TDFClient::getSubjectAttrObjects() {
 
+        LogTrace("TDFClient::getSubjectAttrObjects");
         std::vector<AttributeObject> subjectAttributesObjects;
         initTDFBuilder();
         auto attributes = m_oidcService->getClaimsObjectAttributes();
@@ -314,6 +333,7 @@ namespace virtru {
 
     /// Create TDFs in XML format instead of zip format.
     void TDFClient::setXMLFormat() {
+        LogTrace("TDFClient::setXMLFormat");
         m_tdfBuilder->setProtocol(Protocol::Xml);
     }
 } // namespace virtru

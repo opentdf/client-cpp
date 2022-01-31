@@ -28,53 +28,73 @@ namespace virtru {
     using namespace virtru::network;
 
     /// Get KAS pubkey from KAS endpoint.
-    std::string Utils::getKasPubkeyFromURL(const std::string &kasGetPublicKeyUrl) {
-
-        auto service = Service::Create(kasGetPublicKeyUrl, "", "", "");
-
-        // Add the host to the header, may want to push this to upper layer.
-        service->AddHeader(kHostKey, service->getHost());
+    std::string Utils::getKasPubkeyFromURLsp(const std::string &kasGetPublicKeyUrl, 
+                                             std::weak_ptr<INetwork> httpServiceProvider,
+                                             const std::string &sdkConsumerCertAuthority,
+                                             const std::string &clientKeyFileName,
+                                             const std::string &clientCertFileName) {
 
         std::string kasPubKeyString;
-        IOContext ioContext;
-        service->ExecuteGet(ioContext,
-                            [&kasPubKeyString](ErrorCode errorCode, HttpResponse &&response) {
-                                // TODO: Ignore stream truncated error. Looks like the server is not shuting downn gracefully.
-                                // https://stackoverflow.com/questions/25587403/boost-asio-ssl-async-shutdown-always-finishes-with-an-error
-                                if (errorCode && errorCode.value() != 1) { // something is wrong
-                                    std::ostringstream os{"Error code: "};
-                                    os << errorCode.value() << " " << errorCode.message();
-                                }
+        unsigned status = kHTTPBadRequest;
+        std::promise<void> netPromise;
+        auto netFuture = netPromise.get_future();
 
-                                //Process low level asio network errors
-                                if (errorCode && errorCode.category() == boost::asio::error::netdb_category)
-                                    throw std::runtime_error{"Network error code is "s + std::to_string(errorCode.value()) + " (" + errorCode.category().name() + ")"
-                                                                                                                                                                  ". " +
-                                                             errorCode.message() + ". Possibly bad EAS URL."};
+        LogTrace("Utils::getKasPubkeyFromURL(url, serviceProvider)");
 
-                                // TODO: Enable if verbose logging is required.
-                                //std::cout << "api/entityobject Response: " << response.body().data() << std::endl;
-                                if (response.result_int() < 200 || response.result_int() >= 300)
-                                    throw std::runtime_error{"Response code is "s + std::to_string(response.result_int()) + ". Reason: " + std::string(response.reason()) + ". Possibly bad EAS URL."};
+        if (auto service = httpServiceProvider.lock()) { // Rely on callback interface
 
-                                kasPubKeyString = response.body().data();
+        if (auto sp = httpServiceProvider.lock()) { // Rely on callback interface
+            sp->executeGet(
+                kasGetPublicKeyUrl, {},
+                [&netPromise, &kasPubKeyString, &status](
+                        unsigned int statusCode, std::string &&response) {
+                    status = statusCode;
+                    kasPubKeyString = response;
+                    netPromise.set_value();
+                },
+                sdkConsumerCertAuthority,
+                clientKeyFileName,
+                clientCertFileName);
+        } else {
+            ThrowException("Unable to lock network provider");
+        }
 
-                                LogDebug(kasPubKeyString);
-                                kasPubKeyString.erase(0, 1);
-                                kasPubKeyString.erase(kasPubKeyString.size() - 2);
+        netFuture.get();
 
-                                boost::replace_all(kasPubKeyString, "\\n", "\n");
-                            });
+        // Handle HTTP error.
+        if (!Utils::goodHttpStatus(status)) {
+            std::string exceptionMsg = "getKasPubkeyFromUrl failed status: ";
+            exceptionMsg += std::to_string(status);
+            exceptionMsg += kasPubKeyString;
+            ThrowException(std::move(exceptionMsg));
+        }
 
-        // Run the context - It's blocking call until i/o operation is done.
-        ioContext.run();
+        LogDebug(kasPubKeyString);
+        kasPubKeyString.erase(0, 1);
+        kasPubKeyString.erase(kasPubKeyString.size() - 2);
+
+        boost::replace_all(kasPubKeyString, "\\n", "\n");
 
         LogDebug("Fetched default KAS public key: " + kasPubKeyString);
         //TODO as per JS code, consider handling KAS endpoints that don't present proper PEM-encoded public keys
         //Why on earth a KAS endpoint named `kas_public_key` would return anything other than a PEM-encoded public key
         //is beyond me - would consider it a KAS bug if that's an actual scenario.
         // auto kasPubKey = extractPemFromKasKeyString(kasPubKeyString);
+
+        } else {
+            ThrowException("Unable to lock network provider");
+        }
         return kasPubKeyString;
+    }
+
+    /// Wrapper for above with service create for callers that do not provide one
+    std::string Utils::getKasPubkeyFromURL(const std::string &kasGetPublicKeyUrl) {
+        LogTrace("Utils::getKasPubkeyFromURL(url)");
+
+        HttpHeaders headers;
+        std::shared_ptr<HTTPServiceProvider> serviceProvider = std::make_shared<HTTPServiceProvider>(headers);
+
+        return Utils::getKasPubkeyFromURLsp(kasGetPublicKeyUrl, serviceProvider);
     }
 
     /// Get the entity object from eas.

@@ -55,7 +55,6 @@ namespace virtru {
 
     /// Set the logger log level.
     void Logger::setLogLevel(LogLevel logLevel) {
-
         // LogLevel::Current is a no-op placeholder, do not change level, ignore and return
         if (logLevel == LogLevel::Current)
             return;

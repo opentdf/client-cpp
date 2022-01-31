@@ -16,16 +16,32 @@
 #include <entity_object.h>
 #include <string>
 #include <unordered_map>
+#include "network/http_service_provider.h"
 
 namespace virtru {
     class Utils {
       public:
         /// Get the KAS public key from the KAS well-known HTTP endpoint
+        /// \param kasGetPublicKeyUrl - The url for kas to supply its public key
         static std::string getKasPubkeyFromURL(const std::string &kasGetPublicKeyUrl);
+
+        /// Get the KAS public key from the KAS well-known HTTP endpoint
+        /// \param kasGetPublicKeyUrl - The url for kas to supply its public key
+        /// \param httpServiceProvider - The network service to use for contacting kas
+        /// \param sdkConsumerCertAuthority - The cert authority file.
+        /// \param clientKeyFileName - The filename for the client key
+        /// \param clientCertFileName - The filename for the client certificate
+        static std::string getKasPubkeyFromURLsp(const std::string &kasGetPublicKeyUrl, 
+                                                 std::weak_ptr<INetwork> httpServiceProvider,
+                                                 const std::string &sdkConsumerCertAuthority = "",
+                                                 const std::string &clientKeyFileName = "",
+                                                 const std::string &clientCertFileName = "");
 
         /// Get the entity object from eas.
         /// \param easUrl - The eas url.
         /// \param sdkConsumerCertAuthority - The cert authority file.
+        /// \param clientKeyFileName - The filename for the client key
+        /// \param clientCertFileName - The filename for the client certificate
         /// \param headers - The HTTP headers that will used for getting the entity object.
         /// \param body - The POST for getting the entity object.
         /// \return The entity object.

@@ -288,6 +288,7 @@ namespace virtru :: network {
                                              const std::string& clientKeyFileName, 
                                              const std::string& clientCertFileName) {
         
+        LogTrace("Service::Create");
         // TODO: May want to support in future.
         // std::regex urlRegex("(http|https)://([^/ :]+):?([^/ ]*)(/?[^ #?]*)\\x3f?([^ #]*)#?([^ ]*)");
         std::regex urlRegex("(http|https):\\/\\/([^\\/ :]+):?([^\\/ ]*)(\\/?[^ ]*)");
@@ -312,6 +313,7 @@ namespace virtru :: network {
                                                const std::string& clientCertFileName)
                      : m_schema{std::move(schema)}, m_host{std::move(host)} {
 
+        LogTrace("Service::Service");
         // Use default ca's if the consumer of the sdk didn't provide one.
         auto certAuthority = sdkConsumerCertAuthority;
 
@@ -370,6 +372,7 @@ namespace virtru :: network {
     /// Execute a get request and on completion the callback is executed.
     void Service::ExecuteGet(IOContext& ioContext, ServiceCallback&& callback) {
 
+        LogTrace("Service::ExecuteGet");
         m_request.method(HttpVerb::get);
 
         if (isSSLSocket()) {
@@ -384,6 +387,8 @@ namespace virtru :: network {
 
     /// Execute a post request and on completion the callback is executed.
     void Service::ExecutePost(std::string&& body, IOContext& ioContext, ServiceCallback&& callback) {
+        LogTrace("Service::ExecutePost");
+
         m_request.method(HttpVerb::post);
 
         m_request.body() = body;
@@ -401,6 +406,8 @@ namespace virtru :: network {
 
     /// Execute a patch request and on completion the callback is executed.
     void Service::ExecutePatch(std::string&& body, IOContext& ioContext, ServiceCallback&& callback) {
+        LogTrace("Service::ExecutePatch");
+
         m_request.method(HttpVerb::patch);
 
         m_request.body() = body;
@@ -418,6 +425,7 @@ namespace virtru :: network {
 
     /// Return the target of the current service.
     std::string Service::getTarget() const {
+        LogTrace("Service::getTarget");
         auto target = m_request.target();
         return std::string{target.begin(), target.end()};
     }

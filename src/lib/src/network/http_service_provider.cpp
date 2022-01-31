@@ -28,8 +28,11 @@ namespace virtru::network {
     /// Execute a get request and on completion the callback is executed.
     void HTTPServiceProvider::executeGet(const std::string &url,
                                          const HttpHeaders &headers,
-                                         HTTPServiceCallback &&callback) {
-        auto service = Service::Create(url);
+                                         HTTPServiceCallback &&callback,
+                                         const std::string& sdkConsumerCertAuthority,
+                                         const std::string& clientKeyFileName,
+                                         const std::string& clientCertFileName) {
+        auto service = Service::Create(url, sdkConsumerCertAuthority, clientKeyFileName, clientCertFileName);
 
         LogDebug("GET URL = \"" + url + "\"");
 
@@ -69,10 +72,15 @@ namespace virtru::network {
     }
 
     /// Execute a post request and on completion the callback is executed.
-    void HTTPServiceProvider::executePost(const std::string &url, const HttpHeaders &headers,
-                                          std::string &&body, HTTPServiceCallback &&callback) {
+    void HTTPServiceProvider::executePost(const std::string &url,
+                                          const HttpHeaders &headers,
+                                          std::string &&body,
+                                          HTTPServiceCallback &&callback,
+                                          const std::string& sdkConsumerCertAuthority,
+                                          const std::string& clientKeyFileName,
+                                          const std::string& clientCertFileName) {
 
-        auto service = Service::Create(url);
+        auto service = Service::Create(url, sdkConsumerCertAuthority, clientKeyFileName, clientCertFileName);
 
         LogDebug("POST URL = \"" + url + "\"");
 
@@ -114,10 +122,15 @@ namespace virtru::network {
     }
 
     /// Execute a patch request and on completion the callback is executed.
-    void HTTPServiceProvider::executePatch(const std::string &url, const HttpHeaders &headers,
-                                           std::string &&body, HTTPServiceCallback &&callback) {
+    void HTTPServiceProvider::executePatch(const std::string &url,
+                                           const HttpHeaders &headers,
+                                           std::string &&body,
+                                           HTTPServiceCallback &&callback,
+                                           const std::string& sdkConsumerCertAuthority,
+                                           const std::string& clientKeyFileName,
+                                           const std::string& clientCertFileName) {
 
-        auto service = Service::Create(url);
+        auto service = Service::Create(url, sdkConsumerCertAuthority, clientKeyFileName, clientCertFileName);
 
         LogDebug("PATCH URL = \"" + url + "\"");
 

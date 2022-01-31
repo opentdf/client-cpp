@@ -64,11 +64,11 @@ namespace virtru {
 
 
         public: //INetwork members
-            virtual void executeGet(const std::string &url, const HttpHeaders &headers, HTTPServiceCallback &&callback) override;
+            virtual void executeGet(const std::string &url, const HttpHeaders &headers, HTTPServiceCallback &&callback, const std::string&, const std::string&, const std::string&) override;
             virtual void executePost(const std::string &url, const HttpHeaders &headers,
-                                     std::string &&body, HTTPServiceCallback &&callback) override;
+                                     std::string &&body, HTTPServiceCallback &&callback, const std::string&, const std::string&, const std::string&) override;
             virtual void executePatch(const std::string &url, const HttpHeaders &headers,
-                                      std::string &&body, HTTPServiceCallback &&callback) override;
+                                      std::string &&body, HTTPServiceCallback &&callback, const std::string&, const std::string&, const std::string&) override;
 
         public:
             typedef std::tuple<const std::string, const std::string, const HttpHeaders> recordedResponse;

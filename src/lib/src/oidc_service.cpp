@@ -26,34 +26,18 @@ namespace virtru {
 
     using namespace virtru::network;
 
-    // TODO: Should be moved to some common header file.
-    static constexpr auto kBearerToken = "Bearer";
-    static constexpr auto kClientCredentials = "client_credentials";
-    static constexpr auto kPasswordCredentials = "password";
-    static constexpr auto kClientID = "client_id";
-    static constexpr auto kClientSecret = "client_secret";
-    static constexpr auto kUsername = "username";
-    static constexpr auto kPassword = "password";
-    static constexpr auto kRefreshToken = "refresh_token";
-    static constexpr auto kAccessToken = "access_token";
-    static constexpr auto kGrantType = "grant_type";
-    static constexpr auto kKCRealmPath = "/auth/realms/";
-    static constexpr auto kOIDCTokenPath = "/protocol/openid-connect/token";
-    static constexpr auto kOIDCUserinfoPath = "/protocol/openid-connect/userinfo";
-    static constexpr auto kKeycloakPubkeyHeader = "X-VirtruPubKey";
-    static constexpr auto kContentTypeUrlFormEncode = "application/x-www-form-urlencoded";
-
     using namespace virtru::crypto;
 
     /// Constructor
     OIDCService::OIDCService(OIDCCredentials  oidcCredentials,
                              const HttpHeaders& headers,
-                             const std::string& clientSigningPubkey)
+                             const std::string& clientSigningPubkey,
+                             std::weak_ptr<INetwork> httpServiceProvider)
                              : m_oidcCredentials(std::move(oidcCredentials)) {
         LogTrace("OIDCService::OIDCService");
 
         m_clientSigningPubkey = base64UrlEncode(clientSigningPubkey);
-        m_networkServiceProvider = std::make_unique<HTTPServiceProvider>(headers);
+        m_networkServiceProvider = std::move(httpServiceProvider);
     }
 
     /// Create the header key/value pairs that should be added to the request to establish authorization
@@ -69,13 +53,15 @@ namespace virtru {
         }
 
         // If the credentials object already have an access token, use it.
-        if (m_oidcCredentials.getAuthType() == OIDCCredentials::AuthType::Client ||
+        if (m_oidcCredentials.getAuthType() == OIDCCredentials::AuthType::ClientSecret ||
+            m_oidcCredentials.getAuthType() == OIDCCredentials::AuthType::PKI ||
             m_oidcCredentials.getAuthType() == OIDCCredentials::AuthType::User) {
             getAccessToken();
             authHeaderStream << kBearerToken << " " << m_accessToken;
+            LogDebug("Access token added to auth header");
 
             authHeader.insert({kAuthorizationKey, authHeaderStream.str()});
-        } else if (m_oidcCredentials.getAuthType() == OIDCCredentials::AuthType::AccessToken) {
+        } else if (m_oidcCredentials.getAuthType() == OIDCCredentials::AuthType::ExternalAccessToken) {
             authHeaderStream << kBearerToken << " " << m_oidcCredentials.getAccessToken();
             authHeader.insert({kAuthorizationKey, authHeaderStream.str()});
         } else {
@@ -86,7 +72,7 @@ namespace virtru {
         nlohmann::json tokenAsJson = nlohmann::json::parse(decoded_token.get_payload());
         m_preferredUsername = tokenAsJson[kPreferredUsername];
 
-        LogDebug("Preffered username: " +  m_preferredUsername);
+        LogDebug("Preferred username: " +  m_preferredUsername);
         LogDebug("Authorization = " + authHeaderStream.str());
         return authHeader;
     }
@@ -126,6 +112,7 @@ namespace virtru {
         if (m_accessToken.empty()) {
             //We don't have cached tokens, fetch
             fetchAccessToken();
+            LogDebug("fetched initial access token");
         } else {
             //First, try to grab the cached accessToken
             //and hit up the userinfo endpoint with it
@@ -167,20 +154,41 @@ namespace virtru {
         std::string oidcIdP = m_oidcCredentials.getOIDCEndpoint() +
                               kKCRealmPath + m_oidcCredentials.getOrgName() + kOIDCTokenPath;
 
-        if (m_oidcCredentials.getAuthType() == OIDCCredentials::AuthType::Client) {
+        if (m_oidcCredentials.getAuthType() == OIDCCredentials::AuthType::ClientSecret) {
+            LogDebug("AuthType:ClientSecret");
             addFormData(tokenBody, kGrantType, kClientCredentials);
             addFormData(tokenBody, kClientID, m_oidcCredentials.getClientId());
             addFormData(tokenBody, kClientSecret, m_oidcCredentials.getClientSecret());
+        } else if (m_oidcCredentials.getAuthType() == OIDCCredentials::AuthType::PKI) {
+            LogDebug("AuthType:PKI");
+            addFormData(tokenBody, kGrantType, kPasswordCredentials);
+            addFormData(tokenBody, kClientID, m_oidcCredentials.getClientId());
+            // The username will be pulled from the certificate used to establish the mTLS connection
+            // and the password is obsoleted by the mTLS trust, but the fields need to exist to satisfy
+            // the request parser
+            addFormData(tokenBody, kUsername, "");
+            addFormData(tokenBody, kPassword, "");
         } else { // assume password
+            LogDebug("AuthType:Password");
             addFormData(tokenBody, kUsername, m_oidcCredentials.getUsername());
             addFormData(tokenBody, kPassword, m_oidcCredentials.getPassword());
             addFormData(tokenBody, kGrantType, kPasswordCredentials);
             addFormData(tokenBody, kClientID, m_oidcCredentials.getClientId());
         }
 
+        std::string certAuthority = "";
+        std::string clientKeyFileName = "";
+        std::string clientCertFileName = "";
+        if (m_oidcCredentials.getAuthType() == OIDCCredentials::AuthType::PKI) {
+            clientKeyFileName = m_oidcCredentials.getClientKeyFileName();
+            clientCertFileName = m_oidcCredentials.getClientCertFileName();
+            certAuthority = m_oidcCredentials.getCertificateAuthority();
+        }
+
         LogDebug("OIDCService::fetchAccessToken: Sending POST request: " + tokenBody.str());
 
-        m_networkServiceProvider->executePost(
+        if (auto sp = m_networkServiceProvider.lock()) { // Rely on callback interface
+          sp->executePost(
                 oidcIdP, {{kContentTypeKey,       kContentTypeUrlFormEncode},
                           {kKeycloakPubkeyHeader, m_clientSigningPubkey}},
                 tokenBody.str(),
@@ -188,7 +196,13 @@ namespace virtru {
                     status = statusCode;
                     responseJson = response;
                     netPromise.set_value();
-                });
+                },
+                certAuthority,
+                clientKeyFileName,
+                clientCertFileName);
+        } else {
+            ThrowException("Unable to lock network provider");
+        }
 
         // Wait here for a response
         netFuture.get();
@@ -235,7 +249,7 @@ namespace virtru {
         addFormData(tokenBody, kGrantType, kRefreshToken);
         addFormData(tokenBody, kRefreshToken, m_refreshToken);
 
-        if (m_oidcCredentials.getAuthType() == OIDCCredentials::AuthType::Client) {
+        if (m_oidcCredentials.getAuthType() == OIDCCredentials::AuthType::ClientSecret) {
 
             //If we have client creds, send them. This should be optional,
             //and in fact is not part of the OIDC spec, as only the refresh
@@ -245,20 +259,45 @@ namespace virtru {
                 addFormData(tokenBody, kClientID, m_oidcCredentials.getClientId());
                 addFormData(tokenBody, kClientSecret, m_oidcCredentials.getClientSecret());
             }
+        } else if (m_oidcCredentials.getAuthType() == OIDCCredentials::AuthType::PKI) {
+            addFormData(tokenBody, kClientID, m_oidcCredentials.getClientId());
+            // The username will be pulled from the certificate used to establish the mTLS connection
+            // and the password is obsoleted by the mTLS trust, but the fields need to exist to satisfy
+            // the request parser
+            addFormData(tokenBody, kUsername, "");
+            addFormData(tokenBody, kPassword, "");
         } else { // assume password
             addFormData(tokenBody, kClientID, m_oidcCredentials.getClientId());
             addFormData(tokenBody, kUsername, m_oidcCredentials.getUsername());
             addFormData(tokenBody, kPassword, m_oidcCredentials.getPassword());
         }
 
+        std::string certAuthority = "";
+        std::string clientKeyFileName = "";
+        std::string clientCertFileName = "";
+        if (m_oidcCredentials.getAuthType() == OIDCCredentials::AuthType::PKI) {
+            clientKeyFileName = m_oidcCredentials.getClientKeyFileName();
+            clientCertFileName = m_oidcCredentials.getClientCertFileName();
+            certAuthority = m_oidcCredentials.getCertificateAuthority();
+        }
+
         LogDebug("CredentialsOidc::refreshAccessToken: Sending POST request: " + tokenBody.str());
-        m_networkServiceProvider->executePost(
+
+        if (auto sp = m_networkServiceProvider.lock()) { // Rely on callback interface
+            sp->executePost(
                 oidcIdP, {{kContentTypeKey, kContentTypeUrlFormEncode}, {kKeycloakPubkeyHeader, m_clientSigningPubkey}},
                 tokenBody.str(), [&netPromise, &responseJson, &status](unsigned int statusCode, std::string &&response) {
                     status = statusCode;
                     responseJson = response;
                     netPromise.set_value();
-                });
+                },
+                certAuthority,
+                clientKeyFileName,
+                clientCertFileName);
+
+        } else {
+            ThrowException("Unable to lock network provider");
+        }
 
         // Wait here for a response
         netFuture.get();
@@ -301,7 +340,17 @@ namespace virtru {
         std::string oidcIdP = m_oidcCredentials.getOIDCEndpoint()
                 + kKCRealmPath + m_oidcCredentials.getOrgName() + kOIDCUserinfoPath;
 
-        m_networkServiceProvider->executeGet(
+        std::string certAuthority = "";
+        std::string clientKeyFileName = "";
+        std::string clientCertFileName = "";
+        if (m_oidcCredentials.getAuthType() == OIDCCredentials::AuthType::PKI) {
+            clientKeyFileName = m_oidcCredentials.getClientKeyFileName();
+            clientCertFileName = m_oidcCredentials.getClientCertFileName();
+            certAuthority = m_oidcCredentials.getCertificateAuthority();
+        }
+
+        if (auto sp = m_networkServiceProvider.lock()) { // Rely on callback interface
+            sp->executeGet(
                 oidcIdP, {{kContentTypeKey, kContentTypeUrlFormEncode},
                           {kAuthorizationKey, std::string(kBearerToken) + std::string(" ") + m_accessToken}},
                 [&netPromise, &responseJson, &status](
@@ -309,7 +358,13 @@ namespace virtru {
                     status = statusCode;
                     responseJson = response;
                     netPromise.set_value();
-                });
+                },
+                certAuthority,
+                clientKeyFileName,
+                clientCertFileName);
+        } else {
+            ThrowException("Unable to lock network provider");
+        }
 
         netFuture.get();
 

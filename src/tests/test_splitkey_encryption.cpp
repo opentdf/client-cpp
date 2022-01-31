@@ -159,7 +159,7 @@ BOOST_AUTO_TEST_SUITE(test_splitkey_encryption_suite)
         auto authTag = WriteableBytes{ toWriteableBytes(tag) };
         symDecoder->finish(authTag);
 
-        std::string decryptedMessage(reinterpret_cast<const char *>(&outBufferSpan[0]), outBufferSpan.length());
+        std::string decryptedMessage(reinterpret_cast<const char *>(&outBufferSpan[0]), outBufferSpan.size());
         BOOST_TEST(metaData == decryptedMessage);
         std::cout << "decryptedMessage:" << decryptedMessage << std::endl;
     }

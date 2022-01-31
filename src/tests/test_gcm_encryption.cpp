@@ -86,7 +86,7 @@ BOOST_AUTO_TEST_SUITE(test_gcm_encoding_suite)
         authTag = WriteableBytes{tag};
         encoder->finish (authTag);
 
-        std::string decryptedMessage(reinterpret_cast<const char *>(&writeableBytes[0]), writeableBytes.length());
+        std::string decryptedMessage(reinterpret_cast<const char *>(&writeableBytes[0]), writeableBytes.size());
         base64EncryptedData = base64Encode(decryptedMessage);
         BOOST_TEST(kEncryptedAes256GCMBase64 == base64EncryptedData);
         BOOST_TEST(toBytes(kAuthTagNoAad) == toBytes(tag));

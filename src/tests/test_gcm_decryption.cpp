@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_SUITE(test_gcm_decoding_suite)
         auto authTag = WriteableBytes{ toWriteableBytes(kAuthTagNoAad) };
         decoder->finish(authTag);
         
-        std::string decryptedMessage(reinterpret_cast<const char *>(&writeableBytes[0]), writeableBytes.length());
+        std::string decryptedMessage(reinterpret_cast<const char *>(&writeableBytes[0]), writeableBytes.size());
         BOOST_TEST(kPlainText == decryptedMessage);
     }
 

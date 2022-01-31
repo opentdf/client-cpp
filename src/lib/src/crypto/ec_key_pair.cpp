@@ -324,7 +324,7 @@ namespace virtru::crypto {
 
         auto retValue = EC_POINT_oct2point(group, ecPointFreePtr.get(),
                                       reinterpret_cast<const uint8_t *>(compressedECPoint.data()),
-                                      compressedECPoint.length(), nullptr);
+                                      compressedECPoint.size(), nullptr);
         if (retValue != 1) {
             ThrowOpensslException("Failed to get ec point from compressed point.");
         }
@@ -374,13 +374,13 @@ namespace virtru::crypto {
 
         if (1 != EVP_PKEY_CTX_set1_hkdf_salt(evpPkeyCtxPtr.get(),
                                              reinterpret_cast<const std::uint8_t*>(salt.data()),
-                                             salt.length())) {
+                                             salt.size())) {
             ThrowOpensslException("EVP_PKEY_CTX_set1_hkdf_salt failed");
         }
 
         if (1 != EVP_PKEY_CTX_set1_hkdf_key(evpPkeyCtxPtr.get(),
                                             reinterpret_cast<const std::uint8_t*>(secret.data()),
-                                            secret.length())) {
+                                            secret.size())) {
             ThrowOpensslException("EVP_PKEY_CTX_set1_hkdf_key failed");
         }
 
