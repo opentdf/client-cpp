@@ -72,6 +72,23 @@ DLL_PUBLIC TDF_STATUS TDFCreateCredentialClientCreds(TDFCredsPtr credsPtr,
     return TDF_STATUS_SUCCESS;
 }
 
+DLL_PUBLIC TDF_STATUS TDFCreateCredentialTokenExchange(TDFCredsPtr credsPtr,
+                                                       const char *oidcEndpoint,
+                                                       const char *clientId,
+                                                       const char *clientSecret,
+                                                       const char *externalExchangeToken,
+                                                       const char *organizationName) {
+    if (credsPtr == nullptr) {
+        return TDF_STATUS_INVALID_PARAMS;
+    }
+
+    auto *creds = static_cast<virtru::OIDCCredentials *>(credsPtr);
+    creds->setClientCredentialsTokenExchange(clientId, clientSecret, externalExchangeToken,
+                                             organizationName, oidcEndpoint);
+
+    return TDF_STATUS_SUCCESS;
+}
+
 /// Create a new TDF client using provided credentials object
 /// \param credsPtr - Creds object created by calling CreateCredentialXXX
 /// \param kasURL - URL of a key access service

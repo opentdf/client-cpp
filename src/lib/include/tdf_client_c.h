@@ -46,6 +46,20 @@ DLL_PUBLIC TDF_STATUS TDFCreateCredentialClientCreds(TDFCredsPtr credsPtr,
                                                      const char *clientSecret,
                                                      const char *organizationName);
 
+/// Create a new Credential instance configured for Client Credential authentication.
+/// \param credsPtr = Pointer to Credentials opaque object
+/// \param oidcEndpoint - The OIDC server url
+/// \param clientId - The client id
+/// \param clientSecret - The client secret
+/// \param externalExchangeToken - An external token from the to be exchanged during auth via OIDC Token Exchange
+/// \param organizationName - The OIDC realm or organization the client belongs to
+DLL_PUBLIC TDF_STATUS TDFCreateCredentialTokenExchange(TDFCredsPtr credsPtr,
+                                                       const char *oidcEndpoint,
+                                                       const char *clientId,
+                                                       const char *clientSecret,
+                                                       const char *externalExchangeToken,
+                                                       const char *organizationName);
+
 /// Create a new TDF client using provided credentials object
 /// \param credsPtr - Creds object created by calling TDFCreateCredentialXXX
 /// \param kasURL - URL of a key access service
