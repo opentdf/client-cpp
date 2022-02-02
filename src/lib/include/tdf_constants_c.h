@@ -68,18 +68,12 @@ typedef void* TDFClientPtr;
 // TDF creds opaque object.
 typedef void* TDFCredsPtr;
 
-// Encrypt file params opaque object.
-typedef void* VEncryptFileParamsPtr;
-
-// Encrypt string params opaque object.
-typedef void* VEncryptStringParamsPtr;
-
 // Policy opaque object.
-typedef void* VPolicyPtr;
+typedef void* TDFPolicyPtr;
 
-typedef unsigned char* VBytesPtr;
-typedef const unsigned char* VCBytesPtr;
-typedef unsigned int VBytesLength;
+typedef unsigned char* TDFBytesPtr;
+typedef const unsigned char* TDFCBytesPtr;
+typedef unsigned int TDFBytesLength;
 
 #ifdef __cplusplus
 }

@@ -6,10 +6,10 @@
  */
 
 #include <logger.h>
-#include <tdf_constants.h>
+#include <policy_object.h>
 #include <tdf_client.h>
 #include <tdf_client_c.h>
-#include <policy_object.h>
+#include <tdf_constants.h>
 
 #include <algorithm>
 #include <sstream>
@@ -20,13 +20,13 @@ extern "C" {
 
 /// Hack to allow .NET P/Invoke to free native memory for a random pointer
 /// \param vMemoryPtr - The malloc'd memory to be freed.
-DLL_PUBLIC TDF_STATUS TDFFreeMemory(void *vMemoryPtr) {
-    if (vMemoryPtr == nullptr) {
+DLL_PUBLIC TDF_STATUS TDFFreeMemory(void *memoryPtr) {
+    if (memoryPtr == nullptr) {
         return TDF_STATUS_INVALID_PARAMS;
     }
 
     try {
-        free(vMemoryPtr);
+        free(memoryPtr);
         return TDF_STATUS_SUCCESS;
     } catch (std::exception &e) {
         LogError(e.what());
@@ -36,10 +36,13 @@ DLL_PUBLIC TDF_STATUS TDFFreeMemory(void *vMemoryPtr) {
     return TDF_STATUS_FAILURE;
 }
 
-DLL_PUBLIC TDF_STATUS TDFCreateCredentialPKI(
-    TDFCredsPtr credsPtr, const char *oidcEndpoint, const char *clientId,
-    const char *clientKeyFileName, const char *clientCertFileName,
-    const char *sdkConsumerCertAuthority, const char *organizationName) {
+DLL_PUBLIC TDF_STATUS TDFCreateCredentialPKI(TDFCredsPtr credsPtr,
+                                             const char *oidcEndpoint,
+                                             const char *clientId,
+                                             const char *clientKeyFileName,
+                                             const char *clientCertFileName,
+                                             const char *sdkConsumerCertAuthority,
+                                             const char *organizationName) {
 
     if (credsPtr == nullptr) {
         return TDF_STATUS_INVALID_PARAMS;
@@ -53,9 +56,11 @@ DLL_PUBLIC TDF_STATUS TDFCreateCredentialPKI(
     return TDF_STATUS_SUCCESS;
 }
 
-DLL_PUBLIC TDF_STATUS TDFCreateCredentialClientCreds(
-    TDFCredsPtr credsPtr, const char *oidcEndpoint, const char *clientId,
-    const char *clientSecret, const char *organizationName) {
+DLL_PUBLIC TDF_STATUS TDFCreateCredentialClientCreds(TDFCredsPtr credsPtr,
+                                                     const char *oidcEndpoint,
+                                                     const char *clientId,
+                                                     const char *clientSecret,
+                                                     const char *organizationName) {
     if (credsPtr == nullptr) {
         return TDF_STATUS_INVALID_PARAMS;
     }
@@ -92,6 +97,25 @@ DLL_PUBLIC void TDFDestroyClient(TDFClientPtr clientPtr) {
     } catch (...) {
         LogDefaultError();
     }
+}
+
+DLL_PUBLIC TDF_STATUS TDFAddDataAttribute(TDFClientPtr clientPtr,
+                                          const char *dataAttribute,
+                                          const char *kasUrl) {
+    if (clientPtr == nullptr) {
+        return TDF_STATUS_INVALID_PARAMS;
+    }
+
+    try {
+        auto *client = static_cast<virtru::TDFClientBase *>(clientPtr);
+        client->addDataAttribute(dataAttribute, kasUrl);
+        return TDF_STATUS_SUCCESS;
+    } catch (std::exception &e) {
+        LogError(e.what());
+    } catch (...) {
+        LogDefaultError();
+    }
+    return TDF_STATUS_FAILURE;
 }
 
 /// Enable the internal logger class to write logs to the console for given LogLevel.
@@ -139,288 +163,105 @@ DLL_PUBLIC TDF_STATUS TDFEnableConsoleLogging(TDFClientPtr clientPtr, TDFLogLeve
     return TDF_STATUS_FAILURE;
 }
 
-// // Encrypt the contents of the input file into a TDF. In the process of
-// encryption, a policy is
-// /// associated with the TDF. The policy has a unique id which can be used to
-// identify the TDF policy. DLL_PUBLIC VSTATUS VClientEncryptFile(VClientPtr
-// vClientPtr, VEncryptFileParamsPtr vEncryptFileParamsPtr,
-//                                       char** outPolicyId)
-// {
-// 	if (vClientPtr == nullptr || vEncryptFileParamsPtr == nullptr) {
-// 		return VSTATUS_INVALID_PARAMS;
-// 	}
+DLL_PUBLIC TDF_STATUS TDFEncryptFile(TDFClientPtr clientPtr, const char *inFilepath, const char *outFilepath) {
+    if (clientPtr == nullptr || inFilepath == nullptr || outFilepath == nullptr) {
+        return TDF_STATUS_INVALID_PARAMS;
+    }
 
-// 	try {
-// 		auto* client = static_cast<virtru::Client*>(vClientPtr);
-// 		auto* fileParams =
-// static_cast<virtru::EncryptFileParams*>(vEncryptFileParamsPtr);
+    try {
+        auto *client = static_cast<virtru::TDFClient *>(clientPtr);
+        client->encryptFile(inFilepath, outFilepath);
+        return TDF_STATUS_SUCCESS;
+    } catch (std::exception &e) {
+        LogError(e.what());
+    } catch (...) {
+        LogDefaultError();
+    }
+    return TDF_STATUS_FAILURE;
+}
 
-// 		std::string policyId = client->encryptFile(*fileParams);
+/// Decrypt the contents of the TDF file into its original content.
+DLL_PUBLIC TDF_STATUS TDFDecryptFile(TDFClientPtr clientPtr, const char *inFilepath, const char *outFilepath) {
+    if (clientPtr == nullptr || inFilepath == nullptr || outFilepath == nullptr) {
+        return TDF_STATUS_INVALID_PARAMS;
+    }
 
-// 		// Copy the policyId to the outPolicyId buffer.
-// 		*outPolicyId = static_cast<char*>(malloc(policyId.size() + 1));
-// 		std::copy(policyId.begin(), policyId.end(), *outPolicyId);
-// 		(*outPolicyId)[policyId.size()] = '\0';
+    try {
+        auto *client = static_cast<virtru::TDFClient *>(clientPtr);
+        client->decryptFile(inFilepath, outFilepath);
 
-// 		return VSTATUS_SUCCESS;
-// 	}
-// 	catch (std::exception& e) {
-// 		LogError(e.what());
-// 	}
-// 	catch (...) {
-// 		LogDefaultError();
-// 	}
-// 	return VSTATUS_FAILURE;
-// }
+        return TDF_STATUS_SUCCESS;
+    } catch (std::exception &e) {
+        LogError(e.what());
+    } catch (...) {
+        LogDefaultError();
+    }
+    return TDF_STATUS_FAILURE;
+}
 
-// /// Decrypt the contents of the TDF file into its original content.
-// DLL_PUBLIC VSTATUS VClientDecryptFile(VClientPtr vClientPtr, const char*
-// inFilepath, const char* outFilepath)
-// {
-// 	if (vClientPtr == nullptr || inFilepath == nullptr || outFilepath ==
-// nullptr) { 		return VSTATUS_INVALID_PARAMS;
-// 	}
+DLL_PUBLIC TDF_STATUS TDFEncryptString(TDFClientPtr clientPtr,
+                                       TDFCBytesPtr inBytesPtr,
+                                       TDFBytesLength inBytesLength,
+                                       TDFBytesPtr *outBytesPtr,
+                                       TDFBytesLength *outBytesLength) {
+    if (clientPtr == nullptr ||
+        inBytesPtr == nullptr ||
+        outBytesPtr == nullptr ||
+        outBytesLength == nullptr) {
+        return TDF_STATUS_INVALID_PARAMS;
+    }
 
-// 	try {
-// 		auto* client = static_cast<virtru::Client*>(vClientPtr);
-// 		client->decryptFile(inFilepath, outFilepath);
+    try {
+        auto *client = static_cast<virtru::TDFClient *>(clientPtr);
+        auto tdfData = client->encryptString({reinterpret_cast<char const *>(inBytesPtr), inBytesLength});
 
-// 		return VSTATUS_SUCCESS;
-// 	}
-// 	catch (std::exception& e) {
-// 		LogError(e.what());
-// 	}
-// 	catch (...) {
-// 		LogDefaultError();
-// 	}
-// 	return VSTATUS_FAILURE;
-// }
+        // Copy the encrypted payload.
+        *outBytesLength = tdfData.size();
+        *outBytesPtr = static_cast<unsigned char *>(malloc(*outBytesLength));
+        std::copy(tdfData.begin(), tdfData.end(),
+                  *outBytesPtr);
 
-// /// Encrypt the plain data into a TDF. In the process of encryption, a policy
-// is
-// /// associated with the TDF. The policy has a unique id which can be used to
-// identify the TDF policy. DLL_PUBLIC VSTATUS VClientEncryptString(VClientPtr
-// vClientPtr, VEncryptStringParamsPtr vEncryptStringParamsPtr,
-//                                         char** outPolicyId, VBytesPtr*
-//                                         outBytesPtr, VBytesLength*
-//                                         outBytesLength)
-// {
-// 	if (vClientPtr == nullptr || vEncryptStringParamsPtr == nullptr
-// 		|| outPolicyId == nullptr || outBytesPtr == nullptr
-// 		|| outBytesLength == nullptr) {
-// 		return VSTATUS_INVALID_PARAMS;
-// 	}
+        return TDF_STATUS_SUCCESS;
+    } catch (std::exception &e) {
+        LogError(e.what());
+    } catch (...) {
+        LogDefaultError();
+    }
+    return TDF_STATUS_FAILURE;
+}
 
-// 	try {
-// 		auto* client = static_cast<virtru::Client*>(vClientPtr);
-// 		auto* stringParams =
-// static_cast<virtru::EncryptStringParams*>(vEncryptStringParamsPtr);
+/// Decrypt the TDF data
+DLL_PUBLIC TDF_STATUS TDFDecryptString(TDFClientPtr clientPtr,
+                                       TDFCBytesPtr inBytesPtr,
+                                       TDFBytesLength inBytesLength,
+                                       TDFBytesPtr *outBytesPtr,
+                                       TDFBytesLength *outBytesLength) {
+    if (clientPtr == nullptr ||
+        inBytesPtr == nullptr ||
+        outBytesPtr == nullptr ||
+        outBytesLength == nullptr) {
+        return TDF_STATUS_INVALID_PARAMS;
+    }
 
-// 		auto [policyId, tdfData] = client->encryptString(*stringParams);
+    try {
+        auto *client = static_cast<virtru::TDFClient *>(clientPtr);
 
-// 		// Copy the policyId to the outPolicyId buffer.
-// 		*outPolicyId = static_cast<char*>(malloc(policyId.size() + 1));
-// 		std::copy(policyId.begin(), policyId.end(), *outPolicyId);
-// 		(*outPolicyId)[policyId.size()] = '\0';
+        std::string decryptedData = client->decryptString({reinterpret_cast<char const *>(inBytesPtr), inBytesLength});
 
-// 		// Copy the encrypted payload.
-// 		*outBytesLength = tdfData.size();
-// 		*outBytesPtr = static_cast<unsigned
-// char*>(malloc(*outBytesLength)); 		std::copy(tdfData.begin(), tdfData.end(),
-// *outBytesPtr);
+        *outBytesLength = decryptedData.length();
+        // Copy the decrypted data to the out buffer.
+        *outBytesPtr = static_cast<unsigned char *>(malloc(*outBytesLength));
+        std::copy(decryptedData.begin(), decryptedData.end(),
+                  *outBytesPtr);
 
-// 		return VSTATUS_SUCCESS;
-// 	}
-// 	catch (std::exception& e) {
-// 		LogError(e.what());
-// 	}
-// 	catch (...) {
-// 		LogDefaultError();
-// 	}
-// 	return VSTATUS_FAILURE;
-// }
-
-// /// Decrypt the TDF data
-// DLL_PUBLIC VSTATUS VClientDecryptString(VClientPtr vClientPtr, VCBytesPtr
-// inBytesPtr,
-//                                         VBytesLength inBytesLength,
-//                                         VBytesPtr* outBytesPtr, VBytesLength*
-//                                         outBytesLength)
-// {
-// 	if (vClientPtr == nullptr || inBytesPtr == nullptr || outBytesPtr ==
-// nullptr || outBytesLength == nullptr) { 		return VSTATUS_INVALID_PARAMS;
-// 	}
-
-// 	try {
-// 		auto* client = static_cast<virtru::Client*>(vClientPtr);
-
-// 		std::stringstream decryptDataStream;
-// 		std::stringstream tdfStream;
-// 		tdfStream.write((char*)inBytesPtr, inBytesLength);
-
-// 		client->decryptStream(tdfStream, decryptDataStream);
-
-// 		// Get the stream size.
-// 		decryptDataStream.seekg(0, std::ios::end);
-// 		*outBytesLength = decryptDataStream.tellg();
-// 		decryptDataStream.seekg(0, std::ios::beg);
-
-// 		// Copy the decrypted data to the out buffer.
-// 		*outBytesPtr = static_cast<unsigned
-// char*>(malloc(*outBytesLength)); 		decryptDataStream.read((char*)*outBytesPtr,
-// *outBytesLength);
-
-// 		return VSTATUS_SUCCESS;
-// 	}
-// 	catch (std::exception& e) {
-// 		LogError(e.what());
-// 	}
-// 	catch (...) {
-// 		LogDefaultError();
-// 	}
-// 	return VSTATUS_FAILURE;
-// }
-
-// /// Return the policy associated with the given policy uuid.
-// DLL_PUBLIC VSTATUS VClientFetchPolicyForUUID(VClientPtr vClientPtr, const
-// char* policyUUID, VPolicyPtr* vPolicyPtr)
-// {
-// 	if (vClientPtr == nullptr || policyUUID == nullptr) {
-// 		return VSTATUS_INVALID_PARAMS;
-// 	}
-
-// 	try {
-// 		auto* client = static_cast<virtru::Client*>(vClientPtr);
-
-// 		auto policy = client->fetchPolicyForUUID(policyUUID);
-// 		*vPolicyPtr = VPolicyCreate();
-
-// 		// Copy the contents using assignment.
-// 		auto* newPolicy = static_cast<virtru::Policy*>(*vPolicyPtr);
-// 		*newPolicy = policy;
-
-// 		return VSTATUS_SUCCESS;
-// 	}
-// 	catch (std::exception& e) {
-// 		LogError(e.what());
-// 	}
-// 	catch (...) {
-// 		LogDefaultError();
-// 	}
-// 	return VSTATUS_FAILURE;
-// }
-
-// DLL_PUBLIC VSTATUS VClientSetKasUrl(VClientPtr vClientPtr, const char*
-// kasUrl)
-// {
-// 	if (vClientPtr == nullptr || kasUrl == nullptr) {
-// 		return VSTATUS_INVALID_PARAMS;
-// 	}
-
-// 	try {
-// 		auto* client = static_cast<virtru::Client*>(vClientPtr);
-
-// 		client->setKasUrl(kasUrl);
-
-// 		return VSTATUS_SUCCESS;
-// 	}
-// 	catch (std::exception& e) {
-// 		LogError(e.what());
-// 	}
-// 	catch (...) {
-// 		LogDefaultError();
-// 	}
-// 	return VSTATUS_FAILURE;
-// }
-
-// DLL_PUBLIC VSTATUS VClientSetOIDCProviderUrl(VClientPtr vClientPtr, const
-// char* oidcUrl)
-// {
-// 	if (vClientPtr == nullptr || oidcUrl == nullptr) {
-// 		return VSTATUS_INVALID_PARAMS;
-// 	}
-
-// 	try {
-// 		auto* client = static_cast<virtru::Client*>(vClientPtr);
-
-// 		client->setOIDCProviderUrl(oidcUrl);
-
-// 		return VSTATUS_SUCCESS;
-// 	}
-// 	catch (const std::exception& e) {
-// 		LogError(e.what());
-// 	}
-// 	catch (...) {
-// 		LogDefaultError();
-// 	}
-// 	return VSTATUS_FAILURE;
-// }
-
-// DLL_PUBLIC VSTATUS VClientSetEasUrl(VClientPtr vClientPtr, const char*
-// easUrl)
-// {
-// 	if (vClientPtr == nullptr || easUrl == nullptr) {
-// 		return VSTATUS_INVALID_PARAMS;
-// 	}
-// 	try {
-// 		auto* client = static_cast<virtru::Client*>(vClientPtr);
-
-// 		client->setEasUrl(easUrl);
-
-// 		return VSTATUS_SUCCESS;
-// 	}
-// 	catch (std::exception& e) {
-// 		LogError(e.what());
-// 	}
-// 	catch (...) {
-// 		LogDefaultError();
-// 	}
-// 	return VSTATUS_FAILURE;
-// }
-
-// DLL_PUBLIC VSTATUS VClientSetAcmUrl(VClientPtr vClientPtr, const char*
-// acmUrl)
-// {
-// 	if (vClientPtr == nullptr || acmUrl == nullptr) {
-// 		return VSTATUS_INVALID_PARAMS;
-// 	}
-// 	try {
-// 		auto* client = static_cast<virtru::Client*>(vClientPtr);
-
-// 		client->setAcmUrl(acmUrl);
-
-// 		return VSTATUS_SUCCESS;
-// 	}
-// 	catch (std::exception& e) {
-// 		LogError(e.what());
-// 	}
-// 	catch (...) {
-// 		LogDefaultError();
-// 	}
-// 	return VSTATUS_FAILURE;
-// }
-
-// DLL_PUBLIC VSTATUS VClientSetSecureReaderUrl(VClientPtr vClientPtr, const
-// char* srUrl)
-// {
-// 	if (vClientPtr == nullptr || srUrl == nullptr) {
-// 		return VSTATUS_INVALID_PARAMS;
-// 	}
-// 	try {
-// 		auto* client = static_cast<virtru::Client*>(vClientPtr);
-
-// 		client->setSecureReaderURL(srUrl);
-
-// 		return VSTATUS_SUCCESS;
-// 	}
-// 	catch (std::exception& e) {
-// 		LogError(e.what());
-// 	}
-// 	catch (...) {
-// 		LogDefaultError();
-// 	}
-// 	return VSTATUS_FAILURE;
-// }
+        return TDF_STATUS_SUCCESS;
+    } catch (std::exception &e) {
+        LogError(e.what());
+    } catch (...) {
+        LogDefaultError();
+    }
+    return TDF_STATUS_FAILURE;
+}
 
 #ifdef __cplusplus
 }
