@@ -159,7 +159,7 @@ namespace virtru {
             addFormData(tokenBody, kGrantType, kClientCredentials);
             addFormData(tokenBody, kClientID, m_oidcCredentials.getClientId());
             addFormData(tokenBody, kClientSecret, m_oidcCredentials.getClientSecret());
-        if (m_oidcCredentials.getAuthType() == OIDCCredentials::AuthType::ExternalExchangeToken) {
+        } else if (m_oidcCredentials.getAuthType() == OIDCCredentials::AuthType::ExternalExchangeToken) {
             LogDebug("AuthType:ExternalExchangeToken");
             addFormData(tokenBody, kGrantType, kExchangeToken);
             addFormData(tokenBody, kClientID, m_oidcCredentials.getClientId());
