@@ -8,19 +8,18 @@
 // Created by Sujan Reddy on 7/16/21.
 //
 
-#include <iostream>
-#include <future>
 #include "nlohmann/json.hpp"
+#include <future>
+#include <iostream>
 #include <utility>
 
-#include <jwt-cpp/jwt.h>
+#include "crypto/crypto_utils.h"
 #include "network/http_service_provider.h"
+#include "oidc_service.h"
+#include "sdk_constants.h"
 #include "tdf_exception.h"
 #include "utils.h"
-#include "sdk_constants.h"
-#include "crypto/crypto_utils.h"
-#include "oidc_service.h"
-
+#include <jwt-cpp/jwt.h>
 
 namespace virtru {
 
@@ -29,11 +28,11 @@ namespace virtru {
     using namespace virtru::crypto;
 
     /// Constructor
-    OIDCService::OIDCService(OIDCCredentials  oidcCredentials,
-                             const HttpHeaders& headers,
-                             const std::string& clientSigningPubkey,
+    OIDCService::OIDCService(OIDCCredentials oidcCredentials,
+                             const HttpHeaders &headers,
+                             const std::string &clientSigningPubkey,
                              std::weak_ptr<INetwork> httpServiceProvider)
-                             : m_oidcCredentials(std::move(oidcCredentials)) {
+        : m_oidcCredentials(std::move(oidcCredentials)) {
         LogTrace("OIDCService::OIDCService");
 
         m_clientSigningPubkey = base64UrlEncode(clientSigningPubkey);
@@ -48,7 +47,7 @@ namespace virtru {
         std::ostringstream authHeaderStream;
         std::map<std::string, std::string> authHeader;
 
-        if(m_oidcCredentials.getAuthType() == OIDCCredentials::AuthType::None){
+        if (m_oidcCredentials.getAuthType() == OIDCCredentials::AuthType::None) {
             ThrowException("OIDC credentials are missing");
         }
 
@@ -72,7 +71,7 @@ namespace virtru {
         nlohmann::json tokenAsJson = nlohmann::json::parse(decoded_token.get_payload());
         m_preferredUsername = tokenAsJson[kPreferredUsername];
 
-        LogDebug("Preferred username: " +  m_preferredUsername);
+        LogDebug("Preferred username: " + m_preferredUsername);
         LogDebug("Authorization = " + authHeaderStream.str());
         return authHeader;
     }
@@ -93,7 +92,7 @@ namespace virtru {
 
         std::vector<std::string> attributes;
         attributes.reserve(subjectAttributes.size());
-        for (const auto &subjectAttribute: subjectAttributes) {
+        for (const auto &subjectAttribute : subjectAttributes) {
             std::string attribute = subjectAttribute[kAttribute];
             attributes.push_back(attribute);
         }
@@ -195,9 +194,8 @@ namespace virtru {
         LogDebug("OIDCService::fetchAccessToken: Sending POST request: " + tokenBody.str());
 
         if (auto sp = m_networkServiceProvider.lock()) { // Rely on callback interface
-          sp->executePost(
-                oidcIdP, {{kContentTypeKey,       kContentTypeUrlFormEncode},
-                          {kKeycloakPubkeyHeader, m_clientSigningPubkey}},
+            sp->executePost(
+                oidcIdP, {{kContentTypeKey, kContentTypeUrlFormEncode}, {kKeycloakPubkeyHeader, m_clientSigningPubkey}},
                 tokenBody.str(),
                 [&netPromise, &responseJson, &status](unsigned int statusCode, std::string &&response) {
                     status = statusCode;
@@ -249,7 +247,7 @@ namespace virtru {
         std::string responseJson;
 
         std::string oidcIdP = m_oidcCredentials.getOIDCEndpoint() +
-                kKCRealmPath + m_oidcCredentials.getOrgName() + kOIDCTokenPath;
+                              kKCRealmPath + m_oidcCredentials.getOrgName() + kOIDCTokenPath;
 
         std::ostringstream tokenBody;
 
@@ -292,15 +290,15 @@ namespace virtru {
 
         if (auto sp = m_networkServiceProvider.lock()) { // Rely on callback interface
             sp->executePost(
-                oidcIdP, {{kContentTypeKey, kContentTypeUrlFormEncode}, {kKeycloakPubkeyHeader, m_clientSigningPubkey}},
+                oidcIdP,
+                {{kContentTypeKey, kContentTypeUrlFormEncode},
+                 {kKeycloakPubkeyHeader, m_clientSigningPubkey}},
                 tokenBody.str(), [&netPromise, &responseJson, &status](unsigned int statusCode, std::string &&response) {
                     status = statusCode;
                     responseJson = response;
                     netPromise.set_value();
                 },
-                certAuthority,
-                clientKeyFileName,
-                clientCertFileName);
+                certAuthority, clientKeyFileName, clientCertFileName);
 
         } else {
             ThrowException("Unable to lock network provider");
@@ -336,7 +334,7 @@ namespace virtru {
     }
 
     /// Check if the access token is valid(check with /userinfo)
-    void OIDCService::checkAccessToken()  {
+    void OIDCService::checkAccessToken() {
         LogTrace("OIDCService::checkAccessToken");
 
         unsigned status = kHTTPBadRequest;
@@ -344,8 +342,7 @@ namespace virtru {
         auto netFuture = netPromise.get_future();
         std::string responseJson;
 
-        std::string oidcIdP = m_oidcCredentials.getOIDCEndpoint()
-                + kKCRealmPath + m_oidcCredentials.getOrgName() + kOIDCUserinfoPath;
+        std::string oidcIdP = m_oidcCredentials.getOIDCEndpoint() + kKCRealmPath + m_oidcCredentials.getOrgName() + kOIDCUserinfoPath;
 
         std::string certAuthority = "";
         std::string clientKeyFileName = "";
@@ -358,10 +355,9 @@ namespace virtru {
 
         if (auto sp = m_networkServiceProvider.lock()) { // Rely on callback interface
             sp->executeGet(
-                oidcIdP, {{kContentTypeKey, kContentTypeUrlFormEncode},
-                          {kAuthorizationKey, std::string(kBearerToken) + std::string(" ") + m_accessToken}},
+                oidcIdP, {{kContentTypeKey, kContentTypeUrlFormEncode}, {kAuthorizationKey, std::string(kBearerToken) + std::string(" ") + m_accessToken}},
                 [&netPromise, &responseJson, &status](
-                        unsigned int statusCode, std::string &&response) {
+                    unsigned int statusCode, std::string &&response) {
                     status = statusCode;
                     responseJson = response;
                     netPromise.set_value();
@@ -389,7 +385,7 @@ namespace virtru {
         return;
     }
 
-    void OIDCService::addFormData(std::ostringstream &ss, const std::string& key, const std::string& val) {
+    void OIDCService::addFormData(std::ostringstream &ss, const std::string &key, const std::string &val) {
         LogTrace("OIDCService::addFormData");
 
         //Unless this is the first kvp, append with an ampersand
@@ -398,4 +394,4 @@ namespace virtru {
         }
         ss << Utils::urlEncode(key) << "=" << Utils::urlEncode(val);
     }
-}
+} // namespace virtru
