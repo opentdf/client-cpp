@@ -180,6 +180,10 @@ namespace virtru {
     static constexpr auto kPassword = "password";
     static constexpr auto kRefreshToken = "refresh_token";
     static constexpr auto kAccessToken = "access_token";
+    static constexpr auto kSubjectToken = "subject_token";
+    static constexpr auto kTokenRequestAccess = "urn:ietf:params:oauth:token-type:access_token";
+    static constexpr auto kExchangeToken = "urn:ietf:params:oauth:grant-type:token-exchange";
+    static constexpr auto kTokenRequestType = "requested_token_type";
     static constexpr auto kGrantType = "grant_type";
     static constexpr auto kKCRealmPath = "/auth/realms/";
     static constexpr auto kOIDCTokenPath = "/protocol/openid-connect/token";
