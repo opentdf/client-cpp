@@ -62,27 +62,22 @@ DLL_PUBLIC TDFCredsPtr TDFCreateCredentialClientCreds(const char *oidcEndpoint,
     return creds;
 }
 
+DLL_PUBLIC TDFCredsPtr TDFCreateCredentialTokenExchange(const char *oidcEndpoint,
+                                                        const char *clientId,
+                                                        const char *clientSecret,
+                                                        const char *externalExchangeToken,
+                                                        const char *organizationName) {
+    auto *creds = new virtru::OIDCCredentials();
+    creds->setClientCredentialsTokenExchange(clientId, clientSecret, externalExchangeToken,
+                                             organizationName, oidcEndpoint);
+
+    return creds;
+}
+
 /// Destruct the credentials instance.
 DLL_PUBLIC void TDFDestroyCredential(TDFCredsPtr creds) {
     auto *policy = static_cast<virtru::OIDCCredentials *>(creds);
     delete policy;
-}
-
-DLL_PUBLIC TDF_STATUS TDFCreateCredentialTokenExchange(TDFCredsPtr credsPtr,
-                                                       const char *oidcEndpoint,
-                                                       const char *clientId,
-                                                       const char *clientSecret,
-                                                       const char *externalExchangeToken,
-                                                       const char *organizationName) {
-    if (credsPtr == nullptr) {
-        return TDF_STATUS_INVALID_PARAMS;
-    }
-
-    auto *creds = static_cast<virtru::OIDCCredentials *>(credsPtr);
-    creds->setClientCredentialsTokenExchange(clientId, clientSecret, externalExchangeToken,
-                                             organizationName, oidcEndpoint);
-
-    return TDF_STATUS_SUCCESS;
 }
 
 /// Create a new TDF client using provided credentials object
