@@ -104,7 +104,7 @@ DLL_PUBLIC TDF_STATUS TDFEncryptString(TDFClientPtr clientPtr,
 /// \param outBytesLength  - On success, it is length of the decrypted tdf data.
 /// \return TDF_STATUS - VSTATUS_SUCCESS on success
 /// NOTE: The caller of the api should free outBytesPtr.
-DLL_PUBLIC TDF_STATUS TDFEncryptString(TDFClientPtr clientPtr,
+DLL_PUBLIC TDF_STATUS TDFDecryptString(TDFClientPtr clientPtr,
                                        TDFCBytesPtr inBytesPtr,
                                        TDFBytesLength inBytesLength,
                                        TDFBytesPtr *outBytesPtr,
