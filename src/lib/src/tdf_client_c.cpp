@@ -36,40 +36,36 @@ DLL_PUBLIC TDF_STATUS TDFFreeMemory(void *memoryPtr) {
     return TDF_STATUS_FAILURE;
 }
 
-DLL_PUBLIC TDF_STATUS TDFCreateCredentialPKI(TDFCredsPtr credsPtr,
-                                             const char *oidcEndpoint,
-                                             const char *clientId,
-                                             const char *clientKeyFileName,
-                                             const char *clientCertFileName,
-                                             const char *sdkConsumerCertAuthority,
-                                             const char *organizationName) {
+DLL_PUBLIC TDFCredsPtr TDFCreateCredentialPKI(const char *oidcEndpoint,
+                                              const char *clientId,
+                                              const char *clientKeyFileName,
+                                              const char *clientCertFileName,
+                                              const char *sdkConsumerCertAuthority,
+                                              const char *organizationName) {
 
-    if (credsPtr == nullptr) {
-        return TDF_STATUS_INVALID_PARAMS;
-    }
-
-    auto *creds = static_cast<virtru::OIDCCredentials *>(credsPtr);
+    auto *creds = new virtru::OIDCCredentials();
     creds->setClientCredentialsPKI(clientId, clientKeyFileName,
                                    clientCertFileName, sdkConsumerCertAuthority,
                                    organizationName, oidcEndpoint);
 
-    return TDF_STATUS_SUCCESS;
+    return creds;
 }
 
-DLL_PUBLIC TDF_STATUS TDFCreateCredentialClientCreds(TDFCredsPtr credsPtr,
-                                                     const char *oidcEndpoint,
-                                                     const char *clientId,
-                                                     const char *clientSecret,
-                                                     const char *organizationName) {
-    if (credsPtr == nullptr) {
-        return TDF_STATUS_INVALID_PARAMS;
-    }
-
-    auto *creds = static_cast<virtru::OIDCCredentials *>(credsPtr);
+DLL_PUBLIC TDFCredsPtr TDFCreateCredentialClientCreds(const char *oidcEndpoint,
+                                                      const char *clientId,
+                                                      const char *clientSecret,
+                                                      const char *organizationName) {
+    auto *creds = new virtru::OIDCCredentials();
     creds->setClientCredentialsClientSecret(clientId, clientSecret,
                                             organizationName, oidcEndpoint);
 
-    return TDF_STATUS_SUCCESS;
+    return creds;
+}
+
+/// Destruct the credentials instance.
+DLL_PUBLIC void TDFDestroyCredential(TDFCredsPtr creds) {
+    auto *policy = static_cast<virtru::OIDCCredentials *>(creds);
+    delete policy;
 }
 
 /// Create a new TDF client using provided credentials object

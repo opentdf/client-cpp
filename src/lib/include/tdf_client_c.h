@@ -18,16 +18,17 @@ extern "C" {
 /// \param vMemoryPtr - The malloc'd memory to be freed.
 DLL_PUBLIC TDF_STATUS TDFFreeMemory(void *memoryPtr);
 
+/// Destruct a credentials instance created with TDFCreateCredentialXXX
+DLL_PUBLIC void TDFDestroyCredential(TDFCredsPtr creds);
+
 /// Create a new Credential instance configured for PKI authentication.
-/// \param credsPtr = Pointer to Credentials opaque object
 /// \param oidcEndpoint - The OIDC server url
 /// \param clientId - The client id
 /// \param clientKeyFileName - The name of the file containing the client key
 /// \param clientCertFileName - The name of the file containing the client certificate
 /// \param certificateAuthority - The certificate authority to be used
 /// \param organizationName - The OIDC realm or organization the client belongs to
-DLL_PUBLIC TDF_STATUS TDFCreateCredentialPKI(TDFCredsPtr credsPtr,
-                                             const char *oidcEndpoint,
+DLL_PUBLIC TDFCredsPtr TDFCreateCredentialPKI(const char *oidcEndpoint,
                                              const char *clientId,
                                              const char *clientKeyFileName,
                                              const char *clientCertFileName,
@@ -35,13 +36,11 @@ DLL_PUBLIC TDF_STATUS TDFCreateCredentialPKI(TDFCredsPtr credsPtr,
                                              const char *organizationName);
 
 /// Create a new Credential instance configured for Client Credential authentication.
-/// \param credsPtr = Pointer to Credentials opaque object
 /// \param oidcEndpoint - The OIDC server url
 /// \param clientId - The client id
 /// \param clientSecret - The client secret
 /// \param organizationName - The OIDC realm or organization the client belongs to
-DLL_PUBLIC TDF_STATUS TDFCreateCredentialClientCreds(TDFCredsPtr credsPtr,
-                                                     const char *oidcEndpoint,
+DLL_PUBLIC TDFCredsPtr TDFCreateCredentialClientCreds(const char *oidcEndpoint,
                                                      const char *clientId,
                                                      const char *clientSecret,
                                                      const char *organizationName);
