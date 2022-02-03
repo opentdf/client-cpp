@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 ### Added
+0.4.0
+- PLAT-1371 Add OIDC Token Exchange support
+
 0.3.0
 - PLAT-1371 Add C interoperability layer
 
