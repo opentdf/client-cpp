@@ -4,7 +4,7 @@ class TDFLibConan(ConanFile):
     generators = "cmake"
     settings = "os", "compiler", "build_type", "arch"
 
-    default_options = ("libzip:with_openssl=False", "libarchive:with_zlib=False", "boost:i18n_backend_iconv=off", "boost:i18n_backend_icu=True")
+    default_options = ("libzip:with_openssl=False", "libarchive:with_zlib=False", "boost:without_locale=True", "boost:without_log=True")
         
     def requirements(self):
         self.requires("openssl/1.1.1l@")
