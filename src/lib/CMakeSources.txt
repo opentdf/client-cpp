@@ -107,7 +107,14 @@ set (TDF_CPP_SDK_SOURCE_FILES_NANOTDF
         ${TDF_CPP_SDK_SOURCE_DIR}/src/nanotdf_dataset_client.cpp
     )
 
+set (TDF_CPP_SDK_SOURCE_FILES_C_WRAPPER
+        ${TDF_CPP_SDK_SOURCE_DIR}/include/tdf_constants_c.h
+        ${TDF_CPP_SDK_SOURCE_DIR}/include/tdf_client_c.h
+        ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_client_c.cpp
+    )
+
 set (TDF_CPP_SDK_SOURCE_FILES
         ${TDF_CPP_SDK_SOURCE_FILES_BASE}
         ${TDF_CPP_SDK_SOURCE_FILES_NANOTDF}
+        ${TDF_CPP_SDK_SOURCE_FILES_C_WRAPPER}
     )

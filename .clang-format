@@ -1,0 +1,4 @@
+# Format hints for any editor that supports LSP/Clang (VSCode, Emacs, etc)
+IndentWidth: 4
+ColumnLimit: 0
+NamespaceIndentation: All
