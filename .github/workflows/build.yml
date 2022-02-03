@@ -23,7 +23,10 @@ jobs:
 
       - name: Run build
         run: |
-          cd ${{ github.workspace }}; cd src; ./build-all.sh
+          cd ${{ github.workspace }}
+          cd src
+          export VBUILD_UNIT_TESTS=true
+          ./build-all.sh
 
       - run: echo "🍏 This job's status is ${{ job.status }}."
 
@@ -48,7 +51,10 @@ jobs:
 
       - name: Run build
         run: |
-          cd ${{ github.workspace }}; cd src; ./build-all.sh
+          cd ${{ github.workspace }}
+          cd src
+          export VBUILD_UNIT_TESTS=true
+          .\build-all.bat
 
       - run: echo "🍏 This job's status is ${{ job.status }}."
 
@@ -73,6 +79,9 @@ jobs:
 
       - name: Run build
         run: |
-          cd ${{ github.workspace }}; cd src; ./build-all.sh
+          cd ${{ github.workspace }}
+          cd src
+          export VBUILD_UNIT_TESTS=true
+          ./build-all.sh
 
       - run: echo "🍏 This job's status is ${{ job.status }}."
