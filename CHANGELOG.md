@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 ### Added
+0.3.0
+- PLAT-1371 Add C interoperability layer
+
 0.2.12
 - PLAT-1365 Switch GSL library
 

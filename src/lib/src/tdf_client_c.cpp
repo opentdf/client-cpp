@@ -5,11 +5,10 @@
  *
  */
 
-#include <logger.h>
-#include <policy_object.h>
-#include <tdf_client.h>
-#include <tdf_client_c.h>
-#include <tdf_constants.h>
+#include "logger.h"
+#include "tdf_client.h"
+#include "tdf_client_c.h"
+#include "tdf_constants.h"
 
 #include <algorithm>
 #include <sstream>
