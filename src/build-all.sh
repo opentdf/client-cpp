@@ -3,5 +3,5 @@
 rm -rf build
 mkdir build
 cd build
-conan install .. 
+conan install .. --build=missing
 conan build .. --build-folder .
