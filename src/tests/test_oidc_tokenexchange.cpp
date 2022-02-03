@@ -1,7 +1,6 @@
 //
 //  TDF SDK
 //
-//  Created by Pat Mancuso on 2022/01/14
 //  Copyright 2022 Virtru Corporation
 //
 

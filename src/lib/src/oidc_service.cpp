@@ -53,6 +53,7 @@ namespace virtru {
 
         // If the credentials object already have an access token, use it.
         if (m_oidcCredentials.getAuthType() == OIDCCredentials::AuthType::ClientSecret ||
+            m_oidcCredentials.getAuthType() == OIDCCredentials::AuthType::ExternalExchangeToken ||
             m_oidcCredentials.getAuthType() == OIDCCredentials::AuthType::PKI ||
             m_oidcCredentials.getAuthType() == OIDCCredentials::AuthType::User) {
             getAccessToken();
