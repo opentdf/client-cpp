@@ -28,6 +28,7 @@ jobs:
           export VBUILD_UNIT_TESTS=true
           ./build-all.sh
           cmake -G "Eclipse CDT4 - Unix Makefiles" ..
+          make test
 
       - run: echo "🍏 This job's status is ${{ job.status }}."
 
@@ -57,6 +58,7 @@ jobs:
           set VBUILD_UNIT_TESTS=true
           .\build-all.bat
           cmake ..
+          make test
 
       - run: echo "🍏 This job's status is ${{ job.status }}."
 
@@ -86,5 +88,6 @@ jobs:
           export VBUILD_UNIT_TESTS=true
           ./build-all.sh
           cmake ..
+          make test
 
       - run: echo "🍏 This job's status is ${{ job.status }}."
