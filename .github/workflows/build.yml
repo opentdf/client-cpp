@@ -1,11 +1,11 @@
 name: Run build on push
 on: [push]
+env:
+  VBUILD_UNIT_TESTS: true
 jobs:
 
   run-build-ubuntu:
     runs-on: ubuntu-latest
-    env:
-      VBUILD_UNIT_TESTS true
     steps:
       - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
@@ -31,10 +31,9 @@ jobs:
   run-build-windows:
     runs-on: windows-latest
     env:
-      VBUILD_UNIT_TESTS true
-      VBUILDRELEASE Release
-      VBUILDDEBUG Debug
-      VBUILDMODE Release
+      VBUILDRELEASE: Release
+      VBUILDDEBUG: Debug
+      VBUILDMODE: Release
     steps:
       - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
@@ -59,8 +58,6 @@ jobs:
 
   run-build-mac:
     runs-on: macos-latest
-    env:
-      VBUILD_UNIT_TESTS true
     needs: run-build-ubuntu
     steps:
       - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
