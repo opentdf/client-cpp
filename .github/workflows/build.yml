@@ -27,7 +27,7 @@ jobs:
           cd src
           export VBUILD_UNIT_TESTS=true
           ./build-all.sh
-          cmake -G "Eclipse CDT4 - Unix Makefiles" ..
+          cd build
           make test
 
       - run: echo "🍏 This job's status is ${{ job.status }}."
@@ -57,7 +57,7 @@ jobs:
           cd src
           set VBUILD_UNIT_TESTS=true
           .\build-all.bat
-          cmake ..
+          cd build
           make test
 
       - run: echo "🍏 This job's status is ${{ job.status }}."
@@ -87,7 +87,7 @@ jobs:
           cd src
           export VBUILD_UNIT_TESTS=true
           ./build-all.sh
-          cmake ..
+          cd build
           make test
 
       - run: echo "🍏 This job's status is ${{ job.status }}."
