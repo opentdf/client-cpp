@@ -15,8 +15,7 @@ jobs:
       - run: echo "🖥️ The workflow is now ready to test your code on the runner."
 
       - name: Install Conan
-        id: conan
-        uses: turtlebrowser/get-conan@main
+        run: pip3 install conan==1.45.0
 
       - name: Conan version
         run: echo "${{ steps.conan.outputs.version }}"
@@ -45,8 +44,7 @@ jobs:
       - run: echo "🖥️ The workflow is now ready to test your code on the runner."
 
       - name: Install Conan
-        id: conan
-        uses: turtlebrowser/get-conan@main
+        run: pip3 install conan==1.45.0
 
       - name: Conan version
         run: echo "${{ steps.conan.outputs.version }}"
@@ -56,6 +54,8 @@ jobs:
           cd ${{ github.workspace }}
           cd src
           set VBUILD_UNIT_TESTS=true
+          set VBUILDMODE=Release
+          set VBUILDRELEASE=Release
           .\build-all.bat
           cd build
           make test
@@ -64,6 +64,7 @@ jobs:
 
   run-build-mac:
     runs-on: macos-latest
+    needs: run-build-ubuntu
     steps:
       - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
@@ -75,8 +76,7 @@ jobs:
       - run: echo "🖥️ The workflow is now ready to test your code on the runner."
 
       - name: Install Conan
-        id: conan
-        uses: turtlebrowser/get-conan@main
+        run: pip3 install conan==1.45.0
 
       - name: Conan version
         run: echo "${{ steps.conan.outputs.version }}"
