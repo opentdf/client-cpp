@@ -5,7 +5,7 @@ env:
 jobs:
 
   run-build-ubuntu:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
@@ -29,7 +29,7 @@ jobs:
       - run: echo "🍏 This job's status is ${{ job.status }}."
 
   run-build-windows:
-    runs-on: windows-latest
+    runs-on: windows-2019
     needs: run-build-ubuntu
     env:
       VBUILDRELEASE: Release
@@ -61,7 +61,7 @@ jobs:
       - run: echo "🍏 This job's status is %job.status%."
 
   run-build-mac:
-    runs-on: macos-latest
+    runs-on: macos-11
     needs: run-build-ubuntu
     steps:
       - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
