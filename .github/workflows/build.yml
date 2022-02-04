@@ -1,0 +1,86 @@
+name: Run build on push
+on: [push]
+env:
+  VBUILD_UNIT_TESTS: true
+jobs:
+
+  run-build-ubuntu:
+    runs-on: ubuntu-20.04
+    steps:
+      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
+      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
+      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
+
+      - name: Install Conan
+        run: pip3 install conan==1.45.0
+
+      - name: Run build
+        run: |
+          cd ${{ github.workspace }}
+          cd src
+          ./build-all.sh
+          cd build
+          make test
+
+      - run: echo "🍏 This job's status is ${{ job.status }}."
+
+  run-build-windows:
+    runs-on: windows-2019
+    needs: run-build-ubuntu
+    env:
+      VBUILDRELEASE: Release
+      VBUILDDEBUG: Debug
+      VBUILDMODE: Release
+    steps:
+      - run: echo "🎉 The job was automatically triggered by a %github.event_name% event."
+      - run: echo "🐧 This job is now running on a %runner.os% server hosted by GitHub!"
+      - run: echo "🔎 The name of your branch is %github.ref% and your repository is %github.repository%."
+
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - run: echo "💡 The %github.repository% repository has been cloned to the runner."
+
+      - name: Install Conan
+        run: pip3 install conan==1.45.0
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v1
+
+      - name: Run build
+        run: |
+          cd ${{ github.workspace }}
+          cd src
+          .\build-all.bat
+          cd build
+          msbuild RUN_TESTS.vcxproj /p:Configuration=Release
+
+      - run: echo "🍏 This job's status is %job.status%."
+
+  run-build-mac:
+    runs-on: macos-11
+    needs: run-build-ubuntu
+    steps:
+      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
+      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
+      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
+
+      - name: Install Conan
+        run: pip3 install conan==1.45.0
+
+      - name: Run build
+        run: |
+          cd ${{ github.workspace }}
+          cd src
+          ./build-all.sh
+          cd build
+          make test
+
+      - run: echo "🍏 This job's status is ${{ job.status }}."
