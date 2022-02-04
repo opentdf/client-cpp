@@ -12,13 +12,9 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v2
       - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
-      - run: echo "🖥️ The workflow is now ready to test your code on the runner."
 
       - name: Install Conan
         run: pip3 install conan==1.45.0
-
-      - name: Conan version
-        run: echo "${{ steps.conan.outputs.version }}"
 
       - name: Run build
         run: |
@@ -33,6 +29,7 @@ jobs:
 
   run-build-windows:
     runs-on: windows-latest
+    needs: run-build-ubuntu
     steps:
       - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
@@ -41,21 +38,18 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v2
       - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
-      - run: echo "🖥️ The workflow is now ready to test your code on the runner."
 
       - name: Install Conan
         run: pip3 install conan==1.45.0
-
-      - name: Conan version
-        run: echo "${{ steps.conan.outputs.version }}"
 
       - name: Run build
         run: |
           cd ${{ github.workspace }}
           cd src
           set VBUILD_UNIT_TESTS=true
-          set VBUILDMODE=Release
-          set VBUILDRELEASE=Release
+          set VBUILDRELEASE=/p:Configuration=Release
+          set VBUILDDEBUG=/p:Configuration=Debug
+          set VBUILDMODE=%VBUILDRELEASE%
           .\build-all.bat
           cd build
           make test
@@ -73,13 +67,9 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v2
       - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
-      - run: echo "🖥️ The workflow is now ready to test your code on the runner."
 
       - name: Install Conan
         run: pip3 install conan==1.45.0
-
-      - name: Conan version
-        run: echo "${{ steps.conan.outputs.version }}"
 
       - name: Run build
         run: |
