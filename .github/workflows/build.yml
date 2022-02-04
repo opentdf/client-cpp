@@ -1,5 +1,7 @@
 name: Run build on push
 on: [push]
+env:
+  VBUILD_UNIT_TESTS true
 jobs:
 
   run-build-ubuntu:
@@ -20,7 +22,6 @@ jobs:
         run: |
           cd ${{ github.workspace }}
           cd src
-          export VBUILD_UNIT_TESTS=true
           ./build-all.sh
           cd build
           make test
@@ -29,7 +30,11 @@ jobs:
 
   run-build-windows:
     runs-on: windows-latest
-    needs: run-build-ubuntu
+    env:
+      VBUILDRELEASE /p:Configuration=Release
+      VBUILDDEBUG /p:Configuration=Debug
+      VBUILDMODE /p:Configuration=Release
+
     steps:
       - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
@@ -46,10 +51,6 @@ jobs:
         run: |
           cd ${{ github.workspace }}
           cd src
-          set VBUILD_UNIT_TESTS=true
-          set VBUILDRELEASE=/p:Configuration=Release
-          set VBUILDDEBUG=/p:Configuration=Debug
-          set VBUILDMODE=%VBUILDRELEASE%
           .\build-all.bat
           cd build
           make test
@@ -75,7 +76,6 @@ jobs:
         run: |
           cd ${{ github.workspace }}
           cd src
-          export VBUILD_UNIT_TESTS=true
           ./build-all.sh
           cd build
           make test
