@@ -30,6 +30,7 @@ jobs:
 
   run-build-windows:
     runs-on: windows-latest
+    needs: run-build-ubuntu
     env:
       VBUILDRELEASE: Release
       VBUILDDEBUG: Debug
@@ -52,7 +53,7 @@ jobs:
           cd src
           .\build-all.bat
           cd build
-          make test
+          msbuild RUN_TESTS.vcxproj
 
       - run: echo "🍏 This job's status is ${{ job.status }}."
 
