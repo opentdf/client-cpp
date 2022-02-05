@@ -29,11 +29,11 @@ DLL_PUBLIC void TDFDestroyCredential(TDFCredsPtr creds);
 /// \param certificateAuthority - The certificate authority to be used
 /// \param organizationName - The OIDC realm or organization the client belongs to
 DLL_PUBLIC TDFCredsPtr TDFCreateCredentialPKI(const char *oidcEndpoint,
-                                             const char *clientId,
-                                             const char *clientKeyFileName,
-                                             const char *clientCertFileName,
-                                             const char *sdkConsumerCertAuthority,
-                                             const char *organizationName);
+                                              const char *clientId,
+                                              const char *clientKeyFileName,
+                                              const char *clientCertFileName,
+                                              const char *sdkConsumerCertAuthority,
+                                              const char *organizationName);
 
 /// Create a new Credential instance configured for Client Credential authentication.
 /// \param oidcEndpoint - The OIDC server url
@@ -41,9 +41,21 @@ DLL_PUBLIC TDFCredsPtr TDFCreateCredentialPKI(const char *oidcEndpoint,
 /// \param clientSecret - The client secret
 /// \param organizationName - The OIDC realm or organization the client belongs to
 DLL_PUBLIC TDFCredsPtr TDFCreateCredentialClientCreds(const char *oidcEndpoint,
-                                                     const char *clientId,
-                                                     const char *clientSecret,
-                                                     const char *organizationName);
+                                                      const char *clientId,
+                                                      const char *clientSecret,
+                                                      const char *organizationName);
+
+/// Create a new Credential instance configured for Client Credential authentication.
+/// \param oidcEndpoint - The OIDC server url
+/// \param clientId - The client id
+/// \param clientSecret - The client secret
+/// \param externalExchangeToken - An external token from the to be exchanged during auth via OIDC Token Exchange
+/// \param organizationName - The OIDC realm or organization the client belongs to
+DLL_PUBLIC TDFCredsPtr TDFCreateCredentialTokenExchange(const char *oidcEndpoint,
+                                                        const char *clientId,
+                                                        const char *clientSecret,
+                                                        const char *externalExchangeToken,
+                                                        const char *organizationName);
 
 /// Create a new TDF client using provided credentials object
 /// \param credsPtr - Creds object created by calling TDFCreateCredentialXXX

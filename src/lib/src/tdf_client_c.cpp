@@ -61,6 +61,18 @@ DLL_PUBLIC TDFCredsPtr TDFCreateCredentialClientCreds(const char *oidcEndpoint,
     return creds;
 }
 
+DLL_PUBLIC TDFCredsPtr TDFCreateCredentialTokenExchange(const char *oidcEndpoint,
+                                                        const char *clientId,
+                                                        const char *clientSecret,
+                                                        const char *externalExchangeToken,
+                                                        const char *organizationName) {
+    auto *creds = new virtru::OIDCCredentials();
+    creds->setClientCredentialsTokenExchange(clientId, clientSecret, externalExchangeToken,
+                                             organizationName, oidcEndpoint);
+
+    return creds;
+}
+
 /// Destruct the credentials instance.
 DLL_PUBLIC void TDFDestroyCredential(TDFCredsPtr creds) {
     auto *policy = static_cast<virtru::OIDCCredentials *>(creds);

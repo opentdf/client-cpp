@@ -8,6 +8,14 @@
 // Created by Sujan Reddy on 7/16/21.
 //
 
+#include "oidc_credentials.h"
+#include "crypto/crypto_utils.h"
+#include "network/network_util.h"
+#include "network_interface.h"
+#include "nlohmann/json.hpp"
+#include "sdk_constants.h"
+#include "tdf_exception.h"
+#include "utils.h"
 #include <algorithm>
 #include <cctype>
 #include <ctime>
@@ -16,15 +24,7 @@
 #include <logger.h>
 #include <regex>
 #include <string>
-#include "nlohmann/json.hpp"
 #include <vector>
-#include "oidc_credentials.h"
-#include "utils.h"
-#include "crypto/crypto_utils.h"
-#include "network/network_util.h"
-#include "network_interface.h"
-#include "sdk_constants.h"
-#include "tdf_exception.h"
 
 namespace virtru {
 
@@ -35,16 +35,16 @@ namespace virtru {
     OIDCCredentials::~OIDCCredentials() = default;
 
     // Provide default implementation.
-    OIDCCredentials::OIDCCredentials(const OIDCCredentials&) = default;
-    OIDCCredentials& OIDCCredentials::operator=(const OIDCCredentials&) = default;
-    OIDCCredentials::OIDCCredentials(OIDCCredentials&&) = default;
-    OIDCCredentials& OIDCCredentials::operator=(OIDCCredentials&&) = default;
+    OIDCCredentials::OIDCCredentials(const OIDCCredentials &) = default;
+    OIDCCredentials &OIDCCredentials::operator=(const OIDCCredentials &) = default;
+    OIDCCredentials::OIDCCredentials(OIDCCredentials &&) = default;
+    OIDCCredentials &OIDCCredentials::operator=(OIDCCredentials &&) = default;
 
     /// Set the client credentials that will be use for authn with OIDC server
     void OIDCCredentials::setClientCredentialsClientSecret(const std::string &clientId,
-                                               const std::string &clientSecret,
-                                               const std::string &organizationName,
-                                               const std::string &oidcEndpoint) {
+                                                           const std::string &clientSecret,
+                                                           const std::string &organizationName,
+                                                           const std::string &oidcEndpoint) {
         m_authType = AuthType::ClientSecret;
 
         m_clientId = clientId;
@@ -55,12 +55,30 @@ namespace virtru {
         LogTrace("OIDCCredentials is of auth type client");
     }
 
+    /// Set the client credentials that will be use for authn with OIDC server, with an external
+    /// token that will be processed and exchanged for a new one.
+    void OIDCCredentials::setClientCredentialsTokenExchange(const std::string &clientId,
+                                                            const std::string &clientSecret,
+                                                            const std::string &externalExchangeToken,
+                                                            const std::string &organizationName,
+                                                            const std::string &oidcEndpoint) {
+        m_authType = AuthType::ExternalExchangeToken;
+
+        m_clientId = clientId;
+        m_clientSecret = clientSecret;
+        m_orgName = organizationName;
+        m_oidcEndpoint = oidcEndpoint;
+        m_extToken = externalExchangeToken;
+
+        LogTrace("OIDCCredentials is of auth type client token exchange");
+    }
+
     /// Set the user credentials that will be use for authn with OIDC server
     void OIDCCredentials::setUserCredentialsUser(const std::string &clientId,
-                                             const std::string &username,
-                                             const std::string &password,
-                                             const std::string &organizationName,
-                                             const std::string &oidcEndpoint) {
+                                                 const std::string &username,
+                                                 const std::string &password,
+                                                 const std::string &organizationName,
+                                                 const std::string &oidcEndpoint) {
         m_authType = AuthType::User;
 
         m_clientId = clientId;
@@ -74,11 +92,11 @@ namespace virtru {
 
     /// Set the PKI client credentials that will be use for authn with OIDC server
     void OIDCCredentials::setClientCredentialsPKI(const std::string &clientId,
-                                             const std::string& clientKeyFileName,
-                                             const std::string& clientCertFileName,
-                                             const std::string& certificateAuthority,
-                                             const std::string &organizationName,
-                                             const std::string &oidcEndpoint) {
+                                                  const std::string &clientKeyFileName,
+                                                  const std::string &clientCertFileName,
+                                                  const std::string &certificateAuthority,
+                                                  const std::string &organizationName,
+                                                  const std::string &oidcEndpoint) {
 
         m_authType = AuthType::PKI;
 
@@ -119,6 +137,11 @@ namespace virtru {
         return m_clientSecret;
     }
 
+    /// Return the externally-provided token to be exchanged as part of client creds auth.
+    std::string OIDCCredentials::getExternalExchangeToken() const {
+        LogTrace("OIDCCredentials::getExternalExchangeToken");
+        return m_extToken;
+    }
     /// Return the password for associated user
     std::string OIDCCredentials::getPassword() const {
         LogTrace("OIDCCredentials::getPassword");
@@ -197,4 +220,4 @@ namespace virtru {
         LogDebug("certificateAuthority=" + m_certificateAuthority);
         return m_certificateAuthority;
     }
-}
+} // namespace virtru
