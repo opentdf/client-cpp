@@ -61,16 +61,16 @@ class MockNetwork : public INetwork {
 
     virtual void executeGet(const std::string &url, const HttpHeaders &headers, HTTPServiceCallback &&callback, const std::string &ca, const std::string &key, const std::string &cert) override {
         LogTrace("Mock Service::Get");
-        BOOST_FAIL("No GET expected");
         callback(200, kasPubKey);
     }
 
     virtual void executePost(const std::string &url, const HttpHeaders &headers, std::string &&body, HTTPServiceCallback &&callback, const std::string &ca, const std::string &key, const std::string &cert) override {
         LogTrace("Mock Service::Post");
 
-        if (body.find("urn:ietf:params:oauth:grant-type:token-exchange") != std::string::npos) {
+        if (body.find("urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange") != std::string::npos) {
             BOOST_TEST_MESSAGE("executePost token exchange test Passed");
         } else {
+            LogDebug("executePost token exchange test failed - Body: " + body);
             BOOST_FAIL("executePost token exchange test Failed");
         }
 
@@ -82,7 +82,9 @@ class MockNetwork : public INetwork {
 
         const auto OIDCAccessToken = "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJGRjJKM0o5TjNGQWQ0dnpLVDd2aEloZE1DTEVudE1PejVtLWhGNm5ScFNZIn0.eyJleHAiOjE2MTQxMTgzNzgsImlhdCI6MTYxNDExODA3OCwianRpIjoiNWQ4OTczYjYtYjg5Yy00OTBjLWIzYTYtMTM0ZDMxOTYxZTM3IiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4MDgwL2F1dGgvcmVhbG1zL2V4YW1wbGUtcmVhbG0iLCJhdWQiOiJhY2NvdW50Iiwic3ViIjoiN2ZkZGJkYWQtNDlmYS00NWU4LTg4MzItMzI3ZGI4ZjU1MDE1IiwidHlwIjoiQmVhcmVyIiwiYXpwIjoiZXhhbXBsZS1yZWFsbS1jbGllbnQiLCJzZXNzaW9uX3N0YXRlIjoiOTA0MTc4NTAtNWEwNC00ZmU1LTgxZWMtOTkzZDY1MmVhYmY5IiwiYWNyIjoiMSIsInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJvZmZsaW5lX2FjY2VzcyIsInVtYV9hdXRob3JpemF0aW9uIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJwcm9maWxlIGVtYWlsIiwic3VwaXJpIjoidG9rZW5fc3VwaXJpIiwiZW1haWxfdmVyaWZpZWQiOmZhbHNlLCJjbGFpbSI6eyJuYW1lIjp7InVzZXJuYW1lIjoiZm9vIn19LCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJqZWZmNS1leGFtcGxlIn0.NfM272HpLfyHACNJrXniyPF5klXjfB8QbhHBt_aTlZUF1-wO7W4-3qL02bMYe71dg_swR5WLFR0SL-zqa9zeKfsegL8E-lEeRSCcFwTvoSXPXSZ06tafFmSNxuA88MogG_3ZBhi9sUL5uAXtCoC3Rkb6xpb-JdHp42n68s_Mm1teCU2wx2rS6O1k23YCK3lY_xRsmV62sQ_tx973N5u7YHPxWsKVi-gHNlW3N0x23bRsEk-qcIq-3ug5cLOyADlNUeApTmug9lXGJxqxo3jlugnuf6VUtMwI1x8xSbePwC1pmGAfzZX2pS0kEUiGSHdH7flzibrMG70IXlutmS3e8Q";
 
+        LogDebug("Returning 200");
         callback(200, "{\"" + std::string(kAccessToken) + "\" : \"" + OIDCAccessToken + "\", \"" + std::string(kRefreshToken) + "\" : \"bbbbb\"}");
+        LogDebug("Returned 200");
     }
 
     virtual void executePatch(const std::string &url, const HttpHeaders &headers, std::string &&body, HTTPServiceCallback &&callback, const std::string &ca, const std::string &key, const std::string &cert) override {

@@ -111,12 +111,13 @@ namespace virtru {
 
         if (m_accessToken.empty()) {
             //We don't have cached tokens, fetch
+            LogDebug("fetching initial access token");
             fetchAccessToken();
-            LogDebug("fetched initial access token");
         } else {
             //First, try to grab the cached accessToken
             //and hit up the userinfo endpoint with it
             try {
+                LogDebug("Checking token");
                 checkAccessToken();
                 //That worked? Cool, token is still valid, return
                 LogDebug("Access token valid");
@@ -126,14 +127,17 @@ namespace virtru {
 
                     // Get a new access token using the refresh token
                     if (!m_refreshToken.empty()) {
+                        LogDebug("Refreshing access token");
                         refreshAccessToken();
                     } else {
+                        LogDebug("Fetching access token");
                         fetchAccessToken();
                     }
                 } catch (const Exception &refreshException) {
                     LogWarn("Refresh token rejected, attempting to regenerate tokens with credentials");
                     //Last-ditch effort, maybe our client creds are still valid even if
                     //our refresh and access tokens aren't - try to fetch a new tokenset from scratch
+                    LogDebug("fetching replacement access token");
                     fetchAccessToken();
                 }
             }
@@ -207,6 +211,7 @@ namespace virtru {
                 clientKeyFileName,
                 clientCertFileName);
         } else {
+            LogDebug("Unable to lock network provider");
             ThrowException("Unable to lock network provider");
         }
 
@@ -218,6 +223,7 @@ namespace virtru {
             std::string exceptionMsg = "Get OIDC token failed status: ";
             exceptionMsg += std::to_string(status);
             exceptionMsg += responseJson;
+            LogDebug("Bad http response: " + exceptionMsg);
             ThrowException(std::move(exceptionMsg));
         }
 
