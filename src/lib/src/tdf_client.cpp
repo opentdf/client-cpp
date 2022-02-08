@@ -191,13 +191,16 @@ namespace virtru {
         return plainData;
     }
 
-    /// Decrypt data from tdf format.
+    /// Get the policy document as a JSON string from the encrypted TDF data.
     std::string TDFClient::getPolicy(const std::string &encryptedData) {
         LogTrace("TDFClient::getPolicy");
         // Initialize the TDF builder
         initTDFBuilder();
 
-        // Create a policy object.
+        // Create a policy object - note that this has nothing to do with the policy
+        // we will get and return, this is just an empty object we hand to the builder
+        // so the builder will give us the TDF interface we want to do the thing we want
+        // to do.
         // TODO we really should drop the 'Builder' pattern here,
         // it accomplishes very little of use.
         auto policyObject = createPolicyObject();
