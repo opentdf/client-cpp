@@ -136,6 +136,8 @@ namespace virtru {
         initTDFBuilder();
 
         // Create a policy object.
+        // TODO we really should drop the 'Builder' pattern here,
+        // it accomplishes very little of use.
         auto policyObject = createPolicyObject();
         auto tdf = m_tdfBuilder->setPolicyObject(policyObject).build();
         tdf->decryptFile(inFilepath, outFilepath);
@@ -148,6 +150,8 @@ namespace virtru {
         initTDFBuilder();
 
         // Create a policy object.
+        // TODO we really should drop the 'Builder' pattern here,
+        // it accomplishes very little of use.
         auto policyObject = createPolicyObject();
         auto tdf = m_tdfBuilder->setPolicyObject(policyObject).build();
 
@@ -168,6 +172,8 @@ namespace virtru {
         initTDFBuilder();
 
         // Create a policy object.
+        // TODO we really should drop the 'Builder' pattern here,
+        // it accomplishes very little of use.
         auto policyObject = createPolicyObject();
         auto tdf = m_tdfBuilder->setPolicyObject(policyObject).build();
 
@@ -175,7 +181,7 @@ namespace virtru {
         std::stringstream inputStream;
         inputStream.write(reinterpret_cast<const char *>(encryptedData.data()), encryptedData.size());
 
-        // encrypt the stream.
+        // decrypt the stream.
         std::ostringstream ioStream;
         tdf->decryptStream(inputStream, ioStream);
 
@@ -185,12 +191,24 @@ namespace virtru {
         return plainData;
     }
 
-    /// Set the callback interface which will invoked for all the http network operations.
-    void TDFClient::setHTTPServiceProvider(std::weak_ptr<INetwork> httpServiceProvider) {
+    /// Decrypt data from tdf format.
+    std::string TDFClient::getPolicy(const std::string &encryptedData) {
+        LogTrace("TDFClient::getPolicy");
+        // Initialize the TDF builder
+        initTDFBuilder();
 
-        LogTrace("TDFClient::setHTTPServiceProvider");
-        m_tdfBuilder->setHTTPServiceProvider(httpServiceProvider);
+        // Create a policy object.
+        // TODO we really should drop the 'Builder' pattern here,
+        // it accomplishes very little of use.
+        auto policyObject = createPolicyObject();
+        auto tdf = m_tdfBuilder->setPolicyObject(policyObject).build();
 
+        // NOTE: look into pubsetbuf for better performance.
+        std::istringstream inputStream(encryptedData);
+        std::ostringstream ioStream;
+
+        // return the policy.
+        return tdf->getPolicy(inputStream);
     }
 
     ///Add data attribute
@@ -209,6 +227,14 @@ namespace virtru {
         std::string displayName;
         m_dataAttributeObjects.emplace_back(dataAttribute, displayName,
                                             m_tdfBuilder->m_impl->m_kasPublicKey, userKasURL);
+    }
+
+    /// Set the callback interface which will invoked for all the http network operations.
+    void TDFClient::setHTTPServiceProvider(std::weak_ptr<INetwork> httpServiceProvider) {
+
+        LogTrace("TDFClient::setHTTPServiceProvider");
+        m_tdfBuilder->setHTTPServiceProvider(httpServiceProvider);
+
     }
 
     /// Initialize the TDF builder which is used for creating the TDF instance
