@@ -62,7 +62,14 @@ namespace virtru {
         /// \param sourceCb - A source callback to retrieve the data to be decrypted.
         /// \param sinkCb - A sink callback with the decrypted data.
         void decryptData(TDFDataSourceCb sourceCb, TDFDataSinkCb sinkCb);
+
 #endif
+
+        /// Extract and return the JSON policy string from a TDF stream.
+        /// \param inStream - The stream containing tdf data.
+        /// \param outStream - The stream containing the JSON policy string.
+        /// NOTE: virtru::exception will be thrown if there are issues while retrieving the policy.
+        std::string getPolicy(std::istream& inStream);
 
         /// Return the policy uuid from the tdf file.
         /// \param tdfFilePath - The tdf file path

@@ -915,6 +915,48 @@ namespace virtru {
         outStream.write(token7.data(), token7.size());
     }
 
+    /// Return the policy JSON string from the tdf input stream.
+    std::string TDFImpl::getPolicy(std::istream &inStream) {
+
+        LogTrace("TDFImpl::getPolicy stream");
+
+        // Reset the input stream.
+        const auto final = gsl::finally([&inStream] {
+            inStream.clear();
+        });
+
+        std::string manifestStr;
+
+        auto protocol = encryptedWithProtocol(inStream);
+        if (protocol == Protocol::Zip) {
+            TDFArchiveReader reader(inStream, kTDFManifestFileName, kTDFPayloadFileName);
+
+            manifestStr = reader.getManifest();
+        } else { // html format
+
+            if (protocol == Protocol::Xml) {
+                ThrowException("XML TDF not supported");
+            }
+
+            // Get the stream size
+            inStream.seekg(0, inStream.end);
+            auto dataSize = inStream.tellg();
+            inStream.seekg(0, inStream.beg);
+
+            std::unique_ptr<std::uint8_t[]> buffer(new std::uint8_t[dataSize]);
+
+            // Read all the data from input stream
+            inStream.read(reinterpret_cast<char *>(buffer.get()), dataSize);
+
+            auto bytes = gsl::make_span(buffer.get(), dataSize);
+            auto manifestData = getTDFZipData(toBytes(bytes), true);
+
+            manifestStr.append(manifestData.begin(), manifestData.end());
+        }
+
+        return getPolicyFromManifest(manifestStr);
+    }
+
     /// Return the policy uuid from the tdf file.
     std::string TDFImpl::getPolicyUUID(const std::string &tdfFilePath) {
 
@@ -1590,9 +1632,9 @@ namespace virtru {
         return protocol;
     }
 
-    /// Retrive the policy uuid(id) from the manifest.
-    std::string TDFImpl::getPolicyIdFromManifest(const std::string &manifestStr) const {
-        LogTrace("TDFImpl::getPolicyIdFromManifest");
+    /// Retrive the policy from the manifest.
+    std::string TDFImpl::getPolicyFromManifest(const std::string &manifestStr) const {
+        LogTrace("TDFImpl::getPolicyFromManifest");
 
         auto manifest = nlohmann::json::parse(manifestStr);
 
@@ -1611,6 +1653,12 @@ namespace virtru {
         // Get policy
         std::string base64Policy = encryptionInformation[kPolicy];
         auto policyStr = base64Decode(base64Policy);
+        return policyStr;
+    }
+
+    /// Retrive the policy uuid(id) from the manifest.
+    std::string TDFImpl::getPolicyIdFromManifest(const std::string &manifestStr) const {
+        auto policyStr = getPolicyFromManifest(manifestStr);
         auto policy = nlohmann::json::parse(policyStr);
 
         if (!policy.contains(kUid)) {
