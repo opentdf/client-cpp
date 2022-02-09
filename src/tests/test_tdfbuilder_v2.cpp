@@ -498,7 +498,12 @@ BOOST_AUTO_TEST_CASE(test_tdf_builder_advanced) {
 
             mockNetwork->addPOSTExpectation("https://api-develop01.develop.virtru.com/kas/v2/rewrap", headers, fakeRewrapResp, 200);
 
-            auto tdfPolicyUuid = tdf->getPolicyUUID(outPathEncrypt);
+            auto tdfPolicyStr = tdf->getPolicy(ioStream);
+            auto policy = nlohmann::json::parse(tdfPolicyStr);
+            auto &attributes = policy[kBody][kDissem]
+
+            auto tdfPolicyUuid = tdf->getPolicyUUID(ioStream);
+            BOOST_TEST(attributes.contains(user));
             BOOST_TEST(tdfPolicyUuid == policyUuid);
 
             std::cout << std::endl;

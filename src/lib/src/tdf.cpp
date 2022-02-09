@@ -79,7 +79,16 @@ namespace virtru {
         m_impl->decryptData(sourceCb, sinkCb);
     }
 
+    /// Return the policy from the tdf input stream.
+    std::string TDF::getPolicy(std::istream&  inStream) {
+        LogInfo("get policy object from stream...");
+
+        return m_impl->getPolicy(inStream);
+    }
+
     /// Return the policy uuid from the tdf file.
+    /// TODO we should consider deprecating this in favor of
+    /// the more broadly-useful `getPolicy`
     std::string TDF::getPolicyUUID(const std::string& tdfFilePath) {
         LogInfo("get policy uuid from tdf:" + tdfFilePath);
         
@@ -87,6 +96,8 @@ namespace virtru {
     }
 
     /// Return the policy uuid from the tdf input stream.
+    /// TODO we should consider deprecating this in favor of
+    /// the more broadly-useful `getPolicy`
     std::string TDF::getPolicyUUID(std::istream&  inStream) {
         LogInfo("get policy uuid from stream...");
 

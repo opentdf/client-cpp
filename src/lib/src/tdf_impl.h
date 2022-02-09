@@ -74,6 +74,12 @@ namespace virtru {
         /// \param sinkCb - A sink callback with the decrypted data.
         void decryptData(TDFDataSourceCb sourceCb, TDFDataSinkCb sinkCb);
 
+        /// Extract and return the JSON policy string from a TDF stream.
+        /// \param inStream - The stream containing tdf data.
+        /// \param outStream - The stream containing the JSON policy string.
+        /// NOTE: virtru::exception will be thrown if there are issues while retrieving the policy.
+        std::string getPolicy(std::istream& inStream);
+
         /// Return the policy uuid from the tdf file.
         /// \param tdfFilePath - The tdf file path
         /// \return - Return a uuid of the policy.
@@ -195,6 +201,11 @@ namespace virtru {
         /// \param inTdfFilePath - The tdf file path
         /// \return TDF protocol used to encrypt the input stream data
         Protocol encryptedWithProtocol(std::istream& tdfInStream) const;
+
+        /// Retrive the policy uuid(id) from the manifest.
+        /// \param manifestStr - The tdf manifest.
+        /// \return String - The policy id.
+        std::string getPolicyFromManifest(const std::string& manifestStr) const;
 
         /// Retrive the policy uuid(id) from the manifest.
         /// \param manifestStr - The tdf manifest.

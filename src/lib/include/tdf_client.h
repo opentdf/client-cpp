@@ -122,6 +122,13 @@ namespace virtru {
         /// return value.
         std::vector<VBYTE> decryptData(const std::vector<VBYTE> &encryptedData) override;
 
+        // TODO do we need a GetPolicyFile??
+        /// Extract and return the JSON policy string from a TDF stream.
+        /// \param inStream - The stream containing tdf data.
+        /// \param outStream - The stream containing the JSON policy string.
+        /// NOTE: virtru::exception will be thrown if there are issues while retrieving the policy.
+        std::string getPolicy(const std::string &encryptedData);
+
         /// Allow user to add data attribute
         /// \param dataAttribute - uri of the attribute
         /// \param kasUrl - kas url
