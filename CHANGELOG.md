@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 ### Added
+0.5.1
+- Bump `libarchive` to 3.5.2
+
 0.5.0
 - SA-354 Add `getPolicy` support
 
