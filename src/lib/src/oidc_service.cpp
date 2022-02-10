@@ -29,7 +29,6 @@ namespace virtru {
 
     /// Constructor
     OIDCService::OIDCService(OIDCCredentials oidcCredentials,
-                             const HttpHeaders &headers,
                              const std::string &clientSigningPubkey,
                              std::weak_ptr<INetwork> httpServiceProvider)
         : m_oidcCredentials(std::move(oidcCredentials)) {

@@ -276,8 +276,7 @@ namespace virtru {
                                {kUserAgentKey, UserAgentValuePostFix},
                                {kVirtruClientKey, VirtruClientValue}};
 
-        //If we're using OIDC auth mode (upsert/rewrap V2) - then we ignore EOs
-        //and assume that an Auth header has already been set
+        //Deprecated/remove this case - not in OIDC mode, need to fetch Entity Object
         if (entityObjectNotSet && !oidcMode) {
 
             // Construct the body
@@ -299,12 +298,15 @@ namespace virtru {
             m_tdfBuilder->setHttpHeaders(headers);
         }
 
+        //If we're using OIDC auth mode (upsert/rewrap V2) - then we ignore EOs
+        //and assume that an Auth header has already been set
         if (oidcMode) {
-
             if (!m_oidcService) {
                 HttpHeaders oidcHeaders = {{kUserAgentKey,    UserAgentValuePostFix}};
+                if (!m_tdfBuilder->m_impl->m_networkServiceProvider.lock()) {
+                    m_tdfBuilder->setHTTPServiceProvider(std::make_shared<network::HTTPServiceProvider>(oidcHeaders));
+                }
                 m_oidcService = std::make_unique<OIDCService>(*m_oidcCredentials,
-                                                              oidcHeaders,
                                                               m_tdfBuilder->m_impl->m_requestSignerPublicKey,
                                                               m_tdfBuilder->m_impl->m_networkServiceProvider);
             }

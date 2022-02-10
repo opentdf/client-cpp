@@ -212,7 +212,7 @@ DLL_PUBLIC TDF_STATUS TDFEncryptString(TDFClientPtr clientPtr,
                                        TDFBytesPtr *outBytesPtr,
                                        TDFBytesLength *outBytesLength) {
     if (clientPtr == nullptr) {
-        LogError("Invalid client pointer!");
+        LogError("Invalid inBytes pointer!");
         return TDF_STATUS_INVALID_PARAMS;
     }
     if (inBytesPtr == nullptr) {

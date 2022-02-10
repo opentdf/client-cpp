@@ -306,8 +306,10 @@ namespace virtru {
 
             if (!m_oidcService) {
                 HttpHeaders oidcHeaders = {{kUserAgentKey,    UserAgentValuePostFix}};
+                if (!m_nanoTdfBuilder->m_impl->m_networkServiceProvider.lock()) {
+                    m_nanoTdfBuilder->setHTTPServiceProvider(std::make_shared<network::HTTPServiceProvider>(oidcHeaders));
+                }
                 m_oidcService = std::make_unique<OIDCService>(*m_oidcCredentials,
-                                                              oidcHeaders,
                                                               m_nanoTdfBuilder->m_impl->m_requestSignerPublicKey,
                                                               m_nanoTdfBuilder->m_impl->m_networkServiceProvider);
             }
