@@ -70,16 +70,6 @@ namespace virtru {
         return *this;
     }
 
-    /// TODO this has no business being in the Builder, but the builder pattern
-    /// is largely pointless versus TDFClient as it is just a bunch of duplicated
-    /// setter funcs and a `validate()` call
-    /// Set the callback interface which will invoked for all the http network operations.
-    TDFBuilder &TDFBuilder::setHTTPServiceProvider(std::weak_ptr<INetwork> httpServiceProvider) {
-        LogTrace("TDFBuilder::setHTTPServiceProvider");
-        m_impl->m_networkServiceProvider = std::move(httpServiceProvider);
-        return *this;
-    }
-
     /// Return a unique ptr of TDF object. This can be use to exercise operation like
     /// encryption/decryption of the payload.
     std::unique_ptr<TDF> TDFBuilder::build() {

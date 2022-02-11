@@ -352,6 +352,12 @@ namespace virtru {
         return subjectAttributesObjects;
     }
 
+    /// Set the callback interface which will invoked for all the http network operations.
+    void TDFClient::setHTTPServiceProvider(std::weak_ptr<INetwork> httpServiceProvider) {
+        LogTrace("TDFClient::setHTTPServiceProvider");
+        m_tdfBuilder->m_impl->m_networkServiceProvider = std::move(httpServiceProvider);
+    }
+
     /// Create TDFs in XML format instead of zip format.
     void TDFClient::setXMLFormat() {
         LogTrace("TDFClient::setXMLFormat");

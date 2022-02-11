@@ -102,16 +102,6 @@ namespace virtru {
         /// \return - Unique ptr of the TDF instance.
         TDFBuilder& setHttpHeaders(const std::unordered_map<std::string, std::string>& headers);
 
-        /// TODO this has no business being in the Builder, but the builder pattern
-        /// is largely pointless versus TDFClient as it is just a bunch of duplicated
-        /// setter funcs and a `validate()` call
-        ///
-        /// Set the callback interface which will invoked for all the http network operations.
-        /// \param httpServiceProvider - A callback interface which the caller has to implement for performing the
-        /// network http operations.
-        /// \return - Unique ptr of the TDF instance.
-        TDFBuilder& setHTTPServiceProvider(std::weak_ptr<INetwork> httpServiceProvider);
-
     public:
         /// Optional - Meta data
 

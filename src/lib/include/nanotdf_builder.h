@@ -180,12 +180,6 @@ namespace virtru {
         /// \return - Unique ptr of the TDF instance.
         NanoTDFBuilder& setHttpHeaders(const std::unordered_map<std::string, std::string>& headers);
 
-        /// Set the callback interface which will invoked for all the http network operations.
-        /// \param httpServiceProvider - A callback interface which the caller has to implement for performing the
-        /// network http operations.
-        /// \return - Unique ptr of the TDF instance.
-        NanoTDFBuilder& setHTTPServiceProvider(std::weak_ptr<INetwork> httpServiceProvider);
-
     public: /// Optional - configure root CA's
         /// Set the certAuthority which will be used in SSL handshake for all the network I/O.
         /// \param certAutority - A string which holds the cert authority which will be used in SSL handshake

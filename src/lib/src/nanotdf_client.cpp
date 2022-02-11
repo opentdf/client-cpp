@@ -334,7 +334,7 @@ namespace virtru {
     void NanoTDFClient::setHTTPServiceProvider(std::weak_ptr<INetwork> httpServiceProvider) {
 
         LogTrace("NanoTDFClient::setHTTPServiceProvider");
-        m_nanoTdfBuilder->setHTTPServiceProvider(httpServiceProvider);
+        m_nanoTdfBuilder->m_impl->m_networkServiceProvider = httpServiceProvider;
 
     }
 
