@@ -21,9 +21,8 @@ namespace virtru {
     public:
         /// Constructor
         OIDCService(OIDCCredentials oidcCredentials,
-                    const HttpHeaders& headers,
                     const std::string& clientPubKey,
-                    std::weak_ptr<INetwork> httpServiceProvider);
+                    std::shared_ptr<INetwork> httpServiceProvider);
 
         /// Destructor
         ~OIDCService() = default;
@@ -77,7 +76,7 @@ namespace virtru {
         std::string m_refreshToken;
         OIDCCredentials m_oidcCredentials;
         std::tuple<std::string, std::string> m_tokens;
-        std::weak_ptr<INetwork> m_networkServiceProvider;
+        std::shared_ptr<INetwork> m_networkServiceProvider;
     };
 }
 

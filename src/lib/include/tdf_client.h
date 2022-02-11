@@ -134,15 +134,16 @@ namespace virtru {
         /// \param kasUrl - kas url
         void addDataAttribute(const std::string &dataAttribute, const std::string &kasURL) override;
 
-        /// Set the callback interface which will invoked for all the http network operations.
-        /// Optional - a default provider is created by the constructor, this can be used for replacing it afterwards
-        /// \param httpServiceProvider - A callback interface which the caller has to implement for performing the
-        /// network http operations.
-        void setHTTPServiceProvider(std::weak_ptr<INetwork> httpServiceProvider);
-
       public:
         /// Create TDFs in XML format instead of zip format.
         void setXMLFormat();
+
+        /// Set the callback interface which will invoked for all the http network operations.
+        /// \param httpServiceProvider - A callback interface which the caller has to implement for performing the
+        /// network http operations.
+        /// \return - Unique ptr of the TDF instance.
+        void setHTTPServiceProvider(std::weak_ptr<INetwork> httpServiceProvider);
+
 
       private: /// Helpers
         /// Initialize the TDF builder which is used for creating the TDF instance

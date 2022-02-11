@@ -303,14 +303,14 @@ namespace virtru {
         }
 
         if (oidcMode) {
-
+            LogDebug("Using OIDC auth mode");
             if (!m_oidcService) {
-                HttpHeaders oidcHeaders = {{kUserAgentKey,    UserAgentValuePostFix}};
+                HttpHeaders oidcHeaders = {{kUserAgentKey, kUserAgentValuePostFix}};
                 m_oidcService = std::make_unique<OIDCService>(*m_oidcCredentials,
-                                                              oidcHeaders,
                                                               m_nanoTdfBuilder->m_impl->m_requestSignerPublicKey,
-                                                              m_nanoTdfBuilder->m_impl->m_networkServiceProvider);
+                                                              m_nanoTdfBuilder->getHTTPServiceProvider(oidcHeaders));
             }
+
 
             auto authHeaders = m_oidcService->generateAuthHeaders();
 
@@ -334,7 +334,7 @@ namespace virtru {
     void NanoTDFClient::setHTTPServiceProvider(std::weak_ptr<INetwork> httpServiceProvider) {
 
         LogTrace("NanoTDFClient::setHTTPServiceProvider");
-        m_nanoTdfBuilder->setHTTPServiceProvider(httpServiceProvider);
+        m_nanoTdfBuilder->m_impl->m_networkServiceProvider = httpServiceProvider;
 
     }
 

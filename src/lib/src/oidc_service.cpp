@@ -27,16 +27,16 @@ namespace virtru {
 
     using namespace virtru::crypto;
 
+    HttpHeaders oidcHeaders = {{kUserAgentKey, kUserAgentValuePostFix}};
     /// Constructor
     OIDCService::OIDCService(OIDCCredentials oidcCredentials,
-                             const HttpHeaders &headers,
                              const std::string &clientSigningPubkey,
-                             std::weak_ptr<INetwork> httpServiceProvider)
-        : m_oidcCredentials(std::move(oidcCredentials)) {
+                             std::shared_ptr<INetwork> httpServiceProvider)
+        : m_oidcCredentials(std::move(oidcCredentials)),
+          m_networkServiceProvider(std::move(httpServiceProvider)) {
         LogTrace("OIDCService::OIDCService");
 
         m_clientSigningPubkey = base64UrlEncode(clientSigningPubkey);
-        m_networkServiceProvider = std::move(httpServiceProvider);
     }
 
     /// Create the header key/value pairs that should be added to the request to establish authorization
@@ -198,8 +198,7 @@ namespace virtru {
 
         LogDebug("OIDCService::fetchAccessToken: Sending POST request: " + tokenBody.str());
 
-        if (auto sp = m_networkServiceProvider.lock()) { // Rely on callback interface
-            sp->executePost(
+        m_networkServiceProvider->executePost(
                 oidcIdP, {{kContentTypeKey, kContentTypeUrlFormEncode}, {kKeycloakPubkeyHeader, m_clientSigningPubkey}},
                 tokenBody.str(),
                 [&netPromise, &responseJson, &status](unsigned int statusCode, std::string &&response) {
@@ -210,10 +209,6 @@ namespace virtru {
                 certAuthority,
                 clientKeyFileName,
                 clientCertFileName);
-        } else {
-            LogDebug("Unable to lock network provider");
-            ThrowException("Unable to lock network provider");
-        }
 
         // Wait here for a response
         netFuture.get();
@@ -295,8 +290,7 @@ namespace virtru {
 
         LogDebug("CredentialsOidc::refreshAccessToken: Sending POST request: " + tokenBody.str());
 
-        if (auto sp = m_networkServiceProvider.lock()) { // Rely on callback interface
-            sp->executePost(
+        m_networkServiceProvider->executePost(
                 oidcIdP,
                 {{kContentTypeKey, kContentTypeUrlFormEncode},
                  {kKeycloakPubkeyHeader, m_clientSigningPubkey}},
@@ -306,10 +300,6 @@ namespace virtru {
                     netPromise.set_value();
                 },
                 certAuthority, clientKeyFileName, clientCertFileName);
-
-        } else {
-            ThrowException("Unable to lock network provider");
-        }
 
         // Wait here for a response
         netFuture.get();
@@ -360,8 +350,7 @@ namespace virtru {
             certAuthority = m_oidcCredentials.getCertificateAuthority();
         }
 
-        if (auto sp = m_networkServiceProvider.lock()) { // Rely on callback interface
-            sp->executeGet(
+        m_networkServiceProvider->executeGet(
                 oidcIdP, {{kContentTypeKey, kContentTypeUrlFormEncode}, {kAuthorizationKey, std::string(kBearerToken) + std::string(" ") + m_accessToken}},
                 [&netPromise, &responseJson, &status](
                     unsigned int statusCode, std::string &&response) {
@@ -372,9 +361,6 @@ namespace virtru {
                 certAuthority,
                 clientKeyFileName,
                 clientCertFileName);
-        } else {
-            ThrowException("Unable to lock network provider");
-        }
 
         netFuture.get();
 

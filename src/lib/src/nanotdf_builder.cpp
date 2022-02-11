@@ -233,12 +233,24 @@ namespace virtru {
         return *this;
     }
 
-    /// Set the callback interface which will invoked for all the http network operations.
-    NanoTDFBuilder& NanoTDFBuilder::setHTTPServiceProvider(std::weak_ptr<INetwork> httpServiceProvider) {
-
-        m_impl->m_networkServiceProvider = std::move(httpServiceProvider);
-
-        return *this;
+    /// TODO this has no business being in the Builder, but the builder pattern
+    /// is largely pointless versus TDFClient as it is just a bunch of duplicated
+    /// setter funcs and a `validate()` call
+    /// Returns a network provider for making HTTP calls with.
+    /// If no provider was externally supplied with `setHTTPServiceProvider`, a new one
+    /// will be created and configured with `defaultHeaders`
+    std::shared_ptr<INetwork> NanoTDFBuilder::getHTTPServiceProvider(HttpHeaders defaultHeaders) const {
+        LogTrace("NanoTDFBuilder::getHTTPServiceProvider");
+        if (auto sp = m_impl->m_networkServiceProvider.lock()) {
+            LogDebug("Using existing network provider");
+            return sp;
+        } else {
+            LogDebug("No network provider defined, creating one...");
+            // No service provided, create one using supplied headers
+            std::shared_ptr<INetwork> httpServiceProvider =
+                std::make_shared<network::HTTPServiceProvider>(defaultHeaders);
+            return httpServiceProvider;
+        }
     }
 
     /// Destructor

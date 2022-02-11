@@ -51,7 +51,6 @@ namespace virtru {
     constexpr auto firstTwoCharsOfZip = "PK";
     constexpr auto firstTwoCharsOfXML = "<?";
 
-    namespace filesystem = boost::filesystem;
     using namespace virtru::network;
     using namespace boost::beast::detail::base64;
     using namespace boost::interprocess;
@@ -1226,8 +1225,8 @@ namespace virtru {
         unsigned status = kHTTPBadRequest;
         std::string upsertResponse;
 
-        if (auto sp = m_tdfBuilder.m_impl->m_networkServiceProvider.lock()) { // Rely on callback interface
-
+        if (m_tdfBuilder.m_impl->m_oidcMode) {
+            auto sp = m_tdfBuilder.getHTTPServiceProvider({});
             std::promise<void> upsertPromise;
             auto upsertFuture = upsertPromise.get_future();
 
@@ -1250,6 +1249,10 @@ namespace virtru {
             }
 
         } else {
+            //Else do deprecated stuff
+            //TODO this entire else condition can and should be nuked, as it is either
+            //1. Unecessary vis a vis the above
+            //2. Used only for the deprecated non-OIDC EAS flow
             auto service = Service::Create(upsertUrl);
 
             // Add the headers.
@@ -1386,7 +1389,8 @@ namespace virtru {
         unsigned status = kHTTPBadRequest;
         std::string rewrapResponse;
 
-        if (auto sp = m_tdfBuilder.m_impl->m_networkServiceProvider.lock()) { // Rely of callback interface
+        if (m_tdfBuilder.m_impl->m_oidcMode) {
+            auto sp = m_tdfBuilder.getHTTPServiceProvider({});
 
             std::promise<void> rewrapPromise;
             auto rewrapFuture = rewrapPromise.get_future();
@@ -1412,6 +1416,10 @@ namespace virtru {
             return getWrappedKey(rewrapResponse);
 
         } else {
+            //Else do deprecated stuff
+            //TODO this entire else condition can and should be nuked, as it is either
+            //1. Unecessary vis a vis the above
+            //2. Used only for the deprecated non-OIDC EAS flow
             auto service = Service::Create(rewrapUrl);
 
             // Add the headers.

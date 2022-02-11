@@ -14,6 +14,7 @@
 #define VIRTRU_TDFBUILDER_H
 
 #include "tdf_constants.h"
+#include "network_interface.h"
 
 #include <memory>
 #include <string>
@@ -100,12 +101,6 @@ namespace virtru {
         /// \param properties - A unordered map holder the http headers.
         /// \return - Unique ptr of the TDF instance.
         TDFBuilder& setHttpHeaders(const std::unordered_map<std::string, std::string>& headers);
-
-        /// Set the callback interface which will invoked for all the http network operations.
-        /// \param httpServiceProvider - A callback interface which the caller has to implement for performing the
-        /// network http operations.
-        /// \return - Unique ptr of the TDF instance.
-        TDFBuilder& setHTTPServiceProvider(std::weak_ptr<INetwork> httpServiceProvider);
 
     public:
         /// Optional - Meta data
@@ -242,6 +237,16 @@ namespace virtru {
     protected:
         /// Validate the data set by the consumer of the TDFBuilder
         void validate();
+
+        /// TODO this has no business being in the Builder, but the builder pattern
+        /// is largely pointless versus TDFClient as it is just a bunch of duplicated
+        /// setter funcs and a `validate()` call
+        ///
+        /// Return the network provider defined with `setHTTPServiceProvider`, or return a new
+        /// default provider configured with
+        /// \param defaultHeaders - a collection of HTTP headers to be used if no provider set
+        std::shared_ptr<INetwork> getHTTPServiceProvider(HttpHeaders defaultHeaders) const;
+
 
     private: /// Data
         friend TDF;

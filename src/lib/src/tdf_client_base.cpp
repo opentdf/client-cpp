@@ -49,6 +49,8 @@ namespace virtru {
     void TDFClientBase::enableConsoleLogging(LogLevel logLevel) {
         LogTrace("TDFClientBase::enableConsoleLogging");
         m_logLevel = logLevel;
+        Logger::getInstance().setLogLevel(logLevel);
+        Logger::getInstance().enableConsoleLogging();
         LogTrace("TDFClientBase::enableConsoleLogging");
     }
 
