@@ -303,16 +303,14 @@ namespace virtru {
         }
 
         if (oidcMode) {
-
+            LogDebug("Using OIDC auth mode");
             if (!m_oidcService) {
-                HttpHeaders oidcHeaders = {{kUserAgentKey,    UserAgentValuePostFix}};
-                if (!m_nanoTdfBuilder->m_impl->m_networkServiceProvider.lock()) {
-                    m_nanoTdfBuilder->setHTTPServiceProvider(std::make_shared<network::HTTPServiceProvider>(oidcHeaders));
-                }
+                HttpHeaders oidcHeaders = {{kUserAgentKey, kUserAgentValuePostFix}};
                 m_oidcService = std::make_unique<OIDCService>(*m_oidcCredentials,
                                                               m_nanoTdfBuilder->m_impl->m_requestSignerPublicKey,
-                                                              m_nanoTdfBuilder->m_impl->m_networkServiceProvider);
+                                                              m_nanoTdfBuilder->getHTTPServiceProvider(oidcHeaders));
             }
+
 
             auto authHeaders = m_oidcService->generateAuthHeaders();
 

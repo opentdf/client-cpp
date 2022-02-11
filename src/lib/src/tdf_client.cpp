@@ -232,14 +232,6 @@ namespace virtru {
                                             m_tdfBuilder->m_impl->m_kasPublicKey, userKasURL);
     }
 
-    /// Set the callback interface which will invoked for all the http network operations.
-    void TDFClient::setHTTPServiceProvider(std::weak_ptr<INetwork> httpServiceProvider) {
-
-        LogTrace("TDFClient::setHTTPServiceProvider");
-        m_tdfBuilder->setHTTPServiceProvider(httpServiceProvider);
-
-    }
-
     /// Initialize the TDF builder which is used for creating the TDF instance
     /// used for encrypt and decrypt.
     void TDFClient::initTDFBuilder() {
@@ -278,7 +270,7 @@ namespace virtru {
 
         //Deprecated/remove this case - not in OIDC mode, need to fetch Entity Object
         if (entityObjectNotSet && !oidcMode) {
-
+            LogDebug("Using legacy auth mode");
             // Construct the body
             nlohmann::json publicKeyBody;
             publicKeyBody[kUserId] = m_user;
@@ -301,14 +293,12 @@ namespace virtru {
         //If we're using OIDC auth mode (upsert/rewrap V2) - then we ignore EOs
         //and assume that an Auth header has already been set
         if (oidcMode) {
+            LogDebug("Using OIDC auth mode");
             if (!m_oidcService) {
-                HttpHeaders oidcHeaders = {{kUserAgentKey,    UserAgentValuePostFix}};
-                if (!m_tdfBuilder->m_impl->m_networkServiceProvider.lock()) {
-                    m_tdfBuilder->setHTTPServiceProvider(std::make_shared<network::HTTPServiceProvider>(oidcHeaders));
-                }
+                HttpHeaders oidcHeaders = {{kUserAgentKey, kUserAgentValuePostFix}};
                 m_oidcService = std::make_unique<OIDCService>(*m_oidcCredentials,
                                                               m_tdfBuilder->m_impl->m_requestSignerPublicKey,
-                                                              m_tdfBuilder->m_impl->m_networkServiceProvider);
+                                                              m_tdfBuilder->getHTTPServiceProvider(oidcHeaders));
             }
 
             auto authHeaders = m_oidcService->generateAuthHeaders();

@@ -18,6 +18,7 @@
 #include <unordered_map>
 
 #include "tdf_constants.h"
+#include "network_interface.h"
 
 namespace virtru {
 
@@ -211,6 +212,15 @@ namespace virtru {
     protected:
         /// Validate the data set by the consumer of the NanoTDFBuilder
         void validate();
+
+        /// TODO this has no business being in the Builder, but the builder pattern
+        /// is largely pointless versus TDFClient as it is just a bunch of duplicated
+        /// setter funcs and a `validate()` call
+        ///
+        /// Return the network provider defined with `setHTTPServiceProvider`, or return a new
+        /// default provider configured with
+        /// \param defaultHeaders - a collection of HTTP headers to be used if no provider set
+        std::shared_ptr<INetwork> getHTTPServiceProvider(HttpHeaders defaultHeaders) const;
 
     private: /// Data
         friend class NanoTDF;
