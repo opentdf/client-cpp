@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 ### Added
+0.5.3
+- PLAT-1592/PLAT-1593 Fix build - manylinux and rpi armv8
+
 0.5.2
 - SA-354 Fix issue with network provider handling
 
