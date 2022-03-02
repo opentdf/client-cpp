@@ -344,6 +344,14 @@ namespace virtru {
         }
     }
 
+    /// Set the callback interface which will invoked for all the http network operations.
+    TDFBuilder &TDFBuilder::setHTTPServiceProvider(std::weak_ptr<INetwork> httpServiceProvider) {
+
+        m_impl->m_networkServiceProvider = std::move(httpServiceProvider);
+
+        return *this;
+    }
+
     /// Destructor
     TDFBuilder::~TDFBuilder() = default;
 
