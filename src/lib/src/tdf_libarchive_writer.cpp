@@ -135,6 +135,9 @@ namespace virtru {
     /// Libarchive callback after the archive operation is complete.
     la_ssize_t TDFArchiveWriter::writeCallback(struct archive* archive, void* writerInstance, const void* buffer, size_t length) {
 
+        LogTrace("TDFArchiveWriter::writeCallback");
+        LogDebug("length="+std::to_string(length));
+
         std::ignore = archive;
         TDFArchiveWriter* writer = static_cast<TDFArchiveWriter*>(writerInstance);
 
