@@ -176,6 +176,7 @@ namespace virtru {
                 auto manifest = encryptStream(inputStream, fileSize, *tdfWriter);
 
                 generateHtmlTdf(manifest, tdfStream, outStream);
+                LogTrace("after generateHtmlTdf");
                 logMsg = ".html file encrypt time:";
 
             }
@@ -188,6 +189,7 @@ namespace virtru {
             LogInfo(os.str());
 #endif
         }
+        LogTrace("exiting TDFImpl::EncryptStream");
     }
 
     /// Encrypt the data that is retrieved from the source callback.
@@ -265,6 +267,8 @@ namespace virtru {
             std::stringstream outStream;
             generateHtmlTdf(manifest, tdfStream, outStream);
 
+            LogTrace("after generateHtmlTdf");
+
             // Invoke the caller.
             std::vector<char> buffer(10 * 1024);
             outStream.seekg(0, inStream.beg);
@@ -288,6 +292,7 @@ namespace virtru {
             LogInfo(os.str());
 #endif
         }
+        LogTrace("exiting TDFImpl::encryptData");
     }
 
     /// Decrypt the tdf stream data.
@@ -368,6 +373,7 @@ namespace virtru {
         os << "Total decrypt-time:" << timeSpent << " ms";
         LogInfo(os.str());
 #endif
+        LogTrace("exiting TDFImpl::decryptStream");
     }
 
     /// Decrypt the tdf file.
@@ -453,6 +459,7 @@ namespace virtru {
         os << "Total decrypt-time:" << timeSpent << " ms";
         LogInfo(os.str());
 #endif
+        LogTrace("exiting TDFImpl::decryptFile");
     }
 
     /// Decrypt the data that is retrieved from the source callback.
@@ -541,6 +548,7 @@ namespace virtru {
         os << "Total decrypt-time:" << timeSpent << " ms";
         LogInfo(os.str());
 #endif
+        LogTrace("exiting TDFImpl::decryptData");
     }
 
     void TDFImpl::decryptStream(TDFReader& tdfReader, DataSinkCb &&sinkCB) {
@@ -664,6 +672,7 @@ namespace virtru {
                 ThrowException("Fail to write into stream");
             }
         }
+        LogTrace("exiting TDFImpl::decryptStream");
     }
 
     /// Encrypt the data in the input stream.
@@ -829,6 +838,8 @@ namespace virtru {
 
         writer.appendManifest(to_string(manifest));
 
+        LogTrace("exiting TDFImpl::encryptStream");
+
         return to_string(manifest);
     }
 
@@ -926,6 +937,8 @@ namespace virtru {
         auto const &token7 = m_tdfBuilder.m_impl->m_htmlTemplateTokens[6];
         LogTrace("before token7 write");
         outStream.write(token7.data(), token7.size());
+
+        LogTrace("exiting TDFImpl::generateHtmlTdf");
     }
 
     /// Return the policy JSON string from the tdf input stream.
