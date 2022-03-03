@@ -1260,6 +1260,9 @@ namespace virtru {
                 service->AddHeader(key, value);
             }
 
+// TEMP FIXME REMOVE
+            service->AddHeader(kContentTypeKey, kContentTypeJsonValue);
+
             // Add host header
             service->AddHeader(kHostKey, service->getHost());
 
