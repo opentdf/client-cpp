@@ -1225,7 +1225,7 @@ namespace virtru {
         unsigned status = kHTTPBadRequest;
         std::string upsertResponse;
 
-        if (m_tdfBuilder.m_impl->m_oidcMode) {
+        if (1 /*m_tdfBuilder.m_impl->m_oidcMode*/) {
             auto sp = m_tdfBuilder.getHTTPServiceProvider({});
             std::promise<void> upsertPromise;
             auto upsertFuture = upsertPromise.get_future();
@@ -1259,9 +1259,6 @@ namespace virtru {
             for (const auto &[key, value] : m_tdfBuilder.m_impl->m_httpHeaders) {
                 service->AddHeader(key, value);
             }
-
-// TEMP FIXME REMOVE
-            service->AddHeader(kContentTypeKey, kContentTypeJsonValue);
 
             // Add host header
             service->AddHeader(kHostKey, service->getHost());
