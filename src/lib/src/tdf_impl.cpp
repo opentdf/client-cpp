@@ -841,6 +841,7 @@ namespace virtru {
         using namespace boost::beast::detail::base64;
 
         auto const &token1 = m_tdfBuilder.m_impl->m_htmlTemplateTokens[0];
+        LogTrace("before token1 write");
         outStream.write(token1.data(), token1.size());
 
         /// 1 - Write the contents of the tdf in base64
@@ -850,16 +851,19 @@ namespace virtru {
         while (!inputStream.eof() && !inputStream.fail()) {
 
             // Read from the file.
+            LogTrace("before zip read");
             inputStream.read(reinterpret_cast<char *>(m_zipReadBuffer.data()), kZipReadSize);
 
             // Encode the tdf zip data.
             actualEncodedBufSize = encode(m_encodeBufferSize.data(), m_zipReadBuffer.data(), inputStream.gcount());
 
             // Write to the html file
+            LogTrace("before encoded data write");
             outStream.write(reinterpret_cast<char *>(m_encodeBufferSize.data()), actualEncodedBufSize);
         }
 
         auto const &token2 = m_tdfBuilder.m_impl->m_htmlTemplateTokens[1];
+        LogTrace("before token1 write");
         outStream.write(token2.data(), token2.size());
 
         /// 2 - Write the contents of the manifest in base64
@@ -870,16 +874,20 @@ namespace virtru {
             m_encodeBufferSize.resize(manifestEncodedSize);
         }
         actualEncodedBufSize = encode(m_encodeBufferSize.data(), manifest.data(), manifest.size());
+        LogTrace("before manifest write");
         outStream.write(reinterpret_cast<char *>(m_encodeBufferSize.data()), actualEncodedBufSize);
 
         auto const &token3 = m_tdfBuilder.m_impl->m_htmlTemplateTokens[2];
+        LogTrace("before token3 write");
         outStream.write(token3.data(), token3.size());
 
         /// 3 - Write the secure reader url.
         const auto &url = m_tdfBuilder.m_impl->m_secureReaderUrl;
+        LogTrace("before sr url write");
         outStream.write(url.data(), url.size());
 
         auto const &token4 = m_tdfBuilder.m_impl->m_htmlTemplateTokens[3];
+        LogTrace("before token4 write");
         outStream.write(token4.data(), token4.size());
 
         /// 4 - Write the secure reader base url.
@@ -896,21 +904,27 @@ namespace virtru {
         targetBaseUrl << std::string(what[2].first, what[2].second);
 
         auto targetBaseUrlStr = targetBaseUrl.str();
+        LogTrace("before base url write");
         outStream.write(targetBaseUrlStr.data(), targetBaseUrlStr.size());
 
         auto const &token5 = m_tdfBuilder.m_impl->m_htmlTemplateTokens[4];
+        LogTrace("before token5 write");
         outStream.write(token5.data(), token5.size());
 
         /// 5 - Write he secure reader url for window.location.href - 1
+        LogTrace("before sr url write 2");
         outStream.write(url.data(), url.size());
 
         auto const &token6 = m_tdfBuilder.m_impl->m_htmlTemplateTokens[5];
+        LogTrace("before token6 write");
         outStream.write(token6.data(), token6.size());
 
         /// 6 - Write he secure reader url for window.location.href - 2
+        LogTrace("before sr url write 2");
         outStream.write(url.data(), url.size());
 
         auto const &token7 = m_tdfBuilder.m_impl->m_htmlTemplateTokens[6];
+        LogTrace("before token7 write");
         outStream.write(token7.data(), token7.size());
     }
 
