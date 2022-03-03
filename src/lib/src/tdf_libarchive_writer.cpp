@@ -22,6 +22,8 @@ namespace virtru {
                                        std::string payloadFileName) : m_sink { std::move(sinkCb) },
                                        m_manifestFilename{std::move(manifestFilename)}, m_payloadFileName{std::move(payloadFileName)} {
 
+        LogTrace("TDFArchiveWriter::TDFArchiveWriter");
+
         // Initialize archive
         ArchiveFreePtr archive { archive_write_new() };
 
@@ -65,6 +67,8 @@ namespace virtru {
     /// Append the manifest contents to the archive.
     void TDFArchiveWriter::appendManifest(std::string&& manifest) {
 
+        LogTrace("TDFArchiveWriter::appendManifest");
+
         // TODO: Check the tdf type - for now we assume it's tdf
 
         if (PayloadState::Appending != m_payloadState) {
@@ -96,6 +100,9 @@ namespace virtru {
 
     /// Append the manifest contents to the archive.
     void TDFArchiveWriter::appendPayload(crypto::Bytes payload) {
+
+        LogTrace("TDFArchiveWriter::appendPayload");
+
         // TODO: Check the tdf type - for now we assume it's tdf
 
         if (PayloadState::Initial == m_payloadState) {
@@ -128,6 +135,7 @@ namespace virtru {
 
     /// Finish the write operation.
     void TDFArchiveWriter::finish() {
+        LogTrace("TDFArchiveWriter::finish");
         archive_write_close(m_archive.get());
     }
 
