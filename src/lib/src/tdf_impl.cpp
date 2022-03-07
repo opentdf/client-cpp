@@ -176,6 +176,7 @@ namespace virtru {
                 auto manifest = encryptStream(inputStream, fileSize, *tdfWriter);
 
                 generateHtmlTdf(manifest, tdfStream, outStream);
+                LogTrace("after generateHtmlTdf");
                 logMsg = ".html file encrypt time:";
 
             }
@@ -188,6 +189,7 @@ namespace virtru {
             LogInfo(os.str());
 #endif
         }
+        LogTrace("exiting TDFImpl::EncryptStream");
     }
 
     /// Encrypt the data that is retrieved from the source callback.
@@ -265,6 +267,8 @@ namespace virtru {
             std::stringstream outStream;
             generateHtmlTdf(manifest, tdfStream, outStream);
 
+            LogTrace("after generateHtmlTdf");
+
             // Invoke the caller.
             std::vector<char> buffer(10 * 1024);
             outStream.seekg(0, inStream.beg);
@@ -288,6 +292,7 @@ namespace virtru {
             LogInfo(os.str());
 #endif
         }
+        LogTrace("exiting TDFImpl::encryptData");
     }
 
     /// Decrypt the tdf stream data.
@@ -368,6 +373,7 @@ namespace virtru {
         os << "Total decrypt-time:" << timeSpent << " ms";
         LogInfo(os.str());
 #endif
+        LogTrace("exiting TDFImpl::decryptStream");
     }
 
     /// Decrypt the tdf file.
@@ -453,6 +459,7 @@ namespace virtru {
         os << "Total decrypt-time:" << timeSpent << " ms";
         LogInfo(os.str());
 #endif
+        LogTrace("exiting TDFImpl::decryptFile");
     }
 
     /// Decrypt the data that is retrieved from the source callback.
@@ -541,6 +548,7 @@ namespace virtru {
         os << "Total decrypt-time:" << timeSpent << " ms";
         LogInfo(os.str());
 #endif
+        LogTrace("exiting TDFImpl::decryptData");
     }
 
     void TDFImpl::decryptStream(TDFReader& tdfReader, DataSinkCb &&sinkCB) {
@@ -664,6 +672,7 @@ namespace virtru {
                 ThrowException("Fail to write into stream");
             }
         }
+        LogTrace("exiting TDFImpl::decryptStream");
     }
 
     /// Encrypt the data in the input stream.
@@ -829,6 +838,8 @@ namespace virtru {
 
         writer.appendManifest(to_string(manifest));
 
+        LogTrace("exiting TDFImpl::encryptStream");
+
         return to_string(manifest);
     }
 
@@ -841,6 +852,7 @@ namespace virtru {
         using namespace boost::beast::detail::base64;
 
         auto const &token1 = m_tdfBuilder.m_impl->m_htmlTemplateTokens[0];
+        LogTrace("before token1 write");
         outStream.write(token1.data(), token1.size());
 
         /// 1 - Write the contents of the tdf in base64
@@ -850,16 +862,19 @@ namespace virtru {
         while (!inputStream.eof() && !inputStream.fail()) {
 
             // Read from the file.
+            LogTrace("before zip read");
             inputStream.read(reinterpret_cast<char *>(m_zipReadBuffer.data()), kZipReadSize);
 
             // Encode the tdf zip data.
             actualEncodedBufSize = encode(m_encodeBufferSize.data(), m_zipReadBuffer.data(), inputStream.gcount());
 
             // Write to the html file
+            LogTrace("before encoded data write");
             outStream.write(reinterpret_cast<char *>(m_encodeBufferSize.data()), actualEncodedBufSize);
         }
 
         auto const &token2 = m_tdfBuilder.m_impl->m_htmlTemplateTokens[1];
+        LogTrace("before token1 write");
         outStream.write(token2.data(), token2.size());
 
         /// 2 - Write the contents of the manifest in base64
@@ -870,16 +885,20 @@ namespace virtru {
             m_encodeBufferSize.resize(manifestEncodedSize);
         }
         actualEncodedBufSize = encode(m_encodeBufferSize.data(), manifest.data(), manifest.size());
+        LogTrace("before manifest write");
         outStream.write(reinterpret_cast<char *>(m_encodeBufferSize.data()), actualEncodedBufSize);
 
         auto const &token3 = m_tdfBuilder.m_impl->m_htmlTemplateTokens[2];
+        LogTrace("before token3 write");
         outStream.write(token3.data(), token3.size());
 
         /// 3 - Write the secure reader url.
         const auto &url = m_tdfBuilder.m_impl->m_secureReaderUrl;
+        LogTrace("before sr url write");
         outStream.write(url.data(), url.size());
 
         auto const &token4 = m_tdfBuilder.m_impl->m_htmlTemplateTokens[3];
+        LogTrace("before token4 write");
         outStream.write(token4.data(), token4.size());
 
         /// 4 - Write the secure reader base url.
@@ -896,22 +915,30 @@ namespace virtru {
         targetBaseUrl << std::string(what[2].first, what[2].second);
 
         auto targetBaseUrlStr = targetBaseUrl.str();
+        LogTrace("before base url write");
         outStream.write(targetBaseUrlStr.data(), targetBaseUrlStr.size());
 
         auto const &token5 = m_tdfBuilder.m_impl->m_htmlTemplateTokens[4];
+        LogTrace("before token5 write");
         outStream.write(token5.data(), token5.size());
 
         /// 5 - Write he secure reader url for window.location.href - 1
+        LogTrace("before sr url write 2");
         outStream.write(url.data(), url.size());
 
         auto const &token6 = m_tdfBuilder.m_impl->m_htmlTemplateTokens[5];
+        LogTrace("before token6 write");
         outStream.write(token6.data(), token6.size());
 
         /// 6 - Write he secure reader url for window.location.href - 2
+        LogTrace("before sr url write 2");
         outStream.write(url.data(), url.size());
 
         auto const &token7 = m_tdfBuilder.m_impl->m_htmlTemplateTokens[6];
+        LogTrace("before token7 write");
         outStream.write(token7.data(), token7.size());
+
+        LogTrace("exiting TDFImpl::generateHtmlTdf");
     }
 
     /// Return the policy JSON string from the tdf input stream.
@@ -1219,79 +1246,31 @@ namespace virtru {
             upsertUrl = m_tdfBuilder.m_impl->m_kasUrl + kUpsert;
         }
 
-
         LogDebug(upsertRequestBody);
 
         unsigned status = kHTTPBadRequest;
         std::string upsertResponse;
 
-        if (m_tdfBuilder.m_impl->m_oidcMode) {
-            auto sp = m_tdfBuilder.getHTTPServiceProvider({});
-            std::promise<void> upsertPromise;
-            auto upsertFuture = upsertPromise.get_future();
+        auto sp = m_tdfBuilder.getHTTPServiceProvider({});
+        std::promise<void> upsertPromise;
+        auto upsertFuture = upsertPromise.get_future();
 
-            sp->executePost(upsertUrl, m_tdfBuilder.m_impl->m_httpHeaders, std::move(upsertRequestBody),
-                            [&upsertPromise, &upsertResponse, &status](unsigned int statusCode, std::string &&response) {
-                                status = statusCode;
-                                upsertResponse = response.data();
+        sp->executePost(upsertUrl, m_tdfBuilder.m_impl->m_httpHeaders, std::move(upsertRequestBody),
+                        [&upsertPromise, &upsertResponse, &status](unsigned int statusCode, std::string &&response) {
+                            status = statusCode;
+                            upsertResponse = response.data();
 
-                                upsertPromise.set_value();
-                            });
+                            upsertPromise.set_value();
+                        });
 
-            upsertFuture.get();
+        upsertFuture.get();
 
-            // Handle HTTP error.
-            if (status != kHTTPOk) {
-                std::ostringstream os;
-                os << "Upsert failed status:"
-                   << status << " response:" << upsertResponse;
-                ThrowException(os.str());
-            }
-
-        } else {
-            //Else do deprecated stuff
-            //TODO this entire else condition can and should be nuked, as it is either
-            //1. Unecessary vis a vis the above
-            //2. Used only for the deprecated non-OIDC EAS flow
-            auto service = Service::Create(upsertUrl);
-
-            // Add the headers.
-            for (const auto &[key, value] : m_tdfBuilder.m_impl->m_httpHeaders) {
-                service->AddHeader(key, value);
-            }
-
-            // Add host header
-            service->AddHeader(kHostKey, service->getHost());
-
-            // Add date header
-            service->AddHeader(kDateKey, nowRfc1123());
-
-            IOContext ioContext;
-
-            service->ExecutePost(std::move(upsertRequestBody), ioContext,
-                                 [&status, &upsertResponse](ErrorCode errorCode, HttpResponse &&response) {
-                                     // TODO: Ignore stream truncated error. Looks like the server is not shuting downn gracefully.
-                                     // https://stackoverflow.com/questions/25587403/boost-asio-ssl-async-shutdown-always-finishes-with-an-error
-                                     if (errorCode && errorCode.value() != 1) { // something wrong.
-                                         std::ostringstream os{"Error code: "};
-                                         os << errorCode.value() << " " << errorCode.message();
-                                         LogError(os.str());
-                                     }
-
-                                     status = Service::GetStatus(response.result());
-                                     upsertResponse = response.body().data();
-                                 });
-
-            // Run the context - It's blocking call until i/o operation is done.
-            ioContext.run();
-
-            // Handle HTTP error.
-            if (status != kHTTPOk) {
-                std::ostringstream os;
-                os << "Upsert failed status:"
-                   << status << " response:" << upsertResponse;
-                ThrowException(os.str());
-            }
+        // Handle HTTP error.
+        if (status != kHTTPOk) {
+            std::ostringstream os;
+            os << "Upsert failed status:"
+               << status << " response:" << upsertResponse;
+            ThrowException(os.str());
         }
 
         // Remove the 'encryptedMetadata' and  'wrappedkey' from manifest.

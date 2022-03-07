@@ -247,6 +247,12 @@ namespace virtru {
         /// \param defaultHeaders - a collection of HTTP headers to be used if no provider set
         std::shared_ptr<INetwork> getHTTPServiceProvider(HttpHeaders defaultHeaders) const;
 
+        /// Set the callback interface which will invoked for all the http network operations.
+        /// \param httpServiceProvider - A callback interface which the caller has to implement for performing the
+        /// network http operations.
+        /// \return - Unique ptr of the TDF3 instance.
+        TDFBuilder& setHTTPServiceProvider(std::weak_ptr<INetwork> httpServiceProvider);
+
 
     private: /// Data
         friend TDF;

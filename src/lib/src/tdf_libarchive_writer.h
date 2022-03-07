@@ -21,6 +21,7 @@
 #include "tdf_writer.h"
 #include "tdf_constants.h"
 #include "crypto/bytes.h"
+#include "logger.h"
 
 namespace virtru {
 
@@ -56,6 +57,7 @@ namespace virtru {
         /// \param payload - encrypted payload.
         template <typename Payload,typename = ExplicitlyConvertibleToBytes <Payload>>
         void appendPayload(const Payload & payload) {
+            LogTrace("TDFArchiveWriter::appendPayload");
             appendPayload( crypto::toDynamicBytes(payload));
         }
 
@@ -71,7 +73,7 @@ namespace virtru {
     public: // From TDFWriter
         /// Set the payload size of the TDF
         /// \param payloadSize
-        void setPayloadSize(int64_t payloadSize) override { m_payloadSize = payloadSize; }
+        void setPayloadSize(int64_t payloadSize) override { LogTrace("TDFArchiveWriter::appendPayload"); m_payloadSize = payloadSize; }
 
         /// Append the manifest contents to the archive.
         /// \param manifest - Contents of the manifest file.

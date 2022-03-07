@@ -21,7 +21,7 @@
 namespace virtru {
 
     using TDFDataSinkCb = std::function < Status(BufferSpan)>;
-    void MockNetwork::executeGet(const std::string &url, const HttpHeaders &headers, HTTPServiceCallback &&callback) {
+    void MockNetwork::executeGet(const std::string &url, const HttpHeaders &headers, HTTPServiceCallback &&callback, const std::string &/*certAuth*/, const std::string &/*clientKeyFileName*/, const std::string &/*clientCertFileName*/) {
         auto result = GETExpectations.find({url, headers});
         if (GETExpectations.end() != result)
         {
@@ -32,7 +32,7 @@ namespace virtru {
             callback(69, "Didn't match mock");
         }
     };
-    void MockNetwork::executePost(const std::string &url, const HttpHeaders &headers, [[maybe_unused]] std::string &&body, HTTPServiceCallback &&callback) {
+    void MockNetwork::executePost(const std::string &url, const HttpHeaders &headers, [[maybe_unused]] std::string &&body, HTTPServiceCallback &&callback, const std::string &/*certAuth*/, const std::string &/*clientKeyFileName*/, const std::string &/*clientCertFileName*/) {
         auto result = POSTExpectations.find({url, headers});
         std::cout << "Trying to match against URL: " << url << std::endl;
         std::cout << "Trying to match against Headers: ";
@@ -59,7 +59,7 @@ namespace virtru {
 
     // Avoid unreferenced parm warning by not supplying names for the parms
     void MockNetwork::executePatch(const std::string &/*url*/, const HttpHeaders &/*headers*/,
-                                   std::string &&/*body*/, HTTPServiceCallback &&/*callback*/) {
+                                   std::string &&/*body*/, HTTPServiceCallback &&/*callback*/, const std::string &/*certAuth*/, const std::string &/*clientKeyFileName*/, const std::string &/*clientCertFileName*/) {
     };
 
 
