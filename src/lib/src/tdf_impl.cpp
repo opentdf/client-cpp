@@ -1246,79 +1246,31 @@ namespace virtru {
             upsertUrl = m_tdfBuilder.m_impl->m_kasUrl + kUpsert;
         }
 
-
         LogDebug(upsertRequestBody);
 
         unsigned status = kHTTPBadRequest;
         std::string upsertResponse;
 
-        if (1 /*m_tdfBuilder.m_impl->m_oidcMode*/) {
-            auto sp = m_tdfBuilder.getHTTPServiceProvider({});
-            std::promise<void> upsertPromise;
-            auto upsertFuture = upsertPromise.get_future();
+        auto sp = m_tdfBuilder.getHTTPServiceProvider({});
+        std::promise<void> upsertPromise;
+        auto upsertFuture = upsertPromise.get_future();
 
-            sp->executePost(upsertUrl, m_tdfBuilder.m_impl->m_httpHeaders, std::move(upsertRequestBody),
-                            [&upsertPromise, &upsertResponse, &status](unsigned int statusCode, std::string &&response) {
-                                status = statusCode;
-                                upsertResponse = response.data();
+        sp->executePost(upsertUrl, m_tdfBuilder.m_impl->m_httpHeaders, std::move(upsertRequestBody),
+                        [&upsertPromise, &upsertResponse, &status](unsigned int statusCode, std::string &&response) {
+                            status = statusCode;
+                            upsertResponse = response.data();
 
-                                upsertPromise.set_value();
-                            });
+                            upsertPromise.set_value();
+                        });
 
-            upsertFuture.get();
+        upsertFuture.get();
 
-            // Handle HTTP error.
-            if (status != kHTTPOk) {
-                std::ostringstream os;
-                os << "Upsert failed status:"
-                   << status << " response:" << upsertResponse;
-                ThrowException(os.str());
-            }
-
-        } else {
-            //Else do deprecated stuff
-            //TODO this entire else condition can and should be nuked, as it is either
-            //1. Unecessary vis a vis the above
-            //2. Used only for the deprecated non-OIDC EAS flow
-            auto service = Service::Create(upsertUrl);
-
-            // Add the headers.
-            for (const auto &[key, value] : m_tdfBuilder.m_impl->m_httpHeaders) {
-                service->AddHeader(key, value);
-            }
-
-            // Add host header
-            service->AddHeader(kHostKey, service->getHost());
-
-            // Add date header
-            service->AddHeader(kDateKey, nowRfc1123());
-
-            IOContext ioContext;
-
-            service->ExecutePost(std::move(upsertRequestBody), ioContext,
-                                 [&status, &upsertResponse](ErrorCode errorCode, HttpResponse &&response) {
-                                     // TODO: Ignore stream truncated error. Looks like the server is not shuting downn gracefully.
-                                     // https://stackoverflow.com/questions/25587403/boost-asio-ssl-async-shutdown-always-finishes-with-an-error
-                                     if (errorCode && errorCode.value() != 1) { // something wrong.
-                                         std::ostringstream os{"Error code: "};
-                                         os << errorCode.value() << " " << errorCode.message();
-                                         LogError(os.str());
-                                     }
-
-                                     status = Service::GetStatus(response.result());
-                                     upsertResponse = response.body().data();
-                                 });
-
-            // Run the context - It's blocking call until i/o operation is done.
-            ioContext.run();
-
-            // Handle HTTP error.
-            if (status != kHTTPOk) {
-                std::ostringstream os;
-                os << "Upsert failed status:"
-                   << status << " response:" << upsertResponse;
-                ThrowException(os.str());
-            }
+        // Handle HTTP error.
+        if (status != kHTTPOk) {
+            std::ostringstream os;
+            os << "Upsert failed status:"
+               << status << " response:" << upsertResponse;
+            ThrowException(os.str());
         }
 
         // Remove the 'encryptedMetadata' and  'wrappedkey' from manifest.
