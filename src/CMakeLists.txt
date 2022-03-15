@@ -1,6 +1,6 @@
 # Copyright 2019 Virtru Corporation
 #
-# SPDX - License - Identifier: MIT
+# SPDX - License Identifier: BSD-3-Clause-Clear
 #
 cmake_minimum_required (VERSION 3.8)
 
