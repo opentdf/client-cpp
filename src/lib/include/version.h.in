@@ -1,0 +1,5 @@
+// version information for opentdf
+#define opentdf_VERSION_MAJOR @opentdf_VERSION_MAJOR@
+#define opentdf_VERSION_MINOR @opentdf_VERSION_MINOR@
+#define opentdf_VERSION_PATCH @opentdf_VERSION_PATCH@
+#define opentdf_VERSION "@opentdf_VERSION@"
