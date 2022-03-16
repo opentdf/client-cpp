@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 ### Added
+0.6.1
+- PLAT-1640 Update to BSD license
+
+0.6.0
+- Updates for networking changes
+
 0.5.3
 - PLAT-1592/PLAT-1593 Fix build - manylinux and rpi armv8
 

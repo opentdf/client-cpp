@@ -1,7 +1,7 @@
 /*
 * Copyright 2020 Virtru Corporation
 *
-* SPDX - License - Identifier: MIT
+* SPDX - License Identifier: BSD-3-Clause-Clear
 *
 */
 //
