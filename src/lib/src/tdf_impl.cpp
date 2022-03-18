@@ -160,20 +160,24 @@ namespace virtru {
             } else {
 
                 std::stringstream tdfStream{};
+                std::string manifest;
 
-                DataSinkCb libArchiveSinkCb = [&tdfStream](Bytes bytes) {
-                    if (!tdfStream.write(toChar(bytes.data()), bytes.size())) {
-                        return Status::Failure;
-                    } else {
-                        return Status::Success;
-                    }
-                };
+                // Finish creating a TDF before generating the HTML file
+                {
+                    DataSinkCb libArchiveSinkCb = [&tdfStream](Bytes bytes) {
+                        if (!tdfStream.write(toChar(bytes.data()), bytes.size())) {
+                            return Status::Failure;
+                        } else {
+                            return Status::Success;
+                        }
+                    };
 
-                auto tdfWriter = std::unique_ptr<TDFWriter>(new TDFArchiveWriter(std::move(libArchiveSinkCb),
-                                                                                 kTDFManifestFileName,
-                                                                                 kTDFPayloadFileName));
+                    auto tdfWriter = std::unique_ptr<TDFWriter>(new TDFArchiveWriter(std::move(libArchiveSinkCb),
+                                                                                     kTDFManifestFileName,
+                                                                                     kTDFPayloadFileName));
 
-                auto manifest = encryptStream(inputStream, fileSize, *tdfWriter);
+                    manifest = encryptStream(inputStream, fileSize, *tdfWriter);
+                }
 
                 generateHtmlTdf(manifest, tdfStream, outStream);
                 LogTrace("after generateHtmlTdf");
@@ -249,21 +253,24 @@ namespace virtru {
         } else { // .html format
 
             std::stringstream tdfStream{};
+            std::string manifest;
 
-            DataSinkCb libArchiveSinkCb = [&tdfStream](Bytes bytes) {
-                if (!tdfStream.write(toChar(bytes.data()), bytes.size())) {
-                    return Status::Failure;
-                } else {
-                    return Status::Success;
-                }
-            };
+            // Finish creating a TDF before generating the HTML file
+            {
+                DataSinkCb libArchiveSinkCb = [&tdfStream](Bytes bytes) {
+                    if (!tdfStream.write(toChar(bytes.data()), bytes.size())) {
+                        return Status::Failure;
+                    } else {
+                        return Status::Success;
+                    }
+                };
 
-            auto tdfWriter = std::unique_ptr<TDFWriter>(new TDFArchiveWriter(std::move(libArchiveSinkCb),
+                auto tdfWriter = std::unique_ptr<TDFWriter>(new TDFArchiveWriter(std::move(libArchiveSinkCb),
                                                                                  kTDFManifestFileName,
                                                                                  kTDFPayloadFileName));
 
-            auto manifest = encryptStream(inStream, streamSize, *tdfWriter);
-
+                manifest = encryptStream(inStream, streamSize, *tdfWriter);
+            }
             std::stringstream outStream;
             generateHtmlTdf(manifest, tdfStream, outStream);
 
@@ -1219,8 +1226,7 @@ namespace virtru {
         nlohmann::json requestBody;
         std::string upsertUrl;
 
-        nlohmann::json keyAccessObjects = nlohmann::json::array();
-        keyAccessObjects = manifest[kEncryptionInformation][kKeyAccess];
+        auto &keyAccessObjects = manifest[kEncryptionInformation][kKeyAccess];
         if (keyAccessObjects.size() != 1) {
             ThrowException("Only supports one key access object - upsert");
         }

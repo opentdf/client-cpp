@@ -66,6 +66,10 @@ namespace virtru {
         /// Get the access token from the OIDC server.
         void getAccessToken();
 
+        /// Get the OIDC url for fetching access token.
+        /// \return - The OIDC url
+        std::string getOIDCUrl();
+
         /// Add form data to the string stream.
         static void addFormData(std::ostringstream &ss, const std::string& key, const std::string& val) ;
 
