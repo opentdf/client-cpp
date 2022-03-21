@@ -35,8 +35,12 @@
 constexpr auto user = "user1";
 constexpr auto user2 = "user2";
 constexpr auto easUrl = "http://localhost:8000/";
-constexpr auto OIDC_ENDPOINT = "https://localhost:8443";
-constexpr auto KAS_URL = "http://localhost:8080/kas";
+constexpr auto OIDC_ENDPOINT = "http://localhost:65432/";
+constexpr auto KAS_URL = "http://localhost:65432/kas";
+constexpr auto CLIENT_ID = "tdf-client";
+constexpr auto CLIENT_SECRET = "123-456";
+constexpr auto ORGANIZATION_NAME = "tdf";
+
 
 using namespace virtru::network;
 using namespace virtru::crypto;
@@ -312,8 +316,8 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
 #endif
 
             OIDCCredentials clientCreds;
-            clientCreds.setClientCredentials("tdf-client", "123-456",
-                                             "tdf", OIDC_ENDPOINT);
+            clientCreds.setClientCredentialsClientSecret(CLIENT_ID, CLIENT_SECRET,
+                                                         ORGANIZATION_NAME, OIDC_ENDPOINT);
             auto oidcClientTDF = std::make_unique<TDFClient>(clientCreds, KAS_URL);
 
             auto attributes = oidcClientTDF->getSubjectAttributes();
@@ -322,10 +326,10 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
                 std::cout << attribute << std::endl;
             }
 
-            if (!attributes.empty()) {
-                auto attribute = attributes.front();
-                oidcClientTDF->addDataAttribute(attribute, "");
-            }
+//            if (!attributes.empty()) {
+//                auto attribute = attributes.front();
+//                oidcClientTDF->addDataAttribute(attribute, "");
+//            }
             // Test tdf with user creds
             testTDFOperations(oidcClientTDF.get());
 #endif
@@ -351,8 +355,8 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
 #if TEST_OIDC
 
             OIDCCredentials clientCreds;
-            clientCreds.setClientCredentials("tdf-client", "123-456",
-                                             "tdf", OIDC_ENDPOINT);
+            clientCreds.setClientCredentialsClientSecret(CLIENT_ID, CLIENT_SECRET,
+                                                         ORGANIZATION_NAME, OIDC_ENDPOINT);
             auto oidcClientTDF = std::make_unique<TDFClient>(clientCreds, KAS_URL);
             oidcClientTDF->setXMLFormat();
 
@@ -396,8 +400,8 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
 #if TEST_OIDC
 
         OIDCCredentials clientCreds;
-        clientCreds.setClientCredentials("tdf-client", "123-456",
-                                         "tdf", OIDC_ENDPOINT);
+        clientCreds.setClientCredentialsClientSecret(CLIENT_ID, CLIENT_SECRET,
+                                                     ORGANIZATION_NAME, OIDC_ENDPOINT);
 
         auto encryptNanoTDFClientOIDC = std::make_unique<NanoTDFClient>(clientCreds, KAS_URL);
         //client1->shareWithUsers({user, user2});

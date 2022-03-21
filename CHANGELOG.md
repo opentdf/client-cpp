@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 ### Added
+0.6.2
+- PLAT-1626 Fix the regression caused XML TDF generation and json library update
+
 0.6.1
 - PLAT-1640 Update to BSD license
 
