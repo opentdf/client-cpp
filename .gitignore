@@ -1,2 +1,3 @@
 examples/build/
 src/build/
+src/lib/include/version.h

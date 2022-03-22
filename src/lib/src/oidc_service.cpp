@@ -154,9 +154,7 @@ namespace virtru {
         auto netFuture = netPromise.get_future();
         std::string responseJson;
         std::ostringstream tokenBody;
-
-        std::string oidcIdP = m_oidcCredentials.getOIDCEndpoint() +
-                              kKCRealmPath + m_oidcCredentials.getOrgName() + kOIDCTokenPath;
+        std::string oidcIdP = getOIDCUrl();
 
         if (m_oidcCredentials.getAuthType() == OIDCCredentials::AuthType::ClientSecret) {
             LogDebug("AuthType:ClientSecret");
@@ -248,9 +246,7 @@ namespace virtru {
         auto netFuture = netPromise.get_future();
         std::string responseJson;
 
-        std::string oidcIdP = m_oidcCredentials.getOIDCEndpoint() +
-                              kKCRealmPath + m_oidcCredentials.getOrgName() + kOIDCTokenPath;
-
+        std::string oidcIdP = getOIDCUrl();
         std::ostringstream tokenBody;
 
         addFormData(tokenBody, kGrantType, kRefreshToken);
@@ -339,8 +335,7 @@ namespace virtru {
         auto netFuture = netPromise.get_future();
         std::string responseJson;
 
-        std::string oidcIdP = m_oidcCredentials.getOIDCEndpoint() + kKCRealmPath + m_oidcCredentials.getOrgName() + kOIDCUserinfoPath;
-
+        std::string oidcIdP = getOIDCUrl();
         std::string certAuthority = "";
         std::string clientKeyFileName = "";
         std::string clientCertFileName = "";
@@ -376,6 +371,17 @@ namespace virtru {
 
         // Since the response is OK need not parse the response for access token.
         return;
+    }
+
+    /// Get the OIDC url for fetching access token.
+    std::string OIDCService::getOIDCUrl() {
+        auto oidcEndpoint =  m_oidcCredentials.getOIDCEndpoint();
+        if('/' == oidcEndpoint.back()) {
+            oidcEndpoint.pop_back();
+        }
+
+        std::string oidcUrl = oidcEndpoint + kKCRealmPath + m_oidcCredentials.getOrgName() + kOIDCTokenPath;
+        return oidcUrl;
     }
 
     void OIDCService::addFormData(std::ostringstream &ss, const std::string &key, const std::string &val) {
