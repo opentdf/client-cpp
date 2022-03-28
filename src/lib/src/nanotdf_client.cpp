@@ -30,8 +30,8 @@
 
 namespace virtru {
 
-    constexpr auto UserAgentValuePostFix = "Openstack C++ SDK v0.1";
-    constexpr auto clientValue = "openstack-cpp-sdk:0.0.0";
+    static const auto UserAgentValuePostFix = Utils::getUserAgentValuePostFix();
+    static const auto clientValue = Utils::getClientValue();
 
     /// Constructs a nano TDF client instance.
     /// NOTE: should me used for only offline decrypt operation.
@@ -302,29 +302,37 @@ namespace virtru {
             fetchEntityObject();
         }
 
+        std::string sdkRelease = "0.0.1";
+        if (m_nanoTdfBuilder->m_impl->m_useOldNTDFFormat) {
+            sdkRelease = "0.0.0";
+        }
+
+        HttpHeaders headers = {{kUserAgentKey, UserAgentValuePostFix},
+                               {kVirtruClientKey, clientValue},
+                               {kVirtruNTDFHeaderKey, sdkRelease}};
+
+        auto networkServiceExpired = m_nanoTdfBuilder->m_impl->m_networkServiceProvider.expired();
+        if (networkServiceExpired) {
+            m_httpServiceProvider = std::make_shared<network::HTTPServiceProvider>();
+            m_nanoTdfBuilder->setHttpHeaders(headers);
+            m_nanoTdfBuilder->setHTTPServiceProvider(m_httpServiceProvider);
+        }
+
         if (oidcMode) {
             LogDebug("Using OIDC auth mode");
             if (!m_oidcService) {
-                HttpHeaders oidcHeaders = {{kUserAgentKey, kUserAgentValuePostFix}};
                 m_oidcService = std::make_unique<OIDCService>(*m_oidcCredentials,
                                                               m_nanoTdfBuilder->m_impl->m_requestSignerPublicKey,
-                                                              m_nanoTdfBuilder->getHTTPServiceProvider(oidcHeaders));
+                                                              m_nanoTdfBuilder->m_impl->m_networkServiceProvider.lock());
             }
 
-
             auto authHeaders = m_oidcService->generateAuthHeaders();
-
-            HttpHeaders headers = {{kContentTypeKey,    kContentTypeJsonValue},
-                                   {kAcceptKey,    kAcceptKeyValue},
-                                   {kUserAgentKey, UserAgentValuePostFix},
-                                   {kVirtruClientKey, clientValue}};
-
             for (const auto& header: authHeaders) {
                 headers.insert(header);
             }
 
-            m_nanoTdfBuilder->setHttpHeaders(headers);
             m_nanoTdfBuilder->m_impl->m_user = m_oidcService->getPreferredUsername();
+            m_nanoTdfBuilder->setHttpHeaders(headers);
         }
 
         m_nanoTdfBuilder->enableConsoleLogging(m_logLevel);
@@ -332,10 +340,8 @@ namespace virtru {
 
     /// Set the callback interface which will invoked for all the http network operations.
     void NanoTDFClient::setHTTPServiceProvider(std::weak_ptr<INetwork> httpServiceProvider) {
-
         LogTrace("NanoTDFClient::setHTTPServiceProvider");
-        m_nanoTdfBuilder->m_impl->m_networkServiceProvider = httpServiceProvider;
-
+        m_nanoTdfBuilder->setHTTPServiceProvider(httpServiceProvider);
     }
 
     /// Fetch EntityObject

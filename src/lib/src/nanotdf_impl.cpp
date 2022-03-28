@@ -679,58 +679,7 @@ namespace virtru {
             }
 
         } else {
-            auto service = Service::Create(rewrapUrl);
-
-            // Add the headers.
-            for (const auto& [key, value] :  m_tdfBuilder.m_impl->m_httpHeaders) {
-                service->AddHeader(key, value);
-            }
-
-            // Add host header
-            service->AddHeader(kHostKey, service->getHost());
-
-            // Add date header
-            service->AddHeader(kDateKey, nowRfc1123());
-
-            // Add content-type header
-            service->AddHeader(kContentTypeKey, kContentTypeJsonValue);
-
-            // Add accept header
-            service->AddHeader(kAcceptKey, kAcceptKeyValue);
-
-            std::string sdkRelease = "0.0.1";
-            if (m_tdfBuilder.m_impl->m_useOldNTDFFormat) {
-                sdkRelease = "0.0.0";
-            }
-            service->AddHeader(kVirtruNTDFHeaderKey, sdkRelease);
-
-            IOContext ioContext;
-            service->ExecutePost(to_string(signedTokenRequestBody), ioContext,
-                                 [&status, &rewrapResponse](ErrorCode errorCode, HttpResponse&& response) {
-
-                                     // TODO: Ignore stream truncated error. Looks like the server is not shuting downn gracefully.
-                                     // https://stackoverflow.com/questions/25587403/boost-asio-ssl-async-shutdown-always-finishes-with-an-error
-                                     if (errorCode && errorCode.value() != 1) { // something wrong.
-                                         std::ostringstream os;
-                                         os << "Error code: "
-                                            << errorCode.value() << " " << errorCode.message();
-                                         LogError(os.str());
-                                     }
-
-                                     status = Service::GetStatus(response.result());
-                                     rewrapResponse = response.body().data();
-                                 });
-
-            // Run the context - It's blocking call until i/o operation is done.
-            ioContext.run();
-
-            // Handle HTTP error.
-            if (status != kHTTPOk) {
-                std::ostringstream os;
-                os << "rewrap failed status:"
-                   << status << " response:" << rewrapResponse;
-                ThrowException(os.str());
-            }
+            ThrowException("Network service not available");
         }
 
 #if DEBUG_LOG

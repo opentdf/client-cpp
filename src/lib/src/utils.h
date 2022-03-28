@@ -72,6 +72,14 @@ namespace virtru {
         /// \param status - The HTTP status code
         /// \return bool - True if the status is ok.
         static bool goodHttpStatus(const unsigned status);
+
+        /// Get value of UserAgentValuePostFix
+        /// \return std::string - A string with SDK version major and minor
+        static std::string getUserAgentValuePostFix();
+
+        /// Get value of clientValue
+        /// \return std::string - A string describing SDK client with version
+        static std::string getClientValue();
     };
 } // namespace virtru
 

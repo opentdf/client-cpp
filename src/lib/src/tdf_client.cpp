@@ -34,8 +34,8 @@
 namespace virtru {
 
     //TODO: This need be changed.
-    constexpr auto UserAgentValuePostFix = "Openstack C++ SDK v0.1";
-    constexpr auto VirtruClientValue = "openstack-cpp-sdk:0.0.0";
+    static const auto UserAgentValuePostFix = Utils::getUserAgentValuePostFix();
+    static const auto VirtruClientValue = Utils::getClientValue();
 
     TDFClient::TDFClient(const std::string &backendUrl, const std::string &user)
             : TDFClient(backendUrl, user, "", "", "") {
@@ -263,10 +263,15 @@ namespace virtru {
             m_tdfBuilder->m_impl->m_requestSignerPublicKey = keyPairOf2048->PublicKeyInPEMFormat();
         }
 
-        HttpHeaders headers = {{kContentTypeKey, kContentTypeJsonValue},
-                               {kAcceptKey, kAcceptKeyValue},
-                               {kUserAgentKey, UserAgentValuePostFix},
+        HttpHeaders headers = {{kUserAgentKey, UserAgentValuePostFix},
                                {kVirtruClientKey, VirtruClientValue}};
+
+        auto networkServiceExpired = m_tdfBuilder->m_impl->m_networkServiceProvider.expired();
+        if (networkServiceExpired) {
+            m_httpServiceProvider = std::make_shared<network::HTTPServiceProvider>();
+            m_tdfBuilder->setHttpHeaders(headers);
+            m_tdfBuilder->setHTTPServiceProvider(m_httpServiceProvider);
+        }
 
         //Deprecated/remove this case - not in OIDC mode, need to fetch Entity Object
         if (entityObjectNotSet && !oidcMode) {
@@ -286,8 +291,6 @@ namespace virtru {
                                                   to_string(publicKeyBody));
 
             m_tdfBuilder->setEntityObject(entityObject);
-
-            m_tdfBuilder->setHttpHeaders(headers);
         }
 
         //If we're using OIDC auth mode (upsert/rewrap V2) - then we ignore EOs
@@ -295,10 +298,9 @@ namespace virtru {
         if (oidcMode) {
             LogDebug("Using OIDC auth mode");
             if (!m_oidcService) {
-                HttpHeaders oidcHeaders = {{kUserAgentKey, kUserAgentValuePostFix}};
                 m_oidcService = std::make_unique<OIDCService>(*m_oidcCredentials,
                                                               m_tdfBuilder->m_impl->m_requestSignerPublicKey,
-                                                              m_tdfBuilder->getHTTPServiceProvider(oidcHeaders));
+                                                              m_tdfBuilder->m_impl->m_networkServiceProvider.lock());
             }
 
             auto authHeaders = m_oidcService->generateAuthHeaders();
@@ -308,8 +310,9 @@ namespace virtru {
 
             m_tdfBuilder->m_impl->m_user = m_oidcService->getPreferredUsername();
             m_tdfBuilder->setHttpHeaders(headers);
-            }
         }
+        m_tdfBuilder->enableConsoleLogging(m_logLevel);
+    }
 
     /// Get vector of entity attribute objects
     std::vector<AttributeObject> TDFClient::getEntityAttrObjects() {
@@ -355,7 +358,7 @@ namespace virtru {
     /// Set the callback interface which will invoked for all the http network operations.
     void TDFClient::setHTTPServiceProvider(std::weak_ptr<INetwork> httpServiceProvider) {
         LogTrace("TDFClient::setHTTPServiceProvider");
-        m_tdfBuilder->m_impl->m_networkServiceProvider = std::move(httpServiceProvider);
+        m_tdfBuilder->setHTTPServiceProvider(httpServiceProvider);
     }
 
     /// Create TDFs in XML format instead of zip format.

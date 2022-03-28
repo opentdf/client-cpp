@@ -20,7 +20,7 @@ namespace virtru::network {
     class HTTPServiceProvider : public INetwork {
     public: /// Interface
         /// Constructor
-        explicit HTTPServiceProvider(HttpHeaders headers);
+        explicit HTTPServiceProvider(HttpHeaders headers = {});
 
         /// Destructor
         ~HTTPServiceProvider() override = default;

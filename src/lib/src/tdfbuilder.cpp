@@ -325,25 +325,6 @@ namespace virtru {
         return m_impl->m_entityObject;
     }
 
-    /// TODO this has no business being in the Builder, but the builder pattern
-    /// is largely pointless versus TDFClient as it is just a bunch of duplicated
-    /// setter funcs and a `validate()` call
-    /// Returns a network provider for making HTTP calls with.
-    /// If no provider was externally supplied with `setHTTPServiceProvider`, a new one
-    /// will be created and configured with `defaultHeaders`
-    std::shared_ptr<INetwork> TDFBuilder::getHTTPServiceProvider(HttpHeaders defaultHeaders) const {
-        if (auto sp = m_impl->m_networkServiceProvider.lock()) {
-            LogDebug("Using existing network provider");
-            return sp;
-        } else {
-            LogDebug("No network provider defined, creating one...");
-            // No service provided, create one using supplied headers
-            std::shared_ptr<INetwork> httpServiceProvider =
-                std::make_shared<network::HTTPServiceProvider>(defaultHeaders);
-            return httpServiceProvider;
-        }
-    }
-
     /// Set the callback interface which will invoked for all the http network operations.
     TDFBuilder &TDFBuilder::setHTTPServiceProvider(std::weak_ptr<INetwork> httpServiceProvider) {
 
@@ -394,7 +375,7 @@ namespace virtru {
             if (m_impl->m_kasPublicKey.empty()) {
                 auto kasKeyUrl = m_impl->m_kasUrl + kKasPubKeyPath;
                 LogDebug("KAS public key was not set, fetching from provided KAS URL: " + kasKeyUrl);
-                auto kasPublicKey = Utils::getKasPubkeyFromURLsp(kasKeyUrl, getHTTPServiceProvider({}));
+                auto kasPublicKey = Utils::getKasPubkeyFromURLsp(kasKeyUrl, m_impl->m_networkServiceProvider);
                 LogDebug("KAS public key fetched");
                 m_impl->m_kasPublicKey = kasPublicKey;
             }

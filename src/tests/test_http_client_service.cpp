@@ -7,8 +7,10 @@
 
 #define BOOST_TEST_MODULE test_http_client_service
 
-#include "network/http_client_service.h"
+#include "http_client_service.h"
 #include "tdf_exception.h"
+#include "utils.h"
+#include "version.h"
 
 #include <string>
 #include <iostream>
@@ -19,6 +21,7 @@
 BOOST_AUTO_TEST_SUITE(test_http_client_service_suite)
 
     using namespace virtru::network;
+
     BOOST_AUTO_TEST_CASE(test_http_client_service_get)
     {
         constexpr auto kasUrl = "https://api-develop01.develop.virtru.com/kas";
@@ -118,6 +121,17 @@ BOOST_AUTO_TEST_SUITE(test_http_client_service_suite)
 
         // Run the context - It's blocking call until i/o operation is done.
         ioContext.run();
+    }
+
+    BOOST_AUTO_TEST_CASE(test_http_header_version_value)
+    {
+        std::string utilUserAgent = virtru::Utils::getUserAgentValuePostFix();
+
+        BOOST_CHECK_EQUAL(utilUserAgent, "Openstack C++ SDK v" + std::to_string(opentdf_VERSION_MAJOR) + "." + std::to_string(opentdf_VERSION_MINOR));
+
+        std::string utilClientValue = virtru::Utils::getClientValue();
+
+        BOOST_CHECK_EQUAL(utilClientValue, std::string("openstack-cpp-sdk:") + opentdf_VERSION);
     }
 
 BOOST_AUTO_TEST_SUITE_END()

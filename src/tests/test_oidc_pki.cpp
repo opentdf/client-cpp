@@ -244,16 +244,25 @@ BOOST_AUTO_TEST_CASE(test_pki) {
                                                 oidcEndpoint);
 
         LogTrace("Creating TDFClient");
-        auto oidcClientTDF = std::make_unique<TDFClient>(clientCreds, KAS_URL);
+        auto tdfClient = std::make_unique<TDFClient>(clientCreds, KAS_URL);
 
         LogTrace("Creating mock network");
         std::shared_ptr<MockNetwork> mockNetwork = std::make_shared<MockNetwork>();
 
         LogTrace("setting mock network");
-        oidcClientTDF->setHTTPServiceProvider(mockNetwork);
+        tdfClient->setHTTPServiceProvider(mockNetwork);
 
         LogTrace("encryptString");
-        oidcClientTDF->encryptString("This is a test");
+        tdfClient->encryptString("This is a test");
+
+        LogTrace("Creating NanoTDFClient");
+        auto nanoTDFClient = std::make_unique<TDFClient>(clientCreds, KAS_URL);
+
+        LogTrace("setting mock network");
+        nanoTDFClient->setHTTPServiceProvider(mockNetwork);
+
+        LogTrace("encryptString");
+        nanoTDFClient->encryptString("This is a test");
 
         BOOST_TEST_MESSAGE("TDF pki test passed.");
     } catch (const Exception &exception) {

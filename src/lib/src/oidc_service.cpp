@@ -27,7 +27,6 @@ namespace virtru {
 
     using namespace virtru::crypto;
 
-    HttpHeaders oidcHeaders = {{kUserAgentKey, kUserAgentValuePostFix}};
     /// Constructor
     OIDCService::OIDCService(OIDCCredentials oidcCredentials,
                              const std::string &clientSigningPubkey,
