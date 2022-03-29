@@ -59,6 +59,7 @@ endif()
 include_directories(
     ${PROJECT_SOURCE_DIR}/../lib/include
     ${PROJECT_SOURCE_DIR}/../lib/include/crypto
+    ${PROJECT_SOURCE_DIR}/../lib/include/network
     ${PROJECT_SOURCE_DIR}/../lib/src
     ${PROJECT_SOURCE_DIR}/../lib/src/crypto
     ${PROJECT_SOURCE_DIR}/../thirdparty-libs/common

@@ -1257,7 +1257,11 @@ namespace virtru {
         unsigned status = kHTTPBadRequest;
         std::string upsertResponse;
 
-        auto sp = m_tdfBuilder.getHTTPServiceProvider({});
+        auto sp = m_tdfBuilder.m_impl->m_networkServiceProvider.lock();
+        if (!sp) {
+            ThrowException("Network service not available");
+        }
+
         std::promise<void> upsertPromise;
         auto upsertFuture = upsertPromise.get_future();
 
@@ -1374,80 +1378,33 @@ namespace virtru {
         unsigned status = kHTTPBadRequest;
         std::string rewrapResponse;
 
-        if (m_tdfBuilder.m_impl->m_oidcMode) {
-            auto sp = m_tdfBuilder.getHTTPServiceProvider({});
-
-            std::promise<void> rewrapPromise;
-            auto rewrapFuture = rewrapPromise.get_future();
-
-            sp->executePost(rewrapUrl, m_tdfBuilder.m_impl->m_httpHeaders, std::move(requestBodyStr),
-                            [&rewrapPromise, &rewrapResponse, &status](unsigned int statusCode, std::string &&response) {
-                                status = statusCode;
-                                rewrapResponse = response.data();
-
-                                rewrapPromise.set_value();
-                            });
-
-            rewrapFuture.get();
-
-            // Handle HTTP error.
-            if (status != kHTTPOk) {
-                std::ostringstream os;
-                os << "rewrap failed status:"
-                   << status << " response:" << rewrapResponse;
-                ThrowException(os.str());
-            }
-
-            return getWrappedKey(rewrapResponse);
-
-        } else {
-            //Else do deprecated stuff
-            //TODO this entire else condition can and should be nuked, as it is either
-            //1. Unecessary vis a vis the above
-            //2. Used only for the deprecated non-OIDC EAS flow
-            auto service = Service::Create(rewrapUrl);
-
-            // Add the headers.
-            for (const auto &[key, value] : m_tdfBuilder.m_impl->m_httpHeaders) {
-                service->AddHeader(key, value);
-            }
-
-            // Add host header
-            service->AddHeader(kHostKey, service->getHost());
-
-            // Add date header
-            service->AddHeader(kDateKey, nowRfc1123());
-
-            IOContext ioContext;
-
-            service->ExecutePost(std::move(requestBodyStr), ioContext,
-                                 [&status, &rewrapResponse](ErrorCode errorCode, HttpResponse &&response) {
-                                     // TODO: Ignore stream truncated error. Looks like the server is not shuting downn gracefully.
-                                     // https://stackoverflow.com/questions/25587403/boost-asio-ssl-async-shutdown-always-finishes-with-an-error
-                                     if (errorCode && errorCode.value() != 1) { // something wrong.
-                                         std::ostringstream os;
-                                         os << "Error code: "
-                                            << errorCode.value() << " " << errorCode.message();
-                                         LogError(os.str());
-                                     }
-
-                                     status = Service::GetStatus(response.result());
-                                     rewrapResponse = response.body().data();
-                                 });
-
-            // Run the context - It's blocking call until i/o operation is done.
-            ioContext.run();
-
-            // Handle HTTP error.
-            if (status != kHTTPOk) {
-                std::ostringstream os;
-                os << "rewrap failed status:"
-                   << status << " response:" << rewrapResponse;
-                ThrowException(os.str());
-            }
-
-            return getWrappedKey(rewrapResponse);
+        auto sp = m_tdfBuilder.m_impl->m_networkServiceProvider.lock();
+        if (!sp) {
+            ThrowException("Network service not available");
         }
+
+        std::promise<void> rewrapPromise;
+        auto rewrapFuture = rewrapPromise.get_future();
+
+        sp->executePost(rewrapUrl, m_tdfBuilder.m_impl->m_httpHeaders, std::move(requestBodyStr),
+                            [&rewrapPromise, &rewrapResponse, &status](unsigned int statusCode, std::string &&response) {
+            status = statusCode;
+            rewrapResponse = response.data();
+
+            rewrapPromise.set_value();
+        });
+
+        rewrapFuture.get();
+
+        // Handle HTTP error.
+        if (status != kHTTPOk) {
+            std::ostringstream os;
+            os << "rewrap failed status:"
+               << status << " response:" << rewrapResponse;
+            ThrowException(os.str());
+        }
+
+        return getWrappedKey(rewrapResponse);
     }
 
     /// Parse the response and retrive the wrapped key.

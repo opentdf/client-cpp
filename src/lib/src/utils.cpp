@@ -19,6 +19,7 @@
 #include "sdk_constants.h"
 #include "tdf_exception.h"
 #include "utils.h"
+#include "version.h"
 #include <boost/algorithm/string.hpp>
 
 namespace virtru {
@@ -40,9 +41,6 @@ namespace virtru {
         auto netFuture = netPromise.get_future();
 
         LogTrace("Utils::getKasPubkeyFromURL(url, serviceProvider)");
-
-        if (auto service = httpServiceProvider.lock()) { // Rely on callback interface
-
         if (auto sp = httpServiceProvider.lock()) { // Rely on callback interface
             sp->executeGet(
                 kasGetPublicKeyUrl, {},
@@ -81,9 +79,6 @@ namespace virtru {
         //is beyond me - would consider it a KAS bug if that's an actual scenario.
         // auto kasPubKey = extractPemFromKasKeyString(kasPubKeyString);
 
-        } else {
-            ThrowException("Unable to lock network provider");
-        }
         return kasPubKeyString;
     }
 
@@ -232,6 +227,16 @@ namespace virtru {
         }
 
         return retval;
+    }
+
+    // Get useragentvalue for header
+    std::string Utils::getUserAgentValuePostFix() {
+        return "Openstack C++ SDK v" + std::to_string(opentdf_VERSION_MAJOR) + "." + std::to_string(opentdf_VERSION_MINOR);
+    }
+
+    // Get client value for header
+    std::string Utils::getClientValue() {
+        return std::string("openstack-cpp-sdk:") + opentdf_VERSION;
     }
 
 } // namespace virtru

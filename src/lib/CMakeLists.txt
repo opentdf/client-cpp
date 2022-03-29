@@ -17,7 +17,7 @@ file(STRINGS ../../VERSION PKG_VERSION)
 # Set the project name
 project(opentdf VERSION ${PKG_VERSION})
 
-configure_file(${PROJECT_SOURCE_DIR}/include/version.h.in ${PROJECT_SOURCE_DIR}/include/version.h)
+configure_file(${PROJECT_SOURCE_DIR}/src/version.h.in ${PROJECT_SOURCE_DIR}/include/version.h)
 
 # Add suffix to differentiate between shared and static lib output names
 set(TDF_STATIC_LIB_SUFFIX _static)

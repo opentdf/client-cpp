@@ -16,6 +16,7 @@
 #include "attribute_object.h"
 #include "entity_object.h"
 #include "policy_object.h"
+#include "network_interface.h"
 #include <tdf_constants.h>
 #include <unordered_set>
 
@@ -167,6 +168,7 @@ namespace virtru {
         std::set<std::string> m_dissems;
         std::vector<AttributeObject> m_dataAttributeObjects;
         LogLevel m_logLevel{LogLevel::Warn};
+        std::shared_ptr<INetwork> m_httpServiceProvider;
     };
 } // namespace virtru
 

@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 ### Added
+0.6.3
+- PLAT-1626 Network service interface enabled from Client classes
+
 0.6.2
 - PLAT-1626 Fix the regression caused XML TDF generation and json library update
 
