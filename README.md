@@ -1,24 +1,29 @@
 # openTDF - client-cpp
 Minimal c/c++ client to generate and access TDF files
 
-## Dependencies
+## Building
+
+### Dependencies
+
+To build the client the following dependencies are needed
 
 - [conan](https://conan.io)
+- [cmake](https://cmake.org)
 
-### Install via Homebrew
+#### Install deps via Homebrew
 
 Using [Hombrew](https://brew.sh) (for Mac and Linux)
 
 ```
-brew install conan
+brew install conan cmake
 ```
 
-## Local Building
+### Local Building
 
 1. `cd src`
 1. `sh build-all.sh`
 
-## Local Building+Testing
+### Local Building+Testing
 
 1. `cd src`
 1. `sh build-all-test.sh`
