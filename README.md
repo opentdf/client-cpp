@@ -1,4 +1,4 @@
-# openTDF - client-cpp
+# OpenTDF - client-cpp
 Minimal c/c++ client to generate and access TDF files
 
 ## Local Building
@@ -11,4 +11,4 @@ Minimal c/c++ client to generate and access TDF files
 1. `cd src`
 1. `sh build-all-test.sh`
 
-For more details on conan and publishing, see [openTDF/client-conan](https://github.com/opentdf/client-conan)
+For more details on conan and publishing, see [OpenTDF/client-conan](https://github.com/opentdf/client-conan)
