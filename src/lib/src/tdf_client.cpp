@@ -29,6 +29,8 @@
 
 #include <jwt-cpp/jwt.h>
 #include <sstream>
+#include <istream>
+#include <fstream>
 #include "nlohmann/json.hpp"
 
 namespace virtru {
@@ -69,6 +71,30 @@ namespace virtru {
 
     /// Destructor
     TDFClient::~TDFClient() = default;
+
+    /// Assign the metadata that will be encrypted and stored in
+    /// the TDF, separately from the data.
+    void TDFClient::setEncryptedMetadata(const std::string& medata) {
+
+        LogTrace("TDFClient::setEncryptedMetadata");
+
+        m_metadata = medata;
+    }
+
+    /// Decrypt and return TDF metadata as a string. If the TDF content has
+    /// no encrypted metadata, will return an empty string.
+    std::string TDFClient::getEncryptedMetadata(const std::string &tdfData) {
+
+        LogTrace("TDFClient::getEncryptedMetadata");
+
+        // Initialize the TDF builder
+        initTDFBuilder();
+
+        std::istringstream inputStream(tdfData);
+
+        auto tdf = m_tdfBuilder->build();
+        return tdf->getEncryptedMetadata(inputStream);
+    }
 
     /// Encrypt the file to tdf format.
     void TDFClient::encryptFile(const std::string &inFilepath, const std::string &outFilepath) {
@@ -208,7 +234,6 @@ namespace virtru {
 
         // NOTE: look into pubsetbuf for better performance.
         std::istringstream inputStream(encryptedData);
-        std::ostringstream ioStream;
 
         // return the policy.
         return tdf->getPolicy(inputStream);
@@ -232,6 +257,42 @@ namespace virtru {
                                             m_tdfBuilder->m_impl->m_kasPublicKey, userKasURL);
     }
 
+    //check if file is tdf
+    bool TDFClient::isFileTDF(const std::string &inFilepath) {
+        LogTrace("TDFClient::isFileTDF");
+
+        // Open the input file for reading.
+        std::ifstream inStream{inFilepath, std::ios_base::in | std::ios_base::binary};
+        if (!inStream) {
+            std::string errorMsg{"Failed to open file for reading:"};
+            errorMsg.append(inFilepath);
+            ThrowException(std::move(errorMsg));
+        }
+
+        return TDF::isStreamTDF(inStream);
+    }
+
+    //check if string is tdf
+    bool TDFClient::isStringTDF(const std::string &tdfString) {
+        LogTrace("TDFClient::isStringTDF");
+ 
+        // NOTE: look into pubsetbuf for better performance.
+        std::istringstream inputStream(tdfString);
+
+        return TDF::isStreamTDF(inputStream);
+    }
+
+    //check if data is tdf
+    bool TDFClient::isDataTDF(const std::vector<VBYTE> &tdfData) {
+        LogTrace("TDFClient::isDataTDF");
+ 
+        // NOTE: look into pubsetbuf for better performance.
+        std::stringstream inputStream;
+        inputStream.write(reinterpret_cast<const char *>(tdfData.data()), tdfData.size());
+
+        return TDF::isStreamTDF(inputStream);
+    }
+
     /// Initialize the TDF builder which is used for creating the TDF instance
     /// used for encrypt and decrypt.
     void TDFClient::initTDFBuilder() {
@@ -239,6 +300,7 @@ namespace virtru {
 
         auto oidcMode = m_tdfBuilder->m_impl->m_oidcMode;
         auto entityObjectNotSet = m_tdfBuilder->m_impl->m_entityObject.getUserId().empty();
+        m_tdfBuilder->setMetaDataAsJsonStr(m_metadata).setKeyAccessType(KeyAccessType::Wrapped);
 
         auto privateKeyIsNotSet = m_tdfBuilder->m_impl->m_privateKey.empty();
         auto pubicKeyIsNotSet = m_tdfBuilder->m_impl->m_publicKey.empty();
@@ -248,8 +310,7 @@ namespace virtru {
 
             // Create RSA key pair.
             auto keyPairOf2048 = crypto::RsaKeyPair::Generate(defaultKeySize);
-            m_tdfBuilder->setKeyAccessType(KeyAccessType::Wrapped)
-                    .setPrivateKey(keyPairOf2048->PrivateKeyInPEMFormat())
+            m_tdfBuilder->setPrivateKey(keyPairOf2048->PrivateKeyInPEMFormat())
                     .setPublicKey(keyPairOf2048->PublicKeyInPEMFormat());
         }
 
@@ -365,5 +426,17 @@ namespace virtru {
     void TDFClient::setXMLFormat() {
         LogTrace("TDFClient::setXMLFormat");
         m_tdfBuilder->setProtocol(Protocol::Xml);
+    }
+
+    /// Set the private key(In PEM format), which will be used by this SDK for encryption/decryption of the payload.
+    void TDFClient::setPrivateKey(const std::string& privateKey) {
+        LogTrace("TDFClient::setPrivateKey");
+        m_tdfBuilder->setPrivateKey(privateKey);
+    }
+
+    /// Set the public key(In PEM format), which will be used by this SDK for encryption/decryption of the payload.
+    void TDFClient::setPublicKey(const std::string& publicKey) {
+        LogTrace("TDFClient::setPublicKey");
+        m_tdfBuilder->setPublicKey(publicKey);
     }
 } // namespace virtru

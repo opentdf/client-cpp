@@ -135,6 +135,35 @@ DLL_PUBLIC TDF_STATUS TDFDecryptString(TDFClientPtr clientPtr,
                                        TDFBytesPtr *outBytesPtr,
                                        TDFBytesLength *outBytesLength);
 
+
+
+/// Assign the metadata that will be encrypted and stored in
+/// the TDF, separately from the data.
+/// \param vClientPtr - The pointer to Virtru client opaque object.
+/// \param inBytesPtr  - Pointer to buffer containing the meta data.
+/// \param inBytesLength  - Length of buffer containing the meta data.
+/// \return TDF_STATUS - VSTATUS_SUCCESS on success
+DLL_PUBLIC TDF_STATUS TDFSetEncryptedMetadata(TDFClientPtr clientPtr,
+                                       TDFCBytesPtr inBytesPtr,
+                                       TDFBytesLength inBytesLength);
+
+
+/// Decrypt and return TDF metadata as a string. If the TDF content has
+/// no encrypted metadata, will return an empty string.
+/// \param vClientPtr - The pointer to Virtru client opaque object.
+/// \param inBytesPtr  - Pointer to buffer containing the TDF data.
+/// \param inBytesLength  - Length of buffer containing the TDF data.
+/// \param outBytesPtr  - On success, it contains the meta data string.
+/// \param outBytesLength  - On success, it is length of the meta data string.
+/// \return TDF_STATUS - VSTATUS_SUCCESS on success
+/// NOTE: The caller of the api should free outBytesPtr.
+DLL_PUBLIC TDF_STATUS TDFGetEncryptedMetadata(TDFClientPtr clientPtr,
+                                       TDFCBytesPtr inBytesPtr,
+                                       TDFBytesLength inBytesLength,
+                                       TDFBytesPtr *outBytesPtr,
+                                       TDFBytesLength *outBytesLength);
+
+
 #ifdef __cplusplus
 }
 #endif

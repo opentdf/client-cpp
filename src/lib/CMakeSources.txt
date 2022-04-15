@@ -79,6 +79,8 @@ set (TDF_CPP_SDK_SOURCE_FILES_BASE
         ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_xml_writer.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_xml_reader.cpp
         ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_xml_reader.h
+        ${TDF_CPP_SDK_SOURCE_DIR}/include/test/test_utils.h
+        ${TDF_CPP_SDK_SOURCE_DIR}/include/test/test_utils.cpp
     )
 
 set (TDF_CPP_SDK_SOURCE_FILES_NANOTDF
