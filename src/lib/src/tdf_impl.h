@@ -74,6 +74,12 @@ namespace virtru {
         /// \param sinkCb - A sink callback with the decrypted data.
         void decryptData(TDFDataSourceCb sourceCb, TDFDataSinkCb sinkCb);
 
+        /// Decrypt and return TDF metadata as a string. If the TDF content has
+        /// no encrypted metadata, will return an empty string.
+        /// \param inStream - The stream containing tdf data.
+        /// \return std::string - The string containing the metadata.
+        std::string getEncryptedMetadata(std::istream& inStream);
+
         /// Extract and return the JSON policy string from a TDF stream.
         /// \param inStream - The stream containing tdf data.
         /// \param outStream - The stream containing the JSON policy string.
@@ -94,6 +100,11 @@ namespace virtru {
         /// Sync the tdf file, with symmetric wrapped key and Policy Object.
         /// \param encryptedTdfFilepath - The file path to the tdf.
         void sync(const std::string& encryptedTdfFilepath) const;
+
+        /// Check if data in the stream is TDF
+        /// \param inStream - The stream containing a tdf data to be decrypted.
+        /// \return - Return true if data is TDF and false otherwise
+        static bool isStreamTDF(std::istream& inStream);
 
     private:
         /// Encrypt the data in the input stream to tdf format and return the manifest.
@@ -177,35 +188,40 @@ namespace virtru {
         /// \param htmlTDFFilepath - A tdf file in .html format.
         /// \param manifestData - If true return manifest data otherwise return tdf zip data.
         /// \return - TDF zip data.
-        std::vector<std::uint8_t> getTDFZipData(const std::string& htmlTDFFilepath,
-                                                bool manifestData = false) const;
+        static std::vector<std::uint8_t> getTDFZipData(const std::string& htmlTDFFilepath,
+                                                bool manifestData = false);
 
         /// Return tdf zip data by parsing html tdf file.
         /// \param bytes - The payload of the html.
         /// \param manifestData - If true return manifest data otherwise return tdf zip data.
         /// \return - TDF zip data.
-        std::vector<std::uint8_t> getTDFZipData(Bytes bytes, bool manifestData = false);
+        static std::vector<std::uint8_t> getTDFZipData(Bytes bytes, bool manifestData = false);
 
         /// Return tdf zip data from XMLDoc object.
         /// \param xmlDocPtr - The unique ptr of XMLDoc object.
         /// \param manifestData - If true return manifest data otherwise return tdf zip data.
         /// \return - TDF zip data.
-        std::vector<std::uint8_t> getTDFZipData(XMLDocFreePtr xmlDocPtr, bool manifestData) const;
+        static std::vector<std::uint8_t> getTDFZipData(XMLDocFreePtr xmlDocPtr, bool manifestData);
 
         // Return the TDF protocol used to encrypt the file
         /// \param inTdfFilePath - The tdf file path
         /// \return TDF protocol used to encrypt the file
-        Protocol encryptedWithProtocol(const std::string& inTdfFilePath) const;
+        static Protocol encryptedWithProtocol(const std::string& inTdfFilePath);
 
         // Return the TDF protocol used to encrypt the input stream data
         /// \param inTdfFilePath - The tdf file path
         /// \return TDF protocol used to encrypt the input stream data
-        Protocol encryptedWithProtocol(std::istream& tdfInStream) const;
+        static Protocol encryptedWithProtocol(std::istream& tdfInStream);
 
         /// Retrive the policy uuid(id) from the manifest.
         /// \param manifestStr - The tdf manifest.
         /// \return String - The policy id.
         std::string getPolicyFromManifest(const std::string& manifestStr) const;
+
+        /// Return the manifest from the tdf input stream.
+        /// \param tdfInStream - The TDF input steam
+        /// \return string - The manifest of the tdf.
+        std::string getManifest(std::istream &tdfInStream) const;
 
         /// Retrive the policy uuid(id) from the manifest.
         /// \param manifestStr - The tdf manifest.

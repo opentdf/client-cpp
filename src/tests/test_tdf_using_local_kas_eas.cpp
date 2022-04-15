@@ -16,11 +16,13 @@
 #include "tdf_exception.h"
 #include "crypto/rsa_key_pair.h"
 #include "oidc_credentials.h"
+#include "test_utils.h"
 
 #include <boost/test/included/unit_test.hpp>
 #include <boost/endian/arithmetic.hpp>
 #include <boost/filesystem.hpp>
 #include <iostream>
+#include <istream>
 
 #ifdef _WINDOWS
 #include <direct.h>
@@ -36,7 +38,7 @@ constexpr auto user = "user1";
 constexpr auto user2 = "user2";
 constexpr auto easUrl = "http://localhost:8000/";
 constexpr auto OIDC_ENDPOINT = "http://localhost:65432/";
-constexpr auto KAS_URL = "http://localhost:65432/kas";
+constexpr auto KAS_URL = "http://localhost:65432/api/kas";
 constexpr auto CLIENT_ID = "tdf-client";
 constexpr auto CLIENT_SECRET = "123-456";
 constexpr auto ORGANIZATION_NAME = "tdf";
@@ -66,37 +68,9 @@ void test24BitBigEndian(std::uint32_t value) {
     BOOST_TEST(value == valueAsNative);
 }
 
-/// Generate a random string.
-/// NOTE: Not really worried about the randomness of the string content.
-std::string RandomString(size_t len) {
-    std::string str = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-    std::string newstr;
-    size_t pos;
-    while(newstr.size() != len) {
-        pos = ((rand() % (str.size() - 1)));
-        newstr += str.substr(pos,1);
-    }
-    return newstr;
-}
-
-std::string getCurrentWorkingDir() {
-    char buff[FILENAME_MAX];
-    GetCurrentDir( buff, FILENAME_MAX );
-    std::string current_working_dir(buff);
-    return current_working_dir;
-}
-
-std::string ReplaceAll(std::string str, const std::string& from, const std::string& to) {
-    size_t start_pos = 0;
-    while((start_pos = str.find(from, start_pos)) != std::string::npos) {
-        str.replace(start_pos, from.length(), to);
-        start_pos += to.length(); // Handles case where 'to' is a substring of 'from'
-    }
-    return str;
-}
-
-void testTDFOperations(TDFClientBase* client) {
-    std::string currentDir = getCurrentWorkingDir();
+void testTDFOperations(TDFClient* client, bool testMetaDataAPI = false) {
+    std::string currentDir = TestUtils::getCurrentWorkingDir();
+    const std::string metaData = R"({"displayName" : "opentdf c++ sdk"})";
 
     // TODO: BUGBUG: We should use std::filesystem once all the compilers catch up.
 #ifdef _WINDOWS
@@ -124,10 +98,15 @@ void testTDFOperations(TDFClientBase* client) {
     std::string outPathDecrypt{currentDir};
     outPathDecrypt.append("/data/decrypt/sample.pdf");
 #endif
+    client->setEncryptedMetadata(metaData);
 
     client->encryptFile(inPathEncrypt, outPathEncrypt);
 
-    std::cout << std::endl;
+    if (testMetaDataAPI) {
+        auto metaDataFromTDF = client->getEncryptedMetadata(outPathEncrypt);
+        BOOST_TEST(metaData == metaDataFromTDF);
+    }
+
     client->decryptFile(inPathDecrypt, outPathDecrypt);
 
     BOOST_TEST_MESSAGE("TDF basic test passed.");
@@ -135,7 +114,7 @@ void testTDFOperations(TDFClientBase* client) {
                                                8 * 1024 * 1024, (16 * 1024 * 1024 - 35), 100, 1000, 8000 };
     for (const auto& size : bufferSizes) {
 
-        std::string plainText = RandomString(size);
+        std::string plainText = TestUtils::randomString(size);
         auto encryptedText = client->encryptString(plainText);
         auto plainTextAfterDecrypt = client->decryptString(encryptedText);
         BOOST_TEST(plainText == plainTextAfterDecrypt);
@@ -143,7 +122,7 @@ void testTDFOperations(TDFClientBase* client) {
 
     for (const auto& size : bufferSizes) {
 
-        std::string plainText = RandomString(size);
+        std::string plainText = TestUtils::randomString(size);
         std::vector<uint8_t> text(plainText.begin(), plainText.end());
         auto encryptedText = client->encryptData(text);
         auto plainTextAfterDecrypt = client->decryptData(encryptedText);
@@ -161,7 +140,7 @@ void testNanoTDFOperations(TDFClientBase* client1, NanoTDFClient* client2) {
     { // File tests with signature.
 
         for (const auto& size : fileSizeArray) {
-            std::string plainText = RandomString(size);
+            std::string plainText = TestUtils::randomString(size);
             { // Write file
                 std::ofstream f("nano_tdf_text.txt");
                 f.write(plainText.data(), plainText.size());
@@ -188,7 +167,7 @@ void testNanoTDFOperations(TDFClientBase* client1, NanoTDFClient* client2) {
 
         for (const auto& size : fileSizeArray) {
 
-            std::string plainText = RandomString(size);
+            std::string plainText = TestUtils::randomString(size);
             auto encryptedText = client1->encryptString(plainText);
             auto plainTextAfterDecrypt = client2->decryptString(encryptedText);
             BOOST_TEST(plainText == plainTextAfterDecrypt);
@@ -199,7 +178,7 @@ void testNanoTDFOperations(TDFClientBase* client1, NanoTDFClient* client2) {
 
         for (const auto& size : fileSizeArray) {
 
-            std::string plainText = RandomString(size);
+            std::string plainText = TestUtils::randomString(size);
             std::vector<uint8_t> text(plainText.begin(), plainText.end());
             auto encryptedText = client1->encryptData(text);
             auto plainTextAfterDecrypt = client2->decryptData(encryptedText);
@@ -248,7 +227,7 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
         auto invalidNanoTDFWithSignatureAsBinary = base64Decode(invalidNanoTDFWithSignature);
         BOOST_TEST(NanoTDFClient::isValidNanoTDFData(invalidNanoTDFWithSignatureAsBinary) == false);
 
-        std::string currentDir = getCurrentWorkingDir();
+        std::string currentDir = TestUtils::getCurrentWorkingDir();
 #ifdef _WINDOWS
         std::string validNanoTDFFilePath {currentDir };
         validNanoTDFFilePath.append("\\data\\valid_nanotdf.ntdf");
@@ -269,7 +248,7 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
 
     BOOST_AUTO_TEST_CASE(test_old_version_nano_tdf) {
 #if 0
-        std::string currentDir = getCurrentWorkingDir();
+        std::string currentDir = TestUtils::getCurrentWorkingDir();
 #ifdef _WINDOWS
         std::string ntdfFilePath {currentDir };
         ntdfFilePath.append("\\data\\old_ver_nanotdf.ntdf");
@@ -286,6 +265,68 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
         NanoTDFClient client{easUrl, user};
         client.decryptFileUsingOldFormat(ntdfFilePath, outPathEncrypt);
 #endif
+    }
+
+    BOOST_AUTO_TEST_CASE(test_is_tdf) {
+
+        std::string currentDir = TestUtils::getCurrentWorkingDir();
+#ifdef _WINDOWS
+        std::string validZipTDFFilePath {currentDir };
+        validZipTDFFilePath.append("\\data\\valid_zip_tdf.tdf");
+
+        std::string validXmlTDFFilePath {currentDir };
+        validXmlTDFFilePath.append("\\data\\valid_xml_tdf.tdf");
+
+        std::string validHtmlTDFFilePath {currentDir };
+        validHtmlTDFFilePath.append("\\data\\valid_html_tdf.tdf");
+
+        std::string invalidZipTDFFilePath {currentDir };
+        invalidZipTDFFilePath.append("\\data\\invalid_zip_tdf.tdf");
+
+        std::string invalidXmlTDFFilePath {currentDir };
+        invalidXmlTDFFilePath.append("\\data\\invalid_xml_tdf.tdf");
+
+        std::string invalidHtmlTDFFilePath {currentDir };
+        invalidHtmlTDFFilePath.append("\\data\\invalid_html_tdf.tdf");
+#else
+        std::string validZipTDFFilePath {currentDir };
+        validZipTDFFilePath.append("/data/valid_zip_tdf.tdf");
+
+        std::string validXmlTDFFilePath {currentDir };
+        validXmlTDFFilePath.append("/data/valid_xml_tdf.tdf");
+
+        std::string validHtmlTDFFilePath {currentDir };
+        validHtmlTDFFilePath.append("/data/valid_html_tdf.tdf");
+
+        std::string invalidZipTDFFilePath {currentDir };
+        invalidZipTDFFilePath.append("/data/invalid_zip_tdf.tdf");
+
+        std::string invalidXmlTDFFilePath {currentDir };
+        invalidXmlTDFFilePath.append("/data/invalid_xml_tdf.tdf");
+
+        std::string invalidHtmlTDFFilePath {currentDir };
+        invalidHtmlTDFFilePath.append("/data/invalid_html_tdf.tdf");
+#endif
+        BOOST_TEST(TDFClient::isFileTDF(validZipTDFFilePath) == true);
+        BOOST_TEST(TDFClient::isFileTDF(invalidZipTDFFilePath) == false);
+        BOOST_TEST(TDFClient::isStringTDF(invalidZipTDFFilePath) == false);
+
+        BOOST_TEST(TDFClient::isFileTDF(validXmlTDFFilePath) == true);
+        BOOST_TEST(TDFClient::isFileTDF(invalidXmlTDFFilePath) == false);
+        BOOST_TEST(TDFClient::isStringTDF(invalidXmlTDFFilePath) == false);
+
+        BOOST_TEST(TDFClient::isFileTDF(validHtmlTDFFilePath) == true);
+        BOOST_TEST(TDFClient::isFileTDF(invalidHtmlTDFFilePath) == false);
+        BOOST_TEST(TDFClient::isStringTDF(invalidHtmlTDFFilePath) == false);
+
+        BOOST_TEST(TDFClient::isStringTDF(TestUtils::getFileString(validZipTDFFilePath)) == true);
+        BOOST_TEST(TDFClient::isStringTDF(TestUtils::getFileString(invalidZipTDFFilePath)) == false);
+
+        BOOST_TEST(TDFClient::isStringTDF(TestUtils::getFileString(validXmlTDFFilePath)) == true);
+        BOOST_TEST(TDFClient::isStringTDF(TestUtils::getFileString(invalidXmlTDFFilePath)) == false);
+
+        BOOST_TEST(TDFClient::isStringTDF(TestUtils::getFileString(validHtmlTDFFilePath)) == true);
+        BOOST_TEST(TDFClient::isStringTDF(TestUtils::getFileString(invalidHtmlTDFFilePath)) == false);
     }
 
     BOOST_AUTO_TEST_CASE(test_tdf_kas_eas_local) {
@@ -330,8 +371,10 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
 //                auto attribute = attributes.front();
 //                oidcClientTDF->addDataAttribute(attribute, "");
 //            }
+
+
             // Test tdf with user creds
-            testTDFOperations(oidcClientTDF.get());
+            testTDFOperations(oidcClientTDF.get(), true);
 #endif
 
 #if LOCAL_EAS_KAS_SETUP

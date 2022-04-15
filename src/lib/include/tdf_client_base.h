@@ -118,9 +118,9 @@ namespace virtru {
 
     public: /// Interface
         /// Enable the internal logger class to write logs to the console for given LogLevel.
-        /// The default Loglevel is 'Warn' if not specified.
+        /// The default Loglevel is 'Current' if not specified.
         /// \param logLevel - The log level
-        void enableConsoleLogging(LogLevel logLevel = LogLevel::Warn);
+        void enableConsoleLogging(LogLevel logLevel = LogLevel::Current);
 
     public: /// Policy interface(users, Attributes)
         /// Add access to the TDF file/data for the users in the list
@@ -165,9 +165,10 @@ namespace virtru {
         std::string m_clientKeyFileName;
         std::string m_clientCertFileName;
         std::string m_certAuthority;
+        std::string m_metadata;
         std::set<std::string> m_dissems;
         std::vector<AttributeObject> m_dataAttributeObjects;
-        LogLevel m_logLevel{LogLevel::Warn};
+        LogLevel m_logLevel{LogLevel::Current};
         std::shared_ptr<INetwork> m_httpServiceProvider;
     };
 } // namespace virtru

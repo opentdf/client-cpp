@@ -64,10 +64,14 @@ namespace virtru {
         void decryptData(TDFDataSourceCb sourceCb, TDFDataSinkCb sinkCb);
 
 #endif
+        /// Decrypt and return TDF metadata as a string. If the TDF content has
+        /// no encrypted metadata, will return an empty string.
+        /// \param inStream - The stream containing tdf data.
+        /// \return std::string - The string containing the metadata.
+        std::string getEncryptedMetadata(std::istream& inStream);
 
         /// Extract and return the JSON policy string from a TDF stream.
         /// \param inStream - The stream containing tdf data.
-        /// \param outStream - The stream containing the JSON policy string.
         /// NOTE: virtru::exception will be thrown if there are issues while retrieving the policy.
         std::string getPolicy(std::istream& inStream);
 
@@ -86,6 +90,11 @@ namespace virtru {
         /// Sync the tdf file, with symmetric wrapped key and Policy Object.
         /// \param encryptedTdfFilepath - The file path to the tdf.
         void sync(const std::string& encryptedTdfFilepath);
+
+        /// Check if data in the stream is TDF
+        /// \param inStream - The stream containing a tdf data to be decrypted.
+        /// \return - Return true if data is TDF and false otherwise
+        static bool isStreamTDF(std::istream& inStream);
 
         /// Destructor
         ~TDF();

@@ -10,6 +10,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 ### Added
+0.7.2
+- PLAT-1658 Update example source code and support for python3.10 on linux platforms
+
+0.7.1
+- PLAT-1650 Publish aarch64 (arm64) linux builds of python library to PyPI
+
+0.7.0
+- PLAT-1661 Add getMetadata() method to C++ SDK and its derivatives
+
 0.6.3
 - PLAT-1626 Network service interface enabled from Client classes
 

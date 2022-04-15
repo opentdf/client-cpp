@@ -948,45 +948,116 @@ namespace virtru {
         LogTrace("exiting TDFImpl::generateHtmlTdf");
     }
 
-    /// Return the policy JSON string from the tdf input stream.
-    std::string TDFImpl::getPolicy(std::istream &inStream) {
 
-        LogTrace("TDFImpl::getPolicy stream");
+    bool TDFImpl::isStreamTDF(std::istream &inStream) {
+        LogTrace("TDFImpl::isStreamTDF");
 
         // Reset the input stream.
         const auto final = gsl::finally([&inStream] {
             inStream.clear();
         });
 
-        std::string manifestStr;
-
         auto protocol = encryptedWithProtocol(inStream);
-        if (protocol == Protocol::Zip) {
-            TDFArchiveReader reader(inStream, kTDFManifestFileName, kTDFPayloadFileName);
+        try
+        {
+            if (protocol == Protocol::Zip) {
+                TDFArchiveReader reader(inStream, kTDFManifestFileName, kTDFPayloadFileName);
+                return true;
 
-            manifestStr = reader.getManifest();
-        } else { // html format
+            } else if (protocol == Protocol::Xml) {
+                TDFXMLReader reader(inStream);
+                reader.getManifest();
+                reader.getPayloadSize();
+                return true;
 
-            if (protocol == Protocol::Xml) {
-                ThrowException("XML TDF not supported");
+            } else {
+                // Get the stream size
+                inStream.seekg(0, inStream.end);
+                auto dataSize = inStream.tellg();
+                inStream.seekg(0, inStream.beg);
+
+                std::unique_ptr<std::uint8_t[]> buffer(new std::uint8_t[dataSize]);
+
+                // Read all the data from input stream
+                inStream.read(reinterpret_cast<char *>(buffer.get()), dataSize);
+
+                auto bytes = gsl::make_span(buffer.get(), dataSize);
+                auto tdfData = getTDFZipData(toBytes(bytes));
+                auto manifestData = getTDFZipData(toBytes(bytes), true);
+                bufferstream inputStream(reinterpret_cast<char *>(tdfData.data()), tdfData.size());
+                TDFArchiveReader reader(inputStream, kTDFManifestFileName, kTDFPayloadFileName);
+                
+                return true;
             }
+        }
+        catch (const Exception &exception)
+        {
+            return false;
+        }
+    }
+  
 
-            // Get the stream size
-            inStream.seekg(0, inStream.end);
-            auto dataSize = inStream.tellg();
-            inStream.seekg(0, inStream.beg);
+    /// Decrypt and return TDF metadata as a string. If the TDF content has
+    /// no encrypted metadata, will return an empty string.
+    std::string TDFImpl::getEncryptedMetadata(std::istream& inStream) {
+        LogTrace("TDFImpl::getEncryptedMetadata");
 
-            std::unique_ptr<std::uint8_t[]> buffer(new std::uint8_t[dataSize]);
-
-            // Read all the data from input stream
-            inStream.read(reinterpret_cast<char *>(buffer.get()), dataSize);
-
-            auto bytes = gsl::make_span(buffer.get(), dataSize);
-            auto manifestData = getTDFZipData(toBytes(bytes), true);
-
-            manifestStr.append(manifestData.begin(), manifestData.end());
+        auto manifestStr = getManifest(inStream);
+        auto manifest = nlohmann::json::parse(manifestStr);
+        nlohmann::json keyAccessObjects = nlohmann::json::array();
+        keyAccessObjects = manifest[kEncryptionInformation][kKeyAccess];
+        if (keyAccessObjects.size() != 1) {
+            ThrowException("Only supports one key access object - unwrap");
         }
 
+        // First object
+        auto &keyAccess = keyAccessObjects.at(0);
+        if (!keyAccess.contains(kEncryptedMetadata)) {
+            LogWarn("There is no metadata in tdf");
+            return {};
+        }
+
+        std::string encryptedMetadata = keyAccess[kEncryptedMetadata];
+        WrappedKey wrappedKey = unwrapKey(manifest);
+
+        // Get the algorithm and key type.
+        std::string algorithm = manifest[kEncryptionInformation][kMethod][kCipherAlgorithm];
+        std::string keyType = manifest[kEncryptionInformation][kEncryptKeyType];
+
+        CipherType chiperType = CipherType::Aes265CBC;
+        if (boost::iequals(algorithm, kCipherAlgorithmGCM)) {
+            chiperType = CipherType::Aes256GCM;
+        }
+
+        if (!boost::iequals(keyType, kSplitKeyType)) {
+            ThrowException("Only split key type is supported for tdf operations.");
+        }
+
+        /// Create a split key and the key access object based on access type.
+        auto splitKey = SplitKey{chiperType};
+        splitKey.setWrappedKey(wrappedKey);
+
+        auto metadataJsonStr = base64Decode(encryptedMetadata);
+        auto metadataJsonObj = nlohmann::json::parse(metadataJsonStr);
+        auto metadataAsCipherText = metadataJsonObj[kCiphertext].get<std::string>();
+
+        auto metadataCipherTextAsBinary = base64Decode(metadataAsCipherText);
+        auto readBufferSpan = toBytes(metadataCipherTextAsBinary);
+        std::vector<char> metadataAsString(metadataCipherTextAsBinary.length() - (kAesBlockSize + kGcmIvSize));
+
+        auto writeableBytes = toWriteableBytes(metadataAsString);
+        splitKey.decrypt(readBufferSpan, writeableBytes);
+
+        std::string metadata(metadataAsString.begin(), metadataAsString.end());
+        return metadata;
+    }
+
+    /// Return the policy JSON string from the tdf input stream.
+    std::string TDFImpl::getPolicy(std::istream &inStream) {
+
+        LogTrace("TDFImpl::getPolicy stream");
+
+        auto manifestStr = getManifest(inStream);
         return getPolicyFromManifest(manifestStr);
     }
 
@@ -1430,7 +1501,7 @@ namespace virtru {
 
     /// Return tdf zip data by parsing html tdf file.
     std::vector<std::uint8_t> TDFImpl::getTDFZipData(const std::string &htmlTDFFilepath,
-                                                      bool manifestData) const {
+                                                      bool manifestData) {
         LogTrace("TDFImpl::getTDFZipData file");
 
         /// Protocol is .html
@@ -1467,7 +1538,7 @@ namespace virtru {
     }
 
     /// Return tdf zip data from XMLDoc object.
-    std::vector<std::uint8_t> TDFImpl::getTDFZipData(XMLDocFreePtr xmlDocPtr, bool manifestData) const {
+    std::vector<std::uint8_t> TDFImpl::getTDFZipData(XMLDocFreePtr xmlDocPtr, bool manifestData) {
 
         LogTrace("TDFImpl::getTDFZipData xmlDoc");
 
@@ -1528,7 +1599,7 @@ namespace virtru {
     }
 
     // Return the TDF protocol used to encrypt the file
-    Protocol TDFImpl::encryptedWithProtocol(const std::string& inTdfFilePath) const {
+    Protocol TDFImpl::encryptedWithProtocol(const std::string& inTdfFilePath) {
 
         LogTrace("TDFImpl::encryptedWithProtocol file");
 
@@ -1556,7 +1627,7 @@ namespace virtru {
     }
 
     // Return the TDF protocol used to encrypt the input stream data
-    Protocol TDFImpl::encryptedWithProtocol(std::istream& tdfInStream) const {
+    Protocol TDFImpl::encryptedWithProtocol(std::istream& tdfInStream) {
 
         LogTrace("TDFImpl::encryptedWithProtocol stream");
 
@@ -1604,6 +1675,47 @@ namespace virtru {
         std::string base64Policy = encryptionInformation[kPolicy];
         auto policyStr = base64Decode(base64Policy);
         return policyStr;
+    }
+
+    /// Return the manifest from the tdf input stream.
+    std::string TDFImpl::getManifest(std::istream &tdfInStream) const {
+        LogTrace("TDFImpl::getManifest from tdf stream");
+
+        // Reset the input stream.
+        const auto final = gsl::finally([&tdfInStream] {
+            tdfInStream.clear();
+        });
+
+        std::string manifestStr;
+
+        auto protocol = encryptedWithProtocol(tdfInStream);
+        if (protocol == Protocol::Zip) {
+            TDFArchiveReader reader(tdfInStream, kTDFManifestFileName, kTDFPayloadFileName);
+
+            manifestStr = reader.getManifest();
+        } else { // html format
+
+            if (protocol == Protocol::Xml) {
+                ThrowException("XML TDF not supported");
+            }
+
+            // Get the stream size
+            tdfInStream.seekg(0, tdfInStream.end);
+            auto dataSize = tdfInStream.tellg();
+            tdfInStream.seekg(0, tdfInStream.beg);
+
+            std::unique_ptr<std::uint8_t[]> buffer(new std::uint8_t[dataSize]);
+
+            // Read all the data from input stream
+            tdfInStream.read(reinterpret_cast<char *>(buffer.get()), dataSize);
+
+            auto bytes = gsl::make_span(buffer.get(), dataSize);
+            auto manifestData = getTDFZipData(toBytes(bytes), true);
+
+            manifestStr.append(manifestData.begin(), manifestData.end());
+        }
+
+        return manifestStr;
     }
 
     /// Retrive the policy uuid(id) from the manifest.

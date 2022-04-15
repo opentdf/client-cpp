@@ -73,6 +73,18 @@ namespace virtru {
         /// Move assignment operator
         TDFClient &operator=(TDFClient &&client) = delete;
 
+    public: /// Meta data
+        /// Assign the metadata that will be encrypted and stored in
+        /// the TDF, separately from the data.
+        /// \param medata - The metadata that is stored in the tdf
+        void setEncryptedMetadata(const std::string& medata);
+
+        /// Decrypt and return TDF metadata as a string. If the TDF content has
+        /// no encrypted metadata, will return an empty string.
+        /// \param tdfData - The string containing a tdf data.
+        /// \return std::string - The string containing the metadata.
+        std::string getEncryptedMetadata(const std::string &tdfData);
+
       public: /// Encrypt and Decrypt
         /// Encrypt the file to tdf format.
         /// \param inFilepath - The file on which the encryption is performed.
@@ -134,16 +146,43 @@ namespace virtru {
         /// \param kasUrl - kas url
         void addDataAttribute(const std::string &dataAttribute, const std::string &kasURL) override;
 
+        /// Check if file is TDF
+        /// \param inFilepath - The file on which the decryption is performed.
+        /// \return - Return true if file is TDF and false otherwise
+        static bool isFileTDF(const std::string &inFilepath);
+
+        /// Check if string is TDF
+        /// \param tdfString - The tdf data on which the check is performed.
+        /// \return - Return true if string is TDF and false otherwise
+        static bool isStringTDF(const std::string &tdfString);
+
+#ifndef SWIG_JAVA
+        /// Check if data is TDF
+        /// \param tdfData - The tdf data on which the check is performed.
+        /// \return - Return true if data is TDF and false otherwise
+        static bool isDataTDF(const std::vector<VBYTE> &tdfData);
+#endif
+
       public:
         /// Create TDFs in XML format instead of zip format.
         void setXMLFormat();
 
+#ifndef SWIG
         /// Set the callback interface which will invoked for all the http network operations.
         /// \param httpServiceProvider - A callback interface which the caller has to implement for performing the
         /// network http operations.
         /// \return - Unique ptr of the TDF instance.
         void setHTTPServiceProvider(std::weak_ptr<INetwork> httpServiceProvider);
 
+#endif
+
+        /// Set the private key(In PEM format), which will be used by this SDK for encryption/decryption of the payload.
+        /// \param privateKey - The PEM-encoded private key as a string.
+        void setPrivateKey(const std::string& privateKey);
+
+        /// Set the public key(In PEM format), which will be used by this SDK for encryption/decryption of the payload.
+        /// \param publicKey - The PEM-encoded public key as a string.
+        void setPublicKey(const std::string& publicKey);
 
       private: /// Helpers
         /// Initialize the TDF builder which is used for creating the TDF instance

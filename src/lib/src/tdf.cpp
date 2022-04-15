@@ -79,6 +79,14 @@ namespace virtru {
         m_impl->decryptData(sourceCb, sinkCb);
     }
 
+    /// Decrypt and return TDF metadata as a string. If the TDF content has
+    /// no encrypted metadata, will return an empty string.
+    std::string TDF::getEncryptedMetadata(std::istream& inStream) {
+        LogInfo("get metadata from tdf data stream");
+
+        return m_impl->getEncryptedMetadata(inStream);
+    }
+
     /// Return the policy from the tdf input stream.
     std::string TDF::getPolicy(std::istream&  inStream) {
         LogInfo("get policy object from stream...");
@@ -109,6 +117,12 @@ namespace virtru {
         LogInfo("sync tdf:" + encryptedTdfFilepath);
 
         m_impl->sync(encryptedTdfFilepath);
+    }
+
+    bool TDF::isStreamTDF(std::istream &inStream) {
+        LogInfo("check if stream is tdf");
+
+        return TDFImpl::isStreamTDF(inStream);
     }
 
     TDF::~TDF() = default;

@@ -1,0 +1,95 @@
+
+<html>
+<head>
+    <meta charset="UTF-8">
+  </head>
+  <body style="font-family: Arial; color: #2D323B; overflow: hidden; margin: 0; height: 100%; background-color: white;">
+    <input id="data-input" type="hidden" value="UEsDBAoACAAAAFFahVQAAAAAKwAAACsAAAAJABgAMC5wYXlsb2FkVVQFAAHLXUxidXgLAAEEAAAAAAQAAAAAAMeBwuisyRMoXNlQ/M0Xyeu8SUQuMWlAX/LvbOb7ExncSIC68X3lhxb01VBLBwhM5DTdKwAAACsAAABQSwMECgAIAAAAUVqFVAAAAAATAwAAEwMAAA8AGAAwLm1hbmlmZXN0Lmpzb25VVAUAActdTGJ1eAsAAQQAAAAABAAAAAB7ImVuY3J5cHRpb25JbmZvcm1hdGlvbiI6eyJpbnRlZ3JpdHlJbmZvcm1hdGlvbiI6eyJlbmNyeXB0ZWRTZWdtZW50U2l6ZURlZmF1bHQiOjIwOTcxODAsInJvb3RTaWduYXR1cmUiOnsiYWxnIjoiSFMyNTYiLCJzaWciOiJPREEzTXpJMFlUbGtOekptTURWaFpUazRNakV5WVdNNU1EQTFNV0U1TURJNFpqRm1ZVFV6TWpWaFpqTmlZamt6TW1WbE16azVNREJtTnpjeVpqazNNUT09In0sInNlZ21lbnRIYXNoQWxnIjoiR01BQyIsInNlZ21lbnRTaXplRGVmYXVsdCI6MjA5NzE1Miwic2VnbWVudHMiOlt7ImVuY3J5cHRlZFNlZ21lbnRTaXplIjo0MywiaGFzaCI6Ik5tTmxObVppTVRNeE9XUmpORGc0TUdKaFpqRTNaR1UxT0RjeE5tWTBaRFU9Iiwic2VnbWVudFNpemUiOjIwOTcxNTJ9XX0sImtleUFjY2VzcyI6W3sicHJvdG9jb2wiOiJrYXMiLCJ0eXBlIjoicmVtb3RlIiwidXJsIjoiaHR0cHM6Ly9hcGktZGV2ZWxvcDAxLmRldmVsb3AudmlydHJ1LmNvbS9rYXMifV0sIm1ldGhvZCI6eyJhbGdvcml0aG0iOiJBRVMtMjU2LUdDTSIsImlzU3RyZWFtYWJsZSI6dHJ1ZSwiaXYiOiJjeTN0TXVUejJOUzhFcWZZIn0sInBvbGljeSI6ImV5SjFkV2xrSWpvaVptSXhPRGxpWlRndE16WXdPUzAwTnpRMkxXRmlZalF0TVdVeE5qTmtNV0UyWldFMUluMD0iLCJ0eXBlIjoic3BsaXQifSwicGF5bG9hZCI6eyJpc0VuY3J5cHRlZCI6dHJ1ZSwibWltZVR5cGUiOiJhcHBsaWNhdGlvbi9vY3RldC1zdHJlYW0iLCJwcm90b2NvbCI6Imh0bWwiLCJ0eXBlIjoicmVmZXJlbmNlIiwidXJsIjoiMC5wYXlsb2FkIn19UEsHCIih+W0TAwAAEwMAAFBLAQIKAwoACAAAAFFahVRM5DTdKwAAACsAAAAJABgAAAAAAAAAAADtgQAAAAAwLnBheWxvYWRVVAUAActdTGJ1eAsAAQQAAAAABAAAAABQSwECCgMKAAgAAABRWoVUiKH5bRMDAAATAwAADwAYAAAAAAAAAAAA7YF6AAAAMC5tYW5pZmVzdC5qc29uVVQFAAHLXUxidXgLAAEEAAAAAAQAAAAAUEsFBgAAAAACAAIApAAAAOIDAAAAAA==">
+    <input id="data-manifest" type="hidden" value="eyJlbmNyeXB0aW9uSW5mb3JtYXRpb24iOnsiaW50ZWdyaXR5SW5mb3JtYXRpb24iOnsiZW5jcnlwdGVkU2VnbWVudFNpemVEZWZhdWx0IjoyMDk3MTgwLCJyb290U2lnbmF0dXJlIjp7ImFsZyI6IkhTMjU2Iiwic2lnIjoiT0RBM016STBZVGxrTnpKbU1EVmhaVGs0TWpFeVlXTTVNREExTVdFNU1ESTRaakZtWVRVek1qVmhaak5pWWprek1tVmxNems1TURCbU56Y3laamszTVE9PSJ9LCJzZWdtZW50SGFzaEFsZyI6IkdNQUMiLCJzZWdtZW50U2l6ZURlZmF1bHQiOjIwOTcxNTIsInNlZ21lbnRzIjpbeyJlbmNyeXB0ZWRTZWdtZW50U2l6ZSI6NDMsImhhc2giOiJObU5sTm1aaU1UTXhPV1JqTkRnNE1HSmhaakUzWkdVMU9EY3hObVkwWkRVPSIsInNlZ21lbnRTaXplIjoyMDk3MTUyfV19LCJrZXlBY2Nlc3MiOlt7InByb3RvY29sIjoia2FzIiwidHlwZSI6InJlbW90ZSIsInVybCI6Imh0dHBzOi8vYXBpLWRldmVsb3AwMS5kZXZlbG9wLnZpcnRydS5jb20va2FzIn1dLCJtZXRob2QiOnsiYWxnb3JpdGhtIjoiQUVTLTI1Ni1HQ00iLCJpc1N0cmVhbWFibGUiOnRydWUsIml2IjoiY3kzdE11VHoyTlM4RXFmWSJ9LCJwb2xpY3kiOiJleUoxZFdsa0lqb2labUl4T0RsaVpUZ3RNell3T1MwME56UTJMV0ZpWWpRdE1XVXhOak5rTVdFMlpXRTFJbjA9IiwidHlwZSI6InNwbGl0In0sInBheWxvYWQiOnsiaXNFbmNyeXB0ZWQiOnRydWUsIm1pbWVUeXBlIjoiYXBwbGljYXRpb24vb2N0ZXQtc3RyZWFtIiwicHJvdG9jb2wiOiJodG1sIiwidHlwZSI6InJlZmVyZW5jZSIsInVybCI6IjAucGF5bG9hZCJ9fQ==">
+    <iframe style="width:0;height:0;border:0; border:none;" src="https://secure.virtru.com/start?htmlProtocol=1"></iframe>
+    <div role="banner" style="background-color: #092356; color: white; height: 55px;">
+      <img src="https://cdn.virtru.com/assets/virtru-logo-white-rgb.png"
+           style="display: inline-block; padding: 18px 0 0 24px;"
+           width="62px" height="19px" alt="Virtru logo" title="Virtru"/>
+    </div>
+   <div role="main" class="wrapper" style="padding-top: 107px; display: flex; flex-direction: row; max-width: 1200px;
+          min-width: 800px; margin: 0 auto; min-height: calc(100vh - 230px); border-bottom: 1px solid #F3F5F7;">
+      <div role="region">
+        <img src="https://cdn.virtru.com/assets/request-access.png" style="display: inline-block;"
+             width="387px" height="310px" alt="Request access image" title="Request access"/>
+      </div>
+      <div role="complementary" style="word-break: break-all; padding-right: 12px;">
+        <h1 style="font-size: 1.5em;">Virtru Secure File</h1>
+        <noscript style="font-weight: 100;">
+          <span>
+            To view this file, download and access it from your computer:
+            <br />
+            <br />
+          </span>
+          <div>
+            1. <b>Go Back</b> to the file directory and <b>Right-click</b> on the file
+          </div>
+          <div>
+            2. Select <b>Download</b>
+          </div>
+          <div>
+            3. Once download is complete, <b>double-click</b> on the local file to open
+          </div>
+        </noscript>
+        <div id="js-enabled-message" style="display: none;">
+          <span>We are trying to send you to Secure Reader. If this does not work, please click the button below</span>
+          <br />
+          <button
+            id="viewbutton"
+            style="color: #fff!important; background: gray; padding: 10px 40px; border-radius: 25px; display: inline-block; border: none; font-size: 15px; width: 300px; margin-block-start: 1.1em;
+    margin-block-end: 1.1em;"
+            class="viewbutton"
+            type="button"
+          >
+            View File in Secure Reader
+          </button>
+        </div>
+      </div>
+    </div>
+    <div role="contentinfo" style="color: grey; text-align: center; padding-top: 25px; font-family: Arial;">
+        <span style="padding: 25px; font-size: 13px;">© Copyright 2019 Virtru Corporation</span>
+        <span style="padding: 25px; font-size: 13px;">Learn more at www.virtru.com</span>
+    </div>
+    <script type="text/javascript">
+      var transferComplete = false;
+      var data = document.getElementById('data-input').value;
+      var manifest = JSON.parse(atob(document.getElementById('data-manifest').value));
+      var redirectButton = document.getElementById('viewbutton');
+      var ifr = document.querySelector('iframe');
+      var otherWindow = ifr.contentWindow;
+
+      document.getElementById('js-enabled-message').style.display = 'block';
+      ifr.addEventListener("load", iframeLoaded, false);
+
+      function iframeLoaded() {
+        var channel = new MessageChannel();
+        otherWindow.postMessage({
+          type: 'tdf.html',
+          data: data,
+          policy: manifest.encryptionInformation.policy
+        }, "https://secure.virtru.com", [channel.port2]);
+
+        channel.port1.onmessage = handleMessage;
+
+        function handleMessage(e) {
+          let msg = e.data;
+          if (msg.status === 'success') {
+            transferComplete = true;
+            redirectButton.style.background = '#4585ff';
+            window.location.href = "https://secure.virtru.com/start?htmlProtocol=1";
+          }
+        }
+      }
+      redirectButton.onclick = function(){
+        if (transferComplete) {
+          window.location.href = "https://secure.virtru.com/start?htmlProtocol=1";
+        }
+      };
+    </script>
+  </body>
+</html>

@@ -313,6 +313,77 @@ DLL_PUBLIC TDF_STATUS TDFGetPolicy(TDFClientPtr clientPtr,
     return TDF_STATUS_FAILURE;
 }
 
+/// Assign the metadata that will be encrypted and stored in
+/// the TDF, separately from the data.
+DLL_PUBLIC TDF_STATUS TDFSetEncryptedMetadata(TDFClientPtr clientPtr,
+                                              TDFCBytesPtr inBytesPtr,
+                                              TDFBytesLength inBytesLength) {
+
+    LogTrace("TDFSetEncryptedMetadata");
+
+    if (clientPtr == nullptr || inBytesPtr == nullptr) {
+        return TDF_STATUS_INVALID_PARAMS;
+    }
+
+    try {
+        auto *client = static_cast<virtru::TDFClient *>(clientPtr);
+
+        client->setEncryptedMetadata({reinterpret_cast<char const *>(inBytesPtr),
+                                      inBytesLength});
+
+        return TDF_STATUS_SUCCESS;
+    } catch (std::exception &e) {
+        LogError(e.what());
+    } catch (...) {
+        LogDefaultError();
+    }
+    return TDF_STATUS_FAILURE;
+}
+
+
+/// Decrypt and return TDF metadata as a string. If the TDF content has
+/// no encrypted metadata, will return an empty string.
+DLL_PUBLIC TDF_STATUS TDFGetEncryptedMetadata(TDFClientPtr clientPtr,
+                                              TDFCBytesPtr inBytesPtr,
+                                              TDFBytesLength inBytesLength,
+                                              TDFBytesPtr *outBytesPtr,
+                                              TDFBytesLength *outBytesLength) {
+    LogTrace("TDFGetEncryptedMetadata");
+
+    if (clientPtr == nullptr ||
+        inBytesPtr == nullptr ||
+        outBytesPtr == nullptr ||
+        outBytesLength == nullptr) {
+        return TDF_STATUS_INVALID_PARAMS;
+    }
+
+    try {
+        auto *client = static_cast<virtru::TDFClient *>(clientPtr);
+
+        auto metadata = client->getEncryptedMetadata({reinterpret_cast<char const *>(inBytesPtr),
+                                                      inBytesLength});
+
+        *outBytesLength = metadata.length();
+        *outBytesPtr = nullptr;
+
+        // Copy the metadata string data to the out buffer.
+        if (!metadata.empty()) {
+
+            *outBytesPtr = static_cast<unsigned char *>(malloc(*outBytesLength));
+            std::copy(metadata.begin(), metadata.end(),
+                      *outBytesPtr);
+        }
+
+        return TDF_STATUS_SUCCESS;
+    } catch (std::exception &e) {
+        LogError(e.what());
+    } catch (...) {
+        LogDefaultError();
+    }
+    return TDF_STATUS_FAILURE;
+
+}
+
 #ifdef __cplusplus
 }
 #endif
