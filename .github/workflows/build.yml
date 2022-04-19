@@ -20,7 +20,7 @@ jobs:
 
       - name: Git clone backend 
         run: |
-          git clone https://github.com/opentdf/backend.git
+          git clone https://github.com/opentdf/documentation.git
       
       - uses: yokawasa/action-setup-kube-tools@v0.7.1
         with:
@@ -47,7 +47,8 @@ jobs:
         run: |-
           kubectl version
           pwd
-          cd backend
+          cd documentation/quickstart
+          pwd
           tilt ci
 
       - name: Run build
