@@ -48,7 +48,7 @@ jobs:
         run: |-
           kubectl version
           cd tdf3-test
-          tilt ci integration-tes
+          tilt ci
 
       - name: Run build
         run: |
