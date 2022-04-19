@@ -21,6 +21,12 @@ jobs:
       - name: Git clone backend 
         run: |
           git clone https://github.com/opentdf/documentation.git
+
+      - uses: actions/setup-python@v3
+        with:
+          python-version: '3.9'
+          cache: 'pip'
+      - run: pip install opentdf
       
       - uses: yokawasa/action-setup-kube-tools@v0.7.1
         with:
@@ -115,5 +121,15 @@ jobs:
           ./build-all.sh
           cd build
           make test
+
+      - name: Run sanity-test
+        run: |
+          cd ${{ github.workspace }}
+          cd example
+          mkdir build
+          cd build
+          cmake ..
+          make
+           ./tdf_sample 
 
       - run: echo "🍏 This job's status is ${{ job.status }}."
