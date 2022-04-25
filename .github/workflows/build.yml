@@ -65,6 +65,16 @@ jobs:
           cd build
           make test
 
+      - name: Run Sanity test
+        run: |
+          cd ${{ github.workspace }}
+          cd example
+          mkdir build
+          cd build
+          cmake ..
+          make
+          ./tdf_sample
+
       - run: echo "🍏 This job's status is ${{ job.status }}."
 
   run-build-windows:
