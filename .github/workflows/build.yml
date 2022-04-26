@@ -18,7 +18,7 @@ jobs:
       - name: Install Conan
         run: pip3 install conan==1.45.0
 
-      - name: Git clone backend 
+      - name: Git clone documentation 
         run: |
           git clone https://github.com/opentdf/documentation.git
 
@@ -49,11 +49,13 @@ jobs:
           minikube-version: 1.25.1
           # This should be in sync with the setup-tools version above
           kubernetes-version: 1.23.1
+      - env:
+        # This test script is passed to documentation/quickstart tilt file
+        TEST_SCRIPT: ../../build-and-run-sanity-test.sh
       - name: Run tilt & C++ build and run sanity test
         run: |-
           kubectl version
           pwd
-          cp wait-and-test.sh documentation/quickstart/tests
           cd documentation/quickstart
           pwd
           tilt ci
