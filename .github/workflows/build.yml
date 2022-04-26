@@ -53,22 +53,11 @@ jobs:
         run: |-
           kubectl version
           pwd
+          cp wait-and-test.sh documentation/quickstart/tests
           cd documentation/quickstart
           pwd
+          cp
           tilt ci
-          cd ../..
-          cd ${{ github.workspace }}
-          cd src
-          ./build-all.sh
-          cd build
-          make test
-          cd ${{ github.workspace }}
-          cd examples
-          mkdir build
-          cd build
-          cmake ..
-          make
-          ./tdf_sample
 
       - name: Run build
         run: |
