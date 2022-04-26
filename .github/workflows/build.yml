@@ -49,7 +49,7 @@ jobs:
           minikube-version: 1.25.1
           # This should be in sync with the setup-tools version above
           kubernetes-version: 1.23.1
-      - name: Run tilt & C++ build and test
+      - name: Run tilt & C++ build and run sanity test
         run: |-
           kubectl version
           pwd
@@ -57,24 +57,6 @@ jobs:
           cd documentation/quickstart
           pwd
           tilt ci
-
-      - name: Run build
-        run: |
-          cd ${{ github.workspace }}
-          cd src
-          ./build-all.sh
-          cd build
-          make test
-
-      - name: Run Sanity test
-        run: |
-          cd ${{ github.workspace }}
-          cd examples
-          mkdir build
-          cd build
-          cmake ..
-          make
-          ./tdf_sample
 
       - run: echo "🍏 This job's status is ${{ job.status }}."
 
