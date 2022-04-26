@@ -49,10 +49,10 @@ jobs:
           minikube-version: 1.25.1
           # This should be in sync with the setup-tools version above
           kubernetes-version: 1.23.1
-      - env:
-        # This test script is passed to documentation/quickstart tilt file
-        TEST_SCRIPT: ../../build-and-run-sanity-test.sh
       - name: Run tilt & C++ build and run sanity test
+        env:
+          # This test script is passed to documentation/quickstart tilt file
+          TEST_SCRIPT: ../../build-and-run-sanity-test.sh
         run: |-
           kubectl version
           pwd
