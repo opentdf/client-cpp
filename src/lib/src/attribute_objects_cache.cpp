@@ -55,7 +55,7 @@ namespace virtru {
     AttributeObject AttributeObjectsCache::getDefaultAttributeObject() const {
 
         if(m_attributeObjects.empty()) {
-            ThrowException("Attribute objects cache is empty!");
+            ThrowException("Attribute objects cache is empty!", VIRTRU_ATTR_OBJ_ERROR);
         }
 
         for (const auto& [attribute, attributeObj] : m_attributeObjects) {
@@ -64,7 +64,7 @@ namespace virtru {
             }
         }
 
-        ThrowException("Default attribute object don't exists");
+        ThrowException("Default attribute object doesn't exists", VIRTRU_TDF_FORMAT_ERROR);
         return {"", "", "", ""};
     }
 
@@ -86,7 +86,7 @@ namespace virtru {
     AttributeObject AttributeObjectsCache::getAttributeObject(const std::string& attribute) const {
 
         if(m_attributeObjects.empty()) {
-            ThrowException("Attribute objects cache is empty!");
+            ThrowException("Attribute objects cache is empty!", VIRTRU_ATTR_OBJ_ERROR);
         }
 
         std::string attributeCopy{attribute};
@@ -94,7 +94,7 @@ namespace virtru {
 
         const auto& entry = m_attributeObjects.find(attributeCopy);
         if (entry == m_attributeObjects.end()) {
-            ThrowException(attribute + " - not found in attribute objects cache.");
+            ThrowException(attribute + " - not found in attribute objects cache.", VIRTRU_ATTR_OBJ_ERROR);
         }
 
         return entry->second;

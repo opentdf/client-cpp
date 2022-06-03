@@ -72,7 +72,7 @@ namespace virtru {
         // TODO: Check the tdf type - for now we assume it's tdf
 
         if (PayloadState::Appending != m_payloadState) {
-            ThrowException("Manifest should archive at end.");
+            ThrowException("Manifest should archive at end.", VIRTRU_TDF_FORMAT_ERROR);
         }
 
         ArchiveEntryFreePtr entry { archive_entry_new() };
@@ -87,14 +87,14 @@ namespace virtru {
         if (result != ARCHIVE_OK) {
             std::string errorMsg { "Failed to write manifest header zip entry - " };
             errorMsg.append(archive_error_string(m_archive.get()));
-            ThrowException(std::move(errorMsg));
+            ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
         }
 
         auto length = archive_write_data(m_archive.get(), manifest.data(), manifest.size());
         if (length < 0) {
             std::string errorMsg { "Failed to write manifest data - " };
             errorMsg.append(archive_error_string(m_archive.get()));
-            ThrowException(std::move(errorMsg));
+            ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
         }
     }
 
@@ -119,7 +119,7 @@ namespace virtru {
             if (result != ARCHIVE_OK) {
                 std::string errorMsg { "Failed to write payload header zip entry - " };
                 errorMsg.append(archive_error_string(m_archive.get()));
-                ThrowException(std::move(errorMsg));
+                ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
             }
 
             m_payloadState = PayloadState::Appending;
@@ -129,7 +129,7 @@ namespace virtru {
         if (length < 0) {
             std::string errorMsg { "Failed to write payload data - " };
             errorMsg.append(archive_error_string(m_archive.get()));
-            ThrowException(std::move(errorMsg));
+            ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
         }
     }
 

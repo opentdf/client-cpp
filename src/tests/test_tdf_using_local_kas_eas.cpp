@@ -103,7 +103,8 @@ void testTDFOperations(TDFClient* client, bool testMetaDataAPI = false) {
     client->encryptFile(inPathEncrypt, outPathEncrypt);
 
     if (testMetaDataAPI) {
-        auto metaDataFromTDF = client->getEncryptedMetadata(outPathEncrypt);
+        auto tdfData = TestUtils::getFileString(outPathEncrypt);
+        auto metaDataFromTDF = client->getEncryptedMetadata(tdfData);
         BOOST_TEST(metaData == metaDataFromTDF);
     }
 

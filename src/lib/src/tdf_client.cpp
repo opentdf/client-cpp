@@ -191,6 +191,28 @@ namespace virtru {
         return ioStream.str();
     }
 
+    std::string TDFClient::decryptStringPartial(const std::string &encryptedData, size_t offset, size_t length) {
+        LogTrace("TDFClient::decryptStringPartial");
+
+        // Initialize the TDF builder
+        initTDFBuilder();
+
+        // Create a policy object.
+        // TODO we really should drop the 'Builder' pattern here,
+        // it accomplishes very little of use.
+        auto policyObject = createPolicyObject();
+        auto tdf = m_tdfBuilder->setPolicyObject(policyObject).build();
+
+        // NOTE: look into pubsetbuf for better performance.
+        std::istringstream inputStream(encryptedData);
+        std::ostringstream ioStream;
+
+        // encrypt the stream.
+        tdf->decryptStreamPartial(inputStream, ioStream, offset, length);
+
+        return ioStream.str();
+    }
+
     /// Decrypt the bytes from tdf format.
     std::vector<VBYTE> TDFClient::decryptData(const std::vector<VBYTE> &encryptedData) {
         LogTrace("TDFClient::decryptData");
@@ -249,7 +271,7 @@ namespace virtru {
         }
 
         if (userKasURL != m_tdfBuilder->m_impl->m_kasUrl){
-            LogWarn("Multi KAS is supported");
+            LogWarn("Multi KAS is not supported");
         }
 
         std::string displayName;
@@ -266,7 +288,7 @@ namespace virtru {
         if (!inStream) {
             std::string errorMsg{"Failed to open file for reading:"};
             errorMsg.append(inFilepath);
-            ThrowException(std::move(errorMsg));
+            ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
         }
 
         return TDF::isStreamTDF(inStream);

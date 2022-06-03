@@ -25,11 +25,18 @@
 #include <openssl/bio.h>
 #include <openssl/pem.h>
 
+#include "tdf_error_codes.h"
+
 
 namespace virtru::crypto {
 
     /// macro for open ssl exception
-    #define ThrowOpensslException(message)  virtru::crypto::_ThrowOpensslException(message, __SOURCE_FILENAME__, __LINE__)
+    #define EXPAND( x ) x
+    #define GET_MACRO(_1,_2,NAME,...) NAME
+    #define ThrowOpensslException(...) EXPAND(EXPAND(GET_MACRO(__VA_ARGS__, ThrowOpensslExceptionCode, ThrowOpensslExceptionNoCode))(__VA_ARGS__))
+    #define ThrowOpensslExceptionNoCode(message)  virtru::crypto::_ThrowOpensslException(message, __SOURCE_FILENAME__, __LINE__)
+    #define ThrowOpensslExceptionCode(message, code)  virtru::crypto::_ThrowOpensslException(message, __SOURCE_FILENAME__, __LINE__, code)
+
 
     /// Calculate Sha256 of the given buffer and return the hash in hex format. On error OpensslException is thrown.
     /// \param data - The data buffer.
@@ -85,7 +92,8 @@ namespace virtru::crypto {
     /// \param errorStringPrefix - The error message.
     /// \param fileName - The source file name.
     /// \param lineNumber - The current line number in the source file.
-    void _ThrowOpensslException(std::string &&errorStringPrefix, const char *fileName, unsigned int lineNumber);
+    /// \param code - The error code - default 1
+    void _ThrowOpensslException(std::string &&errorStringPrefix, const char *fileName, unsigned int lineNumber, int code = VIRTRU_GENERAL_ERROR);
 
     /// Throws virtru::crypto::CryptoException if rc is not equal 1
     /// \param rc OpenSSL return code to compare

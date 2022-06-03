@@ -32,6 +32,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/beast/core/detail/base64.hpp>
 #include <boost/interprocess/streams/bufferstream.hpp>
+#include <boost/exception/diagnostic_information.hpp>
 #include <istream>
 #include <jwt-cpp/jwt.h>
 #include <memory>
@@ -85,7 +86,7 @@ namespace virtru {
         if (!inStream) {
             std::string errorMsg{"Failed to open file for reading:"};
             errorMsg.append(inFilepath);
-            ThrowException(std::move(errorMsg));
+            ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
         }
 
         // Open the tdf output file.
@@ -93,7 +94,7 @@ namespace virtru {
         if (!outStream) {
             std::string errorMsg{"Failed to open file for writing:"};
             errorMsg.append(outFilepath);
-            ThrowException(std::move(errorMsg));
+            ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
         }
 
         encryptStream(inStream, outStream);
@@ -116,7 +117,7 @@ namespace virtru {
         inputStream.seekg(0, inputStream.end);
         auto fileSize = inputStream.tellg();
         if (fileSize > kMaxFileSizeSupported) {
-            ThrowException("Current version of Virtru SDKs do not support file size greater than 64 GB.");
+            ThrowException("Current version of Virtru SDKs do not support file size greater than 64 GB.", VIRTRU_TDF_FORMAT_ERROR);
         }
 
         // Move back to the start.
@@ -202,7 +203,7 @@ namespace virtru {
         LogTrace("TDFImpl::encryptData");
 
         if (m_tdfBuilder.m_impl->m_protocol == Protocol::Xml) {
-            ThrowException("XML TDF not supported");
+            ThrowException("XML TDF not supported for encryptData", VIRTRU_TDF_FORMAT_ERROR);
         }
 
 #if LOGTIME
@@ -224,7 +225,7 @@ namespace virtru {
                 streamSize += bufferSpan.dataLength;
                 inStream.write((char *)(bufferSpan.data), bufferSpan.dataLength);
             } else {
-                ThrowException("Source callback failed.");
+                ThrowException("Source callback failed.", VIRTRU_SYSTEM_ERROR);
                 break;
             }
         }
@@ -288,7 +289,7 @@ namespace virtru {
 
                 auto status = sinkCb(bufferSpan);
                 if (status != Status::Success) {
-                    ThrowException("sink callback failed.");
+                    ThrowException("sink callback failed.", VIRTRU_SYSTEM_ERROR);
                 }
             }
 #if LOGTIME
@@ -300,6 +301,22 @@ namespace virtru {
 #endif
         }
         LogTrace("exiting TDFImpl::encryptData");
+    }
+
+    /// Decrypt the tdf stream data.
+    void TDFImpl::decryptStreamPartial(std::istream &inStream, std::ostream &outStream, size_t offset, size_t length) {
+
+        // Decrypt full stream
+        // Redirect to outstream for requested portion
+        // TODO - FIXME - PCM really inefficient implementation here
+        std::stringstream tempStream;
+        decryptStream(inStream, tempStream);
+
+        tempStream.seekg(offset, std::ios_base::beg);
+        for (size_t i = 0; i< length; i++) {
+            uint8_t c = tempStream.get();
+            outStream.put(c);
+        }
     }
 
     /// Decrypt the tdf stream data.
@@ -399,7 +416,7 @@ namespace virtru {
         if (!inStream) {
             std::string errorMsg{"Failed to open file for reading:"};
             errorMsg.append(inFilepath);
-            ThrowException(std::move(errorMsg));
+            ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
         }
 
         // Open the tdf output file.
@@ -407,7 +424,7 @@ namespace virtru {
         if (!outStream) {
             std::string errorMsg{"Failed to open file for writing:"};
             errorMsg.append(outFilepath);
-            ThrowException(std::move(errorMsg));
+            ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
         }
 
         auto protocol = encryptedWithProtocol(inStream);
@@ -493,7 +510,7 @@ namespace virtru {
                 streamSize += bufferSpan.dataLength;
                 inStream.write((char *)(bufferSpan.data), bufferSpan.dataLength);
             } else {
-                ThrowException("Source callback failed.");
+                ThrowException("Source callback failed.", VIRTRU_SYSTEM_ERROR);
                 break;
             }
         }
@@ -511,7 +528,7 @@ namespace virtru {
         } else { // html format
 
             if (protocol == Protocol::Xml) {
-                ThrowException("XML TDF not supported");
+                ThrowException("XML TDF not supported for decryptData", VIRTRU_TDF_FORMAT_ERROR);
             }
 
             /// TODO: Improve the memory effeciency for html parsing.
@@ -592,7 +609,7 @@ namespace virtru {
         }
 
         if (!boost::iequals(keyType, kSplitKeyType)) {
-            ThrowException("Only split key type is supported for tdf operations.");
+            ThrowException("Only split key type is supported for tdf operations.", VIRTRU_CRYPTO_ERROR);
         }
 
         /// Create a split key and the key access object based on access type.
@@ -615,7 +632,7 @@ namespace virtru {
         // Check the combined string of hashes
         auto payloadSigStr = getSignature(toBytes(aggregateHash), splitKey, rootSignatureAlg);
         if (rootSignatureSig != base64Encode(payloadSigStr)) {
-            ThrowException("Failed integrity check on root signature");
+            ThrowException("Failed integrity check on root signature", VIRTRU_CRYPTO_ERROR);
         }
 
         LogDebug("RootSignatureSig is validated.");
@@ -624,13 +641,13 @@ namespace virtru {
 
         // Check for default segment size.
         if (!integrityInformation.contains(kSegmentSizeDefault)) {
-            ThrowException("SegmentSizeDefault is missing in tdf");
+            ThrowException("SegmentSizeDefault is missing in tdf", VIRTRU_TDF_FORMAT_ERROR);
         }
         int segmentSizeDefault = integrityInformation[kSegmentSizeDefault];
 
         // Check for default encrypted segment size.
         if (!integrityInformation.contains(kEncryptedSegSizeDefault)) {
-            ThrowException("EncryptedSegmentSizeDefault is missing in tdf");
+            ThrowException("EncryptedSegmentSizeDefault is missing in tdf", VIRTRU_TDF_FORMAT_ERROR);
         }
         int defaultEncryptedSegmentSize = integrityInformation[kEncryptedSegSizeDefault];
 
@@ -669,14 +686,14 @@ namespace virtru {
 
             // Validate the hash.
             if (hash != base64Encode(payloadSigStr)) {
-                ThrowException("Failed integrity check on segment hash");
+                ThrowException("Failed integrity check on segment hash", VIRTRU_CRYPTO_ERROR);
             }
 
             // Write to file.
             auto status = sinkCB({outBufferSpan.data(), outBufferSpan.size()});
 
             if (status != Status::Success) {
-                ThrowException("Fail to write into stream");
+                ThrowException("Fail to write into stream", VIRTRU_SYSTEM_ERROR);
             }
         }
         LogTrace("exiting TDFImpl::decryptStream");
@@ -690,7 +707,7 @@ namespace virtru {
 
         // Check if there is a policy object
         if (m_tdfBuilder.m_impl->m_policyObject.getUuid().empty()) {
-            ThrowException("Policy object is missing.");
+            ThrowException("Policy object is missing.", VIRTRU_TDF_FORMAT_ERROR);
         }
 
         if (m_tdfBuilder.m_impl->m_policyObject.getDissems().empty() &&
@@ -713,7 +730,7 @@ namespace virtru {
         } else {
 
             if (m_tdfBuilder.m_impl->m_metadataAsJsonStr.empty()) {
-                ThrowException("Remote key access type should have the meta data.");
+                ThrowException("Remote key access type should have the meta data.", VIRTRU_TDF_FORMAT_ERROR);
             }
 
             auto keyAccess = std::unique_ptr<KeyAccess>{std::make_unique<RemoteKeyAccess>(m_tdfBuilder.m_impl->m_kasUrl,
@@ -808,7 +825,7 @@ namespace virtru {
             ///
             auto encryptedSize = inputStream.gcount() + ivSize + kAesBlockSize;
             if (writeableBytes.size() != encryptedSize) {
-                ThrowException("Encrypted buffer output is not correct!");
+                ThrowException("Encrypted buffer output is not correct!", VIRTRU_TDF_FORMAT_ERROR);
             }
 
             // Generate signature for the encrypted payload.
@@ -1007,7 +1024,7 @@ namespace virtru {
         nlohmann::json keyAccessObjects = nlohmann::json::array();
         keyAccessObjects = manifest[kEncryptionInformation][kKeyAccess];
         if (keyAccessObjects.size() != 1) {
-            ThrowException("Only supports one key access object - unwrap");
+            ThrowException("Only supports one key access object - unwrap", VIRTRU_TDF_FORMAT_ERROR);
         }
 
         // First object
@@ -1030,7 +1047,7 @@ namespace virtru {
         }
 
         if (!boost::iequals(keyType, kSplitKeyType)) {
-            ThrowException("Only split key type is supported for tdf operations.");
+            ThrowException("Only split key type is supported for tdf operations.", VIRTRU_CRYPTO_ERROR);
         }
 
         /// Create a split key and the key access object based on access type.
@@ -1076,7 +1093,7 @@ namespace virtru {
             if (!inStream) {
                 std::string errorMsg{"Failed to open file for reading:"};
                 errorMsg.append(tdfFilePath);
-                ThrowException(std::move(errorMsg));
+                ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
             }
 
             TDFArchiveReader reader(inStream, kTDFManifestFileName, kTDFPayloadFileName);
@@ -1085,7 +1102,7 @@ namespace virtru {
         } else {
 
             if (protocol == Protocol::Xml) {
-                ThrowException("XML TDF not supported");
+                ThrowException("XML TDF not supported", VIRTRU_TDF_FORMAT_ERROR);
             }
 
             auto tdfData = getTDFZipData(tdfFilePath, true);
@@ -1115,7 +1132,7 @@ namespace virtru {
         } else { // html format
 
             if (protocol == Protocol::Xml) {
-                ThrowException("XML TDF not supported");
+                ThrowException("XML TDF not supported", VIRTRU_TDF_FORMAT_ERROR);
             }
 
             // Get the stream size
@@ -1151,7 +1168,7 @@ namespace virtru {
             if (!inputStream) {
                 std::string errorMsg{"Failed to open file for reading:"};
                 errorMsg.append(encryptedTdfFilepath);
-                ThrowException(std::move(errorMsg));
+                ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
             }
 
             TDFArchiveReader reader(inputStream, kTDFManifestFileName, kTDFPayloadFileName);
@@ -1159,7 +1176,7 @@ namespace virtru {
         } else {
 
             if (protocol == Protocol::Xml) {
-                ThrowException("XML TDF not supported");
+                ThrowException("XML TDF not supported", VIRTRU_TDF_FORMAT_ERROR);
             }
 
             auto tdfData = getTDFZipData(encryptedTdfFilepath, true);
@@ -1171,7 +1188,7 @@ namespace virtru {
         if (!manifest.contains(kEncryptionInformation)) {
             std::string errorMsg{"'encryptionInformation' not found in the manifest of tdf -"};
             errorMsg.append(encryptedTdfFilepath);
-            ThrowException(std::move(errorMsg));
+            ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
         }
 
         auto &encryptionInformation = manifest[kEncryptionInformation];
@@ -1179,13 +1196,13 @@ namespace virtru {
         if (!encryptionInformation.contains(kKeyAccess)) {
             std::string errorMsg{"'keyAccess' not found in the manifest of tdf -"};
             errorMsg.append(encryptedTdfFilepath);
-            ThrowException(std::move(errorMsg));
+            ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
         }
 
         nlohmann::json keyAccessObjects = nlohmann::json::array();
         keyAccessObjects = encryptionInformation[kKeyAccess];
         if (keyAccessObjects.size() != 1) {
-            ThrowException("Only supports one key access object.");
+            ThrowException("Only supports one key access object.", VIRTRU_TDF_FORMAT_ERROR);
         }
 
         // First object
@@ -1213,12 +1230,12 @@ namespace virtru {
 
         case IntegrityAlgorithm::GMAC:
             if (kGmacPayloadLength > payload.size()) {
-                ThrowException("Failed to create GMAC signature, invalid payload size.");
+                ThrowException("Failed to create GMAC signature, invalid payload size.", VIRTRU_CRYPTO_ERROR);
             }
 
             return hex(payload.last(kGmacPayloadLength));
         default:
-            ThrowException("Unknown algorithm, can't calculate signature.");
+            ThrowException("Unknown algorithm, can't calculate signature.", VIRTRU_CRYPTO_ERROR);
             break;
         }
         return std::string{};
@@ -1299,7 +1316,7 @@ namespace virtru {
 
         auto &keyAccessObjects = manifest[kEncryptionInformation][kKeyAccess];
         if (keyAccessObjects.size() != 1) {
-            ThrowException("Only supports one key access object - upsert");
+            ThrowException("Only supports one key access object - upsert", VIRTRU_TDF_FORMAT_ERROR);
         }
 
         // First object
@@ -1330,7 +1347,7 @@ namespace virtru {
 
         auto sp = m_tdfBuilder.m_impl->m_networkServiceProvider.lock();
         if (!sp) {
-            ThrowException("Network service not available");
+            ThrowException("Network service not available", VIRTRU_NETWORK_ERROR);
         }
 
         std::promise<void> upsertPromise;
@@ -1351,7 +1368,7 @@ namespace virtru {
             std::ostringstream os;
             os << "Upsert failed status:"
                << status << " response:" << upsertResponse;
-            ThrowException(os.str());
+            ThrowException(os.str(), VIRTRU_NETWORK_ERROR);
         }
 
         // Remove the 'encryptedMetadata' and  'wrappedkey' from manifest.
@@ -1419,7 +1436,7 @@ namespace virtru {
         nlohmann::json keyAccessObjects = nlohmann::json::array();
         keyAccessObjects = manifest[kEncryptionInformation][kKeyAccess];
         if (keyAccessObjects.size() != 1) {
-            ThrowException("Only supports one key access object - unwrap");
+            ThrowException("Only supports one key access object - unwrap", VIRTRU_TDF_FORMAT_ERROR);
         }
 
         // First object
@@ -1451,7 +1468,7 @@ namespace virtru {
 
         auto sp = m_tdfBuilder.m_impl->m_networkServiceProvider.lock();
         if (!sp) {
-            ThrowException("Network service not available");
+            ThrowException("Network service not available", VIRTRU_NETWORK_ERROR);
         }
 
         std::promise<void> rewrapPromise;
@@ -1472,7 +1489,7 @@ namespace virtru {
             std::ostringstream os;
             os << "rewrap failed status:"
                << status << " response:" << rewrapResponse;
-            ThrowException(os.str());
+            ThrowException(os.str(), VIRTRU_NETWORK_ERROR);
         }
 
         return getWrappedKey(rewrapResponse);
@@ -1482,8 +1499,17 @@ namespace virtru {
     WrappedKey TDFImpl::getWrappedKey(const std::string &unwrapResponse) const {
 
         LogTrace("TDFImpl::getWrappedKey");
-
-        auto rewrappedObj = nlohmann::json::parse(unwrapResponse);
+        nlohmann::json rewrappedObj;
+        try{
+            rewrappedObj = nlohmann::json::parse(unwrapResponse);
+        } catch (...){
+            if (unwrapResponse == ""){
+                ThrowException("No rewrap response from KAS", VIRTRU_NETWORK_ERROR);
+            }
+            else{
+                ThrowException("Could not parse KAS rewrap response: " + boost::current_exception_diagnostic_information() + "  with response: " + unwrapResponse, VIRTRU_NETWORK_ERROR);
+            }
+        }
         std::string entityWrappedKey = rewrappedObj[kEntityWrappedKey];
         auto entityWrappedKeyDecode = base64Decode(entityWrappedKey);
 
@@ -1513,7 +1539,7 @@ namespace virtru {
         if (!xmlDoc) {
             std::string errorMsg{"Failed to parse file - "};
             errorMsg.append(htmlTDFFilepath);
-            ThrowException(std::move(errorMsg));
+            ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
         }
 
         return getTDFZipData(std::move(xmlDoc), manifestData);
@@ -1531,7 +1557,7 @@ namespace virtru {
                                                 HTML_PARSE_NONET | HTML_PARSE_NOIMPLIED)};
 
         if (!xmlDoc) {
-            ThrowException("Failed to parse file html payload");
+            ThrowException("Failed to parse file html payload", VIRTRU_TDF_FORMAT_ERROR);
         }
 
         return getTDFZipData(std::move(xmlDoc), manifestData);
@@ -1552,11 +1578,11 @@ namespace virtru {
         const xmlChar *xpath = (xmlChar *)"//body/input";
         XMLXPathObjectFreePtr result{xmlXPathEvalExpression(xpath, context.get())};
         if (!result) {
-            ThrowException("Fail to evaluate XPath expression");
+            ThrowException("Fail to evaluate XPath expression", VIRTRU_TDF_FORMAT_ERROR);
         }
 
         if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
-            ThrowException("<input> elements are missing");
+            ThrowException("<input> elements are missing", VIRTRU_TDF_FORMAT_ERROR);
         }
 
         XMLCharFreePtr xmlCharBase64TDF;
@@ -1577,7 +1603,7 @@ namespace virtru {
 
                 xmlChar *base64TDF = xmlGetProp(inputNode, reinterpret_cast<const xmlChar *>(kHTMLValueAttribute));
                 if (!base64TDF) {
-                    ThrowException("Value attribute is missing from html payload.");
+                    ThrowException("Value attribute is missing from html payload.", VIRTRU_TDF_FORMAT_ERROR);
                 }
                 xmlCharBase64TDF.reset(base64TDF);
                 break;
@@ -1585,7 +1611,7 @@ namespace virtru {
         }
 
         if (!xmlCharBase64TDF) {
-            ThrowException("Value attribute is missing from html payload.");
+            ThrowException("Value attribute is missing from html payload.", VIRTRU_TDF_FORMAT_ERROR);
         }
 
         // TODO: This is memory inefficent.
@@ -1608,7 +1634,7 @@ namespace virtru {
         if (!inputStream) {
             std::string errorMsg{"Failed to open file for reading:"};
             errorMsg.append(inTdfFilePath);
-            ThrowException(std::move(errorMsg));
+            ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
         }
 
         static constexpr auto twoChar = 2;
@@ -1661,14 +1687,14 @@ namespace virtru {
 
         if (!manifest.contains(kEncryptionInformation)) {
             std::string errorMsg{"'encryptionInformation' not found in the manifest of tdf."};
-            ThrowException(std::move(errorMsg));
+            ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
         }
 
         auto &encryptionInformation = manifest[kEncryptionInformation];
 
         if (!encryptionInformation.contains(kPolicy)) {
             std::string errorMsg{"'policy' not found in the manifest of tdf."};
-            ThrowException(std::move(errorMsg));
+            ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
         }
 
         // Get policy
@@ -1696,7 +1722,7 @@ namespace virtru {
         } else { // html format
 
             if (protocol == Protocol::Xml) {
-                ThrowException("XML TDF not supported");
+                ThrowException("XML TDF not supported", VIRTRU_TDF_FORMAT_ERROR);
             }
 
             // Get the stream size
@@ -1725,9 +1751,49 @@ namespace virtru {
 
         if (!policy.contains(kUid)) {
             std::string errorMsg{"'uuid' not found in the policy of tdf."};
-            ThrowException(std::move(errorMsg));
+            ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
         }
 
         return policy[kUid];
     }
+
+    //============================================================
+
+    std::string getManifest() {
+        std::string result;
+        return result;
+    }
+
+    std::vector<VBYTE> getFileSegment(const std::string &inFilepath, unsigned long segmentNumber) {
+        LogTrace("TDFClient::getSegment");
+        // open as zip
+        // read 0.data
+        // seek to requested segment
+        // return requested segment number
+        std::vector<VBYTE> result;
+        return result;
+    }
+
+    unsigned long getSegmentCount(const std::string &inFilepath) {
+        LogTrace("TDFClient::getSegmentCount");
+        std::string manifest = getManifest();
+        unsigned long result= 0;// = manifest.segmentCount;
+        return result;
+    }
+
+    unsigned long getSegmentSize(const std::string &inFilepath) {
+        LogTrace("TDFClient:getSegmentSize");
+        std::string manifest = getManifest();
+        unsigned long result = 0;// = manifest.segmentSize;
+        return result;
+    }
+
+    void calculateSegmentRange(const std::string &inFilepath, size_t offset, size_t length, size_t* segmentOffset, size_t* segmentCount) {
+        LogTrace("TDFClient::calculateSegmentRange");
+        size_t segSize = getSegmentSize(inFilepath);
+        *segmentOffset = offset % segSize;
+        *segmentCount = (length % segSize) + 1;
+    }
+
+
 } // namespace virtru

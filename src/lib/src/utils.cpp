@@ -54,17 +54,23 @@ namespace virtru {
                 clientKeyFileName,
                 clientCertFileName);
         } else {
-            ThrowException("Unable to lock network provider");
+            ThrowException("Unable to lock network provider", VIRTRU_NETWORK_ERROR);
         }
 
         netFuture.get();
 
         // Handle HTTP error.
         if (!Utils::goodHttpStatus(status)) {
-            std::string exceptionMsg = "getKasPubkeyFromUrl failed status: ";
+            std::string exceptionMsg = "Get kas public key failed status:";
             exceptionMsg += std::to_string(status);
+            exceptionMsg += " - ";
             exceptionMsg += kasPubKeyString;
-            ThrowException(std::move(exceptionMsg));
+            ThrowException(std::move(exceptionMsg), VIRTRU_NETWORK_ERROR);
+        }
+
+        //Verify that fetched data is kas public key.
+        if (kasPubKeyString.rfind("\"-----BEGIN CERTIFICATE-----", 0) != 0){
+            ThrowException("Get kas public key failed, kas public key is: "+kasPubKeyString, VIRTRU_NETWORK_ERROR);
         }
 
         LogDebug(kasPubKeyString);

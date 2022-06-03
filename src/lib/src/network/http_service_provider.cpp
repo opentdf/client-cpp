@@ -49,18 +49,18 @@ namespace virtru::network {
             if (errorCode && errorCode.value() != 1) { // something is wrong
                 std::ostringstream os{"Error code: "};
                 os << errorCode.value() << " " << errorCode.message();
-                LogError(os.str());
+                LogTrace(os.str());
+                responseBody = errorCode.message();
+            } else {
+                status = Service::GetStatus(response.result());
+                responseBody = response.body();
             }
-
-            status = Service::GetStatus(response.result());
-
-            responseBody = response.body();
 
             // Not everything throws an errorCode
             if ((!errorCode) && (status != kHTTPOk)) {
                 std::ostringstream os{"status: "};
                 os << status << " " << responseBody;
-                LogError(os.str());
+                LogTrace(os.str());
             }
         });
 
@@ -68,6 +68,7 @@ namespace virtru::network {
         ioContext.run();
 
         // invoke the callback.
+        LogDebug("HTTPServiceProvider::executeGet responseBody="+responseBody);
         callback(status, std::move(responseBody));
     }
 
@@ -100,17 +101,19 @@ namespace virtru::network {
             if (errorCode && errorCode.value() != 1) { // something is wrong
                 std::ostringstream os{"Error code: "};
                 os << errorCode.value() << " " << errorCode.message();
-                LogError(os.str());
+                LogTrace(os.str());
+                responseBody = errorCode.message();
+            } else {
+                status = Service::GetStatus(response.result());
+                responseBody = response.body();
             }
-
-            status = Service::GetStatus(response.result());
-            responseBody = response.body();
 
             // Not everything throws an errorCode
             if ((!errorCode) && (status != kHTTPOk)) {
+
                 std::ostringstream os{"status: "};
                 os << status << " " << responseBody;
-                LogError(os.str());
+                LogTrace(os.str());
             }
         });
 
@@ -118,6 +121,7 @@ namespace virtru::network {
         ioContext.run();
 
         // invoke the callback.
+        LogDebug("HTTPServiceProvider::executePost responseBody="+responseBody);
         callback(status, std::move(responseBody));
     }
 
@@ -150,17 +154,18 @@ namespace virtru::network {
             if (errorCode && errorCode.value() != 1) { // something is wrong
                 std::ostringstream os{"Error code: "};
                 os << errorCode.value() << " " << errorCode.message();
-                LogError(os.str());
+                LogTrace(os.str());
+                responseBody = errorCode.message();
+            } else {
+                status = Service::GetStatus(response.result());
+                responseBody = response.body();
             }
-
-            status = Service::GetStatus(response.result());
-            responseBody = response.body();
 
             // Not everything throws an errorCode
             if ((!errorCode) && (status != kHTTPOk)) {
                 std::ostringstream os{"status: "};
                 os << status << " " << responseBody;
-                LogError(os.str());
+                LogTrace(os.str());
             }
         });
 
@@ -168,6 +173,7 @@ namespace virtru::network {
         ioContext.run();
 
         // invoke the callback.
+        LogDebug("HTTPServiceProvider::executePatch responseBody="+responseBody);
         callback(status, std::move(responseBody));
     }
 

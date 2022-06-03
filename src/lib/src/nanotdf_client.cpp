@@ -148,6 +148,22 @@ namespace virtru {
         return plainData;
     }
 
+    /// Decrypt data from nano tdf format.
+    std::string NanoTDFClient::decryptStringPartial(const std::string &encryptedData, size_t offset, size_t length) {
+        // Initialize the micro tdf builder
+        initNanoTDFBuilder(false);
+
+        m_nanoTdfBuilder->disableFlagToUseOldFormatNTDF();
+
+        // Create a policy object.
+        auto policyObject = createPolicyObject();
+        auto nanoTDF = m_nanoTdfBuilder->setPolicyObject(policyObject).build();
+        // TODO - FIXME - PCM really inefficient implementation here
+        std::string plainData(nanoTDF->decryptString(encryptedData));
+        return plainData.substr(offset, length);
+    }
+
+
     /// Decrypt data from nano tdf format that are encrypted using old version of SDKs.
     std::string NanoTDFClient::decryptStringUsingOldFormat(const std::string &encryptedData) {
 
@@ -188,7 +204,7 @@ namespace virtru {
         }
 
         if (userKasURL != m_nanoTdfBuilder->m_impl->m_kasUrl){
-            LogWarn("Multi KAS is supported");
+            LogWarn("Multi KAS is not supported");
         }
 
         std::string displayName;

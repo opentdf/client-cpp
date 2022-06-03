@@ -65,10 +65,10 @@ namespace virtru::nanotdf {
                 m_data.signatureECCMode = 0x02;
                 break;
             case EllipticCurve::SECP256K1:
-                ThrowException("SDK doesn't support 'secp256k1' curve");
+                ThrowException("SDK doesn't support 'secp256k1' curve", VIRTRU_CRYPTO_ERROR);
                 break;
             default:
-                ThrowException("Unsupported ECC algorithm.");
+                ThrowException("Unsupported ECC algorithm.", VIRTRU_CRYPTO_ERROR);
                 break;
         }
     }
@@ -99,7 +99,7 @@ namespace virtru::nanotdf {
                 m_data.symmetricCipherEnum = 0x06;
                 break;
             default:
-                ThrowException("Unsupported symmetric cipher for signature.");
+                ThrowException("Unsupported symmetric cipher for signature.", VIRTRU_CRYPTO_ERROR);
                 break;
         }
     }
@@ -145,7 +145,7 @@ namespace virtru::nanotdf {
             case NanoTDFCipher::EAD_AES_256_HMAC_SHA_256:
                 return 32;
             default:
-                ThrowException("Unsupported symmetric cipher for signature.");
+                ThrowException("Unsupported symmetric cipher for signature.", VIRTRU_CRYPTO_ERROR);
                 break;
         }
     }
@@ -168,7 +168,7 @@ namespace virtru::nanotdf {
             case NanoTDFCipher::EAD_AES_256_HMAC_SHA_256:
                 return "aes-256-gcm-256-bit-tag";
             default:
-                ThrowException("Unsupported symmetric cipher for signature.");
+                ThrowException("Unsupported symmetric cipher for signature.", VIRTRU_CRYPTO_ERROR);
                 break;
         }
     }

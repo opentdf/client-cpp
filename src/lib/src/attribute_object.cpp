@@ -62,7 +62,10 @@ namespace virtru {
         try {
             nlohmann::json attributeObjectJson = nlohmann::json::parse(attributeObjectJsonStr);
 
-            // Get attribute
+            // Get attribute -- required
+            if (!attributeObjectJson.contains(kAttribute)) {
+                ThrowException("attribute not found in attribute object JSON", VIRTRU_ATTR_OBJ_ERROR);
+            }
             m_attribute = attributeObjectJson[kAttribute];
 
             // Get isDefault
@@ -80,7 +83,7 @@ namespace virtru {
             // Get kas base url
             m_kasBaseURL = attributeObjectJson[kKasURL];
         } catch (...) {
-            ThrowException(boost::current_exception_diagnostic_information());
+            ThrowException("Could not parse AttributeObject from JSON: " + boost::current_exception_diagnostic_information(), VIRTRU_ATTR_OBJ_ERROR);
         }
     }
 

@@ -280,6 +280,41 @@ DLL_PUBLIC TDF_STATUS TDFDecryptString(TDFClientPtr clientPtr,
     return TDF_STATUS_FAILURE;
 }
 
+/// Decrypt a portion of the TDF data
+DLL_PUBLIC TDF_STATUS TDFDecryptStringPartial(TDFClientPtr clientPtr,
+                                       TDFCBytesPtr inBytesPtr,
+                                       TDFBytesLength inBytesLength,
+                                       TDFBytesLength offset,
+                                       TDFBytesLength length,
+                                       TDFBytesPtr *outBytesPtr,
+                                       TDFBytesLength *outBytesLength) {
+    if (clientPtr == nullptr ||
+        inBytesPtr == nullptr ||
+        outBytesPtr == nullptr ||
+        outBytesLength == nullptr) {
+        return TDF_STATUS_INVALID_PARAMS;
+    }
+
+    try {
+        auto *client = static_cast<virtru::TDFClient *>(clientPtr);
+
+        std::string decryptedData = client->decryptStringPartial({reinterpret_cast<char const *>(inBytesPtr), inBytesLength}, offset, length);
+
+        *outBytesLength = decryptedData.length();
+        // Copy the decrypted data to the out buffer.
+        *outBytesPtr = static_cast<unsigned char *>(malloc(*outBytesLength));
+        std::copy(decryptedData.begin(), decryptedData.end(),
+                  *outBytesPtr);
+
+        return TDF_STATUS_SUCCESS;
+    } catch (std::exception &e) {
+        LogError(e.what());
+    } catch (...) {
+        LogDefaultError();
+    }
+    return TDF_STATUS_FAILURE;
+}
+
 /// Gets the JSON policy (as string) of a string-encoded TDF payload
 DLL_PUBLIC TDF_STATUS TDFGetPolicy(TDFClientPtr clientPtr,
                                        TDFCBytesPtr inBytesPtr,

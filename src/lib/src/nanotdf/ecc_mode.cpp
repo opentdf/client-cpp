@@ -59,10 +59,10 @@ namespace virtru::nanotdf {
                 m_data.curveMode = 0x02;
                 break;
             case EllipticCurve::SECP256K1:
-                ThrowException("SDK doesn't support 'secp256k1' curve");
+                ThrowException("SDK doesn't support 'secp256k1' curve", VIRTRU_CRYPTO_ERROR);
                 break;
             default:
-                ThrowException("Unsupported ECC algorithm.");
+                ThrowException("Unsupported ECC algorithm.", VIRTRU_CRYPTO_ERROR);
                 break;
         }
     }
@@ -104,10 +104,10 @@ namespace virtru::nanotdf {
             case EllipticCurve::SECP521R1:
                 return "secp521r1";
             case EllipticCurve::SECP256K1:
-                ThrowException("SDK doesn't support 'secp256k1' curve");
+                ThrowException("SDK doesn't support 'secp256k1' curve", VIRTRU_CRYPTO_ERROR);
                 break;
             default:
-                ThrowException("Unsupported ECC algorithm.");
+                ThrowException("Unsupported ECC algorithm.", VIRTRU_CRYPTO_ERROR);
                 break;
         }
     }
@@ -116,7 +116,7 @@ namespace virtru::nanotdf {
     std::uint8_t ECCMode::GetECKeySize(EllipticCurve curve) {
         switch (curve) {
             case EllipticCurve::SECP256K1:
-                ThrowException("SDK doesn't support 'secp256k1' curve");
+                ThrowException("SDK doesn't support 'secp256k1' curve", VIRTRU_CRYPTO_ERROR);
             case EllipticCurve::SECP256R1:
                 return 32;
             case EllipticCurve::SECP384R1:
@@ -124,7 +124,7 @@ namespace virtru::nanotdf {
             case EllipticCurve::SECP521R1:
                 return 66;
             default:
-                ThrowException("Unsupported ECC algorithm.");
+                ThrowException("Unsupported ECC algorithm.", VIRTRU_CRYPTO_ERROR);
                 break;
         }
     }
@@ -133,7 +133,7 @@ namespace virtru::nanotdf {
     std::uint8_t ECCMode::GetECCompressedPubKeySize(EllipticCurve curve) {
         switch (curve) {
             case EllipticCurve::SECP256K1:
-                ThrowException("SDK doesn't support 'secp256k1' curve");
+                ThrowException("SDK doesn't support 'secp256k1' curve", VIRTRU_CRYPTO_ERROR);
             case EllipticCurve::SECP256R1:
                 return 33;
             case EllipticCurve::SECP384R1:
@@ -141,7 +141,7 @@ namespace virtru::nanotdf {
             case EllipticCurve::SECP521R1:
                 return 67;
             default:
-                ThrowException("Unsupported ECC algorithm.");
+                ThrowException("Unsupported ECC algorithm.", VIRTRU_CRYPTO_ERROR);
                 break;
         }
     }

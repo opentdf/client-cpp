@@ -46,7 +46,7 @@ namespace virtru {
         if (!inStream) {
             std::string errorMsg{"Failed to open file for reading:"};
             errorMsg.append(fileName);
-            ThrowException(std::move(errorMsg));
+            ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
         }
 
         // Get the stream size

@@ -10,6 +10,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 ### Added
+1.0.0
+- PLAT-1836 - Update OpenTDF client-cpp with 1.0.0 release
+- PLAT-1835 - Update OpenTDF Python SDK on PyPI with 1.0.0 release
+
+0.7.6
+- PLAT-1805 Allow java to catch native c++ lib exceptions
+
+0.7.5
+- PLAT-1806 Fix java wrapper build, fix some conan problems
+
+0.7.4
+- PLAT-1687 Handle JSON parsing exception while parsing HTTP response objects in C++ SDK
+- PLAT-1689 Better exception message and error code in openTDF C++ SDK
+
+0.7.3
+- PLAT-1713 Update PyPI license to Clear BSD and fix the README.md 
+
 0.7.2
 - PLAT-1658 Update example source code and support for python3.10 on linux platforms
 

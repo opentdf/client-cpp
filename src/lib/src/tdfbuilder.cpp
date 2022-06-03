@@ -200,7 +200,7 @@ namespace virtru {
         if (!ifs) {
             std::string errorMsg{"Failed to open file for reading - "};
             errorMsg.append(htmlTemplateFilePath);
-            ThrowException(std::move(errorMsg));
+            ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
         }
 
         std::ifstream::pos_type fileSize = ifs.tellg();
@@ -227,7 +227,7 @@ namespace virtru {
             if (placeholderPos == std::string::npos) {
                 std::string errorMsg{placeholder};
                 errorMsg.append(" not found in the html template.");
-                ThrowException(std::move(errorMsg));
+                ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
             }
 
             m_impl->m_htmlTemplateTokens.emplace_back(htmlTemplateData.substr(0, placeholderPos));
@@ -236,7 +236,7 @@ namespace virtru {
         m_impl->m_htmlTemplateTokens.emplace_back(htmlTemplateData);
 
         if (m_impl->m_htmlTemplateTokens.size() != placeholders.size() + 1) {
-            ThrowException("Invalid html tokens size.");
+            ThrowException("Invalid html tokens size.", VIRTRU_TDF_FORMAT_ERROR);
         }
 
         return *this;
@@ -345,7 +345,7 @@ namespace virtru {
         auto pubicKeyIsSet = !m_impl->m_publicKey.empty();
 
         if (privateKeyIsSet != pubicKeyIsSet) {
-            ThrowException("Both private and public key must be set.");
+            ThrowException("Both private and public key must be set.", VIRTRU_CRYPTO_ERROR);
         } else if (!pubicKeyIsSet && !privateKeyIsSet) {
             auto keyPairOf2048 = crypto::RsaKeyPair::Generate(2048);
             m_impl->m_privateKey = keyPairOf2048->PrivateKeyInPEMFormat();
@@ -359,7 +359,7 @@ namespace virtru {
         auto signingPubicKeyIsSet = !m_impl->m_requestSignerPublicKey.empty();
 
         if (signingPrivateKeyIsSet != signingPubicKeyIsSet) {
-            ThrowException("Both signing private and public key must be set.");
+            ThrowException("Both signing private and public key must be set.", VIRTRU_CRYPTO_ERROR);
         } else if (!signingPubicKeyIsSet && !signingPrivateKeyIsSet) {
             auto keyPairOf2048 = crypto::RsaKeyPair::Generate(2048);
             m_impl->m_requestSignerPrivateKey = keyPairOf2048->PrivateKeyInPEMFormat();
@@ -370,7 +370,7 @@ namespace virtru {
         if (m_impl->m_oidcMode) {
             LogDebug("Establishing EO and EAS for OIDC");
             if (m_impl->m_kasUrl.empty()) {
-                ThrowException("KAS URL must be set in OIDC mode");
+                ThrowException("KAS URL must be set in OIDC mode", VIRTRU_NETWORK_ERROR);
             }
             if (m_impl->m_kasPublicKey.empty()) {
                 auto kasKeyUrl = m_impl->m_kasUrl + kKasPubKeyPath;

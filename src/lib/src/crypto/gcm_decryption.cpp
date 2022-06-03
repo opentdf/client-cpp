@@ -28,19 +28,19 @@ namespace virtru::crypto {
         // Initialise the encryption operation.
         auto rc = EVP_DecryptInit_ex(ctx.get(), EVP_aes_256_gcm(), nullptr, nullptr, nullptr);
         if (1 != rc) {
-            ThrowOpensslException("EVP_aes_256_gcm initialization failed.");
+            ThrowOpensslException("EVP_aes_256_gcm initialization failed.", VIRTRU_CRYPTO_ERROR);
         }
 
         // Set the IV length
         rc = EVP_CIPHER_CTX_ctrl(ctx.get(), EVP_CTRL_GCM_SET_IVLEN, iv.size(), nullptr);
         if (1 != rc) {
-            ThrowOpensslException("IV length initialization failed.");
+            ThrowOpensslException("IV length initialization failed.", VIRTRU_CRYPTO_ERROR);
         }
 
         // Initialise key and IV
         rc = EVP_DecryptInit_ex(ctx.get(), nullptr, nullptr, toUchar(key.data()), toUchar(iv.data()));
         if (1 != rc) {
-            ThrowOpensslException("Key and IV initialization failed.");
+            ThrowOpensslException("Key and IV initialization failed.", VIRTRU_CRYPTO_ERROR);
         }
 
         return std::unique_ptr<GCMDecryption>(new GCMDecryption(std::move(ctx)));
@@ -54,26 +54,26 @@ namespace virtru::crypto {
         // Initialise the encryption operation.
         auto rc = EVP_DecryptInit_ex(ctx.get(), EVP_aes_256_gcm(), nullptr, nullptr, nullptr);
         if (1 != rc) {
-            ThrowOpensslException("EVP_aes_256_gcm initialization failed.");
+            ThrowOpensslException("EVP_aes_256_gcm initialization failed.", VIRTRU_CRYPTO_ERROR);
         }
 
         // Set the IV length
         rc = EVP_CIPHER_CTX_ctrl(ctx.get(), EVP_CTRL_GCM_SET_IVLEN, iv.size(), nullptr);
         if (1 != rc) {
-            ThrowOpensslException("IV length initialization failed.");
+            ThrowOpensslException("IV length initialization failed.", VIRTRU_CRYPTO_ERROR);
         }
 
         // Initialise key and IV
         rc = EVP_DecryptInit_ex(ctx.get(), nullptr, nullptr, toUchar(key.data()), toUchar(iv.data()));
         if (1 != rc) {
-            ThrowOpensslException("Key and IV initialization failed.");
+            ThrowOpensslException("Key and IV initialization failed.", VIRTRU_CRYPTO_ERROR);
         }
 
         int len;
         rc = EVP_DecryptUpdate(ctx.get(), nullptr, &len, toUchar(aad.data()), aad.size());
 
         if (1 != rc) {
-            ThrowOpensslException("AAD initialization failed.");
+            ThrowOpensslException("AAD initialization failed.", VIRTRU_CRYPTO_ERROR);
         }
 
         return std::unique_ptr<GCMDecryption>(new GCMDecryption(std::move(ctx)));
@@ -84,14 +84,14 @@ namespace virtru::crypto {
     void GCMDecryption::decrypt(Bytes encryptedData, WriteableBytes& decryptedData) {
 
         if (encryptedData.size() > std::numeric_limits<int>::max()) {
-            ThrowException("CBC encoding input buffer is too big");
+            ThrowException("CBC encoding input buffer is too big", VIRTRU_TDF_FORMAT_ERROR);
         }
 
         auto decryptedDataSize = 0;
         const auto final = finalizeSize (decryptedData, decryptedDataSize);
 
         if(decryptedData.size() < encryptedData.size() + margin()) {
-            ThrowException("Input buffer is bigger than output buffer.");
+            ThrowException("Input buffer is bigger than output buffer.", VIRTRU_TDF_FORMAT_ERROR);
         }
 
         const auto rc = EVP_DecryptUpdate(m_ctx.get(),
@@ -101,7 +101,7 @@ namespace virtru::crypto {
                                           encryptedData.size());
 
         if (1 != rc) {
-            ThrowOpensslException("Block decryption(aes-256-gcm) failed.");
+            ThrowOpensslException("Block decryption(aes-256-gcm) failed.", VIRTRU_CRYPTO_ERROR);
         }
     }
 
@@ -111,13 +111,13 @@ namespace virtru::crypto {
         auto rc = EVP_CIPHER_CTX_ctrl(m_ctx.get(), EVP_CTRL_GCM_SET_TAG, tag.size(),
                                       const_cast<gsl::byte *> (tag.data()));
         if (1 != rc) {
-            ThrowOpensslException("Gcm get tag failed.");
+            ThrowOpensslException("Gcm get tag failed.", VIRTRU_CRYPTO_ERROR);
         }
 
         auto decryptedDataSize = 0;
         rc = EVP_DecryptFinal_ex(m_ctx.get(), nullptr, &decryptedDataSize);
         if (1 != rc) {
-            ThrowOpensslException("Final block decryption(aes-256-gcm) failed.");
+            ThrowOpensslException("Final block decryption(aes-256-gcm) failed.", VIRTRU_CRYPTO_ERROR);
         }
     }
 }  // namespace virtru::crypto

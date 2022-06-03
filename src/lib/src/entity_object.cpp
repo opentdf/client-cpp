@@ -162,22 +162,37 @@ namespace virtru {
             nlohmann::json entityObjectJson = nlohmann::json::parse(entityObjectJsonStr);
 
             // Get userId.
+            if (!entityObjectJson.contains(kUserId)) {
+                ThrowException("userId not found in entity object JSON", VIRTRU_ENTITY_OBJ_ERROR);
+            }
             entityObject.m_userId =  entityObjectJson[kUserId];
 
             // Get aliases
+            if (!entityObjectJson.contains(kAliases)) {
+                ThrowException("aliases not found in entity object JSON", VIRTRU_ENTITY_OBJ_ERROR);
+            }
             for (const auto& alias : entityObjectJson[kAliases]) {
                 entityObject.m_aliases.push_back(alias.get<std::string>());
             }
 
             // Get attributes
+            if (!entityObjectJson.contains(kAttributes)) {
+                ThrowException("attributes not found in entity object JSON", VIRTRU_ENTITY_OBJ_ERROR);
+            }
             for (auto& attribute : entityObjectJson[kAttributes]) {
                 entityObject.m_attributesAsJWT.push_back(attribute[kJWt].get<std::string>());
             }
 
             // Get entity public key.
+            if (!entityObjectJson.contains(kPublicKey)) {
+                ThrowException("publicKey not found in entity object JSON", VIRTRU_ENTITY_OBJ_ERROR);
+            }
             entityObject.m_publicKey =  entityObjectJson[kPublicKey];
 
             // Get cert.
+            if (!entityObjectJson.contains(kCert)) {
+                ThrowException("cert not found in entity object JSON", VIRTRU_ENTITY_OBJ_ERROR);
+            }
             entityObject.m_cert =  entityObjectJson[kCert];
 
             // Get signer public key.
@@ -186,7 +201,7 @@ namespace virtru {
             }
 
         } catch (...) {
-            ThrowException(boost::current_exception_diagnostic_information());
+            ThrowException("Could not create entity object from json: " + boost::current_exception_diagnostic_information(), VIRTRU_ENTITY_OBJ_ERROR);
         }
         return entityObject;
     }

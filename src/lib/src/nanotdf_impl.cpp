@@ -11,6 +11,7 @@
 //
 
 #include <boost/endian/arithmetic.hpp>
+#include <boost/exception/diagnostic_information.hpp>
 #include <fstream>
 #include <iostream>
 #include "nlohmann/json.hpp"
@@ -69,14 +70,14 @@ namespace virtru {
         if (!inStream) {
             std::string errorMsg{"Failed to open file for reading - "};
             errorMsg.append(inFilepath);
-            ThrowException(std::move(errorMsg));
+            ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
         }
 
         size_t fileSize = inStream.tellg();
         if (didExceedMaxSize(inStream.tellg())) {
             std::string errorMsg{"Data size not supported for NanoTDF - "};
             errorMsg.append(std::to_string(fileSize));
-            ThrowException(std::move(errorMsg));
+            ThrowException(std::move(errorMsg), VIRTRU_NANO_TDF_FORMAT_ERROR);
         }
 
         std::string_view outBuffer;
@@ -99,7 +100,7 @@ namespace virtru {
         if (!outStream) {
             std::string errorMsg{"Failed to open file for writing:"};
             errorMsg.append(outFilepath);
-            ThrowException(std::move(errorMsg));
+            ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
         }
 
         outStream.write(outBuffer.data(), outBuffer.size());
@@ -122,7 +123,7 @@ namespace virtru {
         if (exceedSize) {
             std::string errorMsg{"Data size not supported for NanoTDF - "};
             errorMsg.append(std::to_string(plainData.size()));
-            ThrowException(std::move(errorMsg));
+            ThrowException(std::move(errorMsg), VIRTRU_NANO_TDF_FORMAT_ERROR);
         }
 
         /// Resize the encrypt buffer only if needed.
@@ -268,14 +269,14 @@ namespace virtru {
         if (!inStream) {
             std::string errorMsg{"Failed to open file for reading - "};
             errorMsg.append(inFilepath);
-            ThrowException(std::move(errorMsg));
+            ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
         }
 
         size_t fileSize = inStream.tellg();
         if (fileSize > kMaxEncryptedNTDFSize || fileSize == 0) {
             std::string errorMsg{"Data size not supported for NanoTDF - "};
             errorMsg.append(std::to_string(fileSize));
-            ThrowException(std::move(errorMsg));
+            ThrowException(std::move(errorMsg), VIRTRU_NANO_TDF_FORMAT_ERROR);
         }
 
         inStream.seekg(0, std::ios::beg);
@@ -291,7 +292,7 @@ namespace virtru {
         if (!outStream) {
             std::string errorMsg{"Failed to open file for writing:"};
             errorMsg.append(outFilepath);
-            ThrowException(std::move(errorMsg));
+            ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
         }
 
         outStream.write(outBuffer.data(), outBuffer.size());
@@ -432,7 +433,7 @@ namespace virtru {
             auto result = ECKeyPair::VerifyECDSASignature(toBytes(digest), toBytes(m_signature), signerPublicKeyAsPem);
 
             if (!result) {
-                ThrowException("Failed to verify the payload signature.");
+                ThrowException("Failed to verify the payload signature.", VIRTRU_NANO_TDF_FORMAT_ERROR);
             }
 
             const auto& sdkSignerPublicKey = ECKeyPair::GetPEMPublicKeyFromX509Cert(m_tdfBuilder.m_impl->m_signerPublicKey);
@@ -446,7 +447,7 @@ namespace virtru {
 #endif
 
             if (!sdkSignerPublicKey.empty() && signerPublicKeyAsPem != sdkSignerPublicKey) {
-                ThrowException("TDF is not signed with the correct entity.");
+                ThrowException("TDF is not signed with the correct entity.", VIRTRU_NANO_TDF_FORMAT_ERROR);
             }
         }
 
@@ -557,9 +558,9 @@ namespace virtru {
         } else if (m_tdfBuilder.m_impl->m_policyType == NanoTDFPolicyType::REMOTE_POLICY) {
 
             // Sync the policy to server and add the url as policy body.
-            ThrowException("Remote policy is not supported.");
+            ThrowException("Remote policy is not supported.", VIRTRU_NANO_TDF_FORMAT_ERROR);
         } else {
-            ThrowException("Unknow nano tdf policy.");
+            ThrowException("Unknow nano tdf policy.", VIRTRU_NANO_TDF_FORMAT_ERROR);
         }
 
         if (m_tdfBuilder.m_impl->m_useECDSABinding) {
@@ -643,7 +644,7 @@ namespace virtru {
             signedToken = builder.sign(jwt::algorithm::es512(m_tdfBuilder.m_impl->m_requestSignerPublicKey,
                                                           m_tdfBuilder.m_impl->m_requestSignerPrivateKey));
         } else {
-            ThrowException("Fail to generate token for the given curve.");
+            ThrowException("Fail to generate token for the given curve.", VIRTRU_CRYPTO_ERROR);
         }
 
         signedTokenRequestBody[kSignedRequestToken] = signedToken;
@@ -675,11 +676,11 @@ namespace virtru {
                 std::ostringstream os;
                 os << "rewrap failed status:"
                    << status << " response:" << rewrapResponse;
-                ThrowException(os.str());
+                ThrowException(os.str(), VIRTRU_NETWORK_ERROR);
             }
 
         } else {
-            ThrowException("Network service not available");
+            ThrowException("Network service not available", VIRTRU_NETWORK_ERROR);
         }
 
 #if DEBUG_LOG
@@ -689,18 +690,28 @@ namespace virtru {
         auto payloadConfig = header.getPayloadConfig();
         auto authTagSize = SymmetricAndPayloadConfig::SizeOfAuthTagForCipher(payloadConfig.getCipherType());
 
-        auto jsonResponse = nlohmann::json::parse(rewrapResponse);
+        nlohmann::json jsonResponse;
+        try{
+            jsonResponse = nlohmann::json::parse(rewrapResponse);
+        } catch (...){
+            if (jsonResponse == ""){
+                ThrowException("No rewrap response from KAS", VIRTRU_NETWORK_ERROR);
+            }
+            else{
+                ThrowException("Could not parse KAS rewrap response: " + boost::current_exception_diagnostic_information() + "  with response: " + rewrapResponse, VIRTRU_NETWORK_ERROR);
+            }
+        }
         if (!jsonResponse.contains(kSessionPublicKey)) {
             const char* noPubkeyMsg = "No session public key in rewrap response";
             LogError(noPubkeyMsg);
-            ThrowException(noPubkeyMsg);
+            ThrowException(noPubkeyMsg, VIRTRU_NETWORK_ERROR);
         }
         const std::string sessionPublicKey = jsonResponse[kSessionPublicKey];
 
         if (!jsonResponse.contains(kEntityWrappedKey)) {
             const char* noKeyMsg = "No wrapped key in rewrap response";
             LogError(noKeyMsg);
-            ThrowException(noKeyMsg);
+            ThrowException(noKeyMsg, VIRTRU_NETWORK_ERROR);
         }
         const std::string wrappedKey = jsonResponse[kEntityWrappedKey];
         const auto& sdkPrivateKey = m_tdfBuilder.m_impl->m_privateKey;
@@ -776,7 +787,7 @@ namespace virtru {
 
             auto keySize = m_cachedEphemeralKey.size();
             if (static_cast<std::size_t>(ephemeralKey.size()) != keySize) {
-                ThrowException("Decrypt error with dataset TDF");
+                ThrowException("Decrypt error with dataset TDF - wrong ephemeral key size", VIRTRU_CRYPTO_ERROR);
             }
 
             if (std::memcmp(ephemeralKey.data(),m_cachedEphemeralKey.data(), keySize) == 0) {
@@ -804,7 +815,7 @@ namespace virtru {
         if (!inStream) {
             std::string errorMsg{"Failed to open file for reading - "};
             errorMsg.append(filePath);
-            ThrowException(std::move(errorMsg));
+            ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
         }
 
         size_t fileSize = inStream.tellg();

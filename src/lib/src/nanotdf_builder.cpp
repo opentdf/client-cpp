@@ -246,7 +246,7 @@ namespace virtru {
         auto pubicKeyIsSet = !m_impl->m_publicKey.empty();
 
         if (privateKeyIsSet != pubicKeyIsSet) {
-            ThrowException("Both private and public key must be set.");
+            ThrowException("Both private and public key must be set.", VIRTRU_NANO_TDF_FORMAT_ERROR);
         } else if(!pubicKeyIsSet && !privateKeyIsSet) {
 
             auto curveName = ECCMode::GetEllipticCurveName(m_impl->m_ellipticCurveType);
@@ -263,7 +263,7 @@ namespace virtru {
             // When using OIDC mode, EO and EAS are not set and should not be assumed.
             if (m_impl->m_oidcMode) {
                 if (m_impl->m_kasUrl.empty()) {
-                    ThrowException("KAS URL must be set in OIDC mode");
+                    ThrowException("KAS URL must be set in OIDC mode", VIRTRU_NANO_TDF_FORMAT_ERROR);
                 }
                 if (m_impl->m_kasPublicKey.empty()) {
                     auto kasKeyUrl = m_impl->m_kasUrl + kKasPubKeyPath + "?algorithm=ec:secp256r1";
@@ -280,7 +280,7 @@ namespace virtru {
                 // Legacy EO/EAS mode
             } else {
                 if (m_impl->m_easUrl.empty()) {
-                    ThrowException("No eas url is defined.");
+                    ThrowException("No eas url is defined.", VIRTRU_NANO_TDF_FORMAT_ERROR);
                 }
 
                 // If entity object is set get the kas url and public key(if not set by user).
@@ -288,7 +288,7 @@ namespace virtru {
                     AttributeObjectsCache attributeObjectsCache {m_impl->m_entityObject};
 
                     if (!attributeObjectsCache.hasDefaultAttribute()) {
-                        ThrowException("Default attribute missing from the entity object.");
+                        ThrowException("Default attribute missing from the entity object.",  VIRTRU_NANO_TDF_FORMAT_ERROR);
                     }
 
                     auto attributeObject = attributeObjectsCache.getDefaultAttributeObject();
@@ -302,7 +302,7 @@ namespace virtru {
                 }
 
                 if (m_impl->m_entityObject.getUserId().empty()) {
-                    ThrowException("Entity object is missing.");
+                    ThrowException("Entity object is missing.",  VIRTRU_NANO_TDF_FORMAT_ERROR);
                 }
             }
         }

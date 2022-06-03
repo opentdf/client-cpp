@@ -72,6 +72,14 @@ namespace virtru {
         m_impl->decryptStream(inStream, outStream);
     }
 
+    /// Decrypt the tdf stream data.
+    void TDF::decryptStreamPartial(std::istream &inStream, std::ostream &outStream, size_t offset, size_t length)  {
+
+        LogInfo("decrypt data in stream...");
+
+        m_impl->decryptStreamPartial(inStream, outStream, offset, length);
+    }
+
     /// Decrypt the data that is retrieved from the source callback.
     void TDF::decryptData(TDFDataSourceCb sourceCb, TDFDataSinkCb sinkCb) {
         LogInfo("decrypt data from data source...");

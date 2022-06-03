@@ -26,6 +26,7 @@
 #include "crypto_utils.h"
 #include "tdf_exception.h"
 #include "openssl_deleters.h"
+#include "logger.h"
 
 namespace virtru::crypto {
 
@@ -43,31 +44,31 @@ namespace virtru::crypto {
     std::array<gsl::byte, 32u> calculateSHA256(Bytes data) {
 
         if (static_cast<unsigned long>(data.size()) > std::numeric_limits<size_t>::max()) {
-            ThrowException("Input buffer is too big for calculating sha256 hash.");
+            ThrowException("Input buffer is too big for calculating sha256 hash.", VIRTRU_CRYPTO_ERROR);
         }
 
         EVP_MD_CTX_free_ptr context{EVP_MD_CTX_create()};
         if (!context) {
-            ThrowOpensslException("EVP_MD_CTX_new failed.");
+            ThrowOpensslException("EVP_MD_CTX_new failed.", VIRTRU_CRYPTO_ERROR);
         }
 
         if(!EVP_DigestInit_ex(context.get(), EVP_sha256(), nullptr)) {
-            ThrowOpensslException("EVP_DigestInit_ex failed.");
+            ThrowOpensslException("EVP_DigestInit_ex failed.", VIRTRU_CRYPTO_ERROR);
         }
 
         if(!EVP_DigestUpdate(context.get(), data.data(), static_cast<size_t>(data.size()))) {
-            ThrowOpensslException("EVP_DigestUpdate failed.");
+            ThrowOpensslException("EVP_DigestUpdate failed.", VIRTRU_CRYPTO_ERROR);
         }
 
         constexpr auto hashSize = 32;
         std::array<gsl::byte, hashSize> hash{};
         unsigned int lengthOfHash = 0;
         if(!EVP_DigestFinal_ex(context.get(), reinterpret_cast<std::uint8_t*>(hash.data()), &lengthOfHash)) {
-            ThrowOpensslException("EVP_DigestFinal_ex failed.");
+            ThrowOpensslException("EVP_DigestFinal_ex failed.", VIRTRU_CRYPTO_ERROR);
         }
 
         if (hashSize != lengthOfHash) {
-            ThrowOpensslException ("SHA256 failed");
+            ThrowOpensslException ("SHA256 failed", VIRTRU_CRYPTO_ERROR);
         }
 
         return hash;
@@ -76,7 +77,7 @@ namespace virtru::crypto {
     std::string hex(Bytes data) {
 
         if (static_cast<unsigned long>(data.size() * 2) > std::numeric_limits<std::string::size_type>::max()) {
-            ThrowException("Input buffer is too big for converting to hex.");
+            ThrowException("Input buffer is too big for converting to hex.", VIRTRU_CRYPTO_ERROR);
         }
 
         std::vector<char> res(static_cast<unsigned long>(data.size() * 2));
@@ -102,11 +103,11 @@ namespace virtru::crypto {
     std::vector<gsl::byte> hmacSha256(Bytes toSignData, Bytes secret) {
 
         if (static_cast<unsigned long>(toSignData.size()) > std::numeric_limits<size_t>::max()) {
-            ThrowException("Input buffer is too big for calculating HMAC.");
+            ThrowException("Input buffer is too big for calculating HMAC.", VIRTRU_CRYPTO_ERROR);
         }
 
         if (secret.size() > std::numeric_limits<int>::max()) {
-            ThrowException("HMAC secret is too big.");
+            ThrowException("HMAC secret is too big.", VIRTRU_CRYPTO_ERROR);
         }
 
         std::vector<gsl::byte> digest(32);;
@@ -122,25 +123,39 @@ namespace virtru::crypto {
         );
 
         if (!returnCode || digestSize != digest.size()) {
-            ThrowOpensslException ("HMAC failed");
+            ThrowOpensslException ("HMAC failed", VIRTRU_CRYPTO_ERROR);
         }
 
         return digest;
     }
 
     /// Utility method to throw exception when there is an OpenSSL error.
-    void _ThrowOpensslException(std::string&& errorStringPrefix, const char* fileName, unsigned int lineNumber)
+    void _ThrowOpensslException(std::string&& errorStringPrefix, const char* fileName, unsigned int lineNumber, int code)
     {
         std::ostringstream os;
         os << " [" << fileName << ":" << lineNumber << "] ";
 
         std::array<char, kOpenSslErrorStringLen> openssl_error_string_buffer{};
         auto error = ERR_get_error();
+        if (code != VIRTRU_GENERAL_ERROR) {
+            error = code;
+        }
         ERR_error_string_n(error, openssl_error_string_buffer.data(), openssl_error_string_buffer.size());
-        throw CryptoException {
+
+        //only log line numbers for DEBUG and TRACE
+        if(IsLogLevelDebug() || IsLogLevelTrace()){
+            throw CryptoException {
                 os.str() + move (errorStringPrefix) + openssl_error_string_buffer.data(),
                 static_cast<int>(error)
-        };
+            };
+        }
+        else{
+            throw CryptoException {
+                move (errorStringPrefix) + openssl_error_string_buffer.data(),
+                static_cast<int>(error)
+            };
+        }
+        
     }
 
     // Base64 encode the given data(Bytes).

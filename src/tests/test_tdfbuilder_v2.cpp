@@ -203,7 +203,7 @@ std::unique_ptr<TDFBuilder> createTDFBuilder(LogLevel logLevel, KeyAccessType ke
         if (!ifs) {
             std::string errorMsg{"Failed to open file for reading - "};
             errorMsg.append(htmlTemplateData);
-            ThrowException(std::move(errorMsg));
+            ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
         }
 
         std::ifstream::pos_type fileSize = ifs.tellg();

@@ -118,7 +118,7 @@ namespace virtru {
         }
 
         if (attributeObjects.empty()) {
-            ThrowException("Attribute objects does not exist");
+            ThrowException("Attribute objects does not exist", VIRTRU_TDF_FORMAT_ERROR);
         }
 
         return attributeObjects.front();

@@ -45,7 +45,7 @@ void test_resource_locator(const std::string& url) {
         std::vector<gsl::byte> contents;
         std::ifstream ifs("test.bin", std::ios::binary|std::ios::ate);
         if (!ifs) {
-            ThrowException("Failed to open file for reading.");
+            ThrowException("Failed to open file for reading.", VIRTRU_SYSTEM_ERROR);
         }
 
         std::ifstream::pos_type fileSize = ifs.tellg();

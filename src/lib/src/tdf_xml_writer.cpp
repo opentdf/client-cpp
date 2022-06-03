@@ -63,7 +63,7 @@ namespace virtru {
         // the default for the standalone declaration.
         auto rc = xmlTextWriterStartDocument(writer.get(), nullptr, kXMLEncoding, nullptr);
         if (rc < 0) {
-            std::string errorMsg{"Error creating the xml writer"};
+            std::string errorMsg{"Error creating the xml writer and starting document"};
             ThrowException(std::move(errorMsg));
         }
 
@@ -71,13 +71,13 @@ namespace virtru {
         // element, this will be the root element of the XML TDF
         rc = xmlTextWriterStartElement(writer.get(), reinterpret_cast<const xmlChar *>(kTrustedDataObjectElement));
         if (rc < 0) {
-            std::string errorMsg{"Error at xmlTextWriterStartElement"};
+            std::string errorMsg{"Error at xmlTextWriterStartElement (TrustedDataObject)"};
             ThrowException(std::move(errorMsg));
         }
 
         rc = xmlTextWriterStartElement(writer.get(), reinterpret_cast<const xmlChar *>(kEncryptionInformationElement));
         if (rc < 0) {
-            std::string errorMsg{"Error at xmlTextWriterStartElement"};
+            std::string errorMsg{"Error at xmlTextWriterStartElement (EncryptionInformation)"};
             ThrowException(std::move(errorMsg));
         }
 
@@ -95,14 +95,14 @@ namespace virtru {
 
         rc = xmlTextWriterEndElement(writer.get());
         if (rc < 0) {
-            std::string errorMsg{"Error at xmlTextWriterEndElement"};
+            std::string errorMsg{"Error at xmlTextWriterEndElement (EncryptionInformation)"};
             ThrowException(std::move(errorMsg));
         }
 
         // Start an element named "Base64BinaryPayload" child of "TrustedDataObject"
         rc = xmlTextWriterStartElement(writer.get(), reinterpret_cast<const xmlChar *>(kBase64BinaryPayloadElement));
         if (rc < 0) {
-            std::string errorMsg{"Error at xmlTextWriterStartElement"};
+            std::string errorMsg{"Error at xmlTextWriterStartElement (Base64BinaryPayload)"};
             ThrowException(std::move(errorMsg));
         }
 
@@ -110,7 +110,7 @@ namespace virtru {
         rc = xmlTextWriterWriteAttribute(writer.get(), reinterpret_cast<const xmlChar *>(kMediaTypeAttribute),
                                          reinterpret_cast<const xmlChar *>(kTextPlainMediaType));
         if (rc < 0) {
-            std::string errorMsg{"Error at xmlTextWriterWriteAttribute"};
+            std::string errorMsg{"Error at xmlTextWriterWriteAttribute (mediaType)"};
             ThrowException(std::move(errorMsg));
         }
 
@@ -118,7 +118,7 @@ namespace virtru {
         rc = xmlTextWriterWriteAttribute(writer.get(), reinterpret_cast<const xmlChar *>(kFilenameAttribute),
                                          reinterpret_cast<const xmlChar *>(kTDFPayloadFileName));
         if (rc < 0) {
-            std::string errorMsg{"Error at xmlTextWriterWriteAttribute"};
+            std::string errorMsg{"Error at xmlTextWriterWriteAttribute (filename)"};
             ThrowException(std::move(errorMsg));
         }
 
@@ -126,7 +126,7 @@ namespace virtru {
         rc = xmlTextWriterWriteAttribute(writer.get(), reinterpret_cast<const xmlChar *>(kIsEncryptedAttribute),
                                          reinterpret_cast<const xmlChar *>(kAttributeValueAsTrue));
         if (rc < 0) {
-            std::string errorMsg{"Error at xmlTextWriterWriteAttribute"};
+            std::string errorMsg{"Error at xmlTextWriterWriteAttribute (isEncrypted)"};
             ThrowException(std::move(errorMsg));
         }
 
@@ -144,14 +144,14 @@ namespace virtru {
         // Close the element named Base64BinaryPayload
         rc = xmlTextWriterEndElement(writer.get());
         if (rc < 0) {
-            std::string errorMsg{"Error at xmlTextWriterEndElement"};
+            std::string errorMsg{"Error at xmlTextWriterEndElement (Base64BinaryPayload)"};
             ThrowException(std::move(errorMsg));
         }
 
         // Close the element named TrustedDataObject
         rc = xmlTextWriterEndElement(writer.get());
         if (rc < 0) {
-            std::string errorMsg{"Error at xmlTextWriterEndElement"};
+            std::string errorMsg{"Error at xmlTextWriterEndElement (TrustedDataObject)"};
             ThrowException(std::move(errorMsg));
         }
 
