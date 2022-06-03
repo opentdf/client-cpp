@@ -107,19 +107,6 @@ DLL_PUBLIC TDF_STATUS TDFEncryptString(TDFClientPtr clientPtr,
                                        TDFBytesPtr *outBytesPtr,
                                        TDFBytesLength *outBytesLength);
 
-/// Decrypt the TDF data
-/// \param vClientPtr - The pointer to Virtru client opaque object.
-/// \param inBytesPtr  - Pointer to buffer containing the TDF data.
-/// \param inBytesLength  - Length of buffer containing the TDF data.
-/// \param outBytesPtr  - On success, it contains the decrypted tdf data.
-/// \param outBytesLength  - On success, it is length of the decrypted tdf data.
-/// \return TDF_STATUS - VSTATUS_SUCCESS on success
-/// NOTE: The caller of the api should free outBytesPtr.
-DLL_PUBLIC TDF_STATUS TDFGetPolicy(TDFClientPtr clientPtr,
-                                       TDFCBytesPtr inBytesPtr,
-                                       TDFBytesLength inBytesLength,
-                                       TDFBytesPtr *outBytesPtr,
-                                       TDFBytesLength *outBytesLength);
 
 /// Gets the JSON policy (as string) of a string-encoded TDF payload
 /// \param vClientPtr - The pointer to Virtru client opaque object.
@@ -129,13 +116,43 @@ DLL_PUBLIC TDF_STATUS TDFGetPolicy(TDFClientPtr clientPtr,
 /// \param outBytesLength  - On success, it is length of the policy string.
 /// \return TDF_STATUS - VSTATUS_SUCCESS on success
 /// NOTE: The caller of the api should free outBytesPtr.
+DLL_PUBLIC TDF_STATUS TDFGetPolicy(TDFClientPtr clientPtr,
+                                       TDFCBytesPtr inBytesPtr,
+                                       TDFBytesLength inBytesLength,
+                                       TDFBytesPtr *outBytesPtr,
+                                       TDFBytesLength *outBytesLength);
+
+/// Decrypt the TDF data
+/// \param vClientPtr - The pointer to Virtru client opaque object.
+/// \param inBytesPtr  - Pointer to buffer containing the TDF data.
+/// \param inBytesLength  - Length of buffer containing the TDF data.
+/// \param outBytesPtr  - On success, it contains the decrypted tdf data.
+/// \param outBytesLength  - On success, it is length of the decrypted tdf data.
+/// \return TDF_STATUS - VSTATUS_SUCCESS on success
+/// NOTE: The caller of the api should free outBytesPtr.
 DLL_PUBLIC TDF_STATUS TDFDecryptString(TDFClientPtr clientPtr,
                                        TDFCBytesPtr inBytesPtr,
                                        TDFBytesLength inBytesLength,
                                        TDFBytesPtr *outBytesPtr,
                                        TDFBytesLength *outBytesLength);
 
-
+/// Decrypt a portion the TDF data
+/// \param vClientPtr - The pointer to Virtru client opaque object.
+/// \param inBytesPtr  - Pointer to buffer containing the TDF data.
+/// \param inBytesLength  - Length of buffer containing the TDF data.
+/// \param offset  - Offset within the plaintext to decrypt
+/// \param length  - Length of the plaintext to decrypt starting at the offset
+/// \param outBytesPtr  - On success, it contains the decrypted tdf data.
+/// \param outBytesLength  - On success, it is length of the decrypted tdf data.
+/// \return TDF_STATUS - VSTATUS_SUCCESS on success
+/// NOTE: The caller of the api should free outBytesPtr.
+DLL_PUBLIC TDF_STATUS TDFDecryptStringPartial(TDFClientPtr clientPtr,
+                                       TDFCBytesPtr inBytesPtr,
+                                       TDFBytesLength inBytesLength,
+                                       TDFBytesLength offset,
+                                       TDFBytesLength length,
+                                       TDFBytesPtr *outBytesPtr,
+                                       TDFBytesLength *outBytesLength);
 
 /// Assign the metadata that will be encrypted and stored in
 /// the TDF, separately from the data.

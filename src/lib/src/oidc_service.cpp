@@ -20,6 +20,7 @@
 #include "tdf_exception.h"
 #include "utils.h"
 #include <jwt-cpp/jwt.h>
+#include <boost/exception/diagnostic_information.hpp>
 
 namespace virtru {
 
@@ -64,7 +65,7 @@ namespace virtru {
             authHeaderStream << kBearerToken << " " << m_oidcCredentials.getAccessToken();
             authHeader.insert({kAuthorizationKey, authHeaderStream.str()});
         } else {
-            ThrowException("Auth type not supported");
+            ThrowException("OIDC auth type not supported");
         }
 
         auto decoded_token = jwt::decode(m_accessToken);
@@ -82,7 +83,7 @@ namespace virtru {
         LogTrace("OIDCService::getClaimsObjectAttributes");
 
         if (m_accessToken.empty()) {
-            ThrowException("Access token missing from OIDC service");
+            ThrowException("Access token missing from OIDC service", VIRTRU_NETWORK_ERROR);
         }
 
         auto decoded_token = jwt::decode(m_accessToken);
@@ -214,16 +215,29 @@ namespace virtru {
         if (!Utils::goodHttpStatus(status)) {
             std::string exceptionMsg = "Get OIDC token failed status: ";
             exceptionMsg += std::to_string(status);
+            exceptionMsg += " - ";
             exceptionMsg += responseJson;
             LogDebug("Bad http response: " + exceptionMsg);
-            ThrowException(std::move(exceptionMsg));
+            ThrowException(std::move(exceptionMsg), VIRTRU_NETWORK_ERROR);
         }
 
         LogDebug("Got OIDC fetchAccessToken response: " + responseJson);
-        nlohmann::json tokens = nlohmann::json::parse(responseJson);
+        nlohmann::json tokens;
+
+        try{
+            tokens = nlohmann::json::parse(responseJson);
+        } catch (...) {
+            if (responseJson == ""){
+                ThrowException("No fetchAccessToken response from OIDC service", VIRTRU_NETWORK_ERROR);
+            }
+            else{
+                ThrowException("Could not parse OIDC fetchAccessToken response: " + boost::current_exception_diagnostic_information() + "  with response: " + responseJson, VIRTRU_NETWORK_ERROR);
+            }
+        }
+
         if (!tokens.contains(kAccessToken)) {
             std::string exceptionMsg = "OIDC access token not found in /openid-connect/token response";
-            ThrowException(std::move(exceptionMsg));
+            ThrowException(std::move(exceptionMsg), VIRTRU_NETWORK_ERROR);
         }
 
         m_accessToken = tokens[kAccessToken];
@@ -303,16 +317,27 @@ namespace virtru {
         if (!Utils::goodHttpStatus(status)) {
             std::string exceptionMsg = "Get OIDC token failed status: ";
             exceptionMsg += std::to_string(status);
+            exceptionMsg += " - ";
             exceptionMsg += responseJson;
-            ThrowException(std::move(exceptionMsg));
+            ThrowException(std::move(exceptionMsg), VIRTRU_NETWORK_ERROR);
         }
 
         LogDebug("Got OIDC refreshAccessToken response: " + responseJson);
-
-        auto tokens = nlohmann::json::parse(responseJson);
+        nlohmann::json tokens;
+        try{
+            tokens = nlohmann::json::parse(responseJson);
+        } catch (...){
+            if (responseJson == ""){
+                ThrowException("No refreshAccessToken response from OIDC service", VIRTRU_NETWORK_ERROR);
+            }
+            else{
+                ThrowException("Could not parse OIDC refreshAccessToken response: " + boost::current_exception_diagnostic_information() + "  with response: " + responseJson, VIRTRU_NETWORK_ERROR);
+            }
+        }
+        
         if (!tokens.contains(kAccessToken)) {
             std::string exceptionMsg = "OIDC access token not found in /openid-connect/token response";
-            ThrowException(std::move(exceptionMsg));
+            ThrowException(std::move(exceptionMsg), VIRTRU_NETWORK_ERROR);
         }
 
         m_accessToken = tokens[kAccessToken];
@@ -362,8 +387,9 @@ namespace virtru {
         if (!Utils::goodHttpStatus(status)) {
             std::string exceptionMsg = "Get OIDC userinfo failed status: ";
             exceptionMsg += std::to_string(status);
+            exceptionMsg += " - ";
             exceptionMsg += responseJson;
-            ThrowException(std::move(exceptionMsg));
+            ThrowException(std::move(exceptionMsg), VIRTRU_NETWORK_ERROR);
         }
 
         LogDebug("Got OIDC userInfo response: " + responseJson);

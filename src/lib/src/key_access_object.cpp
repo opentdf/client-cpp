@@ -142,7 +142,7 @@ namespace virtru {
             }
         } catch (...) {
             LogError("Exception in KeyAccessObject::toJsonString");
-            ThrowException(boost::current_exception_diagnostic_information());
+            ThrowException("Could not create json representation of KAS object: " + boost::current_exception_diagnostic_information(), VIRTRU_KAS_OBJ_ERROR);
         }
 
         if (prettyPrint) {
@@ -172,32 +172,50 @@ namespace virtru {
             nlohmann::json keyAccessObjectJson = nlohmann::json::parse(keyAccessObjectJsonStr);
 
             // Get key access type.
+            if (!keyAccessObjectJson.contains(kKeyAccessType)) {
+                ThrowException("type not found in key access object JSON", VIRTRU_KAS_OBJ_ERROR);
+            }
             std::string keyAccessKeyAsStr = keyAccessObjectJson[kKeyAccessType];
             if (boost::iequals(keyAccessKeyAsStr, kKeyAccessRemote)) {
                 keyAccessObject.m_keyAccessType = KeyAccessType::Remote;
             } else if (boost::iequals(keyAccessKeyAsStr, kKeyAccessWrapped)) {
                 keyAccessObject.m_keyAccessType = KeyAccessType::Wrapped;
             } else {
-                ThrowException("Invalid key access type while parsing KeyAccessObject json string.");
+                ThrowException("Invalid key access type while parsing KeyAccessObject json string.", VIRTRU_KAS_OBJ_ERROR);
             }
 
             // Get kas url.
+            if (!keyAccessObjectJson.contains(kUrl)) {
+                ThrowException("url not found in key access object JSON", VIRTRU_KAS_OBJ_ERROR);
+            }
             keyAccessObject.m_kasUrl = keyAccessObjectJson[kUrl];
 
             // Get the protocol
+            if (!keyAccessObjectJson.contains(kProtocol)) {
+                ThrowException("protocol not found in key access object JSON", VIRTRU_KAS_OBJ_ERROR);
+            }
             std::string protocolAsStr = keyAccessObjectJson[kProtocol];
             if (boost::iequals(protocolAsStr, kKasProtocol)) {
                 keyAccessObject.m_protocol = KeyAccessProtocol::Kas;
             } else {
-                ThrowException("Invalid protocol while parsing KeyAccessObject json string.");
+                ThrowException("Invalid protocol while parsing KeyAccessObject json string.", VIRTRU_KAS_OBJ_ERROR);
             }
 
             // Get the wrapped key.
+            if (!keyAccessObjectJson.contains(kWrappedKey)) {
+                ThrowException("wrappedKey not found in key access object JSON", VIRTRU_KAS_OBJ_ERROR);
+            }
             keyAccessObject.m_wrappedKey = keyAccessObjectJson[kWrappedKey];
 
             // Get policy binding hash.
+            if (!keyAccessObjectJson.contains(kPolicyBinding)) {
+                ThrowException("policyBinding not found in key access object JSON", VIRTRU_KAS_OBJ_ERROR);
+            }
             keyAccessObject.m_policyBindingHash = keyAccessObjectJson[kPolicyBinding];
 
+            if (!keyAccessObjectJson.contains(kEncryptedMetadata)) {
+                ThrowException("encryptedMetadata not found in key access object JSON", VIRTRU_KAS_OBJ_ERROR);
+            }
             auto encryptedMetadata = keyAccessObjectJson[kEncryptedMetadata];
             if (!encryptedMetadata.empty()) {
                 // Get the encrypted meta data.
@@ -206,7 +224,7 @@ namespace virtru {
 
         } catch (...) {
             LogError("Exception in KeyAccessObject::createKeyAccessObjectFromJson");
-            ThrowException(boost::current_exception_diagnostic_information());
+            ThrowException("Could not parse key access object from JSON: " + boost::current_exception_diagnostic_information(), VIRTRU_KAS_OBJ_ERROR);
         }
 
         return keyAccessObject;

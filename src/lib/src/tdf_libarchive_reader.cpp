@@ -38,20 +38,20 @@ namespace virtru {
             if (result != ARCHIVE_OK) {
                 std::string errorMsg { "Archive reader failed to read header - " };
                 errorMsg.append(archive_error_string(archiveFreePtr.get()));
-                ThrowException(std::move(errorMsg));
+                ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
             }
 
             result = archive_read_next_header(archiveFreePtr.get(), &entry);
             if (result != ARCHIVE_OK) {
                 std::string errorMsg { "Archive reader failed to read header - " };
                 errorMsg.append(archive_error_string(archiveFreePtr.get()));
-                ThrowException(std::move(errorMsg));
+                ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
             }
 
             if (std::strncmp(archive_entry_pathname(entry), manifestFilename.c_str(), manifestFilename.size()) != 0) {
                 std::string errorMsg { "Archive reader failed to find the manifest - " };
                 errorMsg.append(manifestFilename);
-                ThrowException(std::move(errorMsg));
+                ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
             }
 
             // Read the contents of the manifest
@@ -61,7 +61,7 @@ namespace virtru {
                 if (size < 0) {
                     std::string errorMsg { "Archive reader failed to read the manifest - " };
                     errorMsg.append(manifestFilename);
-                    ThrowException(std::move(errorMsg));
+                    ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
                 }
 
                 // Done reading
@@ -85,14 +85,14 @@ namespace virtru {
             if (result != ARCHIVE_OK) {
                 std::string errorMsg{"Archive reader failed to read header - "};
                 errorMsg.append(archive_error_string(m_archive.get()));
-                ThrowException(std::move(errorMsg));
+                ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
             }
 
             if (std::strncmp(archive_entry_pathname(entry),
                              payloadFileName.c_str(), payloadFileName.size())) {
                 std::string errorMsg{"Archive reader failed to find the payload - "};
                 errorMsg.append(payloadFileName);
-                ThrowException(std::move(errorMsg));
+                ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
             }
 
             m_payloadSize = archive_entry_size(entry);
@@ -153,7 +153,7 @@ namespace virtru {
         if (size < 0) {
             std::string errorMsg { "Archive reader failed to read - " };
             errorMsg.append(archive_error_string(m_archive.get()));
-            ThrowException(std::move(errorMsg));
+            ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
         } else if (size < buffer.size()) {
             std::string errorMsg { "Failed to read the bytes of size:" };
             errorMsg += std::to_string(buffer.size());
@@ -166,7 +166,7 @@ namespace virtru {
         auto bufferSize = buffer.size();
         readPayload(buffer );
         if (buffer.size() != bufferSize) {
-            ThrowException(std::move("Archive reader failed to read exact payload size"));
+            ThrowException(std::move("Archive reader failed to read exact payload size"), VIRTRU_TDF_FORMAT_ERROR);
         }
     }
 

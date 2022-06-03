@@ -69,6 +69,13 @@ namespace virtru {
         /// \param outStream - The stream containing plain data.
         void decryptStream(std::istream& inStream, std::ostream& outStream);
 
+        /// Decrypt a portion the tdf stream data.
+        /// \param inStream - The stream containing a tdf data to be decrypted.
+        /// \param outStream - The stream containing plain data.
+        /// \param offset - The offset within the plaintext to return
+        /// \param length - The length of the plaintext to return
+        void decryptStreamPartial(std::istream &inStream, std::ostream &outStream, size_t offset, size_t length);
+
         /// Decrypt the data that is retrieved from the source callback.
         /// \param sourceCb - A source callback to retrieve the data to be decrypted.
         /// \param sinkCb - A sink callback with the decrypted data.

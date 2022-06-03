@@ -61,6 +61,9 @@ namespace virtru {
             policyObject.m_uuid = policyObjectJson[kUid];
 
             // Get dissems
+            if (!policyObjectJson[kBody].contains(kDissem)) {
+                ThrowException("dissem not found in policy object JSON", VIRTRU_POLICY_OBJ_ERROR);
+            }
             policyObject.m_dissems.clear();
             for (auto dissem : policyObjectJson[kBody][kDissem]) {
                 // NOTE: Not sure we want to check if the dissem is always the
@@ -71,13 +74,16 @@ namespace virtru {
             }
 
             // Get attribute objects
+            if (!policyObjectJson[kBody].contains(kDataAttributes)) {
+                ThrowException("attributes not found in policy object JSON", VIRTRU_POLICY_OBJ_ERROR);
+            }
             for (auto attributeObject : policyObjectJson[kBody][kDataAttributes]) {
                 policyObject.m_attributeObjects.emplace_back(AttributeObject(to_string(attributeObject)));
             }
 
         } catch (...) {
             LogError("Exception in PolicyObject::CreatePolicyObjectFromJson");
-            ThrowException(boost::current_exception_diagnostic_information());
+            ThrowException("Could not parse policy object from JSON: " + boost::current_exception_diagnostic_information(), VIRTRU_POLICY_OBJ_ERROR);
         }
 
         return policyObject;
@@ -138,7 +144,7 @@ namespace virtru {
             }
         } catch (...) {
             LogError("Exception in PolicyObject::toJsonString");
-            ThrowException(boost::current_exception_diagnostic_information());
+            ThrowException("Could not create JSON representation of policy object: " + boost::current_exception_diagnostic_information(), VIRTRU_POLICY_OBJ_ERROR);
         }
 
         if (prettyPrint) {

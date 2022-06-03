@@ -29,7 +29,7 @@ namespace virtru::nanotdf {
         std::memcpy(magicNumberAndVersion.data(), bytes.data(), magicNumberAndVersion.size());
 
         if (magicNumberAndVersion != m_magicNumberAndVersion) {
-            ThrowException("Invalid magic number and version in nano tdf.");
+            ThrowException("Invalid magic number and version in nano tdf.", VIRTRU_NANO_TDF_FORMAT_ERROR);
         }
 
         // Adjust the bytes.
@@ -164,7 +164,7 @@ namespace virtru::nanotdf {
 
         auto compressedPubKeySize = ECCMode::GetECCompressedPubKeySize(m_eccMode.getEllipticCurveType());
         if (bytes.size() < compressedPubKeySize) {
-            ThrowException("Failed to read ephemeral key - invalid buffer size.");
+            ThrowException("Failed to read ephemeral key - invalid buffer size.", VIRTRU_CRYPTO_ERROR);
         }
 
         m_ephemeralKey.resize(compressedPubKeySize);

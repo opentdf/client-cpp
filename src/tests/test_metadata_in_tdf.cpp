@@ -11,6 +11,7 @@
 #include "network/http_client_service.h"
 #include "tdf_exception.h"
 #include "oidc_credentials.h"
+#include "test_utils.h"
 
 #include <boost/test/included/unit_test.hpp>
 #include <boost/endian/arithmetic.hpp>
@@ -161,17 +162,7 @@ DCzGcDpkNVkPR58v1BvBs4zZ
         tdfFilepath.append("/data/sample_with_metadata.txt.tdf");
 #endif
 
-        std::string tdfData;
-        std::ifstream ifs(tdfFilepath.data(), std::ios::binary|std::ios::ate);
-        if (!ifs) {
-            BOOST_FAIL(tdfFilepath + " failed to open file for reading.");
-        }
-
-        std::ifstream::pos_type fileSize = ifs.tellg();
-        tdfData.reserve(fileSize);
-        ifs.seekg(0, std::ios::beg);
-        tdfData.assign((std::istreambuf_iterator<char>(ifs)),
-                                std::istreambuf_iterator<char>());
+        auto tdfData = TestUtils::getFileString(tdfFilepath);
 
         OIDCCredentials clientCreds;
         clientCreds.setClientCredentialsClientSecret("dummy_client_id", "dummy_secret",
@@ -203,17 +194,7 @@ DCzGcDpkNVkPR58v1BvBs4zZ
         tdfFilepath.append("/data/sample_without_metadata.txt.tdf");
 #endif
 
-        std::string tdfData;
-        std::ifstream ifs(tdfFilepath.data(), std::ios::binary|std::ios::ate);
-        if (!ifs) {
-            BOOST_FAIL(tdfFilepath + " failed to open file for reading.");
-        }
-
-        std::ifstream::pos_type fileSize = ifs.tellg();
-        tdfData.reserve(fileSize);
-        ifs.seekg(0, std::ios::beg);
-        tdfData.assign((std::istreambuf_iterator<char>(ifs)),
-                       std::istreambuf_iterator<char>());
+        auto tdfData = TestUtils::getFileString(tdfFilepath);
 
         OIDCCredentials clientCreds;
         clientCreds.setClientCredentialsClientSecret("dummy_client_id", "dummy_secret",
@@ -244,17 +225,7 @@ DCzGcDpkNVkPR58v1BvBs4zZ
         tdfFilepath.append("/data/sample_xml_format.tdf");
 #endif
 
-        std::string tdfData;
-        std::ifstream ifs(tdfFilepath.data(), std::ios::binary|std::ios::ate);
-        if (!ifs) {
-            BOOST_FAIL(tdfFilepath + " failed to open file for reading.");
-        }
-
-        std::ifstream::pos_type fileSize = ifs.tellg();
-        tdfData.reserve(fileSize);
-        ifs.seekg(0, std::ios::beg);
-        tdfData.assign((std::istreambuf_iterator<char>(ifs)),
-                       std::istreambuf_iterator<char>());
+        auto tdfData = TestUtils::getFileString(tdfFilepath);
 
         OIDCCredentials clientCreds;
         clientCreds.setClientCredentialsClientSecret("dummy_client_id", "dummy_secret",

@@ -41,7 +41,6 @@ int main() {
                 std::cout << "NanoTDF test passed!!" << std::endl;
             } else {
                 std::cerr << "NanoTDF test failed!!" << std::endl;
-                return EXIT_FAILURE;
             }
         }
 
@@ -55,19 +54,13 @@ int main() {
                 std::cout << "NanoTDF test passed!!" << std::endl;
             } else {
                 std::cerr << "NanoTDF test failed!!" << std::endl;
-                return EXIT_FAILURE;
             }
         }
     } catch (const Exception &exception) {
         std ::cerr << "virtru exception " << exception.what() << std::endl;
-        return EXIT_FAILURE;
     } catch (const std::exception &exception) {
         std ::cerr << exception.what() << std::endl;
-        return EXIT_FAILURE;
     } catch (...) {
         std ::cerr << "Unknown..." << std::endl;
-        return EXIT_FAILURE;
     }
-
-    return EXIT_SUCCESS;
 }

@@ -4,8 +4,7 @@ class TDFLibConan(ConanFile):
     generators = "cmake"
     settings = "os", "compiler", "build_type", "arch"
 
-    default_options = ("libzip:with_openssl=False", "libarchive:with_zlib=False")
-
+    default_options = ("libarchive:with_zlib=False")
 
     def configure(self):
         if str(self.settings.arch).startswith('arm'):
@@ -15,12 +14,11 @@ class TDFLibConan(ConanFile):
             self.options["libxml2"].icu = False
         
     def requirements(self):
-        self.requires("openssl/1.1.1l@")
+        self.requires("openssl/1.1.1o@")
         if str(self.settings.arch).startswith('arm'):
             self.requires("boost/1.74.0@")
         else:
             self.requires("boost/1.76.0@")
-        self.requires("zlib/1.2.11@")
         self.requires("ms-gsl/2.1.0@")
         self.requires("libxml2/2.9.10@")
         self.requires("pybind11/2.6.2@")

@@ -39,7 +39,7 @@ namespace virtru {
     void SplitKey::addKeyAccess(std::unique_ptr<KeyAccess> keyAccess) {
 
         if (!m_keyAccessObjects.empty()) {
-            ThrowException("Only instance of 'Key Access Object' is supported");
+            ThrowException("Only instance of 'Key Access Object' is supported", VIRTRU_CRYPTO_ERROR);
         }
 
         m_keyAccessObjects.push_back(std::move(keyAccess));
@@ -49,7 +49,7 @@ namespace virtru {
     nlohmann::json SplitKey::getManifest() {
 
         if (m_keyAccessObjects.empty()) {
-            ThrowException("'Key Access Object' is missing.");
+            ThrowException("'Key Access Object' is missing.", VIRTRU_CRYPTO_ERROR);
         }
 
         /*
@@ -142,7 +142,7 @@ namespace virtru {
     void SplitKey::encrypt(Bytes data, WriteableBytes& encryptedData) const {
 
         if (m_cipherType == CipherType::Aes265CBC) {
-            ThrowException("AES-256-CBC is not supported.");
+            ThrowException("AES-256-CBC is not supported.", VIRTRU_CRYPTO_ERROR);
         }
 
         ByteArray<kGcmIvSize> iv = symmetricKey<kGcmIvSize>();
@@ -180,7 +180,7 @@ namespace virtru {
 
         long finalSize =  iv.size() + data.size() +  kAesBlockSize;
         if (encryptedData.size() < finalSize) {
-            ThrowException("Output buffer is too small.");
+            ThrowException("Output buffer is too small.", VIRTRU_CRYPTO_ERROR);
         }
 
         ByteArray<kAesBlockSize> tag;

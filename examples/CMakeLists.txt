@@ -38,7 +38,7 @@ if("$ENV{VBUILD_CODE_COVERAGE}" STREQUAL "true")
 endif()
 
 link_directories(
-    ${PROJECT_SOURCE_DIR}/../src/build/lib
+    ${PROJECT_SOURCE_DIR}/../tdf-lib-cpp/lib
     )
 
 link_libraries(
@@ -47,7 +47,7 @@ link_libraries(
     )
     
 include_directories(
-    ${PROJECT_SOURCE_DIR}/../src/lib/include
+    ${PROJECT_SOURCE_DIR}/../tdf-lib-cpp/include
     )
 
 add_executable(tdf_sample main.cpp)

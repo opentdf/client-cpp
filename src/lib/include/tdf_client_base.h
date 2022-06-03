@@ -101,6 +101,15 @@ namespace virtru {
         /// return value.
         virtual std::string decryptString(const std::string &encryptedData) = 0;
 #endif
+        /// Decrypt part of the data from tdf format.
+        /// \param encryptedData - The string containing a data to be decrypted.
+        /// \param offset - The offset within the plaintext to return
+        /// \param length - The length of the plaintext to return
+        /// \return std::string - The string containing the plain data.
+        /// NOTE: virtru::exception will be thrown if there are issues while performing the decryption process.
+        /// NOTE: The caller should copy the bytes from the return value and should not hold on to the
+        /// return value.
+        virtual std::string decryptStringPartial(const std::string &encryptedData, size_t offset, size_t length) = 0;
 
         /// Decrypt the bytes from tdf format.
         /// \param encryptedData - The vector containing the bytes to be decrypted.

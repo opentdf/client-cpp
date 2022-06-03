@@ -68,7 +68,7 @@ namespace virtru {
                 xmlChar* base64Data = xmlNodeListGetString(doc.get(), cur->xmlChildrenNode, 1);
                 if (!base64Data) {
                     std::string errorMsg{"Error manifest information is missing from the XML TDF"};
-                    ThrowException(std::move(errorMsg));
+                    ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
                 }
                 xmlCharBase64Manifest.reset(base64Data);
             }
@@ -78,7 +78,7 @@ namespace virtru {
                 xmlChar* base64Data = xmlNodeListGetString(doc.get(), cur->xmlChildrenNode, 1);
                 if (!base64Data) {
                     std::string errorMsg{"Error binary payload information is missing from the XML TDF"};
-                    ThrowException(std::move(errorMsg));
+                    ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
                 }
                 xmlCharBase64Payload.reset(base64Data);
             }
@@ -88,12 +88,12 @@ namespace virtru {
 
         if (!xmlCharBase64Manifest) {
             std::string errorMsg{"Error manifest information is missing from the XML TDF"};
-            ThrowException(std::move(errorMsg));
+            ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
         }
 
         if (!xmlCharBase64Payload) {
             std::string errorMsg{"Error binary payload information is missing from the XML TDF"};
-            ThrowException(std::move(errorMsg));
+            ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
         }
 
         // Get the manifest
