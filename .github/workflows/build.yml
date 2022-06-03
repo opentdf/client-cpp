@@ -18,9 +18,9 @@ jobs:
       - name: Install Conan
         run: pip3 install conan==1.48.2
 
-      - name: Git clone documentation 
+      - name: Git clone opentdf 
         run: |
-          git clone https://github.com/opentdf/documentation.git
+          git clone https://github.com/opentdf/opentdf.git
 
       - uses: actions/setup-python@v3
         with:
@@ -51,12 +51,12 @@ jobs:
           kubernetes-version: 1.23.1
       - name: Run tilt & C++ build and run sanity test
         env:
-          # This test script is passed to documentation/quickstart tilt file
+          # This test script is passed to opentdf/quickstart tilt file
           TEST_SCRIPT: ../../build-and-run-sanity-test.sh
         run: |-
           kubectl version
           pwd
-          cd documentation/quickstart
+          cd opentdf/quickstart
           pwd
           tilt ci
 
