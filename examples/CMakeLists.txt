@@ -22,6 +22,15 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_compile_options(-Wall -Wextra)
 endif()
 
+# set include and lib directories based on available dirs
+if(EXISTS ${PROJECT_SOURCE_DIR}/../tdf-lib-cpp)
+    set(SDKINCDIR ${PROJECT_SOURCE_DIR}/../tdf-lib-cpp/include)
+    set(SDKLIBDIR ${PROJECT_SOURCE_DIR}/../tdf-lib-cpp/lib)
+else()
+    set(SDKINCDIR ${PROJECT_SOURCE_DIR}/../src/lib/include)
+    set(SDKLIBDIR ${PROJECT_SOURCE_DIR}/../src/build/lib)
+endif()
+
 # windows-specific flags
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(CMAKE_CXX_FLAGS_DEBUG "/Zi /Ob0 /Od /MDd")
@@ -38,11 +47,7 @@ if("$ENV{VBUILD_CODE_COVERAGE}" STREQUAL "true")
 endif()
 
 link_directories(
-if("$ENV{BUILDITE}" STREQUAL "true")
-    ${PROJECT_SOURCE_DIR}/../tdf-lib-cpp/lib
-else()
-    ${PROJECT_SOURCE_DIR}/../src/build/lib
-endif()
+    ${SDKLIBDIR}
     )
 
 link_libraries(
@@ -51,11 +56,7 @@ link_libraries(
     )
     
 include_directories(
-if("$ENV{BUILDITE}" STREQUAL "true")
-    ${PROJECT_SOURCE_DIR}/../tdf-lib-cpp/include
-else()
-    ${PROJECT_SOURCE_DIR}/../src/lib/include
-endif()
+    ${SDKINCDIR}
     )
 
 add_executable(tdf_sample main.cpp)
