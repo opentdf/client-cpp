@@ -13,12 +13,11 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package("OpenSSL")
 find_package("Boost")
-find_package("libiconv")
-find_package("ZLIB")
-find_package("gsl_microsoft/20180102")
+find_package("ms_gsl")
 find_package("LibXml2")
-find_package("pybind11")
 find_package("libarchive")
+find_package("nlohmann_json")
+find_package("jwt-cpp")
 
 include_directories(${CONAN_INCLUDE_DIRS})
 
