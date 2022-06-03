@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 1.0.0
+- PLAT-1836 - Update OpenTDF client-cpp with 1.0.0 release
 - PLAT-1835 - Update OpenTDF Python SDK on PyPI with 1.0.0 release
 
 0.7.6

@@ -120,7 +120,7 @@ namespace virtru {
         /// NOTE: virtru::exception will be thrown if there are issues while performing the decryption process.
         /// NOTE: The caller should copy the bytes from the return value and should not hold on to the
         /// return value.
-        std::string decryptStringPartial(const std::string &encryptedData, size_t offset, size_t lengty) override;
+        std::string decryptStringPartial(const std::string &encryptedData, size_t offset, size_t length) override;
 #endif
         /// Decrypt data from nano tdf format that are encrypted using old version of SDKs.
         /// \param encryptedData - The string containing a data to be decrypted.
