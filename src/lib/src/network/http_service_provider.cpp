@@ -44,12 +44,12 @@ namespace virtru::network {
 
         IOContext ioContext;
         service->ExecuteGet(ioContext, [&status, &responseBody](ErrorCode errorCode, HttpResponse &&response) {
-            // TODO: Ignore stream truncated error. Looks like the server is not shuting downn gracefully.
+            // TODO: Ignore stream truncated error. Looks like the server is not shutting down gracefully.
             // https://stackoverflow.com/questions/25587403/boost-asio-ssl-async-shutdown-always-finishes-with-an-error
             if (errorCode && errorCode.value() != 1) { // something is wrong
-                std::ostringstream os{"Error code: "};
-                os << errorCode.value() << " " << errorCode.message();
-                LogTrace(os.str());
+                std::ostringstream oss;
+                oss << "Error code:" << errorCode.value() << " " << errorCode.message();
+                LogWarn(oss.str());
                 responseBody = errorCode.message();
             } else {
                 status = Service::GetStatus(response.result());
@@ -58,9 +58,9 @@ namespace virtru::network {
 
             // Not everything throws an errorCode
             if ((!errorCode) && (status != kHTTPOk)) {
-                std::ostringstream os{"status: "};
-                os << status << " " << responseBody;
-                LogTrace(os.str());
+                std::ostringstream oss;
+                oss << "status: " << status << " " << responseBody;
+                LogDebug(oss.str());
             }
         });
 
@@ -69,6 +69,60 @@ namespace virtru::network {
 
         // invoke the callback.
         LogDebug("HTTPServiceProvider::executeGet responseBody="+responseBody);
+        callback(status, std::move(responseBody));
+    }
+
+
+    /// Execute a put request and on completion the callback is executed.
+    void HTTPServiceProvider::executePut(const std::string &url,
+                                          const HttpHeaders &headers,
+                                          std::string &&body,
+                                          HTTPServiceCallback &&callback,
+                                          const std::string& sdkConsumerCertAuthority,
+                                          const std::string& clientKeyFileName,
+                                          const std::string& clientCertFileName) {
+
+        auto service = Service::Create(url, sdkConsumerCertAuthority, clientKeyFileName, clientCertFileName);
+
+        LogDebug("PUT URL = \"" + url + "\"");
+
+        // Add headers
+        updateService(*service, kHttpPut, headers, body, url);
+
+        LogDebug("Body = \"" + body + "\"");
+
+        unsigned int status = kHTTPBadRequest;
+        std::string responseBody;
+
+        IOContext ioContext;
+
+        service->ExecutePut(std::move(body), ioContext, [&status, &responseBody](ErrorCode errorCode, HttpResponse &&response) {
+            // TODO: Ignore stream truncated error. Looks like the server is not shutting down gracefully.
+            // https://stackoverflow.com/questions/25587403/boost-asio-ssl-async-shutdown-always-finishes-with-an-error
+            if (errorCode && errorCode.value() != 1) { // something is wrong
+                std::ostringstream os{"Error code: "};
+                os << errorCode.value() << " " << errorCode.message();
+                LogWarn(os.str());
+                responseBody = errorCode.message();
+            } else {
+                status = Service::GetStatus(response.result());
+                responseBody = response.body();
+            }
+
+            // Not everything throws an errorCode
+            if ((!errorCode) && (status != kHTTPOk)) {
+
+                std::ostringstream os{"status: "};
+                os << status << " " << responseBody;
+                LogDebug(os.str());
+            }
+        });
+
+        // Run the context - It's blocking call until i/o operation is done.
+        ioContext.run();
+
+        // invoke the callback.
+        LogDebug("HTTPServiceProvider::executePut responseBody="+responseBody);
         callback(status, std::move(responseBody));
     }
 
@@ -96,12 +150,12 @@ namespace virtru::network {
         IOContext ioContext;
 
         service->ExecutePost(std::move(body), ioContext, [&status, &responseBody](ErrorCode errorCode, HttpResponse &&response) {
-            // TODO: Ignore stream truncated error. Looks like the server is not shuting downn gracefully.
+            // TODO: Ignore stream truncated error. Looks like the server is not shutting down gracefully.
             // https://stackoverflow.com/questions/25587403/boost-asio-ssl-async-shutdown-always-finishes-with-an-error
             if (errorCode && errorCode.value() != 1) { // something is wrong
                 std::ostringstream os{"Error code: "};
                 os << errorCode.value() << " " << errorCode.message();
-                LogTrace(os.str());
+                LogWarn(os.str());
                 responseBody = errorCode.message();
             } else {
                 status = Service::GetStatus(response.result());
@@ -113,7 +167,7 @@ namespace virtru::network {
 
                 std::ostringstream os{"status: "};
                 os << status << " " << responseBody;
-                LogTrace(os.str());
+                LogDebug(os.str());
             }
         });
 
@@ -149,12 +203,12 @@ namespace virtru::network {
         IOContext ioContext;
 
         service->ExecutePatch(std::move(body), ioContext, [&status, &responseBody](ErrorCode errorCode, HttpResponse &&response) {
-            // TODO: Ignore stream truncated error. Looks like the server is not shuting downn gracefully.
+            // TODO: Ignore stream truncated error. Looks like the server is not shutting down gracefully.
             // https://stackoverflow.com/questions/25587403/boost-asio-ssl-async-shutdown-always-finishes-with-an-error
             if (errorCode && errorCode.value() != 1) { // something is wrong
                 std::ostringstream os{"Error code: "};
                 os << errorCode.value() << " " << errorCode.message();
-                LogTrace(os.str());
+                LogWarn(os.str());
                 responseBody = errorCode.message();
             } else {
                 status = Service::GetStatus(response.result());
@@ -165,7 +219,7 @@ namespace virtru::network {
             if ((!errorCode) && (status != kHTTPOk)) {
                 std::ostringstream os{"status: "};
                 os << status << " " << responseBody;
-                LogTrace(os.str());
+                LogDebug(os.str());
             }
         });
 
@@ -177,51 +231,112 @@ namespace virtru::network {
         callback(status, std::move(responseBody));
     }
 
+    /// Execute a head request and on completion the callback is executed.
+    void HTTPServiceProvider::executeHead(const std::string &url,
+                                         const HttpHeaders &headers,
+                                         HTTPServiceCallback &&callback,
+                                         const std::string& sdkConsumerCertAuthority,
+                                         const std::string& clientKeyFileName,
+                                         const std::string& clientCertFileName) {
+        auto service = Service::Create(url, sdkConsumerCertAuthority, clientKeyFileName, clientCertFileName);
+
+        LogDebug("HEAD URL = \"" + url + "\"");
+
+        // Add headers
+        updateService(*service, kHttpHead, headers, {}, url);
+
+        unsigned int status = kHTTPBadRequest;
+        std::string responseBody;
+
+        IOContext ioContext;
+        service->ExecuteHead(ioContext, [&status, &responseBody](ErrorCode errorCode, HttpResponse &&response) {
+            // TODO: Ignore stream truncated error. Looks like the server is not shutting down gracefully.
+            // https://stackoverflow.com/questions/25587403/boost-asio-ssl-async-shutdown-always-finishes-with-an-error
+            if (errorCode && errorCode.value() != 1) { // something is wrong
+                std::ostringstream oss;
+                oss << "Error code:" << errorCode.value() << " " << errorCode.message() << "\n";
+                LogError(oss.str());
+                responseBody = oss.str();
+            } else {
+                status = Service::GetStatus(response.result());
+            }
+
+            // Return headers in response body since there is no body for a HEAD response
+            for (auto &hIter: response.base()) {
+                std::ostringstream oss;
+                oss << hIter.name_string() << ": " << hIter.value() << "\n";
+                responseBody.append(oss.str());
+            }
+
+            // Not everything throws an errorCode
+            if ((!errorCode) && (status != kHTTPOk)) {
+                std::ostringstream oss;
+                oss << "status: " << status << " " << responseBody;
+                LogDebug(oss.str());
+            }
+        });
+
+        // Run the context - It's blocking call until i/o operation is done.
+        ioContext.run();
+
+        // invoke the callback.
+        LogDebug("HTTPServiceProvider::executeHead responseBody="+responseBody);
+        callback(status, std::move(responseBody));
+    }
+
     /// Update the service with authorization header and other required headers
-    void HTTPServiceProvider::updateService(Service &service, const std::string &httpVerb,
+    void HTTPServiceProvider::updateService(Service &service, const std::string &/*httpVerb*/,
                                             const HttpHeaders &headers, const std::string &/*body*/,
                                             const std::string &/*url*/) {
         // NOTE: body and url are not used, avoid compiler warning by commenting out var names
-        bool bIsHttpGet = (httpVerb == kHttpGet);
+        LogTrace("HTTPServiceProvider::updateService");
 
-        // Add all the headers from the caller.
-        for (const auto &[key, value] : headers) {
+        // Add all the headers from the caller...from both m_httpHeaders and headers
+        for (const auto &[key, value]: headers) {
+            LogDebug("adding from headers " + key);
             service.AddHeader(key, value);
         }
-
-        //DON'T whack content type if caller already set it - for instance
-        //if they're using POST with `x-www-form-urlencoded` don't force JSON
-        auto hIter = headers.find(kContentTypeKey);
-
-        if (hIter == headers.end()) {
-            LogDebug("POST content type not set, defaulting to application/json");
-            std::string contentTypeValue = kContentTypeJsonValue;
-            //No content-type if GET
-            if (!bIsHttpGet) {
-                service.AddHeader(kContentTypeKey, contentTypeValue);
-            }
-        } else {
-            LogDebug("POST content type previously set");
+        for (const auto &item: m_httpHeaders) {
+            LogDebug("adding from m_httpHeaders " + item.first);
+            service.AddHeader(item.first, item.second);
         }
 
-        // Add 'Accept' as json.
-        service.AddHeader(kAcceptKey, kAcceptKeyValue);
+        // Set content type to default if not already specified
+        auto hIter = headers.find(kContentTypeKey);
+        if (hIter == headers.end()) {
+            LogDebug("Content type not set, defaulting to json");
+            service.AddHeader(kContentTypeKey, kContentTypeJsonValue);
+        } else {
+            LogDebug("Content type previously set");
+        }
 
-        // Add 'Host' header
-        auto host = service.getHost();
-        service.AddHeader(kHostKey, host);
+        // Set Accept to default if not specified
+        hIter = headers.find(kAcceptKey);
+        if (hIter == headers.end()) {
+            LogDebug("Accept not set, defaulting to json");
+            service.AddHeader(kAcceptKey, kAcceptKeyValue);
+        } else {
+            LogDebug("Accept previously set");
+        }
 
-        // Add 'Date' header
-        std::string date = nowRfc1123();
-        service.AddHeader(kDateKey, date);
+        // Set Host to default if not specified
+        hIter = headers.find(kHostKey);
+        if (hIter == headers.end()) {
+            LogDebug("Host not set, adding default");
+            auto host = service.getHost();
+            service.AddHeader(kHostKey, host);
+        } else {
+            LogDebug("Host previously set");
+        }
 
-        // Supply null headers as default - none are required
-        std::map<std::string, std::string> noHeaders;
-        auto target = service.getTarget();
-
-        for (const auto& item : m_httpHeaders) {
-            LogDebug("adding " + item.first);
-            service.AddHeader(item.first, item.second);
+        // Set Host to default if not specified
+        hIter = headers.find(kDateKey);
+        if (hIter == headers.end()) {
+            LogDebug("Date not set, adding default");
+            std::string date = nowRfc1123();
+            service.AddHeader(kDateKey, date);
+        } else {
+            LogDebug("Date previously set");
         }
     }
 }

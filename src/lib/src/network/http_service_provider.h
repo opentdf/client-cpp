@@ -46,6 +46,21 @@ namespace virtru::network {
                         const std::string& clientKeyFileName = "",
                         const std::string& clientCertFileName = "") override;
 
+        /// Execute a put request and on completion the callback is executed.
+        /// \param url - The url (e.g., "https://api.virtru.com/api/entityobject").
+        /// \param headers - The http headers used by network service when performing HTTP operation.
+        /// \param body - The HTTP body part of the request
+        /// \param callback - The response callback.
+        /// \param sdkCertAuthority - certificate authority to use - optional
+        /// \param clientKeyFileName - file containing client key to use - optional
+        /// \param clientCertFileName - file containing client certificate to use - optional
+        void executePut(const std::string& url,
+                         const HttpHeaders& headers,
+                         std::string&& body,
+                         HTTPServiceCallback&& callback,
+                         const std::string& sdkCertAuthority = "",
+                         const std::string& clientKeyFileName = "",
+                         const std::string& clientCertFileName = "") override;
 
         /// Execute a post request and on completion the callback is executed.
         /// \param url - The url (e.g., "https://api.virtru.com/api/entityobject").
@@ -80,6 +95,20 @@ namespace virtru::network {
                           const std::string& clientKeyFileName = "",
                           const std::string& clientCertFileName = "") override;
 
+
+        /// Execute a head request and on completion the callback is executed.
+        /// \param url - The url (e.g., "https://developer.virtru.com/docs/sdk").
+        /// \param headers - The http headers used by network service when performing HTTP operation.
+        /// \param callback - The response callback.
+        /// \param sdkCertAuthority - certificate authority to use - optional
+        /// \param clientKeyFileName - file containing client key to use - optional
+        /// \param clientCertFileName - file containing client certificate to use - optional
+        void executeHead(const std::string& url,
+                        const HttpHeaders& headers,
+                        HTTPServiceCallback&& callback,
+                        const std::string& sdkCertAuthority = "",
+                        const std::string& clientKeyFileName = "",
+                        const std::string& clientCertFileName = "") override;
 
     private:
         /// Update the service with authorization header and other required headers.

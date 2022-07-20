@@ -62,7 +62,6 @@ include_directories(
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(WLIB lib)
     set(ZLIB zlib)
-    set(LIBARCHIVE "${CONAN_LIBS_LIBARCHIVE}.lib")
     set(LIBXML2 libxml2_a)
     set(OTHERLIBS crypt32 bcrypt)
     if($ENV{VBUILDMODE} MATCHES $ENV{VBUILDDEBUG})
@@ -71,7 +70,6 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 else()
     set(ZLIB z)
     set(LIBXML2 xml2)
-    set(LIBARCHIVE "lib${CONAN_LIBS_LIBARCHIVE}.a")
     add_compile_options(-Wall -Wextra -fPIC)
     if(DEFINED ENV{VBUILD_ADD_MACOS_FLAGS})
       if($ENV{VBUILD_ADD_MACOS_FLAGS} MATCHES "true")
@@ -96,7 +94,6 @@ link_libraries(
     ${WLIB}boost_iostreams
     ${WLIB}crypto${DEBUGSUFFIX}
     ${WLIB}ssl${DEBUGSUFFIX}
-    ${CONAN_LIBS_LIBARCHIVE}
     ${LIBXML2}
     iconv
     ${ZLIB}
@@ -107,7 +104,6 @@ link_libraries(
 # generate the static library from the library sources
 add_library(${PROJECT_NAME}static STATIC ${SOURCE_FILES})
 set_target_properties(${PROJECT_NAME}static PROPERTIES OUTPUT_NAME ${PROJECT_NAME}${TDF_STATIC_LIB_SUFFIX})
-set_target_properties(${PROJECT_NAME}static PROPERTIES COMPILE_FLAGS "-DLIBARCHIVE_STATIC=1")
 
 get_target_property(TDF_STATIC_LIB_NAME ${PROJECT_NAME}static OUTPUT_NAME)
 set(TDF_STATIC_LIB_FILENAME ${CMAKE_STATIC_LIBRARY_PREFIX}${PROJECT_NAME}${TDF_STATIC_LIB_SUFFIX}${CMAKE_STATIC_LIBRARY_SUFFIX})
@@ -132,7 +128,6 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
             ${CONAN_LIB_DIRS_BZIP2}/libbz2.a
             ${CONAN_LIB_DIRS_LIBXML2}/libxml2.a
             ${CONAN_LIB_DIRS_LIBICONV}/libiconv.a
-            ${CONAN_LIB_DIRS_LIBARCHIVE}/${LIBARCHIVE}
 
 
             COMMENT "Combining libs and creating ${TDF_COMBINED_LIB_FILENAME}...")
@@ -153,7 +148,6 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     file(APPEND ${MRI_FILE} "addlib ${CONAN_LIB_DIRS_BZIP2}/libbz2.a\n")
     file(APPEND ${MRI_FILE} "addlib ${CONAN_LIB_DIRS_LIBXML2}/libxml2.a\n")
     file(APPEND ${MRI_FILE} "addlib ${CONAN_LIB_DIRS_LIBICONV}/libiconv.a\n")
-    file(APPEND ${MRI_FILE} "addlib ${CONAN_LIB_DIRS_LIBARCHIVE}/${LIBARCHIVE}\n")
     file(APPEND ${MRI_FILE} "save\n")
     file(APPEND ${MRI_FILE} "end\n")
 
@@ -195,7 +189,6 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         ${CONAN_LIB_DIRS_BZIP2}/bz2.lib
         ${CONAN_LIB_DIRS_LIBXML2}/${WLIB}xml2_a.lib
         ${CONAN_LIB_DIRS_LIBICONV}/iconv.lib
-        ${CONAN_LIB_DIRS_LIBARCHIVE}/${LIBARCHIVE}
 
         COMMENT "Combining libs and creating ${TDF_COMBINED_LIB_FILENAME}...")
 else()

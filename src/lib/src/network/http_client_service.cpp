@@ -62,6 +62,8 @@ namespace virtru :: network {
             bb::flat_buffer buffer_; // (Must persist between reads)
             HttpRequest req_;
             HttpResponse res_;
+            bb::http::response_parser<bb::http::string_body> parser_;
+
             ServiceCallback cb_;
             void report (ErrorCode ec ) {
                 if ( cb_ ) {
@@ -83,7 +85,10 @@ namespace virtru :: network {
                     stream_ { io, ctx },
                     req_ { move ( req ) },
                     cb_ { move ( cb ) }
-            { }
+            {
+                parser_.body_limit((std::numeric_limits<std::uint64_t>::max)());
+            }
+
             void start(
                     std::string_view port
             ) {
@@ -149,15 +154,47 @@ namespace virtru :: network {
             ) {
                 if ( ec )
                     return report ( ec );
-                bb :: http :: async_read (
+
+                if (req_.method() == bb::http::verb::head) {
+                    bb :: http :: async_read_header (
+                            stream_,
+                            buffer_,
+                            parser_,
+                            [ self = shared_from_this ( ) ] ( auto ec, auto bytes_transferred ) {
+                                self -> on_read_headers( ec, bytes_transferred );
+                            }
+                    );
+
+                }
+                else {
+                    bb :: http :: async_read (
                         stream_,
                         buffer_,
                         res_,
                         [ self = shared_from_this ( ) ] ( auto ec, auto bytes_transferred ) {
                             self -> on_read ( ec, bytes_transferred );
                         }
-                );
+                    );
+                }
             }
+
+            void on_read_headers (
+                    bs :: error_code ec,
+                    std::size_t bytes_transferred
+            ) {
+                if ( ec )
+                    return report ( ec );
+
+                res_ = parser_.get();
+
+                stream_.async_shutdown (
+                        [ self = shared_from_this ( ) ] ( auto ec ) {
+                            self -> on_shutdown ( ec );
+                        }
+                );
+
+            }
+
             void on_read (
                     bs :: error_code ec,
                     std :: size_t /*bytes_transferred*/
@@ -190,6 +227,7 @@ namespace virtru :: network {
             bb::flat_buffer buffer_; // (Must persist between reads)
             HttpRequest req_;
             HttpResponse res_;
+            bb::http::response_parser<bb::http::string_body> parser_;
             ServiceCallback cb_;
             void report (ErrorCode ec ) {
                 if ( cb_ ) {
@@ -210,7 +248,10 @@ namespace virtru :: network {
                     stream_ { io },
                     req_ { move ( req ) },
                     cb_ { move ( cb ) }
-            { }
+            {
+                parser_.body_limit((std::numeric_limits<std::uint64_t>::max)());
+            }
+
             void start(
                     std::string_view port
             ) {
@@ -258,15 +299,40 @@ namespace virtru :: network {
                 if ( ec )
                     return report ( ec );
 
-                bb :: http :: async_read (
-                        stream_,
-                        buffer_,
-                        res_,
-                        [ self = shared_from_this ( ) ] ( auto ec, auto bytes_transferred ) {
-                            self -> on_read ( ec, bytes_transferred );
-                        }
-                );
+                if (req_.method() == bb::http::verb::head) {
+                    bb::http::async_read_header(
+                            stream_,
+                            buffer_,
+                            parser_,
+                            [self = shared_from_this()](auto ec, auto bytes_transferred) {
+                                self->on_read_headers(ec, bytes_transferred);
+                            }
+                    );
+                }
+                else {
+                    bb::http::async_read(
+                            stream_,
+                            buffer_,
+                            res_,
+                            [self = shared_from_this()](auto ec, auto bytes_transferred) {
+                                self->on_read(ec, bytes_transferred);
+                            }
+                    );
+                }
             }
+
+            void on_read_headers (
+                    bs :: error_code ec,
+                    std::size_t bytes_transferred
+            ) {
+                if ( ec )
+                    return report ( ec );
+
+                res_ = parser_.get();
+                stream_.shutdown (ba::ip::tcp::socket::shutdown_both, ec);
+                return report (ec);
+            }
+
             void on_read (
                     bs :: error_code ec,
                     std :: size_t /*bytes_transferred*/
@@ -374,6 +440,41 @@ namespace virtru :: network {
 
         LogTrace("Service::ExecuteGet");
         m_request.method(HttpVerb::get);
+
+        if (isSSLSocket()) {
+            std::make_shared<SSLSession>(move(m_host), ioContext, m_sslContext,
+                                         move(m_request), move(callback))->start(m_schema);
+        }
+        else {
+            std::make_shared<Session>(move(m_host), ioContext,
+                                      move(m_request), move(callback))->start(m_schema);
+        }
+    }
+
+    /// Execute a head request and on completion the callback is executed.
+    void Service::ExecuteHead(IOContext& ioContext, ServiceCallback&& callback) {
+
+        LogTrace("Service::ExecuteHead");
+        m_request.method(HttpVerb::head);
+
+        if (isSSLSocket()) {
+            std::make_shared<SSLSession>(move(m_host), ioContext, m_sslContext,
+                                         move(m_request), move(callback))->start(m_schema);
+        }
+        else {
+            std::make_shared<Session>(move(m_host), ioContext,
+                                      move(m_request), move(callback))->start(m_schema);
+        }
+    }
+
+    /// Execute a put request and on completion the callback is executed.
+    void Service::ExecutePut(std::string&& body, IOContext& ioContext, ServiceCallback&& callback) {
+        LogTrace("Service::ExecutePut");
+
+        m_request.method(HttpVerb::put);
+
+        m_request.body() = body;
+        m_request.prepare_payload();
 
         if (isSSLSocket()) {
             std::make_shared<SSLSession>(move(m_host), ioContext, m_sslContext,

@@ -57,10 +57,11 @@ set (TDF_CPP_SDK_SOURCE_FILES_BASE
         ${TDF_CPP_SDK_SOURCE_DIR}/include/sdk_constants.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/libxml2_deleters.h
         ${TDF_CPP_SDK_SOURCE_DIR}/include/network_interface.h
-        ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_libarchive_writer.cpp
-        ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_libarchive_writer.h
-        ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_libarchive_reader.cpp
-        ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_libarchive_reader.h
+        ${TDF_CPP_SDK_SOURCE_DIR}/src/zipmanager/zip_headers.h
+        ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_archive_reader.cpp
+        ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_archive_reader.h
+        ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_archive_writer.cpp
+        ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_archive_writer.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/utils.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/utils.cpp
         ${TDF_CPP_SDK_SOURCE_DIR}/include/tdf_client_base.h
@@ -81,6 +82,14 @@ set (TDF_CPP_SDK_SOURCE_FILES_BASE
         ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_xml_reader.h
         ${TDF_CPP_SDK_SOURCE_DIR}/include/test/test_utils.h
         ${TDF_CPP_SDK_SOURCE_DIR}/include/test/test_utils.cpp
+        ${TDF_CPP_SDK_SOURCE_DIR}/src/file_io_provider.cpp
+        ${TDF_CPP_SDK_SOURCE_DIR}/src/s3_io_provider.cpp
+        ${TDF_CPP_SDK_SOURCE_DIR}/src/stream_io_provider.cpp
+        ${TDF_CPP_SDK_SOURCE_DIR}/src/stream_io_provider.h
+        ${TDF_CPP_SDK_SOURCE_DIR}/include/tdf_storage_type.h
+        ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_storage_type.cpp
+        ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_html_writer.cpp
+        ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_html_writer.h
     )
 
 set (TDF_CPP_SDK_SOURCE_FILES_NANOTDF

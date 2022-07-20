@@ -26,7 +26,6 @@ int main() {
 
     try {
 
-
         OIDCCredentials clientCreds;
         clientCreds.setClientCredentialsClientSecret(CLIENT_ID, CLIENT_SECRET,
                                                      ORGANIZATION_NAME, OIDC_ENDPOINT);
@@ -34,24 +33,17 @@ int main() {
         // Test NanoTDF
         {
             auto nanoTDFClient = std::make_unique<NanoTDFClient>(clientCreds, KAS_URL);
-            auto cipherText = nanoTDFClient->encryptString(samplePlainTxt);
-            auto plainText = nanoTDFClient->decryptString(cipherText);
 
-            if (samplePlainTxt == plainText) {
-                std::cout << "NanoTDF test passed!!" << std::endl;
-            } else {
-                std::cerr << "NanoTDF test failed!!" << std::endl;
-                return EXIT_FAILURE;
-            }
-        }
+            TDFStorageType encryptStringType;
+            encryptStringType.setTDFStorageStringType(samplePlainTxt);
+            auto cipherText = nanoTDFClient->encryptData(encryptStringType);
 
-        // Test NanoTDF
-        {
-            auto nanoTDFClient = std::make_unique<NanoTDFClient>(clientCreds, KAS_URL);
-            auto cipherText = nanoTDFClient->encryptString(samplePlainTxt);
-            auto plainText = nanoTDFClient->decryptString(cipherText);
+            TDFStorageType decryptStringType;
+            decryptStringType.setTDFStorageStringType(samplePlainTxt);
+            auto plainText = nanoTDFClient->decryptData(decryptStringType);
+            std::string plainTextStr(plainText.begin(), plainText.end());
 
-            if (samplePlainTxt == plainText) {
+            if (samplePlainTxt == plainTextStr) {
                 std::cout << "NanoTDF test passed!!" << std::endl;
             } else {
                 std::cerr << "NanoTDF test failed!!" << std::endl;
