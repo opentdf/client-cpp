@@ -121,22 +121,15 @@ using namespace virtru;
 
 
         public: //INetwork members
-            static std::unique_ptr<virtru::network::Service> Create(const std::string& url,
-                                               std::string_view sdkConsumerCertAuthority,
-                                               const std::string& clientKeyFileName,
-                                               const std::string& clientCertFileName) { 
-                BOOST_TEST_MESSAGE("Mock service constructed");
-                LogTrace("Mock Service::Create");
-            };
 
-            virtual void executeGet(const std::string &url, const HttpHeaders &headers, HTTPServiceCallback &&callback, const std::string& ca, const std::string& key, const std::string& cert) override
+            virtual void executeGet(const std::string &/*url*/, const HttpHeaders &/*headers*/, HTTPServiceCallback &&callback, const std::string& /*ca*/, const std::string& /*key*/, const std::string& /*cert*/) override
             { 
               LogTrace("Mock Service::Get");
 
               callback(200, kasPubKey);
             }
 
-            virtual void executePost(const std::string &url, const HttpHeaders &headers, std::string &&body, HTTPServiceCallback &&callback, const std::string& ca, const std::string& key, const std::string& cert) override
+            virtual void executePost(const std::string &/*url*/, const HttpHeaders &/*headers*/, std::string &&/*body*/, HTTPServiceCallback &&callback, const std::string& ca, const std::string& key, const std::string& cert) override
             { 
               LogTrace("Mock Service::Post");
 
@@ -173,7 +166,7 @@ using namespace virtru;
               callback(200, "{\""+std::string(kAccessToken)+"\" : \""+OIDCAccessToken+"\", \""+std::string(kRefreshToken)+"\" : \"bbbbb\"}");
             }
 
-            virtual void executePatch(const std::string &url, const HttpHeaders &headers, std::string &&body, HTTPServiceCallback &&callback, const std::string& ca, const std::string& key, const std::string& cert) override
+            virtual void executePatch(const std::string &/*url*/, const HttpHeaders &/*headers*/, std::string &&/*body*/, HTTPServiceCallback &&callback, const std::string& ca, const std::string& key, const std::string& cert) override
             { 
               std::cout << "executePatch: " << key << " " << cert << " " << ca << std::endl;
 
@@ -202,6 +195,19 @@ using namespace virtru;
               }
               callback(0, "");
             }
+
+        virtual void executeHead(const std::string &/*url*/, const HttpHeaders &/*headers*/, HTTPServiceCallback &&callback, const std::string& /*ca*/, const std::string& /*key*/, const std::string& /*cert*/) override
+        {
+            LogTrace("Mock Service::Head");
+
+            callback(400, "");
+        }
+
+        virtual void executePut(const std::string &/*url*/, const HttpHeaders &/*headers*/, std::string &&/*body*/, HTTPServiceCallback &&callback, const std::string& /*ca*/, const std::string& /*key*/, const std::string& /*cert*/) override
+        {
+            LogTrace("Mock Service::Put");
+            callback(400, "");
+        }
 
     };
 
@@ -252,8 +258,10 @@ BOOST_AUTO_TEST_CASE(test_pki) {
         LogTrace("setting mock network");
         tdfClient->setHTTPServiceProvider(mockNetwork);
 
-        LogTrace("encryptString");
-        tdfClient->encryptString("This is a test");
+        LogTrace("encryptData");
+        TDFStorageType stringStorageType;
+        stringStorageType.setTDFStorageStringType("This is a test");
+        tdfClient->encryptData(stringStorageType);
 
         LogTrace("Creating NanoTDFClient");
         auto nanoTDFClient = std::make_unique<TDFClient>(clientCreds, KAS_URL);
@@ -261,8 +269,8 @@ BOOST_AUTO_TEST_CASE(test_pki) {
         LogTrace("setting mock network");
         nanoTDFClient->setHTTPServiceProvider(mockNetwork);
 
-        LogTrace("encryptString");
-        nanoTDFClient->encryptString("This is a test");
+        LogTrace("encryptData");
+        nanoTDFClient->encryptData(stringStorageType);
 
         BOOST_TEST_MESSAGE("TDF pki test passed.");
     } catch (const Exception &exception) {

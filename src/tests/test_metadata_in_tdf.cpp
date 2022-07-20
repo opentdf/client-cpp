@@ -12,6 +12,7 @@
 #include "tdf_exception.h"
 #include "oidc_credentials.h"
 #include "test_utils.h"
+#include "tdf_storage_type.h"
 
 #include <boost/test/included/unit_test.hpp>
 #include <boost/endian/arithmetic.hpp>
@@ -55,28 +56,23 @@ public:
     /// Destructor
     ~MockNetwork() override = default;
 public: //INetwork members
-    static std::unique_ptr<virtru::network::Service> Create(const std::string& url,
-                                                            std::string_view sdkConsumerCertAuthority,
-                                                            const std::string& clientKeyFileName,
-                                                            const std::string& clientCertFileName) { };
-
     // Assuming /kas_public_key is only GET request
-    virtual void executeGet(const std::string &url,
-                            const HttpHeaders &headers,
+    virtual void executeGet(const std::string &/*url*/,
+                            const HttpHeaders &/*headers*/,
                             HTTPServiceCallback &&callback,
-                            const std::string& ca,
-                            const std::string& key,
-                            const std::string& cert) override {
+                            const std::string& /*ca*/,
+                            const std::string& /*key*/,
+                            const std::string& /*cert*/) override {
         callback(200, kasPubKey);
     }
 
     virtual void executePost(const std::string &url,
-                             const HttpHeaders &headers,
-                             std::string &&body,
+                             const HttpHeaders &/*headers*/,
+                             std::string &&/*body*/,
                              HTTPServiceCallback &&callback,
-                             const std::string& ca,
-                             const std::string& key,
-                             const std::string& cert) override {
+                             const std::string& /*ca*/,
+                             const std::string& /*key*/,
+                             const std::string& /*cert*/) override {
 
 
         // Handle 'auth/realms/tdf/protocol/openid-connect/token' request
@@ -90,15 +86,33 @@ public: //INetwork members
         }
     }
 
-    virtual void executePatch(const std::string &url,
-                              const HttpHeaders &headers,
-                              std::string &&body,
-                              HTTPServiceCallback &&callback,
-                              const std::string& ca,
-                              const std::string& key,
-                              const std::string& cert) override { // Do nothing};
+    virtual void executePatch(const std::string &/*url*/,
+                              const HttpHeaders &/*headers*/,
+                              std::string &&/*body*/,
+                              HTTPServiceCallback &&/*callback*/,
+                              const std::string& /*ca*/,
+                              const std::string& /*key*/,
+                              const std::string& /*cert*/) override { // Do nothing};
     }
 
+    virtual void executeHead(const std::string &/*url*/,
+                            const HttpHeaders &/*headers*/,
+                            HTTPServiceCallback &&callback,
+                            const std::string& /*ca*/,
+                            const std::string& /*key*/,
+                            const std::string& /*cert*/) override {
+        callback(400, "");
+    }
+
+    virtual void executePut(const std::string &/*url*/,
+                              const HttpHeaders &/*headers*/,
+                              std::string &&/*body*/,
+                              HTTPServiceCallback &&callback,
+                              const std::string& /*ca*/,
+                              const std::string& /*key*/,
+                              const std::string& /*cert*/) override {
+        callback(400, "");
+    }
 private:
     std::string m_rewrapMock;
 
@@ -162,8 +176,6 @@ DCzGcDpkNVkPR58v1BvBs4zZ
         tdfFilepath.append("/data/sample_with_metadata.txt.tdf");
 #endif
 
-        auto tdfData = TestUtils::getFileString(tdfFilepath);
-
         OIDCCredentials clientCreds;
         clientCreds.setClientCredentialsClientSecret("dummy_client_id", "dummy_secret",
                                                      "dummy.org", "http://dummyhost.org/");
@@ -177,7 +189,9 @@ DCzGcDpkNVkPR58v1BvBs4zZ
         oidcClientTDF->setPrivateKey(rsa2048PrivateKey);
         oidcClientTDF->setPublicKey(rsa2048PublicKey);
 
-        auto metaDataFromTDF = oidcClientTDF->getEncryptedMetadata(tdfData);
+        TDFStorageType fileStorageType;
+        fileStorageType.setTDFStorageFileType(tdfFilepath);
+        auto metaDataFromTDF = oidcClientTDF->getEncryptedMetadata(fileStorageType);
         BOOST_TEST(metaData == metaDataFromTDF);
     }
 
@@ -194,8 +208,6 @@ DCzGcDpkNVkPR58v1BvBs4zZ
         tdfFilepath.append("/data/sample_without_metadata.txt.tdf");
 #endif
 
-        auto tdfData = TestUtils::getFileString(tdfFilepath);
-
         OIDCCredentials clientCreds;
         clientCreds.setClientCredentialsClientSecret("dummy_client_id", "dummy_secret",
                                                      "dummy.org", "http://dummyhost.org/");
@@ -208,7 +220,9 @@ DCzGcDpkNVkPR58v1BvBs4zZ
         oidcClientTDF->setPrivateKey(rsa2048PrivateKey);
         oidcClientTDF->setPublicKey(rsa2048PublicKey);
 
-        auto metaDataFromTDF = oidcClientTDF->getEncryptedMetadata(tdfData);
+        TDFStorageType fileStorageType;
+        fileStorageType.setTDFStorageFileType(tdfFilepath);
+        auto metaDataFromTDF = oidcClientTDF->getEncryptedMetadata(fileStorageType);
         std::string emptyMetadata{};
         BOOST_TEST(emptyMetadata == metaDataFromTDF);
     }
@@ -225,8 +239,6 @@ DCzGcDpkNVkPR58v1BvBs4zZ
         tdfFilepath.append("/data/sample_xml_format.tdf");
 #endif
 
-        auto tdfData = TestUtils::getFileString(tdfFilepath);
-
         OIDCCredentials clientCreds;
         clientCreds.setClientCredentialsClientSecret("dummy_client_id", "dummy_secret",
                                                      "dummy.org", "http://dummyhost.org/");
@@ -234,7 +246,229 @@ DCzGcDpkNVkPR58v1BvBs4zZ
                                                          "http://dummyhost.org/");
         std::shared_ptr<MockNetwork> mockNetwork = std::make_shared<MockNetwork>(std::string());
         oidcClientTDF->setHTTPServiceProvider(mockNetwork);
-        BOOST_CHECK_THROW(oidcClientTDF->getEncryptedMetadata(tdfData), virtru::Exception);
+
+        TDFStorageType fileStorageType;
+        fileStorageType.setTDFStorageFileType(tdfFilepath);
+        BOOST_CHECK_THROW(oidcClientTDF->getEncryptedMetadata(fileStorageType), virtru::Exception);
+    }
+
+    BOOST_AUTO_TEST_CASE(test_decrypt_file_partial) {
+        std::string currentDir = getCurrentWorkingDir();
+
+        // TODO: BUGBUG: We should use std::filesystem once all the compilers catch up.
+#ifdef _WINDOWS
+        std::string tdfFileName {currentDir };
+        tdfFileName.append("\\data\\8mbfile.txt.tdf");
+#else
+        std::string tdfFileName{currentDir};
+        tdfFileName.append("/data/8mbfile.txt.tdf");
+#endif
+
+        OIDCCredentials clientCreds;
+        clientCreds.setClientCredentialsClientSecret("dummy_client_id", "dummy_secret",
+                                                     "dummy.org", "http://dummyhost.org/");
+        auto oidcClientTDF = std::make_unique<TDFClient>(clientCreds,
+                                                         "http://dummyhost.org/");
+        static const auto rewrapResponse = R"({"entityWrappedKey":"V16tn/TrhnrPXIdeWt57eU5WTINl21IXR0Vb7v+5k50jpy0ecS79FEwBPy4jWthE2MX64wGyZWLbleAyABvmwI/9DO4VvRU4SQ7VtJDqWG9JJn6pLkOuD4238M+Z1CF8Ewmb1UICo6qqm5O9CF+8BJjtlDHf1Q5jKOr/+3nod5T6E8M4iWIcTJwUdQBSE1pD1vuKJMiVRqRQX5QCELGlUDXhyzBhVHCvFkIkdbcSyzOKgQxJkiPeUjXlrSCERbYz5+w9fgJ4epxcCmnwnyqZ/K7HQmoBEpzrYhCeSSf5e3FQtc1nTu80qk9RpKrjjcBRMtps2/gudbhnl/7N1HbcSg==","metadata":{}})";
+        std::shared_ptr<MockNetwork> mockNetwork = std::make_shared<MockNetwork>(rewrapResponse);
+
+        oidcClientTDF->setHTTPServiceProvider(mockNetwork);
+        oidcClientTDF->setPrivateKey(rsa2048PrivateKey);
+        oidcClientTDF->setPublicKey(rsa2048PublicKey);
+
+        TDFStorageType tdfStorageFileType;
+        tdfStorageFileType.setTDFStorageFileType(tdfFileName);
+
+        auto segmentSize = 1024*1024;
+        {
+            auto plainData = oidcClientTDF->decryptDataPartial(tdfStorageFileType, segmentSize - 1, 2);
+            std::string strPlainData(plainData.begin(), plainData.end());
+            BOOST_TEST(strPlainData == "ab");
+        }
+
+
+        {
+            auto plainData = oidcClientTDF->decryptDataPartial(tdfStorageFileType,(segmentSize*6) - 1, 2);
+            std::string strPlainData(plainData.begin(), plainData.end());
+            BOOST_TEST(strPlainData == "fg");
+        }
+
+        {
+            auto plainData = oidcClientTDF->decryptDataPartial(tdfStorageFileType, (segmentSize*7), 2);
+            std::string strPlainData(plainData.begin(), plainData.end());
+            BOOST_TEST(strPlainData == "hh");
+        }
+
+
+        {
+            auto plainData = oidcClientTDF->decryptDataPartial(tdfStorageFileType, 0, 10);
+            std::string strPlainData(plainData.begin(), plainData.end());
+            BOOST_TEST(strPlainData == "aaaaaaaaaa");
+        }
+
+
+        {
+            auto plainData = oidcClientTDF->decryptDataPartial(tdfStorageFileType, 3 * segmentSize, segmentSize + 1);
+            std::string strPlainData(plainData.begin(), plainData.end());
+            std::string expectedData(segmentSize, 'd');
+            expectedData.append("e");
+            if (expectedData != strPlainData) {
+                BOOST_FAIL("decryptFilePartial test failed");
+            }
+        }
+
+        // Expect exception the request length is not valid
+        auto longLength = 6 * segmentSize;
+        BOOST_CHECK_THROW(oidcClientTDF->decryptDataPartial(tdfStorageFileType, 3 * segmentSize, longLength),
+                          virtru::Exception);
+
+        { // 10 bytes
+
+#ifdef _WINDOWS
+           std::string tdfFileName {currentDir };
+           tdfFileName.append("\\data\\10bytes.txt.tdf");
+#else
+           std::string tdfFileName{currentDir};
+           tdfFileName.append("/data/10bytes.txt.tdf");
+#endif
+
+            static const auto rewrapResponse = R"({"entityWrappedKey":"vw9p1/+apWVHkFibA3w8Tg8tpPlV0F1D40mfH3BLXLdLk9SHVTEHabJiBz8QvgStEcxVTWinf/B7m0T8+JoDzCvItIcJ+EjzWjZ0xUCtQPdwpGajbTFlLQj9PyjW8ldZnLsOoKgSyOP5dtYL3/O5ExG6baBN+NtxZR+sOyIIoK4PAmb22cm5yO4MLjN9LIpIyhC5X3jSXx+83X8/pdBV7vP+gd6mZ+wVN4KXGPrNI8t3LmmmN9cHqQJzswUAsy19WE8LkK59HJez/kPMd8+icEQX61rA8LUmpljZJUx+3mwGGUjcPc5XSy7wIHgsFR4uMD0F6SgJeix5kzCUqucLiA==","metadata":{}})";
+            std::shared_ptr<MockNetwork> mockNetwork = std::make_shared<MockNetwork>(rewrapResponse);
+
+            oidcClientTDF->setHTTPServiceProvider(mockNetwork);
+
+            TDFStorageType tdfStorageFileType;
+            tdfStorageFileType.setTDFStorageFileType(tdfFileName);
+
+            {
+                auto plainData = oidcClientTDF->decryptDataPartial(tdfStorageFileType, 0, 1);
+                std::string strPlainData(plainData.begin(), plainData.end());
+                BOOST_TEST(strPlainData == "x");
+            }
+
+            {
+                auto plainData = oidcClientTDF->decryptDataPartial(tdfStorageFileType, 1, 9);
+                std::string strPlainData(plainData.begin(), plainData.end());
+                BOOST_TEST(strPlainData == "xxxxxxxxx");
+            }
+
+            {
+                auto plainData = oidcClientTDF->decryptDataPartial(tdfStorageFileType, 0, 10);
+                std::string strPlainData(plainData.begin(), plainData.end());
+                BOOST_TEST(strPlainData == "xxxxxxxxxx");
+            }
+        }
+
+        { // 4mb
+
+#ifdef _WINDOWS
+            std::string tdfFileName {currentDir };
+            tdfFileName.append("\\data\\4mbfile.txt.tdf");
+#else
+            std::string tdfFileName{currentDir};
+            tdfFileName.append("/data/4mbfile.txt.tdf");
+#endif
+
+            static const auto rewrapResponse = R"({"entityWrappedKey":"EVNnw2MXpLCg51tUM2m53yKT5htq0SxkKCMj8lY9QVpBWWi3dxOGot7XmWHwaPtc9C3dwGxpKZ7GIM2ugNfImdctcRN4yokaIlM19Kt+c0L3DNANsYN8wLgjxvDeClMSFtJ42cycSBN5Nm/Q+/wBXwcVNcWypY73Uytr5mhNuVJ6MB2FHsYn5aV2tNCwvn2KGqWrffEnV/2p+aLClx9Yp+Q2N0Hqn3MSgwNMp94QYmBZceNSCCbAh63RtW/8+iNKylZZeBjq7iwK/oKbdXR+YXuTV2fW7w1xoMYoeC4DJwxPKj9HucW3xbQFOpp2tPG/0mmN85X6MYYy5eFXxfY7sA==","metadata":{}})";
+            std::shared_ptr<MockNetwork> mockNetwork = std::make_shared<MockNetwork>(rewrapResponse);
+
+            oidcClientTDF->setHTTPServiceProvider(mockNetwork);
+
+            TDFStorageType tdfStorageFileType;
+            tdfStorageFileType.setTDFStorageFileType(tdfFileName);
+
+            {
+                auto plainData = oidcClientTDF->decryptDataPartial(tdfStorageFileType, segmentSize - 1, 2);
+                std::string strPlainData(plainData.begin(), plainData.end());
+                BOOST_TEST(strPlainData == "ab");
+            }
+
+            {
+                auto plainData = oidcClientTDF->decryptDataPartial(tdfStorageFileType, 0, 10);
+                std::string strPlainData(plainData.begin(), plainData.end());
+                BOOST_TEST(strPlainData == "aaaaaaaaaa");
+            }
+
+            {
+                auto plainData = oidcClientTDF->decryptDataPartial(tdfStorageFileType, 3 * segmentSize, segmentSize + 1);
+                std::string strPlainData(plainData.begin(), plainData.end());
+                std::string expectedData(segmentSize, 'd');
+                expectedData.append("e");
+                if (expectedData != strPlainData) {
+                    BOOST_FAIL("decryptFilePartial test failed");
+                }
+            }
+
+
+            // Expect exception the request length is not valid
+            auto longLength = 2 * segmentSize;
+            BOOST_CHECK_THROW(oidcClientTDF->decryptDataPartial(tdfStorageFileType, 3 * segmentSize, longLength),
+                              virtru::Exception);
+        }
+
+        { // 4mb string partial
+
+#ifdef _WINDOWS
+            std::string tdfFileName {currentDir };
+            tdfFileName.append("\\data\\4mbfile.txt.tdf");
+#else
+            std::string tdfFileName{currentDir};
+            tdfFileName.append("/data/4mbfile.txt.tdf");
+#endif
+
+            std::vector<VBYTE> fileData;
+
+            // Read file from memory.
+            std::ifstream ifs(tdfFileName.data(), std::ios::binary|std::ios::ate);
+            if (!ifs) {
+                BOOST_FAIL("Failed to open file for reading.");
+            }
+
+            std::ifstream::pos_type pos = ifs.tellg();
+            fileData.reserve(ifs.tellg());
+            ifs.seekg(0, std::ios::beg);
+            std::for_each(std::istreambuf_iterator<char>(ifs),
+                          std::istreambuf_iterator<char>(),
+                          [&fileData](const char c){
+                              fileData.push_back(c);
+                          });
+
+            static const auto rewrapResponse = R"({"entityWrappedKey":"EVNnw2MXpLCg51tUM2m53yKT5htq0SxkKCMj8lY9QVpBWWi3dxOGot7XmWHwaPtc9C3dwGxpKZ7GIM2ugNfImdctcRN4yokaIlM19Kt+c0L3DNANsYN8wLgjxvDeClMSFtJ42cycSBN5Nm/Q+/wBXwcVNcWypY73Uytr5mhNuVJ6MB2FHsYn5aV2tNCwvn2KGqWrffEnV/2p+aLClx9Yp+Q2N0Hqn3MSgwNMp94QYmBZceNSCCbAh63RtW/8+iNKylZZeBjq7iwK/oKbdXR+YXuTV2fW7w1xoMYoeC4DJwxPKj9HucW3xbQFOpp2tPG/0mmN85X6MYYy5eFXxfY7sA==","metadata":{}})";
+            std::shared_ptr<MockNetwork> mockNetwork = std::make_shared<MockNetwork>(rewrapResponse);
+
+            oidcClientTDF->setHTTPServiceProvider(mockNetwork);
+
+            TDFStorageType tdfStorageBufferType;
+            tdfStorageBufferType.setTDFStorageBufferType(fileData);
+
+            {
+                auto plainData = oidcClientTDF->decryptDataPartial(tdfStorageBufferType, segmentSize - 1, 2);
+                std::string strPlainData(plainData.begin(), plainData.end());
+                BOOST_TEST(strPlainData == "ab");
+            }
+
+            {
+                auto plainData = oidcClientTDF->decryptDataPartial(tdfStorageBufferType, 0, 10);
+                std::string strPlainData(plainData.begin(), plainData.end());
+                BOOST_TEST(strPlainData == "aaaaaaaaaa");
+            }
+
+            {
+                auto plainData = oidcClientTDF->decryptDataPartial(tdfStorageBufferType, 3 * segmentSize, segmentSize + 1);
+                std::string strPlainData(plainData.begin(), plainData.end());
+                std::string expectedData(segmentSize, 'd');
+                expectedData.append("e");
+                if (expectedData != strPlainData) {
+                    BOOST_FAIL("decryptFilePartial test failed");
+                }
+            }
+
+
+            // Expect exception the request length is not valid
+            auto longLength = 2 * segmentSize;
+            BOOST_CHECK_THROW(oidcClientTDF->decryptDataPartial(tdfStorageBufferType, 3 * segmentSize, longLength),
+                              virtru::Exception);
+        }
     }
 
 BOOST_AUTO_TEST_SUITE_END()

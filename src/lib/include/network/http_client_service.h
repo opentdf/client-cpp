@@ -71,6 +71,12 @@ namespace virtru::network {
         /// \param callback - The response callback.
         void ExecuteGet(IOContext& ioContext, ServiceCallback&& callback);
 
+        /// Execute a put request and on completion the callback is executed.
+        /// \param body - The HTTP body part of the request
+        /// \param ioContext - IO context object which is used by boot:asio to before OS's I/O services.
+        /// \param callback - The response callback.
+        void ExecutePut(std::string&& body, IOContext& ioContext, ServiceCallback&& callback);
+
         /// Execute a post request and on completion the callback is executed.
         /// \param body - The HTTP body part of the request
         /// \param ioContext - IO context object which is used by boot:asio to before OS's I/O services.
@@ -82,6 +88,11 @@ namespace virtru::network {
         /// \param ioContext - IO context object which is used by boot:asio to before OS's I/O services.
         /// \param callback - The response callback.
         void ExecutePatch(std::string&& body, IOContext& ioContext, ServiceCallback&& callback);
+
+        /// Execute a head request and on completion the callback is executed.
+        /// \param ioContext - IO context object which is used by boot:asio to before OS's I/O services.
+        /// \param callback - The response callback.
+        void ExecuteHead(IOContext& ioContext, ServiceCallback&& callback);
 
 		/// Return the host of the current service.
         /// \return - Host of the current service.

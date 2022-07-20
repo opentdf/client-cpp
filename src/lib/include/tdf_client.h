@@ -81,75 +81,68 @@ namespace virtru {
 
         /// Decrypt and return TDF metadata as a string. If the TDF content has
         /// no encrypted metadata, will return an empty string.
-        /// \param tdfData - The string containing a tdf data.
+        /// \param tdfStorageType - The type of the tdf.
         /// \return std::string - The string containing the metadata.
-        std::string getEncryptedMetadata(const std::string &tdfData);
+        std::string getEncryptedMetadata(const TDFStorageType &tdfStorageType);
 
       public: /// Encrypt and Decrypt
-        /// Encrypt the file to tdf format.
-        /// \param inFilepath - The file on which the encryption is performed.
-        /// \param outFilepath - The file path of the tdf after successful encryption.
-        /// NOTE: virtru::exception will be thrown if there is issues while performing the encryption process.
-        void encryptFile(const std::string &inFilepath, const std::string &outFilepath) override;
-
 #ifndef SWIG
-        /// Encrypt the data to tdf format.
-        /// \param plainData - The string containing the data to be encrypted.
-        /// \return std::string - The string containing the encrypted data.
-        /// NOTE: virtru::exception will be thrown if there are issues while performing the encryption process.
-        /// NOTE: The caller should copy the bytes from the return value and should not hold on to the
-        /// return value.
-        std::string encryptString(const std::string &plainData) override;
+        /// Encrypt the data by reading from inputProvider and writing to outputProvider.
+        /// \param inputProvider - InputProvider for reading the data.
+        /// \param outputProvider -  OutputProvide for writing the TDF data.
+        void encryptWithIOProviders(IInputProvider& inputProvider, IOutputProvider& outputProvider) override;
+
+        /// Decrypt the tdf data by reading from inputProvider and writing to outputProvider.
+        /// \param inputProvider - InputProvider for reading the TDF data.
+        /// \param outputProvider -  OutputProvide for writing the decrypted data.
+        void decryptWithIOProviders(IInputProvider& inputProvider, IOutputProvider& outputProvider) override;
 #endif
 
+        /// Encrypt the file to tdf format.
+        /// \param tdfStorageType - The type of the tdf.
+        /// \param outFilepath - The file path of the tdf after successful encryption.
+        /// NOTE: virtru::exception will be thrown if there is issues while performing the encryption process.
+        void encryptFile(const TDFStorageType &tdfStorageType, const std::string &outFilepath) override;
+
         /// Encrypt the bytes to tdf format.
-        /// \param plainData - The vector containing the bytes to be encrypted.
+        /// \param tdfStorageType - The type of the tdf.
         /// \return std::vector<VBYTE> - The vector containing the encrypted data.
         /// NOTE: virtru::exception will be thrown if there are issues while performing the encryption process.
         /// NOTE: The caller should copy the bytes from the return value and should not hold on to the
         /// return value.
-        std::vector<VBYTE> encryptData(const std::vector<VBYTE> &plainData) override;
+        std::vector<VBYTE> encryptData(const TDFStorageType &tdfStorageType) override;
 
-        /// Decrypt file.
-        /// \param inFilepath - The file on which the decryption is performed.
-        /// \param outFilepath - The file path of the tdf after successful decryption.
+        /// Decrypt file to tdf file format.
+        /// \param tdfStorageType - The type of the tdf.
+        /// \param outFilepath - The file path of the tdf after successful encryption.
         /// NOTE: virtru::exception will be thrown if there is issues while performing the decryption process.
-        void decryptFile(const std::string &inFilepath, const std::string &outFilepath) override;
+        void decryptFile(const TDFStorageType &tdfStorageType, const std::string &outFilepath) override;
 
-#ifndef SWIG
-        /// Decrypt data from tdf format.
-        /// \param encryptedData - The string containing a data to be decrypted.
-        /// \return std::string - The string containing the plain data.
+        /// Decrypt the bytes to tdf format.
+        /// \param tdfStorageType - The type of the tdf.
+        /// \return std::vector<VBYTE> - The vector containing the decrypted data.
         /// NOTE: virtru::exception will be thrown if there are issues while performing the decryption process.
         /// NOTE: The caller should copy the bytes from the return value and should not hold on to the
         /// return value.
-        std::string decryptString(const std::string &encryptedData) override;
+        std::vector<VBYTE> decryptData(const TDFStorageType &tdfStorageType) override;
 
-        /// Decrypt data from tdf format.
-        /// \param encryptedData - The string containing a data to be decrypted.
+        /// Decrypt part of the data of tdf storage type.
+        /// \param tdfStorageType - The type of the tdf.
         /// \param offset - The offset within the plaintext to return
         /// \param length - The length of the plaintext to return
-        /// \return std::string - The string containing the plain data.
+        /// \return std::vector - The vector containing the decrypted data.
         /// NOTE: virtru::exception will be thrown if there are issues while performing the decryption process.
         /// NOTE: The caller should copy the bytes from the return value and should not hold on to the
         /// return value.
-        std::string decryptStringPartial(const std::string &encryptedData, size_t offset, size_t length) override;
-#endif
-
-        /// Decrypt the bytes from tdf format.
-        /// \param encryptedData - The vector containing the bytes to be decrypted.
-        /// \return std::vector - The vector containing the plain data.
-        /// NOTE: virtru::exception will be thrown if there are issues while performing the decryption process.
-        /// NOTE: The caller should copy the bytes from the return value and should not hold on to the
-        /// return value.
-        std::vector<VBYTE> decryptData(const std::vector<VBYTE> &encryptedData) override;
+        std::vector<VBYTE> decryptDataPartial(const TDFStorageType &tdfStorageType, size_t offset, size_t length) override;
 
         // TODO do we need a GetPolicyFile??
         /// Extract and return the JSON policy string from a TDF stream.
+
         /// \param inStream - The stream containing tdf data.
         /// \param outStream - The stream containing the JSON policy string.
         /// NOTE: virtru::exception will be thrown if there are issues while retrieving the policy.
-        std::string getPolicy(const std::string &encryptedData);
+        std::string getPolicy(const TDFStorageType &tdfStorageType);
 
         /// Allow user to add data attribute
         /// \param dataAttribute - uri of the attribute

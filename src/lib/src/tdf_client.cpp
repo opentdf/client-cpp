@@ -26,6 +26,9 @@
 #include "tdfbuilder_impl.h"
 #include "oidc_service.h"
 #include "utils.h"
+#include "file_io_provider.h"
+#include "stream_io_provider.h"
+#include "s3_io_provider.h"
 
 #include <jwt-cpp/jwt.h>
 #include <sstream>
@@ -83,22 +86,65 @@ namespace virtru {
 
     /// Decrypt and return TDF metadata as a string. If the TDF content has
     /// no encrypted metadata, will return an empty string.
-    std::string TDFClient::getEncryptedMetadata(const std::string &tdfData) {
+    std::string TDFClient::getEncryptedMetadata(const TDFStorageType &tdfStorageType) {
 
         LogTrace("TDFClient::getEncryptedMetadata");
 
         // Initialize the TDF builder
         initTDFBuilder();
-
-        std::istringstream inputStream(tdfData);
-
         auto tdf = m_tdfBuilder->build();
-        return tdf->getEncryptedMetadata(inputStream);
+
+        if (tdfStorageType.m_tdfType == TDFStorageType::StorageType::File) {
+
+            // Create input provider
+            FileInputProvider inputProvider{tdfStorageType.m_filePath};
+            return tdf->getEncryptedMetadata(inputProvider);
+        } else if(tdfStorageType.m_tdfType == TDFStorageType::StorageType::Buffer) {
+
+            // Create input provider
+            std::istringstream inputStream(tdfStorageType.m_tdfBuffer);
+            StreamInputProvider inputProvider{inputStream};
+            return tdf->getEncryptedMetadata(inputProvider);
+        } else if (tdfStorageType.m_tdfType == TDFStorageType::StorageType::S3) {
+
+            // Create input provider
+            S3InputProvider inputProvider{tdfStorageType.m_S3Url, tdfStorageType.m_awsAccessKeyId, tdfStorageType.m_awsSecretAccessKey, tdfStorageType.m_awsRegionName};
+
+            return tdf->getEncryptedMetadata(inputProvider);
+        } else {
+            std::string errorMsg{"Unknown TDF storage type"};
+            ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
+        }
+    }
+
+    /// Encrypt the data by reading from inputProvider and writing to outputProvider.
+    void TDFClient::encryptWithIOProviders(IInputProvider& inputProvider, IOutputProvider& outputProvider) {
+
+        LogTrace("TDFClient::encryptWithIOProviders");
+
+        // Initialize the TDF builder
+        initTDFBuilder();
+
+        // Create a policy object.
+        auto policyObject = createPolicyObject();
+        auto tdf = m_tdfBuilder->setPolicyObject(policyObject).build();
+        tdf->encryptIOProvider(inputProvider, outputProvider);
+    }
+
+    /// Decrypt the tdf data by reading from inputProvider and writing to outputProvider.
+    void TDFClient::decryptWithIOProviders(IInputProvider& inputProvider, IOutputProvider& outputProvider) {
+
+        LogTrace("TDFClient::decryptWithIOProviders");
+        // Initialize the TDF builder
+        initTDFBuilder();
+
+        auto policyObject = createPolicyObject();
+        auto tdf = m_tdfBuilder->setPolicyObject(policyObject).build();
+        tdf->decryptIOProvider(inputProvider, outputProvider);
     }
 
     /// Encrypt the file to tdf format.
-    void TDFClient::encryptFile(const std::string &inFilepath, const std::string &outFilepath) {
-
+    void TDFClient::encryptFile(const TDFStorageType &tdfStorageType, const std::string &outFilepath) {
         LogTrace("TDFClient::encryptFile");
         // Initialize the TDF builder
         initTDFBuilder();
@@ -106,33 +152,25 @@ namespace virtru {
         // Create a policy object.
         auto policyObject = createPolicyObject();
         auto tdf = m_tdfBuilder->setPolicyObject(policyObject).build();
-        tdf->encryptFile(inFilepath, outFilepath);
-    }
 
-    /// Encrypt the data to tdf format.
-    std::string TDFClient::encryptString(const std::string &plainData) {
-        LogTrace("TDFClient::encryptString");
+        if (tdfStorageType.m_tdfType == TDFStorageType::StorageType::File) {
 
-        // Initialize the TDF builder
-        initTDFBuilder();
+            // Create input provider
+            FileInputProvider inputProvider{tdfStorageType.m_filePath};
 
-        // Create a policy object.
-        auto policyObject = createPolicyObject();
-        auto tdf = m_tdfBuilder->setPolicyObject(policyObject).build();
-
-        // NOTE: look into pubsetbuf for better performance.
-        std::istringstream inputStream(plainData);
-        std::ostringstream ioStream;
-
-        // encrypt the stream.
-        tdf->encryptStream(inputStream, ioStream);
-
-        return ioStream.str();
+            // Create output provider
+            FileOutputProvider outputProvider{outFilepath};
+            tdf->encryptIOProvider(inputProvider, outputProvider);
+        } else {
+            std::string errorMsg{"Unknown TDF storage type"};
+            ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
+        }
     }
 
     /// Encrypt the bytes to tdf format.
-    std::vector<VBYTE> TDFClient::encryptData(const std::vector<VBYTE> &plainData) {
-        LogTrace("TDFClient::encryptData");
+    std::vector<VBYTE> TDFClient::encryptData(const TDFStorageType &tdfStorageType) {
+        LogTrace("TDFClient::encryptDataV2");
+
         // Initialize the TDF builder
         initTDFBuilder();
 
@@ -140,23 +178,31 @@ namespace virtru {
         auto policyObject = createPolicyObject();
         auto tdf = m_tdfBuilder->setPolicyObject(policyObject).build();
 
-        // NOTE: look into pubsetbuf for better performance.
-        std::stringstream inputStream;
-        inputStream.write(reinterpret_cast<const char *>(plainData.data()), plainData.size());
+        if (tdfStorageType.m_tdfType == TDFStorageType::StorageType::Buffer) {
 
-        // encrypt the stream.
-        std::ostringstream ioStream;
-        tdf->encryptStream(inputStream, ioStream);
+            // Create input provider
+            std::istringstream inputStream(tdfStorageType.m_tdfBuffer);
+            StreamInputProvider inputProvider{inputStream};
 
-        // NOTE: This is not efficient it makes a copy of internal buffer.
-        const std::string& str = ioStream.str();
-        std::vector<VBYTE> encryptedData(str.begin(), str.end());
-        return encryptedData;
+            // Create output provider
+            std::ostringstream oStringStream;
+            StreamOutputProvider outputProvider{oStringStream};
+
+            tdf->encryptIOProvider(inputProvider, outputProvider);
+
+            std::string str = oStringStream.str();
+            std::vector<VBYTE> buffer(str.begin(), str.end());
+            return buffer;
+
+        } else {
+            std::string errorMsg{"Unknown TDF storage type"};
+            ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
+            return {};
+        }
     }
 
-    /// Decrypt file.
-    void TDFClient::decryptFile(const std::string &inFilepath, const std::string &outFilepath) {
-
+    /// Decrypt file to tdf file format.
+    void TDFClient::decryptFile(const TDFStorageType &tdfStorageType, const std::string &outFilepath) {
         LogTrace("TDFClient::decryptFile");
         // Initialize the TDF builder
         initTDFBuilder();
@@ -166,12 +212,25 @@ namespace virtru {
         // it accomplishes very little of use.
         auto policyObject = createPolicyObject();
         auto tdf = m_tdfBuilder->setPolicyObject(policyObject).build();
-        tdf->decryptFile(inFilepath, outFilepath);
+
+        if (tdfStorageType.m_tdfType == TDFStorageType::StorageType::File) {
+
+            // Create input provider
+            FileInputProvider inputProvider{tdfStorageType.m_filePath};
+
+            // Create output provider
+            FileOutputProvider outputProvider{outFilepath};
+            tdf->decryptIOProvider(inputProvider, outputProvider);
+        } else {
+            std::string errorMsg{"Unknown TDF storage type"};
+            ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
+        }
+
     }
 
-    /// Decrypt data from tdf format.
-    std::string TDFClient::decryptString(const std::string &encryptedData) {
-        LogTrace("TDFClient::decryptString");
+    /// Decrypt the bytes to tdf format.
+    std::vector<VBYTE> TDFClient::decryptData(const TDFStorageType &tdfStorageType) {
+        LogTrace("TDFClient::decryptFile");
         // Initialize the TDF builder
         initTDFBuilder();
 
@@ -181,84 +240,121 @@ namespace virtru {
         auto policyObject = createPolicyObject();
         auto tdf = m_tdfBuilder->setPolicyObject(policyObject).build();
 
-        // NOTE: look into pubsetbuf for better performance.
-        std::istringstream inputStream(encryptedData);
-        std::ostringstream ioStream;
+        if (tdfStorageType.m_tdfType == TDFStorageType::StorageType::Buffer) {
 
-        // encrypt the stream.
-        tdf->decryptStream(inputStream, ioStream);
+            // Create input provider
+            std::istringstream inputStream(tdfStorageType.m_tdfBuffer);
+            StreamInputProvider inputProvider{inputStream};
 
-        return ioStream.str();
+            // Create output provider
+            std::ostringstream oStringStream;
+            StreamOutputProvider outputProvider{oStringStream};
+
+            tdf->decryptIOProvider(inputProvider, outputProvider);
+
+            // TODO: Find a efficient way of copying data from stream
+            std::string str = oStringStream.str();
+            std::vector<VBYTE> buffer(str.begin(), str.end());
+            return buffer;
+        } else {
+            std::string errorMsg{"Unknown TDF storage type"};
+            ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
+            return {};
+        }
     }
 
-    std::string TDFClient::decryptStringPartial(const std::string &encryptedData, size_t offset, size_t length) {
-        LogTrace("TDFClient::decryptStringPartial");
+    /// Decrypt part of the data of tdf storage type.
+    std::vector<VBYTE> TDFClient::decryptDataPartial(const TDFStorageType &tdfStorageType, size_t offset, size_t length) {
+        LogTrace("TDFClient::decryptPartial");
 
         // Initialize the TDF builder
         initTDFBuilder();
 
-        // Create a policy object.
-        // TODO we really should drop the 'Builder' pattern here,
-        // it accomplishes very little of use.
-        auto policyObject = createPolicyObject();
-        auto tdf = m_tdfBuilder->setPolicyObject(policyObject).build();
+        // NOTE: We don't require policy object for decrypting the TDF
+        auto tdf = m_tdfBuilder->build();
+        if (tdfStorageType.m_tdfType == TDFStorageType::StorageType::File) {
 
-        // NOTE: look into pubsetbuf for better performance.
-        std::istringstream inputStream(encryptedData);
-        std::ostringstream ioStream;
+            // Create input provider
+            FileInputProvider inputProvider{tdfStorageType.m_filePath};
 
-        // encrypt the stream.
-        tdf->decryptStreamPartial(inputStream, ioStream, offset, length);
+            // Create output provider
+            std::ostringstream oStringStream;
+            StreamOutputProvider outputProvider{oStringStream};
 
-        return ioStream.str();
-    }
+            tdf->decryptIOProviderPartial(inputProvider, outputProvider, offset, length);
 
-    /// Decrypt the bytes from tdf format.
-    std::vector<VBYTE> TDFClient::decryptData(const std::vector<VBYTE> &encryptedData) {
-        LogTrace("TDFClient::decryptData");
-        // Initialize the TDF builder
-        initTDFBuilder();
+            // TODO: Find a efficient way of copying data from stream
+            std::string str = oStringStream.str();
+            std::vector<VBYTE> buffer(str.begin(), str.end());
+            return buffer;
 
-        // Create a policy object.
-        // TODO we really should drop the 'Builder' pattern here,
-        // it accomplishes very little of use.
-        auto policyObject = createPolicyObject();
-        auto tdf = m_tdfBuilder->setPolicyObject(policyObject).build();
+        } else if (tdfStorageType.m_tdfType == TDFStorageType::StorageType::Buffer) {
+            // Create input provider
+            std::istringstream inputStream(tdfStorageType.m_tdfBuffer);
+            StreamInputProvider inputProvider{inputStream};
 
-        // NOTE: look into pubsetbuf for better performance.
-        std::stringstream inputStream;
-        inputStream.write(reinterpret_cast<const char *>(encryptedData.data()), encryptedData.size());
+            // Create output provider
+            std::ostringstream oStringStream;
+            StreamOutputProvider outputProvider{oStringStream};
 
-        // decrypt the stream.
-        std::ostringstream ioStream;
-        tdf->decryptStream(inputStream, ioStream);
+            tdf->decryptIOProviderPartial(inputProvider, outputProvider, offset, length);
 
-        // NOTE: This is not efficient it makes a copy of internal buffer.
-        const std::string& str = ioStream.str();
-        std::vector<VBYTE> plainData(str.begin(), str.end());
-        return plainData;
+            // TODO: Find a efficient way of copying data from stream
+            std::string str = oStringStream.str();
+            std::vector<VBYTE> buffer(str.begin(), str.end());
+            return buffer;
+        } else if (tdfStorageType.m_tdfType == TDFStorageType::StorageType::S3) {
+
+            // Create input provider
+            S3InputProvider inputProvider{tdfStorageType.m_S3Url, tdfStorageType.m_awsAccessKeyId, tdfStorageType.m_awsSecretAccessKey, tdfStorageType.m_awsRegionName};
+
+            // Create output provider
+            std::ostringstream oStringStream;
+            StreamOutputProvider outputProvider{oStringStream};
+
+            tdf->decryptIOProviderPartial(inputProvider, outputProvider, offset, length);
+
+            // TODO: Find a efficient way of copying data from stream
+            std::string str = oStringStream.str();
+            std::vector<VBYTE> buffer(str.begin(), str.end());
+            return buffer;
+        } else {
+            std::string errorMsg{"Unknown TDF storage type"};
+            ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
+        }
+
+        return {};
     }
 
     /// Get the policy document as a JSON string from the encrypted TDF data.
-    std::string TDFClient::getPolicy(const std::string &encryptedData) {
+    std::string TDFClient::getPolicy(const TDFStorageType &tdfStorageType) {
         LogTrace("TDFClient::getPolicy");
+
         // Initialize the TDF builder
         initTDFBuilder();
+        auto tdf = m_tdfBuilder->build();
 
-        // Create a policy object - note that this has nothing to do with the policy
-        // we will get and return, this is just an empty object we hand to the builder
-        // so the builder will give us the TDF interface we want to do the thing we want
-        // to do.
-        // TODO we really should drop the 'Builder' pattern here,
-        // it accomplishes very little of use.
-        auto policyObject = createPolicyObject();
-        auto tdf = m_tdfBuilder->setPolicyObject(policyObject).build();
+        if (tdfStorageType.m_tdfType == TDFStorageType::StorageType::File) {
 
-        // NOTE: look into pubsetbuf for better performance.
-        std::istringstream inputStream(encryptedData);
+            // Create input provider
+            FileInputProvider inputProvider{tdfStorageType.m_filePath};
+            return tdf->getPolicy(inputProvider);
+        } else if(tdfStorageType.m_tdfType == TDFStorageType::StorageType::Buffer) {
 
-        // return the policy.
-        return tdf->getPolicy(inputStream);
+            // Create input provider
+            std::istringstream inputStream(tdfStorageType.m_tdfBuffer);
+            StreamInputProvider inputProvider{inputStream};
+            return tdf->getPolicy(inputProvider);
+        } else if (tdfStorageType.m_tdfType == TDFStorageType::StorageType::S3) {
+
+            // Create input provider
+            S3InputProvider inputProvider{tdfStorageType.m_S3Url, tdfStorageType.m_awsAccessKeyId, tdfStorageType.m_awsSecretAccessKey, tdfStorageType.m_awsRegionName};
+
+            return tdf->getPolicy(inputProvider);
+        } else {
+            std::string errorMsg{"Unknown TDF storage type"};
+            ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
+        }
     }
 
     ///Add data attribute
@@ -283,36 +379,27 @@ namespace virtru {
     bool TDFClient::isFileTDF(const std::string &inFilepath) {
         LogTrace("TDFClient::isFileTDF");
 
-        // Open the input file for reading.
-        std::ifstream inStream{inFilepath, std::ios_base::in | std::ios_base::binary};
-        if (!inStream) {
-            std::string errorMsg{"Failed to open file for reading:"};
-            errorMsg.append(inFilepath);
-            ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
-        }
-
-        return TDF::isStreamTDF(inStream);
+        FileInputProvider inputProvider{inFilepath};
+        return TDF::isInputProviderTDF(inputProvider);
     }
 
     //check if string is tdf
     bool TDFClient::isStringTDF(const std::string &tdfString) {
         LogTrace("TDFClient::isStringTDF");
- 
-        // NOTE: look into pubsetbuf for better performance.
-        std::istringstream inputStream(tdfString);
 
-        return TDF::isStreamTDF(inputStream);
+        std::istringstream inputStream(tdfString);
+        StreamInputProvider inputProvider{inputStream};
+        return TDF::isInputProviderTDF(inputProvider);
     }
 
     //check if data is tdf
     bool TDFClient::isDataTDF(const std::vector<VBYTE> &tdfData) {
         LogTrace("TDFClient::isDataTDF");
- 
-        // NOTE: look into pubsetbuf for better performance.
-        std::stringstream inputStream;
-        inputStream.write(reinterpret_cast<const char *>(tdfData.data()), tdfData.size());
 
-        return TDF::isStreamTDF(inputStream);
+        std::string tdfString(tdfData.begin(), tdfData.end());
+        std::istringstream inputStream(tdfString);
+        StreamInputProvider inputProvider{inputStream};
+        return TDF::isInputProviderTDF(inputProvider);
     }
 
     /// Initialize the TDF builder which is used for creating the TDF instance

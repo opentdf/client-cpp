@@ -15,7 +15,6 @@ find_package("OpenSSL")
 find_package("Boost")
 find_package("ms_gsl")
 find_package("LibXml2")
-find_package("libarchive")
 find_package("nlohmann_json")
 find_package("jwt-cpp")
 

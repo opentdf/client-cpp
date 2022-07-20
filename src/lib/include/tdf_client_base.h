@@ -17,13 +17,17 @@
 #include "entity_object.h"
 #include "policy_object.h"
 #include "network_interface.h"
+#include "tdf_storage_type.h"
 #include <tdf_constants.h>
 #include <unordered_set>
-
 #include <memory>
 #include <set>
 
 namespace virtru {
+
+    // Forward declaration
+    class IInputProvider;
+    class IOutputProvider;
 
     /// A helper base class to provide an simple interface for Python bindings. NOT intended for
     /// public API yet. This interface is subject to change.
@@ -62,62 +66,54 @@ namespace virtru {
         TDFClientBase &operator=(TDFClientBase &&client) = delete;
 
       public: /// Encrypt and Decrypt
+#ifndef SWIG
+        /// Encrypt the data by reading from inputProvider and writing to outputProvider.
+        /// \param inputProvider - InputProvider for reading the data.
+        /// \param outputProvider -  OutputProvide for writing the TDF data.
+        virtual void encryptWithIOProviders(IInputProvider& inputProvider, IOutputProvider& outputProvider) = 0;
+
+        /// Decrypt the tdf data by reading from inputProvider and writing to outputProvider.
+        /// \param inputProvider - InputProvider for reading the TDF data.
+        /// \param outputProvider -  OutputProvide for writing the decrypted data.
+        virtual void decryptWithIOProviders(IInputProvider& inputProvider, IOutputProvider& outputProvider) = 0;
+#endif
         /// Encrypt the file to tdf format.
-        /// \param inFilepath - The file on which the encryption is performed.
+        /// \param tdfStorageType - The type of the tdf.
         /// \param outFilepath - The file path of the tdf after successful encryption.
         /// NOTE: virtru::exception will be thrown if there is issues while performing the encryption process.
-        virtual void encryptFile(const std::string &inFilepath, const std::string &outFilepath) = 0;
-
-#ifndef SWIG
-        /// Encrypt the data to tdf format.
-        /// \param plainData - The string containing the data to be encrypted.
-        /// \return std::string - The string containing the encrypted data.
-        /// NOTE: virtru::exception will be thrown if there are issues while performing the encryption process.
-        /// NOTE: The caller should copy the bytes from the return value and should not hold on to the
-        /// return value.
-        virtual std::string encryptString(const std::string &plainData) = 0;
-#endif
+        virtual void encryptFile(const TDFStorageType &tdfStorageType, const std::string &outFilepath) = 0;
 
         /// Encrypt the bytes to tdf format.
-        /// \param plainData - The vector containing the bytes to be encrypted.
+        /// \param tdfStorageType - The type of the tdf.
         /// \return std::vector<VBYTE> - The vector containing the encrypted data.
         /// NOTE: virtru::exception will be thrown if there are issues while performing the encryption process.
         /// NOTE: The caller should copy the bytes from the return value and should not hold on to the
         /// return value.
-        virtual std::vector<VBYTE> encryptData(const std::vector<VBYTE> &plainData) = 0;
+        virtual std::vector<VBYTE> encryptData(const TDFStorageType &tdfStorageType) = 0;
 
-        /// Decrypt file.
-        /// \param inFilepath - The file on which the decryption is performed.
-        /// \param outFilepath - The file path of the tdf after successful decryption.
+        /// Decrypt file to tdf file format.
+        /// \param tdfStorageType - The type of the tdf.
+        /// \param outFilepath - The file path of the tdf after successful encryption.
         /// NOTE: virtru::exception will be thrown if there is issues while performing the decryption process.
-        virtual void decryptFile(const std::string &inFilepath, const std::string &outFilepath) = 0;
+        virtual void decryptFile(const TDFStorageType &tdfStorageType, const std::string &outFilepath) = 0;
 
-#ifndef SWIG
-        /// Decrypt data from tdf format.
-        /// \param encryptedData - The string containing a data to be decrypted.
-        /// \return std::string - The string containing the plain data.
+        /// Decrypt the bytes to tdf format.
+        /// \param tdfStorageType - The type of the tdf.
+        /// \return std::vector<VBYTE> - The vector containing the decrypted data.
         /// NOTE: virtru::exception will be thrown if there are issues while performing the decryption process.
         /// NOTE: The caller should copy the bytes from the return value and should not hold on to the
         /// return value.
-        virtual std::string decryptString(const std::string &encryptedData) = 0;
-#endif
-        /// Decrypt part of the data from tdf format.
-        /// \param encryptedData - The string containing a data to be decrypted.
+        virtual std::vector<VBYTE> decryptData(const TDFStorageType &tdfStorageType) = 0;
+
+        /// Decrypt part of the data from tdf storage type.
+        /// \param tdfStorageType - The type of the tdf.
         /// \param offset - The offset within the plaintext to return
         /// \param length - The length of the plaintext to return
-        /// \return std::string - The string containing the plain data.
+        /// \return std::vector - The vector containing the decrypted data.
         /// NOTE: virtru::exception will be thrown if there are issues while performing the decryption process.
         /// NOTE: The caller should copy the bytes from the return value and should not hold on to the
         /// return value.
-        virtual std::string decryptStringPartial(const std::string &encryptedData, size_t offset, size_t length) = 0;
-
-        /// Decrypt the bytes from tdf format.
-        /// \param encryptedData - The vector containing the bytes to be decrypted.
-        /// \return std::vector - The vector containing the plain data.
-        /// NOTE: virtru::exception will be thrown if there are issues while performing the decryption process.
-        /// NOTE: The caller should copy the bytes from the return value and should not hold on to the
-        /// return value.
-        virtual std::vector<VBYTE> decryptData(const std::vector<VBYTE> &encryptedData) = 0;
+        virtual std::vector<VBYTE> decryptDataPartial(const TDFStorageType &tdfStorageType, size_t offset, size_t length) = 0;
 
         /// Allow user to add data attribute
         /// \param dataAttribute - uri of the attribute

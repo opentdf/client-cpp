@@ -68,6 +68,9 @@ typedef void* TDFClientPtr;
 // TDF creds opaque object.
 typedef void* TDFCredsPtr;
 
+// TDF Storage type object.
+typedef void* TDFStorageTypePtr;
+
 // Policy opaque object.
 typedef void* TDFPolicyPtr;
 

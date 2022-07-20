@@ -15,6 +15,7 @@
 #include "tdf_exception.h"
 #include "logger.h"
 #include "tdf_client.h"
+#include "tdf_storage_type.h"
 #include "crypto/crypto_utils.h"
 #include "stdlib.h"
 #include "openssl/sha.h"
@@ -76,14 +77,6 @@ BOOST_AUTO_TEST_SUITE(test_decrypt_partial)
         int m_rewrap = 0;
         int m_token = 0;
     public: //INetwork members
-        static std::unique_ptr<virtru::network::Service> Create(const std::string& /*url*/,
-                                                                std::string_view /*sdkConsumerCertAuthority*/,
-                                                                const std::string& /*clientKeyFileName*/,
-                                                                const std::string& /*clientCertFileName*/) {
-            BOOST_TEST_MESSAGE("Mock service constructed");
-            LogTrace("Mock Service::Create");
-            return 0;
-        };
 
         virtual void executeGet(const std::string &url, const HttpHeaders &/*headers*/, HTTPServiceCallback &&callback, const std::string& /*ca*/, const std::string& /*key*/, const std::string& /*cert*/) override
         {
@@ -138,6 +131,16 @@ BOOST_AUTO_TEST_SUITE(test_decrypt_partial)
             callback(404, "Not found");
         }
 
+        virtual void executeHead(const std::string &/*url*/, const HttpHeaders &/*headers*/, HTTPServiceCallback &&callback, const std::string& /*ca*/, const std::string& /*key*/, const std::string& /*cert*/) override {
+            LogTrace("Mock Service::Head");
+            callback(400, "");
+        }
+        virtual void executePut(const std::string &/*url*/, const HttpHeaders &/*headers*/, std::string &&/*body*/, HTTPServiceCallback &&callback, const std::string& /*ca*/, const std::string& /*key*/, const std::string& /*cert*/) override
+        {
+            LogTrace("Mock Service::Put");
+
+            callback(404, "Not found");
+        }
     };
 
 
@@ -217,8 +220,10 @@ BOOST_AUTO_TEST_CASE(test_tdf_decrypt_string_partial) {
     LogDebug("Encrypted string="+makeEscapedString(encryptedString));
 #endif
 
-    std::string decryptedSubstring{client->decryptStringPartial(encryptedString, offset, length)};
-
+    TDFStorageType tdfStorageType;
+    tdfStorageType.setTDFStorageStringType(encryptedString);
+    auto buffer = client->decryptDataPartial(tdfStorageType, offset, length);
+    std::string decryptedSubstring(buffer.begin(), buffer.end());
     std::string plaintextSubstring{sequentialNumbersData.substr(offset, length)};
 
     result = (decryptedSubstring == plaintextSubstring);

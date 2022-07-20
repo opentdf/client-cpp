@@ -27,8 +27,13 @@
 #include "tdf_xml_writer.h"
 #include "tdf_xml_reader.h"
 #include "tdfbuilder_impl.h"
+#include "file_io_provider.h"
+#include "tdf_archive_writer.h"
+#include "tdf_html_writer.h"
+#include "stream_io_provider.h"
 
 #include <memory>
+#include <stdint.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/beast/core/detail/base64.hpp>
 #include <boost/interprocess/streams/bufferstream.hpp>
@@ -67,326 +72,45 @@ namespace virtru {
     TDFImpl::TDFImpl(TDFBuilder &tdfBuilder) : m_tdfBuilder(tdfBuilder) {
 
         LogTrace("TDFImpl::TDFImpl");
-
-        // Reserve the size for buffers for .html protocol.
-        if (m_tdfBuilder.m_impl->m_protocol == Protocol::Html) {
-            m_zipReadBuffer.reserve(kZipReadSize);
-            m_encodeBufferSize.reserve(encoded_size(kZipReadSize));
-        }
     }
 
-    /// Encrypt the file to tdf format.
-    void TDFImpl::encryptFile(const std::string &inFilepath,
-                               const std::string &outFilepath) {
-
-        LogTrace("TDFImpl::EncryptFile");
-
-        // Open the input file for reading.
-        std::ifstream inStream{inFilepath, std::ios_base::in | std::ios_base::binary};
-        if (!inStream) {
-            std::string errorMsg{"Failed to open file for reading:"};
-            errorMsg.append(inFilepath);
-            ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
-        }
-
-        // Open the tdf output file.
-        std::ofstream outStream{outFilepath, std::ios_base::out | std::ios_base::binary};
-        if (!outStream) {
-            std::string errorMsg{"Failed to open file for writing:"};
-            errorMsg.append(outFilepath);
-            ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
-        }
-
-        encryptStream(inStream, outStream);
-    }
-
-    /// Encrypt the stream data to tdf format.
-    void TDFImpl::encryptStream(std::istream &inputStream, std::ostream &outStream) {
-
-        LogTrace("TDFImpl::EncryptStream");
-
-        // Reset the input stream.
-        const auto final = gsl::finally([&inputStream] {
-            inputStream.clear();
-        });
+    /// Encrypt data from InputProvider and write to IOutputProvider
+    void TDFImpl::encryptIOProvider(IInputProvider& inputProvider,
+                           IOutputProvider& outputProvider) {
 
 #if LOGTIME
         auto t1 = std::chrono::high_resolution_clock::now();
 #endif
-        // The max file size of 64gb can be encrypted.
-        inputStream.seekg(0, inputStream.end);
-        auto fileSize = inputStream.tellg();
-        if (fileSize > kMaxFileSizeSupported) {
-            ThrowException("Current version of Virtru SDKs do not support file size greater than 64 GB.", VIRTRU_TDF_FORMAT_ERROR);
-        }
+        if (m_tdfBuilder.m_impl->m_protocol == Protocol::Zip) {
 
-        // Move back to the start.
-        inputStream.seekg(0, inputStream.beg);
+            TDFArchiveWriter writer{&outputProvider,
+                                    kTDFManifestFileName,
+                                    kTDFPayloadFileName};
 
-        if (m_tdfBuilder.m_impl->m_protocol == Protocol::Zip) { // .tdf format
+            encryptIOProviderImpl(inputProvider, writer);
+        } else if (m_tdfBuilder.m_impl->m_protocol == Protocol::Xml) {
+            TDFXMLWriter writer{outputProvider,
+                                kTDFManifestFileName,
+                                kTDFPayloadFileName};
 
-            DataSinkCb libArchiveSinkCb = [&outStream](Bytes bytes) {
-                if (!outStream.write(toChar(bytes.data()), bytes.size())) {
-                    return Status::Failure;
-                } else {
-                    return Status::Success;
+            encryptIOProviderImpl(inputProvider, writer);
+        } else { // HTML
+            struct HTMLOutputProvider: IOutputProvider {
+                void writeBytes(Bytes bytes) override {
+                    stringStream.write(toChar(bytes.data()), bytes.size());
                 }
+                void flush() override { stringStream.flush(); }
+                std::stringstream stringStream{};
             };
 
-            auto tdfWriter = std::unique_ptr<TDFWriter>(new TDFArchiveWriter(std::move(libArchiveSinkCb),
-                                                                             kTDFManifestFileName,
-                                                                             kTDFPayloadFileName));
+            HTMLOutputProvider htmlOutputProvider{};
+            TDFArchiveWriter writer{&htmlOutputProvider,
+                                    kTDFManifestFileName,
+                                    kTDFPayloadFileName};
+            auto manifestStr = encryptIOProviderImpl(inputProvider, writer);
 
-            encryptStream(inputStream, fileSize, *tdfWriter);
-
-#if LOGTIME
-            auto t2 = std::chrono::high_resolution_clock::now();
-            auto tdfTimeSpent = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
-            std::ostringstream os;
-            os << ".tdf file encrypt time:" << tdfTimeSpent << "ms";
-            LogInfo(os.str());
-#endif
-        } else { // .html or xml format
-
-            std::string logMsg;
-            if (m_tdfBuilder.m_impl->m_protocol == Protocol::Xml) {
-
-                auto tdfWriter = std::unique_ptr<TDFXMLWriter>(new TDFXMLWriter(kTDFManifestFileName,
-                                                                                 kTDFPayloadFileName));
-                auto basePtr = static_cast<TDFWriter*>(tdfWriter.get());
-
-                encryptStream(inputStream, fileSize, *basePtr);
-                tdfWriter->writeToStream(outStream);
-                logMsg = ".xml file encrypt time:";
-            } else {
-
-                std::stringstream tdfStream{};
-                std::string manifest;
-
-                // Finish creating a TDF before generating the HTML file
-                {
-                    DataSinkCb libArchiveSinkCb = [&tdfStream](Bytes bytes) {
-                        if (!tdfStream.write(toChar(bytes.data()), bytes.size())) {
-                            return Status::Failure;
-                        } else {
-                            return Status::Success;
-                        }
-                    };
-
-                    auto tdfWriter = std::unique_ptr<TDFWriter>(new TDFArchiveWriter(std::move(libArchiveSinkCb),
-                                                                                     kTDFManifestFileName,
-                                                                                     kTDFPayloadFileName));
-
-                    manifest = encryptStream(inputStream, fileSize, *tdfWriter);
-                }
-
-                generateHtmlTdf(manifest, tdfStream, outStream);
-                LogTrace("after generateHtmlTdf");
-                logMsg = ".html file encrypt time:";
-
-            }
-
-#if LOGTIME
-            auto t2 = std::chrono::high_resolution_clock::now();
-            auto htmlTimeSpent = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
-            std::ostringstream os;
-            os << logMsg << htmlTimeSpent << "ms";
-            LogInfo(os.str());
-#endif
-        }
-        LogTrace("exiting TDFImpl::EncryptStream");
-    }
-
-    /// Encrypt the data that is retrieved from the source callback.
-    void TDFImpl::encryptData(TDFDataSourceCb sourceCb, TDFDataSinkCb sinkCb) {
-
-        LogTrace("TDFImpl::encryptData");
-
-        if (m_tdfBuilder.m_impl->m_protocol == Protocol::Xml) {
-            ThrowException("XML TDF not supported for encryptData", VIRTRU_TDF_FORMAT_ERROR);
-        }
-
-#if LOGTIME
-        auto t1 = std::chrono::high_resolution_clock::now();
-#endif
-
-        /// Read the all the data and store it in the stream.
-        std::streampos streamSize;
-        std::stringstream inStream;
-        while (true) {
-            Status status = Status::Success;
-            auto bufferSpan = sourceCb(status);
-
-            if (0 >= bufferSpan.dataLength) { // end of data
-                break;
-            }
-
-            if (status == Status::Success) {
-                streamSize += bufferSpan.dataLength;
-                inStream.write((char *)(bufferSpan.data), bufferSpan.dataLength);
-            } else {
-                ThrowException("Source callback failed.", VIRTRU_SYSTEM_ERROR);
-                break;
-            }
-        }
-
-        if (m_tdfBuilder.m_impl->m_protocol == Protocol::Zip) { // .tdf format
-
-            DataSinkCb libArchiveSinkCb = [&sinkCb](Bytes bytes) {
-                BufferSpan bufferSpan{reinterpret_cast<const std::uint8_t *>(bytes.data()),
-                                      static_cast<size_t>(bytes.size())};
-                return sinkCb(bufferSpan);
-            };
-
-            auto tdfWriter = std::unique_ptr<TDFWriter>(new TDFArchiveWriter(std::move(libArchiveSinkCb),
-                                                                             kTDFManifestFileName,
-                                                                             kTDFPayloadFileName));
-
-            encryptStream(inStream, streamSize, *tdfWriter);
-
-#if LOGTIME
-            auto t2 = std::chrono::high_resolution_clock::now();
-            auto tdfTimeSpent = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
-            std::ostringstream os;
-            os << ".tdf file encrypt time:" << tdfTimeSpent << "ms";
-            LogInfo(os.str());
-#endif
-        } else { // .html format
-
-            std::stringstream tdfStream{};
-            std::string manifest;
-
-            // Finish creating a TDF before generating the HTML file
-            {
-                DataSinkCb libArchiveSinkCb = [&tdfStream](Bytes bytes) {
-                    if (!tdfStream.write(toChar(bytes.data()), bytes.size())) {
-                        return Status::Failure;
-                    } else {
-                        return Status::Success;
-                    }
-                };
-
-                auto tdfWriter = std::unique_ptr<TDFWriter>(new TDFArchiveWriter(std::move(libArchiveSinkCb),
-                                                                                 kTDFManifestFileName,
-                                                                                 kTDFPayloadFileName));
-
-                manifest = encryptStream(inStream, streamSize, *tdfWriter);
-            }
-            std::stringstream outStream;
-            generateHtmlTdf(manifest, tdfStream, outStream);
-
-            LogTrace("after generateHtmlTdf");
-
-            // Invoke the caller.
-            std::vector<char> buffer(10 * 1024);
-            outStream.seekg(0, inStream.beg);
-            while (!outStream.eof()) {
-                outStream.read(buffer.data(), buffer.size());
-
-                std::streamsize dataSize = outStream.gcount();
-                BufferSpan bufferSpan{reinterpret_cast<const std::uint8_t *>(buffer.data()),
-                                      static_cast<size_t>(dataSize)};
-
-                auto status = sinkCb(bufferSpan);
-                if (status != Status::Success) {
-                    ThrowException("sink callback failed.", VIRTRU_SYSTEM_ERROR);
-                }
-            }
-#if LOGTIME
-            auto t2 = std::chrono::high_resolution_clock::now();
-            auto htmlTimeSpent = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
-            std::ostringstream os;
-            os << ".html file encrypt time:" << htmlTimeSpent << "ms";
-            LogInfo(os.str());
-#endif
-        }
-        LogTrace("exiting TDFImpl::encryptData");
-    }
-
-    /// Decrypt the tdf stream data.
-    void TDFImpl::decryptStreamPartial(std::istream &inStream, std::ostream &outStream, size_t offset, size_t length) {
-
-        // Decrypt full stream
-        // Redirect to outstream for requested portion
-        // TODO - FIXME - PCM really inefficient implementation here
-        std::stringstream tempStream;
-        decryptStream(inStream, tempStream);
-
-        tempStream.seekg(offset, std::ios_base::beg);
-        for (size_t i = 0; i< length; i++) {
-            uint8_t c = tempStream.get();
-            outStream.put(c);
-        }
-    }
-
-    /// Decrypt the tdf stream data.
-    void TDFImpl::decryptStream(std::istream &inStream, std::ostream &outStream) {
-
-        LogTrace("TDFImpl::decryptStream");
-
-        // Reset the input stream.
-        const auto final = gsl::finally([&inStream] {
-            inStream.clear();
-        });
-
-#if LOGTIME
-        auto t1 = std::chrono::high_resolution_clock::now();
-#endif
-        auto protocol = encryptedWithProtocol(inStream);
-        if (protocol == Protocol::Zip) {
-            TDFArchiveReader reader(inStream, kTDFManifestFileName, kTDFPayloadFileName);
-
-            decryptStream(reader, [&outStream](Bytes bytes) {
-                if (!outStream.write(toChar(bytes.data()), bytes.size())) {
-                    return Status::Failure;
-                } else {
-                    return Status::Success;
-                }
-            });
-        } else if (protocol == Protocol::Xml) {
-            TDFXMLReader reader(inStream);
-            decryptStream(reader, [&outStream](Bytes bytes) {
-                if (!outStream.write(toChar(bytes.data()), bytes.size())) {
-                    return Status::Failure;
-                } else {
-                    return Status::Success;
-                }
-            });
-        } else { // html format
-
-            /// TODO: Improve the memory effeciency for html parsing.
-#if LOGTIME
-            auto t11 = std::chrono::high_resolution_clock::now();
-#endif
-            // Get the stream size
-            inStream.seekg(0, inStream.end);
-            auto dataSize = inStream.tellg();
-            inStream.seekg(0, inStream.beg);
-
-            std::unique_ptr<std::uint8_t[]> buffer(new std::uint8_t[dataSize]);
-
-            // Read all the data from input stream
-            inStream.read(reinterpret_cast<char *>(buffer.get()), dataSize);
-
-            auto bytes = gsl::make_span(buffer.get(), dataSize);
-            auto tdfData = getTDFZipData(toBytes(bytes));
-
-            bufferstream inputStream(reinterpret_cast<char *>(tdfData.data()), tdfData.size());
-            TDFArchiveReader reader(inputStream, kTDFManifestFileName, kTDFPayloadFileName);
-
-#if LOGTIME
-            auto t12 = std::chrono::high_resolution_clock::now();
-            std::ostringstream os;
-            os << "Time spend extracting tdf data from html:" << std::chrono::duration_cast<std::chrono::milliseconds>(t12 - t11).count() << "ms";
-            LogInfo(os.str());
-#endif
-            decryptStream(reader, [&outStream](Bytes bytes) {
-                if (!outStream.write(toChar(bytes.data()), bytes.size())) {
-                    return Status::Failure;
-                } else {
-                    return Status::Success;
-                }
-            });
+            htmlOutputProvider.flush();
+            generateHtmlTdf(manifestStr, htmlOutputProvider.stringStream, outputProvider);
         }
 
 #if LOGTIME
@@ -394,316 +118,18 @@ namespace virtru {
         auto timeSpent = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
 
         std::ostringstream os;
-        os << "Total decrypt-time:" << timeSpent << " ms";
+        os << "Total encrypt-time:" << timeSpent << " ms";
         LogInfo(os.str());
 #endif
-        LogTrace("exiting TDFImpl::decryptStream");
+
     }
 
-    /// Decrypt the tdf file.
-    void TDFImpl::decryptFile(const std::string &inFilepath,
-                               const std::string &outFilepath) {
-
-        LogTrace("TDFImpl::decryptFile");
-
-#if LOGTIME
-        auto t1 = std::chrono::high_resolution_clock::now();
-#endif
+    /// Encrypt data from InputProvider and write to IOutputProvider
+    std::string TDFImpl::encryptIOProviderImpl(IInputProvider& inputProvider, ITDFWriter& writer) {
+        LogTrace("TDFImpl::encryptIOProviderImpl");
 
 
-        // Open the input file for reading.
-        std::ifstream inStream{inFilepath, std::ios_base::in | std::ios_base::binary};
-        if (!inStream) {
-            std::string errorMsg{"Failed to open file for reading:"};
-            errorMsg.append(inFilepath);
-            ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
-        }
-
-        // Open the tdf output file.
-        std::ofstream outStream{outFilepath, std::ios_base::out | std::ios_base::binary};
-        if (!outStream) {
-            std::string errorMsg{"Failed to open file for writing:"};
-            errorMsg.append(outFilepath);
-            ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
-        }
-
-        auto protocol = encryptedWithProtocol(inStream);
-
-        // Move back to the start.
-        inStream.seekg(0, inStream.beg);
-
-        if (protocol == Protocol::Zip) {
-            TDFArchiveReader reader(inStream, kTDFManifestFileName, kTDFPayloadFileName);
-
-            decryptStream(reader, [&outStream](Bytes bytes) {
-                if (!outStream.write(toChar(bytes.data()), bytes.size())) {
-                    return Status::Failure;
-                } else {
-                    return Status::Success;
-                }
-            });
-        }  else if (protocol == Protocol::Xml) {
-            TDFXMLReader reader(inStream);
-            decryptStream(reader, [&outStream](Bytes bytes) {
-                if (!outStream.write(toChar(bytes.data()), bytes.size())) {
-                    return Status::Failure;
-                } else {
-                    return Status::Success;
-                }
-            });
-        } else {
-            /// TODO: Improve the memory effeciency for html parsing.
-#if LOGTIME
-            auto t11 = std::chrono::high_resolution_clock::now();
-#endif
-            auto tdfData = getTDFZipData(inFilepath);
-
-            bufferstream inputStream(reinterpret_cast<char *>(tdfData.data()), tdfData.size());
-            TDFArchiveReader reader(inputStream, kTDFManifestFileName, kTDFPayloadFileName);
-#if LOGTIME
-            auto t12 = std::chrono::high_resolution_clock::now();
-            std::ostringstream os;
-            os << "Time spend extracting tdf data from html:" << std::chrono::duration_cast<std::chrono::milliseconds>(t12 - t11).count() << "ms";
-            LogInfo(os.str());
-#endif
-            decryptStream(reader, [&outStream](Bytes bytes) {
-                if (!outStream.write(toChar(bytes.data()), bytes.size())) {
-                    return Status::Failure;
-                } else {
-                    return Status::Success;
-                }
-            });
-        }
-
-#if LOGTIME
-        auto t2 = std::chrono::high_resolution_clock::now();
-        auto timeSpent = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
-
-        std::ostringstream os;
-        os << "Total decrypt-time:" << timeSpent << " ms";
-        LogInfo(os.str());
-#endif
-        LogTrace("exiting TDFImpl::decryptFile");
-    }
-
-    /// Decrypt the data that is retrieved from the source callback.
-    void TDFImpl::decryptData(TDFDataSourceCb sourceCb, TDFDataSinkCb sinkCb) {
-
-        LogTrace("TDFImpl::decryptData");
-
-#if LOGTIME
-        auto t1 = std::chrono::high_resolution_clock::now();
-#endif
-
-        /// Read the all the data and store it in the stream.
-        std::streampos streamSize;
-        std::stringstream inStream;
-        while (true) {
-            Status status = Status::Success;
-            auto bufferSpan = sourceCb(status);
-
-            if (0 >= bufferSpan.dataLength) { // end of data
-                break;
-            }
-
-            if (status == Status::Success) {
-                streamSize += bufferSpan.dataLength;
-                inStream.write((char *)(bufferSpan.data), bufferSpan.dataLength);
-            } else {
-                ThrowException("Source callback failed.", VIRTRU_SYSTEM_ERROR);
-                break;
-            }
-        }
-
-        auto protocol = encryptedWithProtocol(inStream);
-        if (protocol == Protocol::Zip) {
-            TDFArchiveReader reader(inStream, kTDFManifestFileName, kTDFPayloadFileName);
-
-            decryptStream(reader, [&sinkCb](Bytes bytes) {
-                BufferSpan bufferSpan{reinterpret_cast<const std::uint8_t *>(bytes.data()),
-                                      static_cast<size_t>(bytes.size())};
-                return sinkCb(bufferSpan);
-            });
-
-        } else { // html format
-
-            if (protocol == Protocol::Xml) {
-                ThrowException("XML TDF not supported for decryptData", VIRTRU_TDF_FORMAT_ERROR);
-            }
-
-            /// TODO: Improve the memory effeciency for html parsing.
-#if LOGTIME
-            auto t11 = std::chrono::high_resolution_clock::now();
-#endif
-            // Get the stream size
-            inStream.seekg(0, inStream.end);
-            auto dataSize = inStream.tellg();
-            inStream.seekg(0, inStream.beg);
-
-            std::unique_ptr<std::uint8_t[]> buffer(new std::uint8_t[dataSize]);
-
-            // Read all the data from input stream
-            inStream.read(reinterpret_cast<char *>(buffer.get()), dataSize);
-
-            auto bytes = gsl::make_span(buffer.get(), dataSize);
-            auto tdfData = getTDFZipData(toBytes(bytes));
-
-            bufferstream inputStream(reinterpret_cast<char *>(tdfData.data()), tdfData.size());
-            TDFArchiveReader reader(inputStream, kTDFManifestFileName, kTDFPayloadFileName);
-
-#if LOGTIME
-            auto t12 = std::chrono::high_resolution_clock::now();
-            std::ostringstream os;
-            os << "Time spend extracting tdf data from html:" << std::chrono::duration_cast<std::chrono::milliseconds>(t12 - t11).count() << "ms";
-            LogInfo(os.str());
-#endif
-            decryptStream(reader, [&sinkCb](Bytes bytes) {
-                BufferSpan bufferSpan{reinterpret_cast<const std::uint8_t *>(bytes.data()),
-                                      static_cast<size_t>(bytes.size())};
-                return sinkCb(bufferSpan);
-            });
-        }
-
-#if LOGTIME
-        auto t2 = std::chrono::high_resolution_clock::now();
-        auto timeSpent = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
-
-        std::ostringstream os;
-        os << "Total decrypt-time:" << timeSpent << " ms";
-        LogInfo(os.str());
-#endif
-        LogTrace("exiting TDFImpl::decryptData");
-    }
-
-    void TDFImpl::decryptStream(TDFReader& tdfReader, DataSinkCb &&sinkCB) {
-
-        LogTrace("TDFImpl::decryptStream");
-
-        auto manifestStr = tdfReader.getManifest();
-        LogDebug("Manifest:" + manifestStr);
-
-        auto manifest = nlohmann::json::parse(manifestStr);
-
-#if LOGTIME
-        auto unwrapKeyT1 = std::chrono::high_resolution_clock::now();
-#endif
-
-        WrappedKey wrappedKey = unwrapKey(manifest);
-
-        LogDebug("Obtained the wrappedKey from manifest.");
-
-#if LOGTIME
-        auto unwrapKeyT2 = std::chrono::high_resolution_clock::now();
-        auto unwrapTimeSpent = std::chrono::duration_cast<std::chrono::milliseconds>(unwrapKeyT2 - unwrapKeyT1).count();
-        std::ostringstream os;
-        os << "rewrap time: " << unwrapTimeSpent << "ms";
-        LogInfo(os.str());
-#endif
-        // Get the algorithm and key type.
-        std::string algorithm = manifest[kEncryptionInformation][kMethod][kCipherAlgorithm];
-        std::string keyType = manifest[kEncryptionInformation][kEncryptKeyType];
-
-        CipherType chiperType = CipherType::Aes265CBC;
-        if (boost::iequals(algorithm, kCipherAlgorithmGCM)) {
-            chiperType = CipherType::Aes256GCM;
-        }
-
-        if (!boost::iequals(keyType, kSplitKeyType)) {
-            ThrowException("Only split key type is supported for tdf operations.", VIRTRU_CRYPTO_ERROR);
-        }
-
-        /// Create a split key and the key access object based on access type.
-        auto splitKey = SplitKey{chiperType};
-        splitKey.setWrappedKey(wrappedKey);
-
-        auto &rootSignature = manifest[kEncryptionInformation][kIntegrityInformation][kRootSignature];
-        std::string rootSignatureAlg = rootSignature[kRootSignatureAlg];
-        std::string rootSignatureSig = rootSignature[kRootSignatureSig];
-
-        // Get the hashes from the segments and combine.
-        std::string aggregateHash;
-        nlohmann::json segmentInfos = nlohmann::json::array();
-        segmentInfos = manifest[kEncryptionInformation][kIntegrityInformation][kSegments];
-        for (nlohmann::json segment : segmentInfos) {
-            std::string hash = segment[kHash];
-            aggregateHash.append(base64Decode(hash));
-        }
-
-        // Check the combined string of hashes
-        auto payloadSigStr = getSignature(toBytes(aggregateHash), splitKey, rootSignatureAlg);
-        if (rootSignatureSig != base64Encode(payloadSigStr)) {
-            ThrowException("Failed integrity check on root signature", VIRTRU_CRYPTO_ERROR);
-        }
-
-        LogDebug("RootSignatureSig is validated.");
-
-        auto &integrityInformation = manifest[kEncryptionInformation][kIntegrityInformation];
-
-        // Check for default segment size.
-        if (!integrityInformation.contains(kSegmentSizeDefault)) {
-            ThrowException("SegmentSizeDefault is missing in tdf", VIRTRU_TDF_FORMAT_ERROR);
-        }
-        int segmentSizeDefault = integrityInformation[kSegmentSizeDefault];
-
-        // Check for default encrypted segment size.
-        if (!integrityInformation.contains(kEncryptedSegSizeDefault)) {
-            ThrowException("EncryptedSegmentSizeDefault is missing in tdf", VIRTRU_TDF_FORMAT_ERROR);
-        }
-        int defaultEncryptedSegmentSize = integrityInformation[kEncryptedSegSizeDefault];
-
-        ///
-        // Create buffers for reading from file and for performing decryption.
-        // These buffers will be reused.
-        ///
-        std::vector<gsl::byte> readBuffer(defaultEncryptedSegmentSize);
-        std::vector<gsl::byte> decryptedBuffer(segmentSizeDefault);
-
-        std::string segmentHashAlg = integrityInformation[kSegmentHashAlg];
-        for (auto &segment : segmentInfos) {
-
-            // Adjust read buffer size
-            auto readBufferSpan = WriteableBytes{readBuffer};
-            if (segment.contains(kEncryptedSegmentSize)) {
-                int encryptedSegmentSize = segment[kEncryptedSegmentSize];
-                readBufferSpan = WriteableBytes{readBufferSpan.data(), encryptedSegmentSize};
-            }
-
-            // Adjust decrypt buffer size
-            auto outBufferSpan = WriteableBytes{decryptedBuffer};
-            if (segment.contains(kSegmentSize)) {
-                int segmentSize = segment[kSegmentSize];
-                outBufferSpan = WriteableBytes{outBufferSpan.data(), segmentSize};
-            }
-
-            // Read form zip reader.
-            tdfReader.readPayload(readBufferSpan);
-
-            // Decrypt the payload.
-            splitKey.decrypt(readBufferSpan, outBufferSpan);
-
-            auto payloadSigStr = getSignature(readBufferSpan, splitKey, segmentHashAlg);
-            std::string hash = segment[kHash];
-
-            // Validate the hash.
-            if (hash != base64Encode(payloadSigStr)) {
-                ThrowException("Failed integrity check on segment hash", VIRTRU_CRYPTO_ERROR);
-            }
-
-            // Write to file.
-            auto status = sinkCB({outBufferSpan.data(), outBufferSpan.size()});
-
-            if (status != Status::Success) {
-                ThrowException("Fail to write into stream", VIRTRU_SYSTEM_ERROR);
-            }
-        }
-        LogTrace("exiting TDFImpl::decryptStream");
-    }
-
-    /// Encrypt the data in the input stream.
-    std::string TDFImpl::encryptStream(std::istream& inputStream, std::streampos dataSize,
-                                       TDFWriter& writer) {
-
-        LogTrace("TDFImpl::encryptStream");
+        auto dataSize = inputProvider.getSize();
 
         // Check if there is a policy object
         if (m_tdfBuilder.m_impl->m_policyObject.getUuid().empty()) {
@@ -807,14 +233,21 @@ namespace virtru {
 
         writer.setPayloadSize(actualTDFPayloadSize);
 
+        size_t index{};
         while (totalSegment != 0) {
 
+            auto readSize = defaultSegmentSize;
+            if ((dataSize - index) < defaultSegmentSize) {
+                readSize = (dataSize - index);
+            }
+
             // Read the file in 'defaultSegmentSize' chuck max
-            inputStream.read(readBuffer.data(), defaultSegmentSize);
+            auto bytes = toWriteableBytes(readBuffer);
+            inputProvider.readBytes(index, readSize, bytes);
 
             // make sub span of 'defaultSegmentSize' or less
             auto readBufferAsBytes = toBytes(readBuffer);
-            Bytes subSpanBuffer{readBufferAsBytes.data(), static_cast<std::ptrdiff_t>(inputStream.gcount())};
+            Bytes subSpanBuffer{readBufferAsBytes.data(), static_cast<std::ptrdiff_t>(readSize)};
             auto writeableBytes = toWriteableBytes(encryptedBuffer);
 
             // Encrypt the payload
@@ -823,7 +256,7 @@ namespace virtru {
             ///
             // Check if all the bytes are encrypted.
             ///
-            auto encryptedSize = inputStream.gcount() + ivSize + kAesBlockSize;
+            auto encryptedSize =readSize + ivSize + kAesBlockSize;
             if (writeableBytes.size() != encryptedSize) {
                 ThrowException("Encrypted buffer output is not correct!", VIRTRU_TDF_FORMAT_ERROR);
             }
@@ -836,7 +269,7 @@ namespace virtru {
 
             nlohmann::json segmentInfo;
             segmentInfo[kHash] = base64Encode(payloadSigStr);
-            segmentInfo[kSegmentSize] = readBuffer.size();
+            segmentInfo[kSegmentSize] = readSize;
             segmentInfo[kEncryptedSegmentSize] = encryptedSize;
             segmentInfos.emplace_back(segmentInfo);
 
@@ -844,6 +277,7 @@ namespace virtru {
             writer.appendPayload(writeableBytes);
 
             totalSegment--;
+            index += readSize;
         }
 
         LogDebug("Encryption is completed, preparing the manifest");
@@ -861,149 +295,315 @@ namespace virtru {
         manifest[kEncryptionInformation][kMethod][kIsStreamable] = true;
 
         writer.appendManifest(to_string(manifest));
-
-        LogTrace("exiting TDFImpl::encryptStream");
+        writer.finish();
 
         return to_string(manifest);
     }
 
-    void TDFImpl::generateHtmlTdf(const std::string &manifest,
-                                   std::istream &inputStream,
-                                   std::ostream &outStream) {
 
-        LogTrace("TDFImpl::generateHtmlTdf");
+    /// Decrypt data from InputProvider and write to IOutputProvider
+    void TDFImpl::decryptIOProvider(IInputProvider& inputProvider,
+                           IOutputProvider& outputProvider) {
 
-        using namespace boost::beast::detail::base64;
+#if LOGTIME
+        auto t1 = std::chrono::high_resolution_clock::now();
+#endif
 
-        auto const &token1 = m_tdfBuilder.m_impl->m_htmlTemplateTokens[0];
-        LogTrace("before token1 write");
-        outStream.write(token1.data(), token1.size());
+        auto protocol = encryptedWithProtocol(inputProvider);
+        if (protocol == Protocol::Zip) {
+            TDFArchiveReader reader{&inputProvider,
+                                    kTDFManifestFileName,
+                                    kTDFPayloadFileName};
+            decryptIOProviderImpl(reader, outputProvider);
+        } else if (protocol == Protocol::Xml) {
+            TDFXMLReader reader{inputProvider};
+            decryptIOProviderImpl(reader, outputProvider);
+        } else { // HTML
 
-        /// 1 - Write the contents of the tdf in base64
-        std::size_t actualEncodedBufSize;
+            /// TODO: Improve the memory effeciency for html parsing.
+#if LOGTIME
+            auto t11 = std::chrono::high_resolution_clock::now();
+#endif
 
-        // Vectors m_encodeBufferSize and m_zipReadBuffer are sized in constructor if protocol is html
-        while (!inputStream.eof() && !inputStream.fail()) {
+            auto dataSize = inputProvider.getSize();
+            std::unique_ptr<std::uint8_t[]> buffer(new std::uint8_t[dataSize]);
 
-            // Read from the file.
-            LogTrace("before zip read");
-            inputStream.read(reinterpret_cast<char *>(m_zipReadBuffer.data()), kZipReadSize);
+            // Read all the data from input provider
+            auto htmlBytes = gsl::make_span(buffer.get(), dataSize);
+            auto writeableBytes = toWriteableBytes(htmlBytes);
+            inputProvider.readBytes(0, dataSize, writeableBytes);
 
-            // Encode the tdf zip data.
-            actualEncodedBufSize = encode(m_encodeBufferSize.data(), m_zipReadBuffer.data(), inputStream.gcount());
+            auto bytes = gsl::make_span(buffer.get(), dataSize);
+            auto tdfData = getTDFZipData(toBytes(bytes));
 
-            // Write to the html file
-            LogTrace("before encoded data write");
-            outStream.write(reinterpret_cast<char *>(m_encodeBufferSize.data()), actualEncodedBufSize);
+            std::string tdfString(tdfData.begin(), tdfData.end());
+            std::istringstream inputStream(tdfString);
+            StreamInputProvider ipProvider{inputStream};
+            TDFArchiveReader reader{&ipProvider, kTDFManifestFileName, kTDFPayloadFileName };
+#if LOGTIME
+            auto t12 = std::chrono::high_resolution_clock::now();
+            std::ostringstream os;
+            os << "Time spend extracting tdf data from html:" << std::chrono::duration_cast<std::chrono::milliseconds>(t12 - t11).count() << "ms";
+            LogInfo(os.str());
+#endif
+            decryptIOProviderImpl(reader, outputProvider);
         }
 
-        auto const &token2 = m_tdfBuilder.m_impl->m_htmlTemplateTokens[1];
-        LogTrace("before token1 write");
-        outStream.write(token2.data(), token2.size());
+#if LOGTIME
+        auto t2 = std::chrono::high_resolution_clock::now();
+        auto timeSpent = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
 
-        /// 2 - Write the contents of the manifest in base64
-
-        // manifest can grow larger than our prealloc'ed buffer, correct that if it's a problem
-        unsigned manifestEncodedSize = encoded_size(manifest.size());
-        if (manifestEncodedSize > m_encodeBufferSize.size()) {
-            m_encodeBufferSize.resize(manifestEncodedSize);
-        }
-        actualEncodedBufSize = encode(m_encodeBufferSize.data(), manifest.data(), manifest.size());
-        LogTrace("before manifest write");
-        outStream.write(reinterpret_cast<char *>(m_encodeBufferSize.data()), actualEncodedBufSize);
-
-        auto const &token3 = m_tdfBuilder.m_impl->m_htmlTemplateTokens[2];
-        LogTrace("before token3 write");
-        outStream.write(token3.data(), token3.size());
-
-        /// 3 - Write the secure reader url.
-        const auto &url = m_tdfBuilder.m_impl->m_secureReaderUrl;
-        LogTrace("before sr url write");
-        outStream.write(url.data(), url.size());
-
-        auto const &token4 = m_tdfBuilder.m_impl->m_htmlTemplateTokens[3];
-        LogTrace("before token4 write");
-        outStream.write(token4.data(), token4.size());
-
-        /// 4 - Write the secure reader base url.
-        std::regex urlRegex("(http|https)://([^/ ]+)(/?[^ ]*)");
-        std::cmatch what;
-        if (!regex_match(url.c_str(), what, urlRegex)) {
-            std::string errorMsg{"Failed to parse url, expected:'(http|https)//<domain>/<target>' actual:"};
-            errorMsg.append(url);
-            ThrowException(std::move(errorMsg));
-        }
-
-        std::ostringstream targetBaseUrl;
-        targetBaseUrl << std::string(what[1].first, what[1].second) << "://";
-        targetBaseUrl << std::string(what[2].first, what[2].second);
-
-        auto targetBaseUrlStr = targetBaseUrl.str();
-        LogTrace("before base url write");
-        outStream.write(targetBaseUrlStr.data(), targetBaseUrlStr.size());
-
-        auto const &token5 = m_tdfBuilder.m_impl->m_htmlTemplateTokens[4];
-        LogTrace("before token5 write");
-        outStream.write(token5.data(), token5.size());
-
-        /// 5 - Write he secure reader url for window.location.href - 1
-        LogTrace("before sr url write 2");
-        outStream.write(url.data(), url.size());
-
-        auto const &token6 = m_tdfBuilder.m_impl->m_htmlTemplateTokens[5];
-        LogTrace("before token6 write");
-        outStream.write(token6.data(), token6.size());
-
-        /// 6 - Write he secure reader url for window.location.href - 2
-        LogTrace("before sr url write 2");
-        outStream.write(url.data(), url.size());
-
-        auto const &token7 = m_tdfBuilder.m_impl->m_htmlTemplateTokens[6];
-        LogTrace("before token7 write");
-        outStream.write(token7.data(), token7.size());
-
-        LogTrace("exiting TDFImpl::generateHtmlTdf");
+        std::ostringstream os;
+        os << "Total decrypt-time:" << timeSpent << " ms";
+        LogInfo(os.str());
+#endif
     }
 
+    /// Decrypt data from reader and write to IOutputProvider
+    void TDFImpl::decryptIOProviderImpl(ITDFReader& reader, IOutputProvider& outputProvider) {
 
-    bool TDFImpl::isStreamTDF(std::istream &inStream) {
-        LogTrace("TDFImpl::isStreamTDF");
+        auto manifestStr = reader.getManifest();
 
-        // Reset the input stream.
-        const auto final = gsl::finally([&inStream] {
-            inStream.clear();
-        });
+        // Parse the manifest
+        auto manifest = nlohmann::json::parse(manifestStr);
 
-        auto protocol = encryptedWithProtocol(inStream);
+        // Validate the cipher type before creating a split key
+        validateCipherType(manifest);
+
+        WrappedKey wrappedKey = unwrapKey(manifest);
+
+        LogDebug("Obtained the wrappedKey from manifest.");
+
+        // Create a split key and the key access object based on access type.
+        auto splitKey = SplitKey{CipherType::Aes256GCM};
+        splitKey.setWrappedKey(wrappedKey);
+
+        // Validate the root signature from the manifest.
+        validateRootSignature(splitKey, manifest);
+
+        auto &integrityInformation = manifest[kEncryptionInformation][kIntegrityInformation];
+        size_t segmentSizeDefault = integrityInformation[kSegmentSizeDefault];
+        size_t defaultEncryptedSegmentSize = integrityInformation[kEncryptedSegSizeDefault];
+
+        auto ivSize = (m_tdfBuilder.m_impl->m_cipherType == CipherType::Aes256GCM) ? kGcmIvSize : kCbcIvSize;
+        if (segmentSizeDefault != (defaultEncryptedSegmentSize - ((ivSize + kAesBlockSize)))) {
+            ThrowException("EncryptedSegmentSizeDefault is missing in tdf", VIRTRU_TDF_FORMAT_ERROR);
+        }
+
+        const auto& segmentInfos = manifest[kEncryptionInformation][kIntegrityInformation][kSegments];
+
+        ///
+        /// Create buffers for reading from file and for performing decryption.
+        /// These buffers will be reused.
+        ///
+        std::vector<gsl::byte> readBuffer(defaultEncryptedSegmentSize);
+        std::vector<gsl::byte> decryptedBuffer(segmentSizeDefault);
+
+        std::string segmentHashAlg = integrityInformation[kSegmentHashAlg];
+        size_t payloadOffset = 0;
+        for (auto &segment : segmentInfos) {
+
+            // Adjust read buffer size
+            auto readBufferSpan = WriteableBytes{readBuffer};
+            if (segment.contains(kEncryptedSegmentSize)) {
+                int encryptedSegmentSize = segment[kEncryptedSegmentSize];
+                readBufferSpan = WriteableBytes{readBufferSpan.data(), encryptedSegmentSize};
+            }
+
+            // Adjust decrypt buffer size
+            auto outBufferSpan = WriteableBytes{decryptedBuffer};
+            if (segment.contains(kSegmentSize)) {
+                int segmentSize = segment[kSegmentSize];
+                outBufferSpan = WriteableBytes{outBufferSpan.data(), segmentSize};
+            }
+
+            // Read form zip reader.
+            reader.readPayload(payloadOffset, readBufferSpan.size(), readBufferSpan);
+            payloadOffset += readBufferSpan.size();
+
+            // Decrypt the payload.
+            splitKey.decrypt(readBufferSpan, outBufferSpan);
+
+            auto payloadSigStr = getSignature(readBufferSpan, splitKey, segmentHashAlg);
+            std::string hash = segment[kHash];
+
+            // Validate the hash.
+            if (hash != base64Encode(payloadSigStr)) {
+                ThrowException("Failed integrity check on segment hash", VIRTRU_CRYPTO_ERROR);
+            }
+
+            outputProvider.writeBytes(outBufferSpan);
+        }
+    }
+
+    /// Decrypt data starting at index and of length from input provider
+    /// and write to output provider
+    void TDFImpl::decryptIOProviderPartial(IInputProvider& inputProvider,
+                                           IOutputProvider& outputProvider,
+                                           size_t offset,
+                                           size_t length) {
+
+        auto protocol = encryptedWithProtocol(inputProvider);
+        if (protocol != Protocol::Zip) {
+            ThrowException("Only zip protocol is supported", VIRTRU_TDF_FORMAT_ERROR);
+        }
+
+        TDFArchiveReader reader{&inputProvider, kTDFManifestFileName, kTDFPayloadFileName };
+        auto manifestStr = reader.getManifest();
+
+        // Parse the manifest
+        auto manifest = nlohmann::json::parse(manifestStr);
+
+        // Validate the cipher type before creating a split key
+        validateCipherType(manifest);
+
+        WrappedKey wrappedKey = unwrapKey(manifest);
+
+        LogDebug("Obtained the wrappedKey from manifest.");
+
+        // Create a split key and the key access object based on access type.
+        auto splitKey = SplitKey{CipherType::Aes256GCM};
+        splitKey.setWrappedKey(wrappedKey);
+
+        // Validate the root signature from the manifest.
+        validateRootSignature(splitKey, manifest);
+
+        auto &integrityInformation = manifest[kEncryptionInformation][kIntegrityInformation];
+        size_t segmentSizeDefault = integrityInformation[kSegmentSizeDefault];
+        size_t defaultEncryptedSegmentSize = integrityInformation[kEncryptedSegSizeDefault];
+
+        auto ivSize = (m_tdfBuilder.m_impl->m_cipherType == CipherType::Aes256GCM) ? kGcmIvSize : kCbcIvSize;
+        if (segmentSizeDefault != (defaultEncryptedSegmentSize - ((ivSize + kAesBlockSize)))) {
+            ThrowException("EncryptedSegmentSizeDefault is missing in tdf", VIRTRU_TDF_FORMAT_ERROR);
+        }
+
+        // Get the segments array and calculate the payload size.
+        const auto& segmentInfos = manifest[kEncryptionInformation][kIntegrityInformation][kSegments];
+        auto segmentArraySize = segmentInfos.size();
+        size_t encryptedPayloadSize = 0;
+        for (const auto& segment : segmentInfos) {
+            size_t encryptedSegmentSize = segment[kEncryptedSegmentSize];
+            encryptedPayloadSize += encryptedSegmentSize;
+        }
+
+        auto payloadSize = encryptedPayloadSize - (segmentArraySize * (ivSize + kAesBlockSize));
+        auto segmentOffset = static_cast<size_t>((floor(static_cast<double>(offset)/static_cast<double>(segmentSizeDefault))));
+        auto lastSegment = static_cast<size_t>(ceil(static_cast<double>(offset+length)/static_cast<double>(segmentSizeDefault)));
+
+        if (segmentOffset >= lastSegment) {
+            ThrowException("Fail to calculate the required segments", VIRTRU_TDF_FORMAT_ERROR);
+        }
+
+        if ((offset + length) > payloadSize) {
+            ThrowException("Fail to calculate the required segments", VIRTRU_TDF_FORMAT_ERROR);
+        }
+
+        auto sizeRequiredForSegments = segmentSizeDefault * ((lastSegment - segmentOffset) + 1);
+        std::vector<gsl::byte> bufferForRequiredSegments(sizeRequiredForSegments);
+        auto bufferOffset = 0;
+
+        ///
+        /// Create buffers for reading from file and for performing decryption.
+        /// These buffers will be reused.
+        ///
+        std::vector<gsl::byte> readBuffer(defaultEncryptedSegmentSize);
+        std::vector<gsl::byte> decryptedBuffer(segmentSizeDefault);
+        std::string segmentHashAlg = integrityInformation[kSegmentHashAlg];
+
+        size_t payloadOffset = 0;
+        for (size_t index = 0; index < segmentInfos.size(); index++) {
+
+            const auto& segment = segmentInfos[index];
+
+            size_t encryptedSegmentSize = segment[kEncryptedSegmentSize];
+            if (segmentOffset > index ) {
+                // Update the payload offset and skip the read.
+                payloadOffset += encryptedSegmentSize;
+                continue;
+            } else {
+
+                // Adjust read buffer size
+                auto readBufferSpan = WriteableBytes{readBuffer};
+                if (segment.contains(kEncryptedSegmentSize)) {
+                    readBufferSpan = WriteableBytes{readBufferSpan.data(),
+                                                    static_cast<std::ptrdiff_t>(encryptedSegmentSize)};
+                }
+
+                // Adjust decrypt buffer size
+                auto outBufferSpan = WriteableBytes{decryptedBuffer};
+                if (segment.contains(kSegmentSize)) {
+                    int segmentSize = segment[kSegmentSize];
+                    outBufferSpan = WriteableBytes{outBufferSpan.data(), segmentSize};
+                }
+
+
+                // Read form zip reader.
+                reader.readPayload(payloadOffset, encryptedSegmentSize, readBufferSpan);
+                payloadOffset += encryptedSegmentSize;
+
+                // Decrypt the payload.
+                splitKey.decrypt(readBufferSpan, outBufferSpan);
+
+                auto payloadSigStr = getSignature(readBufferSpan, splitKey, segmentHashAlg);
+                std::string hash = segment[kHash];
+
+                // Validate the hash.
+                if (hash != base64Encode(payloadSigStr)) {
+                    ThrowException("Failed integrity check on segment hash", VIRTRU_CRYPTO_ERROR);
+                }
+
+                // Write the decrypted data to segment buffer
+                std::copy(outBufferSpan.begin(),
+                          outBufferSpan.end(),
+                          bufferForRequiredSegments.begin() + bufferOffset);
+                bufferOffset += outBufferSpan.size();
+            }
+
+            if (index == lastSegment) {
+                break;
+            }
+        }
+
+        size_t startOfPlainText = offset - (segmentOffset * segmentSizeDefault);
+        auto bytesToWrite = gsl::make_span(reinterpret_cast<const char *>(bufferForRequiredSegments.data() + startOfPlainText),
+                                           length);
+        outputProvider.writeBytes(toBytes(bytesToWrite));
+    }
+
+    bool TDFImpl::isInputProviderTDF(IInputProvider& inputProvider) {
+        LogTrace("TDFImpl::isInputProviderTDF");
+
+        auto protocol = encryptedWithProtocol(inputProvider);
         try
         {
             if (protocol == Protocol::Zip) {
-                TDFArchiveReader reader(inStream, kTDFManifestFileName, kTDFPayloadFileName);
+                TDFArchiveReader reader{&inputProvider, kTDFManifestFileName, kTDFPayloadFileName };
+                reader.getManifest();
                 return true;
 
             } else if (protocol == Protocol::Xml) {
-                TDFXMLReader reader(inStream);
+                TDFXMLReader reader{inputProvider};
                 reader.getManifest();
                 reader.getPayloadSize();
                 return true;
-
             } else {
-                // Get the stream size
-                inStream.seekg(0, inStream.end);
-                auto dataSize = inStream.tellg();
-                inStream.seekg(0, inStream.beg);
-
+                auto dataSize = inputProvider.getSize();
                 std::unique_ptr<std::uint8_t[]> buffer(new std::uint8_t[dataSize]);
 
                 // Read all the data from input stream
-                inStream.read(reinterpret_cast<char *>(buffer.get()), dataSize);
+                auto htmlBytes = gsl::make_span(buffer.get(), dataSize);
+                auto writeableBytes = toWriteableBytes(htmlBytes);
+                inputProvider.readBytes(0, dataSize, writeableBytes);
 
                 auto bytes = gsl::make_span(buffer.get(), dataSize);
                 auto tdfData = getTDFZipData(toBytes(bytes));
                 auto manifestData = getTDFZipData(toBytes(bytes), true);
-                bufferstream inputStream(reinterpret_cast<char *>(tdfData.data()), tdfData.size());
-                TDFArchiveReader reader(inputStream, kTDFManifestFileName, kTDFPayloadFileName);
-                
+
+                std::string tdfString(tdfData.begin(), tdfData.end());
+                std::istringstream inputStream(tdfString);
+                StreamInputProvider ipProvider{inputStream};
+                TDFArchiveReader reader{&ipProvider, kTDFManifestFileName, kTDFPayloadFileName };
+                reader.getManifest();
                 return true;
             }
         }
@@ -1016,10 +616,10 @@ namespace virtru {
 
     /// Decrypt and return TDF metadata as a string. If the TDF content has
     /// no encrypted metadata, will return an empty string.
-    std::string TDFImpl::getEncryptedMetadata(std::istream& inStream) {
+    std::string TDFImpl::getEncryptedMetadata(IInputProvider& inputProvider) {
         LogTrace("TDFImpl::getEncryptedMetadata");
 
-        auto manifestStr = getManifest(inStream);
+        auto manifestStr = getManifest(inputProvider);
         auto manifest = nlohmann::json::parse(manifestStr);
         nlohmann::json keyAccessObjects = nlohmann::json::array();
         keyAccessObjects = manifest[kEncryptionInformation][kKeyAccess];
@@ -1069,88 +669,21 @@ namespace virtru {
         return metadata;
     }
 
-    /// Return the policy JSON string from the tdf input stream.
-    std::string TDFImpl::getPolicy(std::istream &inStream) {
+    /// Extract and return the JSON policy string from the input provider.
+    std::string TDFImpl::getPolicy(IInputProvider& inputProvider) {
 
-        LogTrace("TDFImpl::getPolicy stream");
+        LogTrace("TDFImpl::getPolicy");
 
-        auto manifestStr = getManifest(inStream);
+        auto manifestStr = getManifest(inputProvider);
         return getPolicyFromManifest(manifestStr);
     }
 
-    /// Return the policy uuid from the tdf file.
-    std::string TDFImpl::getPolicyUUID(const std::string &tdfFilePath) {
+    /// Return the policy uuid from the input provider.
+    std::string TDFImpl::getPolicyUUID(IInputProvider& inputProvider) {
 
-        LogTrace("TDFImpl::getPolicyUUID file");
+        LogTrace("TDFImpl::getPolicyUUID");
 
-        std::string manifestStr;
-
-        auto protocol = encryptedWithProtocol(tdfFilePath);
-        if (protocol == Protocol::Zip) {
-
-            // Open the input file for reading.
-            std::ifstream inStream{tdfFilePath, std::ios_base::in | std::ios_base::binary};
-            if (!inStream) {
-                std::string errorMsg{"Failed to open file for reading:"};
-                errorMsg.append(tdfFilePath);
-                ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
-            }
-
-            TDFArchiveReader reader(inStream, kTDFManifestFileName, kTDFPayloadFileName);
-            manifestStr = reader.getManifest();
-
-        } else {
-
-            if (protocol == Protocol::Xml) {
-                ThrowException("XML TDF not supported", VIRTRU_TDF_FORMAT_ERROR);
-            }
-
-            auto tdfData = getTDFZipData(tdfFilePath, true);
-            manifestStr.append(tdfData.begin(), tdfData.end());
-        }
-
-        return getPolicyIdFromManifest(manifestStr);
-    }
-
-    /// Return the policy uuid from the tdf input stream.
-    std::string TDFImpl::getPolicyUUID(std::istream &inStream) {
-
-        LogTrace("TDFImpl::getPolicyUUID stream");
-
-        // Reset the input stream.
-        const auto final = gsl::finally([&inStream] {
-            inStream.clear();
-        });
-
-        std::string manifestStr;
-
-        auto protocol = encryptedWithProtocol(inStream);
-        if (protocol == Protocol::Zip) {
-            TDFArchiveReader reader(inStream, kTDFManifestFileName, kTDFPayloadFileName);
-
-            manifestStr = reader.getManifest();
-        } else { // html format
-
-            if (protocol == Protocol::Xml) {
-                ThrowException("XML TDF not supported", VIRTRU_TDF_FORMAT_ERROR);
-            }
-
-            // Get the stream size
-            inStream.seekg(0, inStream.end);
-            auto dataSize = inStream.tellg();
-            inStream.seekg(0, inStream.beg);
-
-            std::unique_ptr<std::uint8_t[]> buffer(new std::uint8_t[dataSize]);
-
-            // Read all the data from input stream
-            inStream.read(reinterpret_cast<char *>(buffer.get()), dataSize);
-
-            auto bytes = gsl::make_span(buffer.get(), dataSize);
-            auto manifestData = getTDFZipData(toBytes(bytes), true);
-
-            manifestStr.append(manifestData.begin(), manifestData.end());
-        }
-
+        std::string manifestStr = getManifest(inputProvider);
         return getPolicyIdFromManifest(manifestStr);
     }
 
@@ -1161,7 +694,8 @@ namespace virtru {
 
         std::string manifestStr;
 
-        auto protocol = encryptedWithProtocol(encryptedTdfFilepath);
+        FileInputProvider inputProvider{encryptedTdfFilepath};
+        auto protocol = encryptedWithProtocol(inputProvider);
         if (protocol == Protocol::Zip) {
             // Open the input file for reading.
             std::ifstream inputStream{encryptedTdfFilepath, std::ios_base::in | std::ios_base::binary};
@@ -1171,7 +705,9 @@ namespace virtru {
                 ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
             }
 
-            TDFArchiveReader reader(inputStream, kTDFManifestFileName, kTDFPayloadFileName);
+            TDFArchiveReader reader{&inputProvider,
+                                    kTDFManifestFileName,
+                                    kTDFPayloadFileName};
             manifestStr = reader.getManifest();
         } else {
 
@@ -1624,47 +1160,121 @@ namespace virtru {
         return decodeBuffer;
     }
 
-    // Return the TDF protocol used to encrypt the file
-    Protocol TDFImpl::encryptedWithProtocol(const std::string& inTdfFilePath) {
+    void TDFImpl::generateHtmlTdf(const std::string &manifest,
+                                  std::istream &inputStream,
+                                  IOutputProvider& outputProvider) {
 
-        LogTrace("TDFImpl::encryptedWithProtocol file");
+        LogTrace("TDFImpl::generateHtmlTdf");
 
-        // Open the input file for reading.
-        std::ifstream inputStream{inTdfFilePath, std::ios_base::in | std::ios_base::binary};
-        if (!inputStream) {
-            std::string errorMsg{"Failed to open file for reading:"};
-            errorMsg.append(inTdfFilePath);
-            ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
+        using namespace boost::beast::detail::base64;
+
+        auto const &token1 = m_tdfBuilder.m_impl->m_htmlTemplateTokens[0];
+        LogTrace("before token1 write");
+        outputProvider.writeBytes(toBytes(token1));
+
+        /// 1 - Write the contents of the tdf in base64
+        std::size_t actualEncodedBufSize;
+        std::vector<std::uint8_t> zipReadBuffer(kZipReadSize);
+        std::vector<std::uint8_t> encodeBuffer(encoded_size(kZipReadSize));
+
+        // Vectors m_encodeBufferSize and m_zipReadBuffer are sized in constructor if protocol is html
+        while (!inputStream.eof()) {
+
+            // Read from the file.
+            LogTrace("before zip read");
+            inputStream.read(reinterpret_cast<char *>(zipReadBuffer.data()), kZipReadSize);
+
+            // Encode the tdf zip data.
+            actualEncodedBufSize = encode(encodeBuffer.data(), zipReadBuffer.data(), inputStream.gcount());
+
+            // Write to the html file
+            LogTrace("before encoded data write");
+            auto bytes = gsl::make_span(encodeBuffer.data(), actualEncodedBufSize);
+            outputProvider.writeBytes(toBytes(bytes));
         }
 
-        static constexpr auto twoChar = 2;
+        auto const &token2 = m_tdfBuilder.m_impl->m_htmlTemplateTokens[1];
+        LogTrace("before token1 write");
+        outputProvider.writeBytes(toBytes(token2));
 
-        // Read first 2 chars from file and determine the protocol
-        std::vector<char> result(twoChar);
-        inputStream.read(reinterpret_cast<char *>(result.data()), twoChar);
+        /// 2 - Write the contents of the manifest in base64
 
-        if (boost::iequals(std::string(result.begin(), result.end()), firstTwoCharsOfZip)) {
-            return Protocol::Zip;
-        } else if(boost::iequals(std::string(result.begin(), result.end()), firstTwoCharsOfXML)) {
-            return Protocol::Xml;
-        } else {
-            return Protocol::Html;
+        // manifest can grow larger than our prealloc'ed buffer, correct that if it's a problem
+        unsigned manifestEncodedSize = encoded_size(manifest.size());
+        if (manifestEncodedSize > encodeBuffer.size()) {
+            encodeBuffer.resize(manifestEncodedSize);
         }
+        actualEncodedBufSize = encode(encodeBuffer.data(), manifest.data(), manifest.size());
+        LogTrace("before manifest write");
+
+        auto bytes = gsl::make_span(encodeBuffer.data(), actualEncodedBufSize);
+        outputProvider.writeBytes(toBytes(bytes));
+
+        auto const &token3 = m_tdfBuilder.m_impl->m_htmlTemplateTokens[2];
+        LogTrace("before token3 write");
+        outputProvider.writeBytes(toBytes(token3));
+
+        /// 3 - Write the secure reader url.
+        const auto &url = m_tdfBuilder.m_impl->m_secureReaderUrl;
+        LogTrace("before sr url write");
+        outputProvider.writeBytes(toBytes(url));
+
+        auto const &token4 = m_tdfBuilder.m_impl->m_htmlTemplateTokens[3];
+        LogTrace("before token4 write");
+        outputProvider.writeBytes(toBytes(token4));
+
+        /// 4 - Write the secure reader base url.
+        std::regex urlRegex("(http|https)://([^/ ]+)(/?[^ ]*)");
+        std::cmatch what;
+        if (!regex_match(url.c_str(), what, urlRegex)) {
+            std::string errorMsg{"Failed to parse url, expected:'(http|https)//<domain>/<target>' actual:"};
+            errorMsg.append(url);
+            ThrowException(std::move(errorMsg));
+        }
+
+        std::ostringstream targetBaseUrl;
+        targetBaseUrl << std::string(what[1].first, what[1].second) << "://";
+        targetBaseUrl << std::string(what[2].first, what[2].second);
+
+        auto targetBaseUrlStr = targetBaseUrl.str();
+        LogTrace("before base url write");
+        outputProvider.writeBytes(toBytes(targetBaseUrlStr));
+
+        auto const &token5 = m_tdfBuilder.m_impl->m_htmlTemplateTokens[4];
+        LogTrace("before token5 write");
+        outputProvider.writeBytes(toBytes(token5));
+
+        /// 5 - Write he secure reader url for window.location.href - 1
+        LogTrace("before sr url write 2");
+        outputProvider.writeBytes(toBytes(url));
+
+        auto const &token6 = m_tdfBuilder.m_impl->m_htmlTemplateTokens[5];
+        LogTrace("before token6 write");
+        outputProvider.writeBytes(toBytes(token6));
+
+        /// 6 - Write he secure reader url for window.location.href - 2
+        LogTrace("before sr url write 2");
+        outputProvider.writeBytes(toBytes(url));
+
+        auto const &token7 = m_tdfBuilder.m_impl->m_htmlTemplateTokens[6];
+        LogTrace("before token7 write");
+        outputProvider.writeBytes(toBytes(token7));
+
+        LogTrace("exiting TDFImpl::generateHtmlTdf");
     }
 
-    // Return the TDF protocol used to encrypt the input stream data
-    Protocol TDFImpl::encryptedWithProtocol(std::istream& tdfInStream) {
 
-        LogTrace("TDFImpl::encryptedWithProtocol stream");
+    /// Return the TDF protocol used to encrypt the data from input provider
+    Protocol TDFImpl::encryptedWithProtocol(IInputProvider& inputProvider) {
+
+        LogTrace("TDFImpl::encryptedWithProtocol input provider");
 
         static constexpr auto twoChar = 2;
-
-        // set to the start.
-        tdfInStream.seekg(0, tdfInStream.beg);
+        std::vector<char> result(twoChar);
 
         // Read first 2 chars from file and determine the protocol
-        std::vector<char> result(twoChar);
-        tdfInStream.read(reinterpret_cast<char *>(result.data()), twoChar);
+        auto resultBytes = toWriteableBytes(result);
+        inputProvider.readBytes(0, twoChar, resultBytes);
 
         Protocol protocol = Protocol::Html;
         if (boost::iequals(std::string(result.begin(), result.end()), firstTwoCharsOfZip)) {
@@ -1673,10 +1283,42 @@ namespace virtru {
             protocol = Protocol::Xml;
         }
 
-        // Move back to the start.
-        tdfInStream.seekg(0, tdfInStream.beg);
-
         return protocol;
+    }
+
+    /// Return the manifest from the tdf input provider.
+    std::string TDFImpl::getManifest(IInputProvider& inputProvider) const {
+        LogTrace("TDFImpl::getManifest from tdf stream");
+
+        std::string manifestStr;
+
+        auto protocol = encryptedWithProtocol(inputProvider);
+        if (protocol == Protocol::Zip) {
+            TDFArchiveReader reader{&inputProvider,
+                                    kTDFManifestFileName,
+                                    kTDFPayloadFileName};
+            manifestStr = reader.getManifest();
+        } else { // html format
+
+            if (protocol == Protocol::Xml) {
+                ThrowException("XML TDF not supported", VIRTRU_TDF_FORMAT_ERROR);
+            }
+
+            auto dataSize = inputProvider.getSize();
+            std::unique_ptr<std::uint8_t[]> buffer(new std::uint8_t[dataSize]);
+
+            // Read all the data from input stream
+            auto htmlBytes = gsl::make_span(buffer.get(), dataSize);
+            auto writeableBytes = toWriteableBytes(htmlBytes);
+            inputProvider.readBytes(0, dataSize, writeableBytes);
+
+            auto bytes = gsl::make_span(buffer.get(), dataSize);
+            auto manifestData = getTDFZipData(toBytes(bytes), true);
+
+            manifestStr.append(manifestData.begin(), manifestData.end());
+        }
+
+        return manifestStr;
     }
 
     /// Retrive the policy from the manifest.
@@ -1703,47 +1345,6 @@ namespace virtru {
         return policyStr;
     }
 
-    /// Return the manifest from the tdf input stream.
-    std::string TDFImpl::getManifest(std::istream &tdfInStream) const {
-        LogTrace("TDFImpl::getManifest from tdf stream");
-
-        // Reset the input stream.
-        const auto final = gsl::finally([&tdfInStream] {
-            tdfInStream.clear();
-        });
-
-        std::string manifestStr;
-
-        auto protocol = encryptedWithProtocol(tdfInStream);
-        if (protocol == Protocol::Zip) {
-            TDFArchiveReader reader(tdfInStream, kTDFManifestFileName, kTDFPayloadFileName);
-
-            manifestStr = reader.getManifest();
-        } else { // html format
-
-            if (protocol == Protocol::Xml) {
-                ThrowException("XML TDF not supported", VIRTRU_TDF_FORMAT_ERROR);
-            }
-
-            // Get the stream size
-            tdfInStream.seekg(0, tdfInStream.end);
-            auto dataSize = tdfInStream.tellg();
-            tdfInStream.seekg(0, tdfInStream.beg);
-
-            std::unique_ptr<std::uint8_t[]> buffer(new std::uint8_t[dataSize]);
-
-            // Read all the data from input stream
-            tdfInStream.read(reinterpret_cast<char *>(buffer.get()), dataSize);
-
-            auto bytes = gsl::make_span(buffer.get(), dataSize);
-            auto manifestData = getTDFZipData(toBytes(bytes), true);
-
-            manifestStr.append(manifestData.begin(), manifestData.end());
-        }
-
-        return manifestStr;
-    }
-
     /// Retrive the policy uuid(id) from the manifest.
     std::string TDFImpl::getPolicyIdFromManifest(const std::string &manifestStr) const {
         auto policyStr = getPolicyFromManifest(manifestStr);
@@ -1757,43 +1358,55 @@ namespace virtru {
         return policy[kUid];
     }
 
-    //============================================================
+    /// Validate the supported cipher type
+    void TDFImpl::validateCipherType(const nlohmann::json& manifest) const {
+        // Get the algorithm and key type.
+        std::string algorithm = manifest[kEncryptionInformation][kMethod][kCipherAlgorithm];
+        std::string keyType = manifest[kEncryptionInformation][kEncryptKeyType];
 
-    std::string getManifest() {
-        std::string result;
-        return result;
+        if (!boost::iequals(algorithm, kCipherAlgorithmGCM)) {
+            ThrowException("Only AES GCM cipher algorithm is supported for tdf operations.", VIRTRU_CRYPTO_ERROR);
+        }
+
+        if (!boost::iequals(keyType, kSplitKeyType)) {
+            ThrowException("Only split key type is supported for tdf operations.", VIRTRU_CRYPTO_ERROR);
+        }
     }
 
-    std::vector<VBYTE> getFileSegment(const std::string &inFilepath, unsigned long segmentNumber) {
-        LogTrace("TDFClient::getSegment");
-        // open as zip
-        // read 0.data
-        // seek to requested segment
-        // return requested segment number
-        std::vector<VBYTE> result;
-        return result;
-    }
+    /// Validate the root signature.
+    void TDFImpl::validateRootSignature(SplitKey& splitKey, const nlohmann::json& manifest) const {
 
-    unsigned long getSegmentCount(const std::string &inFilepath) {
-        LogTrace("TDFClient::getSegmentCount");
-        std::string manifest = getManifest();
-        unsigned long result= 0;// = manifest.segmentCount;
-        return result;
-    }
+        auto &rootSignature = manifest[kEncryptionInformation][kIntegrityInformation][kRootSignature];
+        std::string rootSignatureAlg = rootSignature[kRootSignatureAlg];
+        std::string rootSignatureSig = rootSignature[kRootSignatureSig];
 
-    unsigned long getSegmentSize(const std::string &inFilepath) {
-        LogTrace("TDFClient:getSegmentSize");
-        std::string manifest = getManifest();
-        unsigned long result = 0;// = manifest.segmentSize;
-        return result;
-    }
+        // Get the hashes from the segments and combine.
+        std::string aggregateHash;
+        const auto&  segmentInfos= manifest[kEncryptionInformation][kIntegrityInformation][kSegments];
+        for (const auto& segment : segmentInfos) {
+            std::string hash = segment[kHash];
+            aggregateHash.append(base64Decode(hash));
+        }
 
-    void calculateSegmentRange(const std::string &inFilepath, size_t offset, size_t length, size_t* segmentOffset, size_t* segmentCount) {
-        LogTrace("TDFClient::calculateSegmentRange");
-        size_t segSize = getSegmentSize(inFilepath);
-        *segmentOffset = offset % segSize;
-        *segmentCount = (length % segSize) + 1;
-    }
+        // Check the combined string of hashes
+        auto payloadSigStr = getSignature(toBytes(aggregateHash), splitKey, rootSignatureAlg);
+        if (rootSignatureSig != base64Encode(payloadSigStr)) {
+            ThrowException("Failed integrity check on root signature", VIRTRU_CRYPTO_ERROR);
+        }
 
+        LogDebug("RootSignatureSig is validated.");
+
+        auto &integrityInformation = manifest[kEncryptionInformation][kIntegrityInformation];
+
+        // Check for default segment size.
+        if (!integrityInformation.contains(kSegmentSizeDefault)) {
+            ThrowException("SegmentSizeDefault is missing in tdf", VIRTRU_TDF_FORMAT_ERROR);
+        }
+
+        // Check for default encrypted segment size.
+        if (!integrityInformation.contains(kEncryptedSegSizeDefault)) {
+            ThrowException("EncryptedSegmentSizeDefault is missing in tdf", VIRTRU_TDF_FORMAT_ERROR);
+        }
+    }
 
 } // namespace virtru

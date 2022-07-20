@@ -17,16 +17,18 @@
 #include "tdf_reader.h"
 #include "tdf_constants.h"
 #include "crypto/bytes.h"
+#include "io_provider.h"
+#include "tdf_archive_reader.h"
 
 namespace virtru {
 
     using namespace virtru::crypto;
 
-    class TDFXMLReader : public TDFReader {
+    class TDFXMLReader : public ITDFReader {
     public:
         /// Constructor
-        /// \param inStream - A source input stream which hold the xml data.
-        TDFXMLReader(std::istream& inStream);
+        /// \param inputProvider -  A input provider which hold the xml data.
+        TDFXMLReader(IInputProvider& inputProvider);
 
         /// Delete default constructor
         TDFXMLReader() = delete;
@@ -40,26 +42,25 @@ namespace virtru {
         TDFXMLReader & operator=(const TDFXMLReader &) = delete;
         TDFXMLReader & operator=(TDFXMLReader &&) = delete;
 
-    public: // From TDFWriter
+    public: // From ITDFReader
         /// Get the manifest content.
         /// \return - Return the manifest as string.
         const std::string& getManifest() override;
 
-        /// Read the payload contents into the buffer.
-        /// The size of buffer could be less than requested size.
-        /// \param buffer - WriteableBytes
-        void readPayload(WriteableBytes& buffer) override;
+        /// Read payload of length starting the index.
+        /// \param index - index within data where read is to begin
+        /// \param length - length of data to be retrieved starting from index
+        /// \param bytes - buffer for storing the retrieved data
+        void readPayload(size_t index, size_t length, WriteableBytes &bytes) override;
 
         /// Get the size of the payload.
         /// \return std::uint64_t - Size of the payload.
-        std::int64_t getPayloadSize() const override;
+        std::uint64_t getPayloadSize() const override;
 
     private: /// Data
-        std::istream&           m_inStream;
+        IInputProvider&         m_inputProvider;
         std::string             m_manifest;
         std::vector<gsl::byte>  m_binaryPayload;
-        std::size_t             m_payloadLeftToRead;
-        std::size_t             m_payloadStartIndex{0};
     };
 }
 

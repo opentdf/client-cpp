@@ -26,7 +26,6 @@ int main() {
 
     try {
 
-
         OIDCCredentials clientCreds;
         clientCreds.setClientCredentialsClientSecret(CLIENT_ID, CLIENT_SECRET,
                                                      ORGANIZATION_NAME, OIDC_ENDPOINT);
@@ -34,10 +33,17 @@ int main() {
         // Test NanoTDF
         {
             auto nanoTDFClient = std::make_unique<NanoTDFClient>(clientCreds, KAS_URL);
-            auto cipherText = nanoTDFClient->encryptString(samplePlainTxt);
-            auto plainText = nanoTDFClient->decryptString(cipherText);
 
-            if (samplePlainTxt == plainText) {
+            TDFStorageType encryptStringType;
+            encryptStringType.setTDFStorageStringType(samplePlainTxt);
+            auto cipherText = nanoTDFClient->encryptData(encryptStringType);
+
+            TDFStorageType decryptStringType;
+            decryptStringType.setTDFStorageBufferType(cipherText);
+            auto plainText = nanoTDFClient->decryptData(decryptStringType);
+            std::string plainTextStr(plainText.begin(), plainText.end());
+
+            if (samplePlainTxt == plainTextStr) {
                 std::cout << "NanoTDF test passed!!" << std::endl;
             } else {
                 std::cerr << "NanoTDF test failed!!" << std::endl;
@@ -45,16 +51,23 @@ int main() {
             }
         }
 
-        // Test NanoTDF
+        // Test TDF3
         {
-            auto nanoTDFClient = std::make_unique<NanoTDFClient>(clientCreds, KAS_URL);
-            auto cipherText = nanoTDFClient->encryptString(samplePlainTxt);
-            auto plainText = nanoTDFClient->decryptString(cipherText);
+            auto client = std::make_unique<TDFClient>(clientCreds, KAS_URL);
 
-            if (samplePlainTxt == plainText) {
-                std::cout << "NanoTDF test passed!!" << std::endl;
+            TDFStorageType encryptStringType;
+            encryptStringType.setTDFStorageStringType(samplePlainTxt);
+            auto encryptedText = client->encryptData(encryptStringType);
+
+            TDFStorageType decryptBufferType;
+            decryptBufferType.setTDFStorageBufferType(encryptedText);
+            auto plainTextAfterDecrypt = client->decryptData(decryptBufferType);
+            std::string plainTextStr(plainTextAfterDecrypt.begin(), plainTextAfterDecrypt.end());
+
+            if (samplePlainTxt == plainTextStr) {
+                std::cout << "TDF3 test passed!!" << std::endl;
             } else {
-                std::cerr << "NanoTDF test failed!!" << std::endl;
+                std::cerr << "TDF3 test failed!!" << std::endl;
                 return EXIT_FAILURE;
             }
         }

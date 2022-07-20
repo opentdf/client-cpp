@@ -10,11 +10,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 ### Added
+1.1.0
+ - PLAT-1871 opentdf 1.1.0 relase, custom zip and major api cleanup
+
+1.0.1
+- PLAT-1665 Add S3 read and write support, add http HEAD support
+- PLAT-1895 Fix http response parser max limit to fix errors where S3 object is > 8mb
+
 1.0.0
 - PLAT-1836 - Update OpenTDF client-cpp with 1.0.0 release
 - PLAT-1835 - Update OpenTDF Python SDK on PyPI with 1.0.0 release
 
 0.7.6
+- PLAT-1752 Create C++ IOProvider interface to support zipfile manager
+- PLAT-1666 Reasonably quick 'decrypt offset: length:' method
+- PLAT-1664 Create C++ IOProvider for local file I/O to support new zipfile manager
+- PLAT-1748 Create C++ zipfile manager to read zip files
 - PLAT-1805 Allow java to catch native c++ lib exceptions
 
 0.7.5

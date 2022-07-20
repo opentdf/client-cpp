@@ -24,8 +24,9 @@ namespace virtru {
     constexpr auto kXMLEncoding = "UTF-8";
 
     /// Constructor for TDFXMLWriter
-    TDFXMLWriter::TDFXMLWriter(std::string manifestFilename, std::string payloadFileName)
-        : m_manifestFilename{std::move(manifestFilename)}, m_payloadFileName{std::move(payloadFileName)} {
+    TDFXMLWriter::TDFXMLWriter(IOutputProvider& outputProvider, std::string manifestFilename, std::string payloadFileName)
+            : m_manifestFilename{std::move(manifestFilename)}, m_payloadFileName{std::move(payloadFileName)},
+            m_outputProvider(outputProvider){
     }
 
     /// Set the payload size of the TDF
@@ -44,8 +45,9 @@ namespace virtru {
         m_binaryPayload.insert(m_binaryPayload.end(), payload.begin(), payload.end());
     }
 
-    /// Write the XML TDF to the output stream
-    void TDFXMLWriter::writeToStream(std::ostream& outStream) {
+    /// Create XML TDF buffer
+    xmlBufferPtr TDFXMLWriter::createTDFXML() {
+
         xmlBufferFreePtr xmlBuffer{xmlBufferCreate()};
         if (!xmlBuffer) {
             std::string errorMsg{"Fail to create XML Buffer for creating the XML TDF"};
@@ -162,7 +164,21 @@ namespace virtru {
             ThrowException(std::move(errorMsg));
         }
 
-        outStream.write(reinterpret_cast<const char *>(xmlBuffer.get()->content),
-                        xmlBufferLength(xmlBuffer.get()));
+        return xmlBuffer.release();
+    }
+
+    /// Finalize archive entry.
+    void TDFXMLWriter::finish() {
+        auto xmlBufferPtr = createTDFXML();
+
+        xmlBufferFreePtr xmlBuffer{xmlBufferPtr};
+        if (!xmlBuffer) {
+            std::string errorMsg{"Fail to create XML Buffer for creating the XML TDF"};
+            ThrowException(std::move(errorMsg));
+        }
+
+        auto data = gsl::make_span(reinterpret_cast<const gsl::byte *>(xmlBuffer.get()->content),
+                                   xmlBufferLength(xmlBuffer.get()));
+        m_outputProvider.writeBytes(data);
     }
 }

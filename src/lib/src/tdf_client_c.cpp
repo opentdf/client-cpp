@@ -73,6 +73,30 @@ DLL_PUBLIC TDFCredsPtr TDFCreateCredentialTokenExchange(const char *oidcEndpoint
     return creds;
 }
 
+DLL_PUBLIC TDFStorageTypePtr TDFCreateTDFStorageFileType(const char *filePath) {
+    auto *storageType = new virtru::TDFStorageType();
+    storageType->setTDFStorageFileType(filePath);
+
+    return storageType;
+}
+
+DLL_PUBLIC TDFStorageTypePtr TDFCreateTDFStorageStringType(const char *buffer) {
+    auto *storageType = new virtru::TDFStorageType();
+    storageType->setTDFStorageStringType(buffer);
+
+    return storageType;
+}
+
+DLL_PUBLIC TDFStorageTypePtr TDFCreateTDFStorageS3Type(const char *S3Url,
+                                                       const char *awsAccessKeyId,
+                                                       const char *awsSecretAccessKey,
+                                                       const char *awsRegionName) {
+    auto *storageType = new virtru::TDFStorageType();
+    storageType->setTDFStorageS3Type(S3Url, awsAccessKeyId, awsSecretAccessKey, awsRegionName);
+
+    return storageType;
+}
+
 /// Destruct the credentials instance.
 DLL_PUBLIC void TDFDestroyCredential(TDFCredsPtr creds) {
     auto *credsCast = static_cast<virtru::OIDCCredentials *>(creds);
@@ -170,14 +194,15 @@ DLL_PUBLIC TDF_STATUS TDFEnableConsoleLogging(TDFClientPtr clientPtr, TDFLogLeve
     return TDF_STATUS_FAILURE;
 }
 
-DLL_PUBLIC TDF_STATUS TDFEncryptFile(TDFClientPtr clientPtr, const char *inFilepath, const char *outFilepath) {
-    if (clientPtr == nullptr || inFilepath == nullptr || outFilepath == nullptr) {
+DLL_PUBLIC TDF_STATUS TDFEncryptFile(TDFClientPtr clientPtr, TDFStorageTypePtr data, const char *outFilepath) {
+    if (clientPtr == nullptr || data == nullptr || outFilepath == nullptr) {
         return TDF_STATUS_INVALID_PARAMS;
     }
 
     try {
         auto *client = static_cast<virtru::TDFClient *>(clientPtr);
-        client->encryptFile(inFilepath, outFilepath);
+        virtru::TDFStorageType *storage = static_cast<virtru::TDFStorageType *>(data);
+        client->encryptFile(*storage, outFilepath);
         return TDF_STATUS_SUCCESS;
     } catch (std::exception &e) {
         LogError(e.what());
@@ -188,14 +213,15 @@ DLL_PUBLIC TDF_STATUS TDFEncryptFile(TDFClientPtr clientPtr, const char *inFilep
 }
 
 /// Decrypt the contents of the TDF file into its original content.
-DLL_PUBLIC TDF_STATUS TDFDecryptFile(TDFClientPtr clientPtr, const char *inFilepath, const char *outFilepath) {
-    if (clientPtr == nullptr || inFilepath == nullptr || outFilepath == nullptr) {
+DLL_PUBLIC TDF_STATUS TDFDecryptFile(TDFClientPtr clientPtr, TDFStorageTypePtr storageTypePtr, const char *outFilepath) {
+    if (clientPtr == nullptr || storageTypePtr == nullptr || outFilepath == nullptr) {
         return TDF_STATUS_INVALID_PARAMS;
     }
 
     try {
         auto *client = static_cast<virtru::TDFClient *>(clientPtr);
-        client->decryptFile(inFilepath, outFilepath);
+        auto *storage = static_cast<virtru::TDFStorageType *>(storageTypePtr);
+        client->decryptFile(*storage, outFilepath);
 
         return TDF_STATUS_SUCCESS;
     } catch (std::exception &e) {
@@ -207,16 +233,15 @@ DLL_PUBLIC TDF_STATUS TDFDecryptFile(TDFClientPtr clientPtr, const char *inFilep
 }
 
 DLL_PUBLIC TDF_STATUS TDFEncryptString(TDFClientPtr clientPtr,
-                                       TDFCBytesPtr inBytesPtr,
-                                       TDFBytesLength inBytesLength,
+                                       TDFStorageTypePtr storageTypePtr,
                                        TDFBytesPtr *outBytesPtr,
                                        TDFBytesLength *outBytesLength) {
     if (clientPtr == nullptr) {
         LogError("Invalid inBytes pointer!");
         return TDF_STATUS_INVALID_PARAMS;
     }
-    if (inBytesPtr == nullptr) {
-        LogError("Invalid inBytes pointer!");
+    if (storageTypePtr == nullptr) {
+        LogError("Invalid tdf storage type ointer!");
         return TDF_STATUS_INVALID_PARAMS;
     }
     if (outBytesPtr == nullptr) {
@@ -230,7 +255,8 @@ DLL_PUBLIC TDF_STATUS TDFEncryptString(TDFClientPtr clientPtr,
 
     try {
         auto *client = static_cast<virtru::TDFClient *>(clientPtr);
-        auto tdfData = client->encryptString({reinterpret_cast<char const *>(inBytesPtr), inBytesLength});
+        auto *storage = static_cast<virtru::TDFStorageType *>(storageTypePtr);
+        auto tdfData = client->encryptData(*storage);
 
         // Copy the encrypted payload.
         *outBytesLength = tdfData.size();
@@ -249,12 +275,11 @@ DLL_PUBLIC TDF_STATUS TDFEncryptString(TDFClientPtr clientPtr,
 
 /// Decrypt the TDF data
 DLL_PUBLIC TDF_STATUS TDFDecryptString(TDFClientPtr clientPtr,
-                                       TDFCBytesPtr inBytesPtr,
-                                       TDFBytesLength inBytesLength,
+                                       TDFStorageTypePtr storageTypePtr,
                                        TDFBytesPtr *outBytesPtr,
                                        TDFBytesLength *outBytesLength) {
     if (clientPtr == nullptr ||
-        inBytesPtr == nullptr ||
+            storageTypePtr == nullptr ||
         outBytesPtr == nullptr ||
         outBytesLength == nullptr) {
         return TDF_STATUS_INVALID_PARAMS;
@@ -262,10 +287,11 @@ DLL_PUBLIC TDF_STATUS TDFDecryptString(TDFClientPtr clientPtr,
 
     try {
         auto *client = static_cast<virtru::TDFClient *>(clientPtr);
+        auto *storage = static_cast<virtru::TDFStorageType *>(storageTypePtr);
 
-        std::string decryptedData = client->decryptString({reinterpret_cast<char const *>(inBytesPtr), inBytesLength});
+        auto decryptedData = client->decryptData(*storage);
 
-        *outBytesLength = decryptedData.length();
+        *outBytesLength = decryptedData.size();
         // Copy the decrypted data to the out buffer.
         *outBytesPtr = static_cast<unsigned char *>(malloc(*outBytesLength));
         std::copy(decryptedData.begin(), decryptedData.end(),
@@ -280,27 +306,30 @@ DLL_PUBLIC TDF_STATUS TDFDecryptString(TDFClientPtr clientPtr,
     return TDF_STATUS_FAILURE;
 }
 
-/// Decrypt a portion of the TDF data
-DLL_PUBLIC TDF_STATUS TDFDecryptStringPartial(TDFClientPtr clientPtr,
-                                       TDFCBytesPtr inBytesPtr,
-                                       TDFBytesLength inBytesLength,
-                                       TDFBytesLength offset,
-                                       TDFBytesLength length,
-                                       TDFBytesPtr *outBytesPtr,
-                                       TDFBytesLength *outBytesLength) {
+DLL_PUBLIC TDF_STATUS TDFDecryptDataPartial(TDFClientPtr clientPtr,
+                                            TDFStorageTypePtr storageTypePtr,
+                                            TDFBytesLength offset,
+                                            TDFBytesLength length,
+                                            TDFBytesPtr *outBytesPtr,
+                                            TDFBytesLength *outBytesLength) {
     if (clientPtr == nullptr ||
-        inBytesPtr == nullptr ||
+        storageTypePtr == nullptr ||
         outBytesPtr == nullptr ||
         outBytesLength == nullptr) {
         return TDF_STATUS_INVALID_PARAMS;
     }
 
+    if (length == 0) {
+        return TDF_STATUS_SUCCESS;
+    }
+
     try {
         auto *client = static_cast<virtru::TDFClient *>(clientPtr);
+        virtru::TDFStorageType *storage = static_cast<virtru::TDFStorageType *>(storageTypePtr);
 
-        std::string decryptedData = client->decryptStringPartial({reinterpret_cast<char const *>(inBytesPtr), inBytesLength}, offset, length);
+        auto decryptedData = client->decryptDataPartial(*storage, offset, length);
 
-        *outBytesLength = decryptedData.length();
+        *outBytesLength = decryptedData.size();
         // Copy the decrypted data to the out buffer.
         *outBytesPtr = static_cast<unsigned char *>(malloc(*outBytesLength));
         std::copy(decryptedData.begin(), decryptedData.end(),
@@ -317,12 +346,11 @@ DLL_PUBLIC TDF_STATUS TDFDecryptStringPartial(TDFClientPtr clientPtr,
 
 /// Gets the JSON policy (as string) of a string-encoded TDF payload
 DLL_PUBLIC TDF_STATUS TDFGetPolicy(TDFClientPtr clientPtr,
-                                       TDFCBytesPtr inBytesPtr,
-                                       TDFBytesLength inBytesLength,
-                                       TDFBytesPtr *outBytesPtr,
-                                       TDFBytesLength *outBytesLength) {
+                                   TDFStorageTypePtr storageTypePtr,
+                                   TDFBytesPtr *outBytesPtr,
+                                   TDFBytesLength *outBytesLength) {
     if (clientPtr == nullptr ||
-        inBytesPtr == nullptr ||
+        storageTypePtr == nullptr ||
         outBytesPtr == nullptr ||
         outBytesLength == nullptr) {
         return TDF_STATUS_INVALID_PARAMS;
@@ -330,8 +358,9 @@ DLL_PUBLIC TDF_STATUS TDFGetPolicy(TDFClientPtr clientPtr,
 
     try {
         auto *client = static_cast<virtru::TDFClient *>(clientPtr);
+        auto *storage = static_cast<virtru::TDFStorageType *>(storageTypePtr);
 
-        std::string policyStr = client->getPolicy({reinterpret_cast<char const *>(inBytesPtr), inBytesLength});
+        std::string policyStr = client->getPolicy(*storage);
 
         *outBytesLength = policyStr.length();
         // Copy the policy string data to the out buffer.
@@ -379,14 +408,13 @@ DLL_PUBLIC TDF_STATUS TDFSetEncryptedMetadata(TDFClientPtr clientPtr,
 /// Decrypt and return TDF metadata as a string. If the TDF content has
 /// no encrypted metadata, will return an empty string.
 DLL_PUBLIC TDF_STATUS TDFGetEncryptedMetadata(TDFClientPtr clientPtr,
-                                              TDFCBytesPtr inBytesPtr,
-                                              TDFBytesLength inBytesLength,
+                                              TDFStorageTypePtr storageTypePtr,
                                               TDFBytesPtr *outBytesPtr,
                                               TDFBytesLength *outBytesLength) {
     LogTrace("TDFGetEncryptedMetadata");
 
     if (clientPtr == nullptr ||
-        inBytesPtr == nullptr ||
+        storageTypePtr == nullptr ||
         outBytesPtr == nullptr ||
         outBytesLength == nullptr) {
         return TDF_STATUS_INVALID_PARAMS;
@@ -395,8 +423,9 @@ DLL_PUBLIC TDF_STATUS TDFGetEncryptedMetadata(TDFClientPtr clientPtr,
     try {
         auto *client = static_cast<virtru::TDFClient *>(clientPtr);
 
-        auto metadata = client->getEncryptedMetadata({reinterpret_cast<char const *>(inBytesPtr),
-                                                      inBytesLength});
+        virtru::TDFStorageType *storage = static_cast<virtru::TDFStorageType *>(storageTypePtr);
+
+        auto metadata = client->getEncryptedMetadata(*storage);
 
         *outBytesLength = metadata.length();
         *outBytesPtr = nullptr;

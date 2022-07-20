@@ -17,6 +17,9 @@
 #include "crypto/rsa_key_pair.h"
 #include "oidc_credentials.h"
 #include "test_utils.h"
+#include "tdf_exception.h"
+#include "file_io_provider.h"
+#include "tdf_archive_reader.h"
 
 #include <boost/test/included/unit_test.hpp>
 #include <boost/endian/arithmetic.hpp>
@@ -32,7 +35,12 @@
 #define GetCurrentDir getcwd
 #endif
 
-#define TEST_OIDC 0
+#if RUN_BACKEND_TESTS
+    #define TEST_OIDC 1
+#else
+    #define TEST_OIDC 0
+#endif
+
 #define LOCAL_EAS_KAS_SETUP 0
 constexpr auto user = "user1";
 constexpr auto user2 = "user2";
@@ -100,15 +108,20 @@ void testTDFOperations(TDFClient* client, bool testMetaDataAPI = false) {
 #endif
     client->setEncryptedMetadata(metaData);
 
-    client->encryptFile(inPathEncrypt, outPathEncrypt);
+    TDFStorageType encryptFileType;
+    encryptFileType.setTDFStorageFileType(inPathEncrypt);
+    client->encryptFile(encryptFileType, outPathEncrypt);
 
     if (testMetaDataAPI) {
-        auto tdfData = TestUtils::getFileString(outPathEncrypt);
-        auto metaDataFromTDF = client->getEncryptedMetadata(tdfData);
+        TDFStorageType fileType;
+        fileType.setTDFStorageFileType(outPathEncrypt);
+        auto metaDataFromTDF = client->getEncryptedMetadata(fileType);
         BOOST_TEST(metaData == metaDataFromTDF);
     }
 
-    client->decryptFile(inPathDecrypt, outPathDecrypt);
+    TDFStorageType decryptFileType;
+    decryptFileType.setTDFStorageFileType(inPathDecrypt);
+    client->decryptFile(decryptFileType, outPathDecrypt);
 
     BOOST_TEST_MESSAGE("TDF basic test passed.");
     std::array<std::uint32_t, 10u> bufferSizes{1, 10, 1024 * 1024, 2 * 1024 * 1024, 4 * 1024 * 1024,
@@ -116,19 +129,17 @@ void testTDFOperations(TDFClient* client, bool testMetaDataAPI = false) {
     for (const auto& size : bufferSizes) {
 
         std::string plainText = TestUtils::randomString(size);
-        auto encryptedText = client->encryptString(plainText);
-        auto plainTextAfterDecrypt = client->decryptString(encryptedText);
-        BOOST_TEST(plainText == plainTextAfterDecrypt);
-    }
 
-    for (const auto& size : bufferSizes) {
+        TDFStorageType encryptStringType;
+        encryptStringType.setTDFStorageStringType(plainText);
+        auto encryptedText = client->encryptData(encryptStringType);
 
-        std::string plainText = TestUtils::randomString(size);
-        std::vector<uint8_t> text(plainText.begin(), plainText.end());
-        auto encryptedText = client->encryptData(text);
-        auto plainTextAfterDecrypt = client->decryptData(encryptedText);
-        std::string decryptedText(plainTextAfterDecrypt.begin(), plainTextAfterDecrypt.end());
-        BOOST_TEST(plainText == decryptedText);
+        TDFStorageType decryptBufferType;
+        decryptBufferType.setTDFStorageBufferType(encryptedText);
+        auto plainTextAfterDecrypt = client->decryptData(decryptBufferType);
+        std::string plainTextAfterTDFOp(plainTextAfterDecrypt.begin(), plainTextAfterDecrypt.end());
+
+        BOOST_TEST(plainText == plainTextAfterTDFOp);
     }
 }
 
@@ -147,8 +158,13 @@ void testNanoTDFOperations(TDFClientBase* client1, NanoTDFClient* client2) {
                 f.write(plainText.data(), plainText.size());
             }
 
-            client1->encryptFile("nano_tdf_text.txt", "nano_tdf_text.txt.ntdf");
-            client1->decryptFile("nano_tdf_text.txt.ntdf", "nano_tdf_text_out.txt");
+            TDFStorageType encryptFileType;
+            encryptFileType.setTDFStorageFileType("nano_tdf_text.txt");
+            client1->encryptFile(encryptFileType, "nano_tdf_text.txt.ntdf");
+
+            TDFStorageType decryptFileType;
+            decryptFileType.setTDFStorageFileType("nano_tdf_text.txt.ntdf");
+            client2->decryptFile(decryptFileType, "nano_tdf_text_out.txt");
 
             std::string plainTextAfterDecrypt;
             { // Read file.
@@ -169,22 +185,18 @@ void testNanoTDFOperations(TDFClientBase* client1, NanoTDFClient* client2) {
         for (const auto& size : fileSizeArray) {
 
             std::string plainText = TestUtils::randomString(size);
-            auto encryptedText = client1->encryptString(plainText);
-            auto plainTextAfterDecrypt = client2->decryptString(encryptedText);
-            BOOST_TEST(plainText == plainTextAfterDecrypt);
-        }
-    }
 
-    { // Buffer test nano tdf.
+            TDFStorageType bufferType;
+            bufferType.setTDFStorageStringType(plainText);
 
-        for (const auto& size : fileSizeArray) {
+            auto encryptedText = client1->encryptData(bufferType);
 
-            std::string plainText = TestUtils::randomString(size);
-            std::vector<uint8_t> text(plainText.begin(), plainText.end());
-            auto encryptedText = client1->encryptData(text);
-            auto plainTextAfterDecrypt = client2->decryptData(encryptedText);
-            std::string decryptedText(plainTextAfterDecrypt.begin(), plainTextAfterDecrypt.end());
-            BOOST_TEST(plainText == decryptedText);
+            TDFStorageType decryptBufferType;
+            decryptBufferType.setTDFStorageBufferType(encryptedText);
+
+            auto plainTextAfterDecrypt = client2->decryptData(decryptBufferType);
+            std::string plaintTextStr(plainTextAfterDecrypt.begin(), plainTextAfterDecrypt.end());
+            BOOST_TEST(plainText == plaintTextStr);
         }
     }
 }
@@ -382,6 +394,96 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
             auto tdfClient = std::make_unique<TDFClient>(easUrl, user);
             testTDFOperations(tdfClient.get());
 #endif
+        }
+        catch (const Exception &exception) {
+            BOOST_FAIL(exception.what());
+        } catch (const std::exception &exception) {
+            BOOST_FAIL(exception.what());
+            std::cout << exception.what() << std::endl;
+        } catch (...) {
+            BOOST_FAIL("Unknown exception...");
+            std::cout << "Unknown..." << std::endl;
+        }
+    }
+
+    BOOST_AUTO_TEST_CASE(test_tdf_partial_decrypt) {
+        try {
+
+#if TEST_OIDC
+
+            {
+                // Create a 5GB file
+                std::string fileName{"sample_5gb_for_partial_decrypt.txt"};
+                std::string tdfFileName{"sample_5gb_for_partial_decrypt.txt.tdf"};
+                size_t filesize = 0;
+                auto segmentSize = 1024*1024;
+                {
+                    std::ofstream outStream{fileName.c_str(), std::ios_base::out | std::ios_base::binary};
+                    if (!outStream) {
+                        BOOST_FAIL("Failed to open file for writing sample data for partial decrypt.");
+                    }
+
+                    // size = 8mb * 512
+                    auto counter = 512;
+                    std::array<char, 8u> sampleData = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'};
+                    filesize = sampleData.size() * segmentSize * counter;
+                    for(auto index = 0; index < counter ; index++) {
+                        std::vector<char> segment(segmentSize);
+                        for (const auto& byte: sampleData) {
+                            std::fill(segment.begin(), segment.end(), byte);
+                            outStream.write(segment.data(), segmentSize);
+                        }
+                    }
+                }
+
+                OIDCCredentials clientCreds;
+                clientCreds.setClientCredentialsClientSecret(CLIENT_ID, CLIENT_SECRET,
+                                                             ORGANIZATION_NAME, OIDC_ENDPOINT);
+                auto oidcClientTDF = std::make_unique<TDFClient>(clientCreds, KAS_URL);
+
+                TDFStorageType fileType;
+                fileType.setTDFStorageFileType(fileName);
+                oidcClientTDF->encryptFile(fileType, tdfFileName);
+
+                TDFStorageType tdfStorageFileType;
+                tdfStorageFileType.setTDFStorageFileType(tdfFileName);
+
+                {
+                    auto plainData = oidcClientTDF->decryptDataPartial(tdfStorageFileType, 0, 10);
+                    std::string strPlainData(plainData.begin(), plainData.end());
+                    BOOST_TEST(strPlainData ==  "aaaaaaaaaa");
+                }
+
+                // 1mb + 1 byte from middle
+                {
+                    auto plainData = oidcClientTDF->decryptDataPartial(tdfStorageFileType, 241* segmentSize, segmentSize+1);
+                    std::string expectedData(segmentSize, 'b');
+                    expectedData.append("c");
+
+                    std::string strPlainData(plainData.begin(), plainData.end());
+                    if (expectedData != strPlainData) {
+                        BOOST_FAIL("decryptFilePartial test failed");
+                    }
+                }
+
+                // last 10 bytes
+                auto last10BytesIndex = filesize - 10;
+                {
+                    auto plainData = oidcClientTDF->decryptDataPartial(tdfStorageFileType, last10BytesIndex, 10);
+                    std::string strPlainData(plainData.begin(), plainData.end());
+                    if (strPlainData != "hhhhhhhhhh") {
+                        BOOST_FAIL("decryptFilePartial test failed");
+                    }
+                }
+
+                // Expect exception the request length is not valid
+                auto longLength = 6*segmentSize;
+                BOOST_CHECK_THROW(oidcClientTDF->decryptDataPartial(tdfStorageFileType, last10BytesIndex, 100),
+                                  virtru::Exception);
+            }
+
+#endif
+
         }
         catch (const Exception &exception) {
             BOOST_FAIL(exception.what());
@@ -654,6 +756,72 @@ aviKeWq6GU4X5AJ/ZHmZmPqZjdpwsQxUiaVAFMrWjj4v3iwNeJD2fhjI
             }
         }
 
+#endif
+    }
+
+    BOOST_AUTO_TEST_CASE(test_tdf_with_io_provider) {
+#if TEST_OIDC
+        OIDCCredentials clientCreds;
+        clientCreds.setClientCredentialsClientSecret(CLIENT_ID, CLIENT_SECRET,
+                                                     ORGANIZATION_NAME, OIDC_ENDPOINT);
+        auto oidcClientTDF = std::make_unique<TDFClient>(clientCreds, KAS_URL);
+
+        const size_t sizeOfData = 25 * 1024 * 1024; // 25 mb
+
+        static std::vector<gsl::byte> plainData(sizeOfData);
+        std::fill(plainData.begin(), plainData.end(), gsl::byte(0xFF));
+
+        static std::vector<gsl::byte> encryptedBuffer;
+
+        { // Encrypt with I/O Providers
+            struct CustomInputProvider: IInputProvider {
+                void readBytes(size_t index, size_t length, WriteableBytes &bytes) override {
+                    std::memcpy(bytes.data(), plainData.data() + index, length);
+                }
+
+                size_t getSize() override { return sizeOfData; }
+            };
+
+            struct CustomOutputProvider: IOutputProvider {
+                void writeBytes(Bytes bytes) override {
+                    encryptedBuffer.insert(encryptedBuffer.end(), bytes.begin(), bytes.end());
+                }
+                void flush() override { /* Do nothing */ }
+            };
+
+            CustomInputProvider inputProvider{};
+            CustomOutputProvider outputProvider{};
+            oidcClientTDF->encryptWithIOProviders(inputProvider, outputProvider);
+
+//            std::string writeData;
+//            writeData.append(reinterpret_cast<char *>(encryptedBuffer.data()), encryptedBuffer.size());
+//            std::cout << "The TDF Data is:" <<  writeData << std::endl;
+        }
+
+        static std::vector<gsl::byte> decryptData;
+        { // Decrypt with I/0 Providers
+
+            struct CustomInputProvider: IInputProvider {
+                void readBytes(size_t index, size_t length, WriteableBytes &bytes) override {
+                    std::memcpy(bytes.data(), encryptedBuffer.data() + index, length);
+                }
+
+                size_t getSize() override { return encryptedBuffer.size(); }
+            };
+
+            struct CustomOutputProvider: IOutputProvider {
+                void writeBytes(Bytes bytes) override {
+                    decryptData.insert(decryptData.end(), bytes.begin(), bytes.end());
+                }
+                void flush() override { /* Do nothing */ }
+            };
+
+            CustomInputProvider inputProvider{};
+            CustomOutputProvider outputProvider{};
+            oidcClientTDF->decryptWithIOProviders(inputProvider, outputProvider);
+        }
+
+        BOOST_TEST(plainData == decryptData);
 #endif
     }
 
