@@ -3,3 +3,4 @@ src/build/
 src/lib/include/version.h
 examples/.idea/
 src/.idea/
+tdf-lib-cpp/

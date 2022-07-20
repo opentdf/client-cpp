@@ -39,7 +39,7 @@ int main() {
             auto cipherText = nanoTDFClient->encryptData(encryptStringType);
 
             TDFStorageType decryptStringType;
-            decryptStringType.setTDFStorageStringType(samplePlainTxt);
+            decryptStringType.setTDFStorageBufferType(cipherText);
             auto plainText = nanoTDFClient->decryptData(decryptStringType);
             std::string plainTextStr(plainText.begin(), plainText.end());
 
@@ -47,6 +47,27 @@ int main() {
                 std::cout << "NanoTDF test passed!!" << std::endl;
             } else {
                 std::cerr << "NanoTDF test failed!!" << std::endl;
+                return EXIT_FAILURE;
+            }
+        }
+
+        // Test TDF3
+        {
+            auto client = std::make_unique<TDFClient>(clientCreds, KAS_URL);
+
+            TDFStorageType encryptStringType;
+            encryptStringType.setTDFStorageStringType(samplePlainTxt);
+            auto encryptedText = client->encryptData(encryptStringType);
+
+            TDFStorageType decryptBufferType;
+            decryptBufferType.setTDFStorageBufferType(encryptedText);
+            auto plainTextAfterDecrypt = client->decryptData(decryptBufferType);
+            std::string plainTextStr(plainTextAfterDecrypt.begin(), plainTextAfterDecrypt.end());
+
+            if (samplePlainTxt == plainTextStr) {
+                std::cout << "TDF3 test passed!!" << std::endl;
+            } else {
+                std::cerr << "TDF3 test failed!!" << std::endl;
                 return EXIT_FAILURE;
             }
         }
