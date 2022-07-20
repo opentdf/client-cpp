@@ -5,7 +5,6 @@ class TDFLibConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
 
     def configure(self):
-        self.options["libxml2"].iconv = False
         if str(self.settings.arch).startswith('arm'):
             self.options["openssl"].no_asm = True
             self.options["libxml2"].zlib = False
@@ -13,6 +12,7 @@ class TDFLibConan(ConanFile):
             self.options["libxml2"].icu = False
         
     def requirements(self):
+        self.requires("libiconv/1.17@")
         self.requires("openssl/1.1.1o@")
         if str(self.settings.arch).startswith('arm'):
             self.requires("boost/1.74.0@")
