@@ -35,7 +35,12 @@
 #define GetCurrentDir getcwd
 #endif
 
-#define TEST_OIDC 0
+#if RUN_BACKEND_TESTS
+    #define TEST_OIDC 1
+#else
+    #define TEST_OIDC 0
+#endif
+
 #define LOCAL_EAS_KAS_SETUP 0
 constexpr auto user = "user1";
 constexpr auto user2 = "user2";

@@ -24,7 +24,11 @@
 using namespace virtru;
 using namespace virtru::network;
 
+#if RUN_BACKEND_TESTS
 #define TEST_OIDC 1
+#else
+#define TEST_OIDC 0
+#endif
 constexpr auto OIDC_ENDPOINT = "http://localhost:65432/";
 constexpr auto KAS_URL = "http://localhost:65432/api/kas";
 constexpr auto CLIENT_ID = "tdf-client";
