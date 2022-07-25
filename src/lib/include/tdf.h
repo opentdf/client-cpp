@@ -14,6 +14,9 @@
 #define VIRTRU_TDF_H
 
 #include "tdf_constants.h"
+#include "io_provider.h"
+#include "tdf_storage_type.h"
+#include "io_provider.h"
 #include <memory>
 #include <string>
 
@@ -34,16 +37,17 @@ namespace virtru {
         /// NOTE: virtru::exception will be thrown if there is issues while performing the encryption process.
         void encryptFile(const std::string& inFilepath, const std::string& outFilepath);
 
+        /// Encrypt data from InputProvider and write to IOutputProvider
+        /// \param inputProvider - Input provider interface for reading data
+        /// \param outputProvider - Out provider interface for writing data
+        /// NOTE: virtru::exception will be thrown if there are issues while performing the decryption process.
+        void encryptIOProvider(IInputProvider& inputProvider, IOutputProvider& outputProvider);
+
 #ifndef SWIG
         /// Encrypt the stream data to tdf format.
         /// \param inStream - The stream containing a data to be encrypted.
         /// \param outStream - The stream containing the encrypted data.
         void encryptStream(std::istream& inStream, std::ostream& outStream);
-
-        /// Encrypt the data that is retrieved from the source callback.
-        /// \param sourceCb - A source callback to retrieve the data to be encrypted.
-        /// \param sinkCb - A sink callback with the encrypted data.
-        void encryptData(TDFDataSourceCb sourceCb, TDFDataSinkCb sinkCb);
 #endif
 
         /// Decrypt file.
@@ -51,31 +55,51 @@ namespace virtru {
         /// \param outFilepath - The file path of the tdf after successful decryption.
         /// NOTE: virtru::exception will be thrown if there is issues while performing the decryption process.
         void decryptFile(const std::string& inFilepath, const std::string& outFilepath);
-        
+
+        /// Encrypt data from InputProvider and write to IOutputProvider
+        /// \param inputProvider - Input provider interface for reading data
+        /// \param outputProvider - Out provider interface for writing data
+        /// NOTE: virtru::exception will be thrown if there are issues while performing the decryption process.
+        void decryptIOProvider(IInputProvider& inputProvider, IOutputProvider& outputProvider);
+
 #ifndef SWIG
         /// Decrypt the tdf stream data.
         /// \param inStream - The stream containing a tdf data to be decrypted.
         /// \param outStream - The stream containing plain data.
         void decryptStream(std::istream &inStream, std::ostream &outStream);
 
-        /// Decrypt the tdf stream data.
-        /// \param inStream - The stream containing a tdf data to be decrypted.
-        /// \param outStream - The stream containing plain data.
+        /// Decrypt data starting at index and of length from input provider
+        /// and write to output provider
+        /// \param inputProvider - Input provider interface for reading data
+        /// \param outputProvider - Out provider interface for writing data
         /// \param offset - The offset within the plaintext to return
         /// \param length - The length of the plaintext to return
-        void decryptStreamPartial(std::istream &inStream, std::ostream &outStream, size_t offset, size_t length);
-
-        /// Decrypt the data that is retrieved from the source callback.
-        /// \param sourceCb - A source callback to retrieve the data to be decrypted.
-        /// \param sinkCb - A sink callback with the decrypted data.
-        void decryptData(TDFDataSourceCb sourceCb, TDFDataSinkCb sinkCb);
+        /// \return std::string - The string containing the plain data.
+        /// NOTE: virtru::exception will be thrown if there are issues while performing the decryption process.
+        /// NOTE: The caller should copy the bytes from the return value and should not hold on to the
+        /// return value.
+        void decryptIOProviderPartial(IInputProvider& inputProvider,
+                                      IOutputProvider& outputProvider,
+                                      size_t offset,
+                                      size_t length);
 
 #endif
         /// Decrypt and return TDF metadata as a string. If the TDF content has
         /// no encrypted metadata, will return an empty string.
-        /// \param inStream - The stream containing tdf data.
+        /// \param inputProvider - Input provider interface for reading data
         /// \return std::string - The string containing the metadata.
-        std::string getEncryptedMetadata(std::istream& inStream);
+        std::string getEncryptedMetadata(IInputProvider& inputProvider);
+
+        /// Extract and return the JSON policy string from the input provider.
+        /// \param inputProvider - Input provider interface for reading data
+        /// \return std::string - The string containing the policy.
+        /// NOTE: virtru::exception will be thrown if there are issues while retrieving the policy.
+        std::string getPolicy(IInputProvider& inputProvider);
+
+        /// Return the policy uuid from the input provider.
+        /// \param inputProvider - Input provider interface for reading data
+        /// \return - Return a uuid of the policy.
+        std::string getPolicyUUID(IInputProvider& inputProvider);
 
         /// Extract and return the JSON policy string from a TDF stream.
         /// \param inStream - The stream containing tdf data.
@@ -98,10 +122,10 @@ namespace virtru {
         /// \param encryptedTdfFilepath - The file path to the tdf.
         void sync(const std::string& encryptedTdfFilepath);
 
-        /// Check if data in the stream is TDF
-        /// \param inStream - The stream containing a tdf data to be decrypted.
-        /// \return - Return true if data is TDF and false otherwise
-        static bool isStreamTDF(std::istream& inStream);
+        /// Check if data in the input provider is TDF
+        /// \param inputProvider - The input provider containing a tdf data to be decrypted.
+        /// \return Return true if data is TDF and false otherwise
+        static bool isInputProviderTDF(IInputProvider& inputProvider);
 
         /// Destructor
         ~TDF();

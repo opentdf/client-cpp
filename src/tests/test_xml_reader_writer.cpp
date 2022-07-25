@@ -10,6 +10,7 @@
 #include "sdk_constants.h"
 #include "tdf_xml_reader.h"
 #include "tdf_xml_writer.h"
+#include "stream_io_provider.h"
 
 #include <ostream>
 #include <boost/test/included/unit_test.hpp>
@@ -28,43 +29,51 @@ BOOST_AUTO_TEST_SUITE(test_xml_reader_writer_suite)
 )";
 
     BOOST_AUTO_TEST_CASE(test_tdf_xml_writer) {
-        TDFXMLWriter tdfxmlWriter{kTDFManifestFileName, kTDFPayloadFileName};
+
+        // Create output provider
+        std::ostringstream oStringStream;
+        StreamOutputProvider outputProvider{oStringStream};
+
+        TDFXMLWriter tdfxmlWriter{outputProvider, kTDFManifestFileName, kTDFPayloadFileName};
         std::string localCopy(manifest);
         tdfxmlWriter.setPayloadSize(payload.size());
         tdfxmlWriter.appendManifest(std::move(localCopy));
         tdfxmlWriter.appendPayload(toBytes(payload));
-        std::stringstream outStream;
-        tdfxmlWriter.writeToStream(outStream);
-        BOOST_TEST(outStream.str() == tdfXML);
+        tdfxmlWriter.finish();
+        BOOST_TEST(oStringStream.str() == tdfXML);
     }
 
     BOOST_AUTO_TEST_CASE(test_tdf_xml_reader) {
 
         std::string actualPayload;
-        std::stringstream inStream;
-        inStream.write(tdfXML.c_str(), tdfXML.size());
-        TDFXMLReader tdfxmlReader{inStream};
+
+        std::istringstream inputStream(tdfXML);
+        StreamInputProvider inputProvider{inputStream};
+        TDFXMLReader tdfxmlReader{inputProvider};
 
         BOOST_TEST(tdfxmlReader.getManifest() == manifest);
         BOOST_TEST(tdfxmlReader.getPayloadSize() == 26);
 
+        auto index = 0;
         std::string  payloadBuffer;
         payloadBuffer.resize(10);
 
         auto wBytes = toWriteableBytes(payloadBuffer);
-        tdfxmlReader.readPayload(wBytes);
+        tdfxmlReader.readPayload(index, payloadBuffer.size(), wBytes);
+        index +=  payloadBuffer.size();
         BOOST_TEST(wBytes.size() == 10);
         actualPayload.append(reinterpret_cast<const char*>(wBytes.data()), wBytes.size());
 
 
         wBytes = toWriteableBytes(payloadBuffer);
-        tdfxmlReader.readPayload(wBytes);
+        tdfxmlReader.readPayload(index, payloadBuffer.size(), wBytes);
+        index +=  payloadBuffer.size();
         BOOST_TEST(wBytes.size() == 10);
         actualPayload.append(reinterpret_cast<const char*>(wBytes.data()), wBytes.size());
 
+        payloadBuffer.resize(6);
         wBytes = toWriteableBytes(payloadBuffer);
-        tdfxmlReader.readPayload(wBytes);
-        BOOST_TEST(wBytes.size() == 6);
+        tdfxmlReader.readPayload(index, payloadBuffer.size(), wBytes);
         actualPayload.append(reinterpret_cast<const char*>(wBytes.data()), wBytes.size());
 
         BOOST_TEST(actualPayload == payload);

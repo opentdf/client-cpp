@@ -51,20 +51,13 @@ using HTTPServiceCallback = std::function<void(unsigned int statusCode, std::str
 class MockNetwork : public INetwork {
 
   public: //INetwork members
-    static std::unique_ptr<virtru::network::Service> Create(const std::string &url,
-                                                            std::string_view sdkConsumerCertAuthority,
-                                                            const std::string &clientKeyFileName,
-                                                            const std::string &clientCertFileName) {
-        BOOST_TEST_MESSAGE("Mock service constructed");
-        LogTrace("Mock Service::Create");
-    };
 
-    virtual void executeGet(const std::string &url, const HttpHeaders &headers, HTTPServiceCallback &&callback, const std::string &ca, const std::string &key, const std::string &cert) override {
+    virtual void executeGet(const std::string &/*url*/, const HttpHeaders &/*headers*/, HTTPServiceCallback &&callback, const std::string &/*ca*/, const std::string &/*key*/, const std::string &/*cert*/) override {
         LogTrace("Mock Service::Get");
         callback(200, kasPubKey);
     }
 
-    virtual void executePost(const std::string &url, const HttpHeaders &headers, std::string &&body, HTTPServiceCallback &&callback, const std::string &ca, const std::string &key, const std::string &cert) override {
+    virtual void executePost(const std::string &/*url*/, const HttpHeaders &/*headers*/, std::string &&body, HTTPServiceCallback &&callback, const std::string &/*ca*/, const std::string &/*key*/, const std::string &/*cert*/) override {
         LogTrace("Mock Service::Post");
 
         if (body.find("urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange") != std::string::npos) {
@@ -87,10 +80,21 @@ class MockNetwork : public INetwork {
         LogDebug("Returned 200");
     }
 
-    virtual void executePatch(const std::string &url, const HttpHeaders &headers, std::string &&body, HTTPServiceCallback &&callback, const std::string &ca, const std::string &key, const std::string &cert) override {
+    virtual void executePatch(const std::string &/*url*/, const HttpHeaders &/*headers*/, std::string &&/*body*/, HTTPServiceCallback &&callback, const std::string &/*ca*/, const std::string &/*key*/, const std::string &/*cert*/) override {
         LogTrace("Mock Service::Patch");
         BOOST_FAIL("No PATCH expected");
         callback(0, "");
+    }
+
+    virtual void executeHead(const std::string &/*url*/, const HttpHeaders &/*headers*/, HTTPServiceCallback &&callback, const std::string &/*ca*/, const std::string &/*key*/, const std::string &/*cert*/) override {
+        LogTrace("Mock Service::Head");
+        BOOST_FAIL("No HEAD expected");
+        callback(400, "");
+    }
+    virtual void executePut(const std::string &/*url*/, const HttpHeaders &/*headers*/, std::string &&/*body*/, HTTPServiceCallback &&callback, const std::string &/*ca*/, const std::string &/*key*/, const std::string &/*cert*/) override {
+        LogTrace("Mock Service::Put");
+        BOOST_FAIL("No PUT expected");
+        callback(400, "");
     }
 };
 
@@ -128,8 +132,10 @@ BOOST_AUTO_TEST_CASE(test_tokenexchange) {
         LogTrace("setting mock network");
         oidcClientTDF->setHTTPServiceProvider(mockNetwork);
 
-        LogTrace("encryptString");
-        oidcClientTDF->encryptString("This is a test");
+        LogTrace("encryptData");
+        TDFStorageType stringStorageType;
+        stringStorageType.setTDFStorageStringType("This is a test");
+        oidcClientTDF->encryptData(stringStorageType);
 
         BOOST_TEST_MESSAGE("TDF tokenexchange test passed.");
     } catch (const Exception &exception) {

@@ -14,6 +14,8 @@
 #include "tdf_impl.h"
 #include "tdfbuilder.h"
 #include "tdfbuilder_impl.h"
+#include "file_io_provider.h"
+#include "stream_io_provider.h"
 #include "utils.h"
 
 #include <iostream>
@@ -37,7 +39,19 @@ namespace virtru {
 
         LogInfo("encrypt file:" + inFilepath);
 
-        m_impl->encryptFile(inFilepath, outFilepath);
+        // Create input provider
+        FileInputProvider inputProvider{inFilepath};
+
+        // Create output provider
+        FileOutputProvider outputProvider{outFilepath};
+        m_impl->encryptIOProvider(inputProvider, outputProvider);
+    }
+
+    /// Encrypt data from InputProvider and write to IOutputProvider
+    void TDF::encryptIOProvider(IInputProvider& inputProvider, IOutputProvider& outputProvider) {
+        LogInfo("encrypt io provider");
+
+        m_impl->encryptIOProvider(inputProvider, outputProvider);
     }
 
     /// Encrypt the stream data to tdf format.
@@ -45,61 +59,85 @@ namespace virtru {
 
         LogInfo("encrypt data in stream...");
 
-        m_impl->encryptStream(inStream, outStream);
+        StreamInputProvider inputProvider{inStream};
+        StreamOutputProvider outputProvider{outStream};
+
+        m_impl->encryptIOProvider(inputProvider, outputProvider);
     }
 
+    void TDF::decryptIOProvider(IInputProvider& inputProvider, IOutputProvider& outputProvider) {
 
-    /// Encrypt the data that is retrieved from the source callback.
-    void TDF::encryptData(TDFDataSourceCb sourceCb, TDFDataSinkCb sinkCb) {
+        LogInfo("decrypt using IOProviders...");
 
-        LogInfo("encrypt data from data source...");
-
-        m_impl->encryptData(sourceCb, sinkCb);
+        m_impl->decryptIOProvider(inputProvider, outputProvider);
     }
 
     /// Decrypt file.
     void TDF::decryptFile(const std::string& inFilepath, const std::string& outFilepath) {
         LogInfo("decrypt file:" + inFilepath);
 
-        m_impl->decryptFile(inFilepath, outFilepath);
+        // Create input provider
+        FileInputProvider inputProvider{inFilepath};
+
+        // Create output provider
+        FileOutputProvider outputProvider{outFilepath};
+        m_impl->decryptIOProvider(inputProvider, outputProvider);
     }
-    
+
     /// Decrypt the tdf stream data.
     void TDF::decryptStream(std::istream& inStream, std::ostream& outStream)  {
         
         LogInfo("decrypt data in stream...");
-        
-        m_impl->decryptStream(inStream, outStream);
+
+        StreamInputProvider inputProvider{inStream};
+        StreamOutputProvider outputProvider{outStream};
+
+        m_impl->decryptIOProvider(inputProvider, outputProvider);
     }
 
-    /// Decrypt the tdf stream data.
-    void TDF::decryptStreamPartial(std::istream &inStream, std::ostream &outStream, size_t offset, size_t length)  {
 
-        LogInfo("decrypt data in stream...");
+    /// Decrypt data starting at index and of length from input provider
+    /// and write to output provider
+    void TDF::decryptIOProviderPartial(IInputProvider& inputProvider,
+                                       IOutputProvider& outputProvider,
+                                       size_t offset,
+                                       size_t length) {
 
-        m_impl->decryptStreamPartial(inStream, outStream, offset, length);
-    }
+        LogInfo("decrypt data in io provider...");
 
-    /// Decrypt the data that is retrieved from the source callback.
-    void TDF::decryptData(TDFDataSourceCb sourceCb, TDFDataSinkCb sinkCb) {
-        LogInfo("decrypt data from data source...");
-
-        m_impl->decryptData(sourceCb, sinkCb);
+        m_impl->decryptIOProviderPartial(inputProvider, outputProvider, offset, length);
     }
 
     /// Decrypt and return TDF metadata as a string. If the TDF content has
     /// no encrypted metadata, will return an empty string.
-    std::string TDF::getEncryptedMetadata(std::istream& inStream) {
+    std::string TDF::getEncryptedMetadata(IInputProvider& inputProvider) {
         LogInfo("get metadata from tdf data stream");
 
-        return m_impl->getEncryptedMetadata(inStream);
+        return m_impl->getEncryptedMetadata(inputProvider);
+    }
+
+    /// Extract and return the JSON policy string from the input provider.
+    std::string TDF::getPolicy(IInputProvider& inputProvider) {
+        LogInfo("get policy object from inputProvider...");
+
+        return m_impl->getPolicy(inputProvider);
+    }
+
+    /// Return the policy uuid from the input provider.
+    /// TODO we should consider deprecating this in favor of
+    /// the more broadly-useful `getPolicy`
+    std::string TDF::getPolicyUUID(IInputProvider& inputProvider) {
+        LogInfo("get policy uuid from tdf input provider" );
+        
+        return m_impl->getPolicyUUID(inputProvider);
     }
 
     /// Return the policy from the tdf input stream.
     std::string TDF::getPolicy(std::istream&  inStream) {
         LogInfo("get policy object from stream...");
 
-        return m_impl->getPolicy(inStream);
+        StreamInputProvider inputProvider{inStream};
+        return m_impl->getPolicy(inputProvider);
     }
 
     /// Return the policy uuid from the tdf file.
@@ -107,8 +145,10 @@ namespace virtru {
     /// the more broadly-useful `getPolicy`
     std::string TDF::getPolicyUUID(const std::string& tdfFilePath) {
         LogInfo("get policy uuid from tdf:" + tdfFilePath);
-        
-        return m_impl->getPolicyUUID(tdfFilePath);
+
+        // Create input provider
+        FileInputProvider inputProvider{tdfFilePath};
+        return m_impl->getPolicyUUID(inputProvider);
     }
 
     /// Return the policy uuid from the tdf input stream.
@@ -117,7 +157,8 @@ namespace virtru {
     std::string TDF::getPolicyUUID(std::istream&  inStream) {
         LogInfo("get policy uuid from stream...");
 
-        return m_impl->getPolicyUUID(inStream);
+        StreamInputProvider inputProvider{inStream};
+        return m_impl->getPolicyUUID(inputProvider);
     }
 
     /// Sync the tdf file, with symmetric wrapped key and Policy Object.
@@ -127,10 +168,10 @@ namespace virtru {
         m_impl->sync(encryptedTdfFilepath);
     }
 
-    bool TDF::isStreamTDF(std::istream &inStream) {
-        LogInfo("check if stream is tdf");
+    bool TDF::isInputProviderTDF(IInputProvider& inputProvider) {
+        LogInfo("check if input provider is tdf");
 
-        return TDFImpl::isStreamTDF(inStream);
+        return TDFImpl::isInputProviderTDF(inputProvider);
     }
 
     TDF::~TDF() = default;

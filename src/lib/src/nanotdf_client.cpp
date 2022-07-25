@@ -23,8 +23,11 @@
 #include "nanotdf_builder_impl.h"
 #include "nanotdf_client.h"
 #include "nanotdf_impl.h"
+#include "file_io_provider.h"
 
 #include <jwt-cpp/jwt.h>
+#include <fstream>
+#include <iostream>
 #include <sstream>
 #include "nlohmann/json.hpp"
 
@@ -68,57 +71,32 @@ namespace virtru {
     /// Destructor
     NanoTDFClient::~NanoTDFClient() = default;
 
-    /// Encrypt the file to nano tdf format.
-    void NanoTDFClient::encryptFile(const std::string& inFilepath, const std::string& outFilepath) {
+    /// Encrypt the data by reading from inputProvider and writing to outputProvider.
+    void NanoTDFClient::encryptWithIOProviders(IInputProvider& inputProvider, IOutputProvider& outputProvider) {
+        LogError("Not implemented");
+    }
+
+    /// Decrypt the tdf data by reading from inputProvider and writing to outputProvider.
+    void NanoTDFClient::decryptWithIOProviders(IInputProvider& inputProvider, IOutputProvider& outputProvider) {
+        LogError("Not implemented");
+    }
+
+    /// Encrypt the file to tdf format.
+    void NanoTDFClient::encryptFile(const TDFStorageType &tdfStorageType, const std::string &outFilepath) {
+
         // Initialize the nano tdf builder
         initNanoTDFBuilder();
 
         // Create a policy object.
         auto policyObject = createPolicyObject();
         auto nanoTDF = m_nanoTdfBuilder->setPolicyObject(policyObject).build();
-        nanoTDF->encryptFile(inFilepath, outFilepath);
-    }
 
-    /// Encrypt the data to nano tdf format.
-    std::string NanoTDFClient::encryptString(const std::string &plainData) {
-
-        // Initialize the nano tdf builder
-        initNanoTDFBuilder();
-
-        // Create a policy object.
-        auto policyObject = createPolicyObject();
-        auto nanoTDF = m_nanoTdfBuilder->setPolicyObject(policyObject).build();
-
-        std::string encryptedData(nanoTDF->encryptString(plainData));
-        return encryptedData;
-    }
-
-    /// Encrypt the bytes to tdf format.
-    std::vector<VBYTE> NanoTDFClient::encryptData(const std::vector<VBYTE> &plainData) {
-        // Initialize the nano tdf builder
-        initNanoTDFBuilder();
-
-        // Create a policy object.
-        auto policyObject = createPolicyObject();
-        auto nanoTDF = m_nanoTdfBuilder->setPolicyObject(policyObject).build();
-        std::string_view dataView(reinterpret_cast<const char*>(plainData.data()), plainData.size());
-        auto bufferView = nanoTDF->encryptData(dataView);
-        std::vector<VBYTE> encryptedData(bufferView.begin(), bufferView.end());
-        return encryptedData;
-    }
-
-
-    /// Decrypt file.
-    void NanoTDFClient::decryptFile(const std::string& inFilepath, const std::string& outFilepath) {
-        // Initialize the nano tdf builder
-        initNanoTDFBuilder(false);
-
-        m_nanoTdfBuilder->disableFlagToUseOldFormatNTDF();
-
-        // Create a policy object.
-        auto policyObject = createPolicyObject();
-        auto nanoTDF = m_nanoTdfBuilder->setPolicyObject(policyObject).build();
-        nanoTDF->decryptFile(inFilepath, outFilepath);
+        if (tdfStorageType.m_tdfType == TDFStorageType::StorageType::File) {
+            nanoTDF->encryptFile(tdfStorageType.m_filePath, outFilepath);
+        } else {
+            std::string errorMsg{"Unknown TDF storage type"};
+            ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
+        }
     }
 
     /// Decrypt file that are encrypted using old version of SDKs.
@@ -134,8 +112,78 @@ namespace virtru {
         nanoTDF->decryptFile(inFilepath, outFilepath);
     }
 
-    /// Decrypt data from nano tdf format.
-    std::string NanoTDFClient::decryptString(const std::string& encryptedData) {
+    /// Decrypt file to nano tdf file format.
+    void NanoTDFClient::decryptFile(const TDFStorageType &tdfStorageType, const std::string &outFilepath) {
+        // Initialize the nano tdf builder
+        initNanoTDFBuilder();
+
+        // Create a policy object.
+        auto policyObject = createPolicyObject();
+        auto nanoTDF = m_nanoTdfBuilder->setPolicyObject(policyObject).build();
+
+        if (tdfStorageType.m_tdfType == TDFStorageType::StorageType::File) {
+            nanoTDF->decryptFile(tdfStorageType.m_filePath, outFilepath);
+        } else {
+            std::string errorMsg{"Unknown TDF storage type"};
+            ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
+        }
+    }
+
+    /// Decrypt the bytes to nano tdf format.
+    std::vector<VBYTE> NanoTDFClient::decryptData(const TDFStorageType &tdfStorageType) {
+
+        // Initialize the nano tdf builder
+        initNanoTDFBuilder();
+
+        // Create a policy object.
+        auto policyObject = createPolicyObject();
+        auto nanoTDF = m_nanoTdfBuilder->setPolicyObject(policyObject).build();
+
+        if (tdfStorageType.m_tdfType == TDFStorageType::StorageType::Buffer) {
+            std::string_view dataView(reinterpret_cast<const char*>(tdfStorageType.m_tdfBuffer.data()),
+                                      tdfStorageType.m_tdfBuffer.size());
+            auto bufferView = nanoTDF->decryptData(dataView);
+            std::vector<VBYTE> decryptedData(bufferView.begin(), bufferView.end());
+            return decryptedData;
+        } else {
+            std::string errorMsg{"Unknown TDF storage type"};
+            ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
+        }
+        return {};
+    }
+
+    /// Encrypt the bytes to tdf format.
+    std::vector<VBYTE> NanoTDFClient::encryptData(const TDFStorageType &tdfStorageType) {
+        // Initialize the nano tdf builder
+        initNanoTDFBuilder();
+
+        // Create a policy object.
+        auto policyObject = createPolicyObject();
+        auto nanoTDF = m_nanoTdfBuilder->setPolicyObject(policyObject).build();
+
+        if (tdfStorageType.m_tdfType == TDFStorageType::StorageType::Buffer) {
+            std::string_view dataView(reinterpret_cast<const char*>(tdfStorageType.m_tdfBuffer.data()),
+                                      tdfStorageType.m_tdfBuffer.size());
+            auto bufferView = nanoTDF->encryptData(dataView);
+            std::vector<VBYTE> encryptedData(bufferView.begin(), bufferView.end());
+            return encryptedData;
+        } else {
+            std::string errorMsg{"Unknown TDF storage type"};
+            ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
+        }
+        return {};
+    }
+
+    /// Decrypt part of the data from tdf storage type.
+    /// \param tdfStorageType - The type of the nano tdf.
+    /// \param offset - The offset within the plaintext to return
+    /// \param length - The length of the plaintext to return
+    /// \return std::vector - The vector containing the decrypted data.
+    /// NOTE: virtru::exception will be thrown if there are issues while performing the decryption process.
+    /// NOTE: The caller should copy the bytes from the return value and should not hold on to the
+    /// return value.
+    std::vector<VBYTE> NanoTDFClient::decryptDataPartial(const TDFStorageType &tdfStorageType, size_t offset, size_t length) {
+
         // Initialize the micro tdf builder
         initNanoTDFBuilder(false);
 
@@ -144,25 +192,42 @@ namespace virtru {
         // Create a policy object.
         auto policyObject = createPolicyObject();
         auto nanoTDF = m_nanoTdfBuilder->setPolicyObject(policyObject).build();
-        std::string plainData(nanoTDF->decryptString(encryptedData));
-        return plainData;
+
+        if (tdfStorageType.m_tdfType == TDFStorageType::StorageType::File) {
+            std::ifstream inStream( tdfStorageType.m_filePath, std::ios::binary | std::ios::ate);
+            if (!inStream) {
+                std::string errorMsg{"Failed to open file for reading - "};
+                errorMsg.append(tdfStorageType.m_filePath);
+                ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
+            }
+
+            std::ostringstream stringStream;
+            stringStream << inStream.rdbuf();
+
+            std::string plainData(nanoTDF->decryptString(stringStream.str()));
+            auto subStr = plainData.substr(offset, length);
+            std::vector<VBYTE> buffer(subStr.begin(), subStr.end());
+            return buffer;
+
+        }  else if (tdfStorageType.m_tdfType == TDFStorageType::StorageType::Buffer) {
+            std::string plainData(nanoTDF->decryptString(tdfStorageType.m_tdfBuffer));
+            auto subStr = plainData.substr(offset, length);
+
+            std::vector<VBYTE> buffer(subStr.begin(), subStr.end());
+            return buffer;
+        } else if (tdfStorageType.m_tdfType == TDFStorageType::StorageType::S3) {
+            std::string errorMsg{"S3 not implemented"};
+            ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
+            // TODO FIXME - needs implementation
+            std::vector<VBYTE> buffer(0, 1);
+            return buffer;
+        } else {
+            std::string errorMsg{"Unknown TDF storage type"};
+            ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
+        }
+
+        return {};
     }
-
-    /// Decrypt data from nano tdf format.
-    std::string NanoTDFClient::decryptStringPartial(const std::string &encryptedData, size_t offset, size_t length) {
-        // Initialize the micro tdf builder
-        initNanoTDFBuilder(false);
-
-        m_nanoTdfBuilder->disableFlagToUseOldFormatNTDF();
-
-        // Create a policy object.
-        auto policyObject = createPolicyObject();
-        auto nanoTDF = m_nanoTdfBuilder->setPolicyObject(policyObject).build();
-        // TODO - FIXME - PCM really inefficient implementation here
-        std::string plainData(nanoTDF->decryptString(encryptedData));
-        return plainData.substr(offset, length);
-    }
-
 
     /// Decrypt data from nano tdf format that are encrypted using old version of SDKs.
     std::string NanoTDFClient::decryptStringUsingOldFormat(const std::string &encryptedData) {
@@ -176,21 +241,6 @@ namespace virtru {
         auto policyObject = createPolicyObject();
         auto nanoTDF = m_nanoTdfBuilder->setPolicyObject(policyObject).build();
         std::string plainData(nanoTDF->decryptString(encryptedData));
-        return plainData;
-    }
-
-    /// Decrypt the bytes from tdf format.
-    std::vector<VBYTE> NanoTDFClient::decryptData(const std::vector<VBYTE> &encryptedData) {
-
-        // Initialize the micro tdf builder
-        initNanoTDFBuilder(false);
-
-        // Create a policy object.
-        auto policyObject = createPolicyObject();
-        auto nanoTDF = m_nanoTdfBuilder->setPolicyObject(policyObject).build();
-        std::string_view dataView(reinterpret_cast<const char*>(encryptedData.data()), encryptedData.size());
-        auto bufferView = nanoTDF->decryptData(dataView);
-        std::vector<VBYTE> plainData(bufferView.begin(), bufferView.end());
         return plainData;
     }
 

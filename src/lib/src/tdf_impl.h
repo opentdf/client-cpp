@@ -15,9 +15,9 @@
 
 #include "crypto/bytes.h"
 #include "tdf_constants.h"
-#include "tdf_libarchive_writer.h"
-#include "tdf_libarchive_reader.h"
+#include "tdf_archive_reader.h"
 #include "libxml2_deleters.h"
+#include "tdf_storage_type.h"
 
 #include <boost/filesystem.hpp>
 #include "nlohmann/json.hpp"
@@ -31,6 +31,7 @@ namespace virtru {
     class TDFWriter;
     class SplitKey;
     class TDFZIPReader;
+    class ITDFWriter;
 
     /// Implementation of the core functionality of tdf.
     class TDFImpl {
@@ -42,96 +43,73 @@ namespace virtru {
         /// Destructor
         ~TDFImpl() = default;
 
-        /// Encrypt the file to tdf format.
-        /// \param inFilepath - The file on which the encryption is performed.
-        /// \param outFilepath - The file path of the tdf after successful encryption.
-        void encryptFile(const std::string& inFilepath,
-                         const std::string& outFilepath);
+        /// Encrypt data from InputProvider and write to IOutputProvider
+        /// \param inputProvider - Input provider interface for reading data
+        /// \param outputProvider - Out provider interface for writing data
+        /// NOTE: virtru::exception will be thrown if there are issues while performing the encryption process.
+        void encryptIOProvider(IInputProvider& inputProvider,
+                               IOutputProvider& outputProvider);
 
-        /// Encrypt the stream data to tdf format.
-        /// \param inStream - The stream containing a data to be encrypted.
-        /// \param outStream - The stream containing the encrypted data.
-        void encryptStream(std::istream& inStream, std::ostream& outStream);
+        /// Decrypt data from InputProvider and write to IOutputProvider
+        /// \param inputProvider - Input provider interface for reading data
+        /// \param outputProvider - Out provider interface for writing data
+        /// NOTE: virtru::exception will be thrown if there are issues while performing the decryption process.
+        void decryptIOProvider(IInputProvider& inputProvider,
+                               IOutputProvider& outputProvider);
 
-        /// Encrypt the data that is retrieved from the source callback.
-        /// \param sourceCb - A source callback to retrieve the data to be encrypted.
-        /// \param sinkCb - A sink callback with the encrypted data.
-        void encryptData(TDFDataSourceCb sourceCb, TDFDataSinkCb sinkCb);
-
-        /// Decrypt the tdf file.
-        /// \param inFilepath - The tdf file on which the decryption is performed.
-        /// \param outFilepath - The file path of the file after successful decryption.
-        void decryptFile(const std::string& inFilepath,
-                         const std::string& outFilepath);
-        
-        /// Decrypt the tdf stream data.
-        /// \param inStream - The stream containing a tdf data to be decrypted.
-        /// \param outStream - The stream containing plain data.
-        void decryptStream(std::istream& inStream, std::ostream& outStream);
-
-        /// Decrypt a portion the tdf stream data.
-        /// \param inStream - The stream containing a tdf data to be decrypted.
-        /// \param outStream - The stream containing plain data.
+        /// Decrypt data starting at index and of length from input provider
+        /// and write to output provider
+        /// \param inputProvider - Input provider interface for reading data
+        /// \param outputProvider - Out provider interface for writing data
         /// \param offset - The offset within the plaintext to return
         /// \param length - The length of the plaintext to return
-        void decryptStreamPartial(std::istream &inStream, std::ostream &outStream, size_t offset, size_t length);
-
-        /// Decrypt the data that is retrieved from the source callback.
-        /// \param sourceCb - A source callback to retrieve the data to be decrypted.
-        /// \param sinkCb - A sink callback with the decrypted data.
-        void decryptData(TDFDataSourceCb sourceCb, TDFDataSinkCb sinkCb);
+        /// \return std::string - The string containing the plain data.
+        /// NOTE: virtru::exception will be thrown if there are issues while performing the decryption process.
+        /// NOTE: The caller should copy the bytes from the return value and should not hold on to the
+        /// return value.
+        void decryptIOProviderPartial(IInputProvider& inputProvider,
+                                      IOutputProvider& outputProvider,
+                                      size_t offset,
+                                      size_t length);
 
         /// Decrypt and return TDF metadata as a string. If the TDF content has
         /// no encrypted metadata, will return an empty string.
-        /// \param inStream - The stream containing tdf data.
+        /// \param inputProvider - Input provider interface for reading data
         /// \return std::string - The string containing the metadata.
-        std::string getEncryptedMetadata(std::istream& inStream);
+        std::string getEncryptedMetadata(IInputProvider& inputProvider);
 
-        /// Extract and return the JSON policy string from a TDF stream.
-        /// \param inStream - The stream containing tdf data.
-        /// \param outStream - The stream containing the JSON policy string.
+        /// Extract and return the JSON policy string from the input provider.
+        /// \param inputProvider - Input provider interface for reading data
+        /// \return std::string - The string containing the policy.
         /// NOTE: virtru::exception will be thrown if there are issues while retrieving the policy.
-        std::string getPolicy(std::istream& inStream);
+        std::string getPolicy(IInputProvider& inputProvider);
 
-        /// Return the policy uuid from the tdf file.
-        /// \param tdfFilePath - The tdf file path
+        /// Return the policy uuid from the input provider.
+        /// \param inputProvider - Input provider interface for reading data
         /// \return - Return a uuid of the policy.
-        std::string getPolicyUUID(const std::string& tdfFilePath);
+        std::string getPolicyUUID(IInputProvider& inputProvider);
 
-        /// Return the policy uuid from the tdf input stream.
-        /// \param inStream - The stream containing a tdf data.
-        /// \return - Return a uuid of the policy.
-        /// NOTE: virtru::exception will be thrown if there is issues while retrieving the policy uuid.
-        std::string getPolicyUUID(std::istream&  inStream);
-        
         /// Sync the tdf file, with symmetric wrapped key and Policy Object.
         /// \param encryptedTdfFilepath - The file path to the tdf.
         void sync(const std::string& encryptedTdfFilepath) const;
 
-        /// Check if data in the stream is TDF
-        /// \param inStream - The stream containing a tdf data to be decrypted.
-        /// \return - Return true if data is TDF and false otherwise
-        static bool isStreamTDF(std::istream& inStream);
+        /// Check if data in the input provider is TDF
+        /// \param inputProvider - The input provider containing a tdf data to be decrypted.
+        /// \return Return true if data is TDF and false otherwise
+        static bool isInputProviderTDF(IInputProvider& inputProvider);
 
     private:
-        /// Encrypt the data in the input stream to tdf format and return the manifest.
-        /// \param inputStream - The input steam
-        /// \param dataSize - The amount of data in the input stream.
-        /// \param sinkCB - A data sink callback which is called with tdf data.
-        /// \return string - The manifest of the tdf.
-
-        /// Encrypt the data in the input stream to tdf format and return the manifest.
-        /// \param inputStream - The input steam
-        /// \param dataSize - The amount of data in the input stream.
+        /// Encrypt data from InputProvider and write to IOutputProvider
+        /// \param inputProvider - Input provider interface for reading data
         /// \param writer - The writer to which tdf data will write to
-        /// \param sinkCB - A data sink callback which is called with tdf data.
-        /// \return string - The manifest of the tdf.
-        std::string encryptStream(std::istream& inputStream, std::streampos dataSize, TDFWriter& writer);
+        /// \return Return manifest
+        /// NOTE: virtru::exception will be thrown if there are issues while performing the encryption process.
+        std::string encryptIOProviderImpl(IInputProvider& inputProvider, ITDFWriter& writer);
 
-        /// Decrypt the data in TDFReader and write to the out stream.
-        /// \param tdfReader - The TDF reader instance.
-        /// \param outStream - The stream containing the decrypted data.
-        void decryptStream(TDFReader& tdfReader, DataSinkCb&& sinkCB);
+        /// Decrypt data from reader and write to IOutputProvider
+        /// \param reader - TDF reader from which tdf data can be read
+        /// \param outputProvider - The decrypted data will be write to output provider
+        void decryptIOProviderImpl(ITDFReader& reader, IOutputProvider& outputProvider);
 
     private:
         /// Generate a signature of the payload base on integrity algorithm.
@@ -186,10 +164,10 @@ namespace virtru {
         /// Generate a html tdf type file.
         /// \param manifest - Manifest of the tdf file.
         /// \param inputStream - input stream of tdf data.
-        /// \param outStream  - output stream, on success it hold the .html tdf data.
+        /// \param outputProvider - The decrypted data will be write to output provider/
         inline void generateHtmlTdf(const std::string& manifest,
                                     std::istream& inputStream,
-                                    std::ostream& outStream);
+                                    IOutputProvider& outputProvider);
 
         /// Return tdf zip data by parsing html tdf file.
         /// \param htmlTDFFilepath - A tdf file in .html format.
@@ -210,36 +188,38 @@ namespace virtru {
         /// \return - TDF zip data.
         static std::vector<std::uint8_t> getTDFZipData(XMLDocFreePtr xmlDocPtr, bool manifestData);
 
-        // Return the TDF protocol used to encrypt the file
-        /// \param inTdfFilePath - The tdf file path
-        /// \return TDF protocol used to encrypt the file
-        static Protocol encryptedWithProtocol(const std::string& inTdfFilePath);
-
-        // Return the TDF protocol used to encrypt the input stream data
-        /// \param inTdfFilePath - The tdf file path
+        /// Return the TDF protocol used to encrypt the input stream data
+        /// \param inputProvider - Input provider interface for reading data
         /// \return TDF protocol used to encrypt the input stream data
-        static Protocol encryptedWithProtocol(std::istream& tdfInStream);
+        static Protocol encryptedWithProtocol(IInputProvider& inputProvider);
 
         /// Retrive the policy uuid(id) from the manifest.
         /// \param manifestStr - The tdf manifest.
         /// \return String - The policy id.
         std::string getPolicyFromManifest(const std::string& manifestStr) const;
 
-        /// Return the manifest from the tdf input stream.
-        /// \param tdfInStream - The TDF input steam
+        /// Return the manifest from the tdf input provider.
+        /// \param inputProvider - Input provider interface for reading data
         /// \return string - The manifest of the tdf.
-        std::string getManifest(std::istream &tdfInStream) const;
+        std::string getManifest(IInputProvider& inputProvider) const;
 
         /// Retrive the policy uuid(id) from the manifest.
         /// \param manifestStr - The tdf manifest.
         /// \return String - The policy id.
         std::string getPolicyIdFromManifest(const std::string& manifestStr) const;
 
+        /// Validate the supported cipher type
+        /// \param manifest - -The tdf manifest.
+        void validateCipherType(const nlohmann::json& manifest) const;
+
+        /// Validate the root signature.
+        /// \param splitKey - split key to validate the signature
+        /// \param manifest -The tdf manifest.
+        void validateRootSignature(SplitKey& splitKey, const nlohmann::json& manifest) const;
+
     private: /// Data
 
         TDFBuilder& m_tdfBuilder;
-        std::vector<std::uint8_t> m_zipReadBuffer;
-        std::vector<std::uint8_t> m_encodeBufferSize;
     };
 
 } // namespace virtru

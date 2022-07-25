@@ -22,22 +22,18 @@ namespace virtru {
 
     using namespace boost::beast::detail::base64;
 
-    /// Constructor for TDFArchiveReader
-    TDFXMLReader::TDFXMLReader(std::istream& inStream) : m_inStream(inStream) {
-        m_inStream.clear();
-        m_inStream.seekg(0, m_inStream.beg);
-    }
+    /// Constructor
+    TDFXMLReader::TDFXMLReader(IInputProvider& inputProvider): m_inputProvider(inputProvider) { }
 
     /// Get the manifest content.
     /// \return - Return the manifest as string.
     const std::string& TDFXMLReader::getManifest() {
 
-        m_inStream.seekg(0, std::ios::end);
-        auto fileSize = m_inStream.tellg();
-        m_inStream.seekg(0, std::ios::beg);
+        auto fileSize = m_inputProvider.getSize();
 
-        std::vector<char> xmlBuf((std::istreambuf_iterator<char>(m_inStream)),
-                               std::istreambuf_iterator<char>());
+        std::vector<gsl::byte> xmlBuf(fileSize);
+        auto bytes = toWriteableBytes(xmlBuf);
+        m_inputProvider.readBytes(0, fileSize, bytes);
 
         XMLDocFreePtr doc{xmlParseMemory(reinterpret_cast<const char *>(xmlBuf.data()), xmlBuf.size())};
         if (!doc) {
@@ -117,36 +113,20 @@ namespace virtru {
                                        reinterpret_cast<const char *>(xmlCharBase64Payload.get()),
                                        base64PayloadLength);
             m_binaryPayload.resize(result.first);
-            m_payloadLeftToRead = m_binaryPayload.size();
         }
 
         return m_manifest;
     }
 
-    /// Read the payload contents into the buffer.
-    /// The size of buffer could be less than requested size.
-    /// \param buffer - WriteableBytes
-    void TDFXMLReader::readPayload(WriteableBytes& buffer){
+    /// Read payload of length starting the index.
+    void TDFXMLReader::readPayload(size_t index, size_t length, WriteableBytes &bytes) {
 
-        std::size_t sizeToRead;
-        if (buffer.size() > m_payloadLeftToRead) {
-            sizeToRead = m_payloadLeftToRead;
-        } else {
-            sizeToRead = buffer.size();
-            m_payloadLeftToRead -= buffer.size();
-        }
-
-        // Copy the payload buffer contents into encrypt buffer without the IV padding.
-        std::copy_n(m_binaryPayload.begin() + m_payloadStartIndex, sizeToRead,
-                buffer.begin());
-
-        m_payloadStartIndex += sizeToRead;
-        buffer = buffer.first(sizeToRead);
+        std::copy_n(m_binaryPayload.begin() + index, length,
+                    bytes.begin());
     }
 
     /// Get the size of the payload.
-    /// \return std::uint64_t - Size of the payload.
-    std::int64_t TDFXMLReader::getPayloadSize() const {
+    std::uint64_t TDFXMLReader::getPayloadSize() const {
         return m_binaryPayload.size();
     }
 }

@@ -1,3 +1,4 @@
+
 /*
 * Copyright 2020 Virtru Corporation
 *
@@ -67,35 +68,31 @@ namespace virtru {
         NanoTDFClient& operator=(NanoTDFClient&& client)  = delete;
 
     public: /// Encrypt and Decrypt
-        /// Encrypt the file to nano tdf format.
-        /// \param inFilepath - The file on which the encryption is performed.
-        /// \param outFilepath - The file path of the tdf after successful encryption.
-        /// NOTE: virtru::exception will be thrown if there is issues while performing the encryption process.
-        void encryptFile(const std::string& inFilepath, const std::string& outFilepath) override;
-
 #ifndef SWIG
-        /// Encrypt the data to nano tdf format.
-        /// \param plainData - The string containing the data to be encrypted.
-        /// \return std::string - The string containing the encrypted data.
-        /// NOTE: virtru::exception will be thrown if there are issues while performing the encryption process.
-        /// NOTE: The caller should copy the bytes from the return value and should not hold on to the
-        /// return value.
-        std::string encryptString(const std::string &plainData) override;
+        /// Encrypt the data by reading from inputProvider and writing to outputProvider.
+        /// \param inputProvider - InputProvider for reading the data.
+        /// \param outputProvider -  OutputProvide for writing the TDF data.
+        void encryptWithIOProviders(IInputProvider& inputProvider, IOutputProvider& outputProvider) override;
+
+        /// Decrypt the tdf data by reading from inputProvider and writing to outputProvider.
+        /// \param inputProvider - InputProvider for reading the TDF data.
+        /// \param outputProvider -  OutputProvide for writing the decrypted data.
+        void decryptWithIOProviders(IInputProvider& inputProvider, IOutputProvider& outputProvider) override;
 #endif
 
+        /// Encrypt the file to tdf format.
+        /// \param tdfStorageType - The type of the tdf.
+        /// \param outFilepath - The file path of the tdf after successful encryption.
+        /// NOTE: virtru::exception will be thrown if there is issues while performing the encryption process.
+        void encryptFile(const TDFStorageType &tdfStorageType, const std::string &outFilepath) override;
+
         /// Encrypt the bytes to tdf format.
-        /// \param plainData - The vector containing the bytes to be encrypted.
+        /// \param tdfStorageType - The type of the tdf.
         /// \return std::vector<VBYTE> - The vector containing the encrypted data.
         /// NOTE: virtru::exception will be thrown if there are issues while performing the encryption process.
         /// NOTE: The caller should copy the bytes from the return value and should not hold on to the
         /// return value.
-        std::vector<VBYTE> encryptData(const std::vector<VBYTE> &plainData) override;
-
-        /// Decrypt file.
-        /// \param inFilepath - The file on which the decryption is performed.
-        /// \param outFilepath - The file path of the nano tdf after successful decryption.
-        /// NOTE: virtru::exception will be thrown if there is issues while performing the decryption process.
-        void decryptFile(const std::string& inFilepath, const std::string& outFilepath) override;
+        std::vector<VBYTE> encryptData(const TDFStorageType &tdfStorageType) override;
 
         /// Decrypt file that are encrypted using old version of SDKs.
         /// \param inFilepath - The file on which the decryption is performed.
@@ -103,25 +100,30 @@ namespace virtru {
         /// NOTE: virtru::exception will be thrown if there is issues while performing the decryption process.
         void decryptFileUsingOldFormat(const std::string& inFilepath, const std::string& outFilepath);
 
-#ifndef SWIG
-        /// Decrypt data from nano tdf format.
-        /// \param encryptedData - The string containing a data to be decrypted.
-        /// \return std::string - The string containing the plain data.
+        /// Decrypt file to nano tdf file format.
+        /// \param tdfStorageType - The type of the tdf.
+        /// \param outFilepath - The file path of the tdf after successful encryption.
+        /// NOTE: virtru::exception will be thrown if there is issues while performing the decryption process.
+        void decryptFile(const TDFStorageType &tdfStorageType, const std::string &outFilepath) override;
+
+        /// Decrypt the bytes to nano tdf format.
+        /// \param tdfStorageType - The type of the tdf.
+        /// \return std::vector<VBYTE> - The vector containing the decrypted data.
         /// NOTE: virtru::exception will be thrown if there are issues while performing the decryption process.
         /// NOTE: The caller should copy the bytes from the return value and should not hold on to the
         /// return value.
-        std::string decryptString(const std::string &encryptedData) override;
+        std::vector<VBYTE> decryptData(const TDFStorageType &tdfStorageType) override;
 
-        /// Decrypt data from nano tdf format.
-        /// \param encryptedData - The string containing a data to be decrypted.
+        /// Decrypt part of the data from tdf storage type.
+        /// \param tdfStorageType - The type of the nano tdf.
         /// \param offset - The offset within the plaintext to return
         /// \param length - The length of the plaintext to return
-        /// \return std::string - The string containing the plain data.
+        /// \return std::vector - The vector containing the decrypted data.
         /// NOTE: virtru::exception will be thrown if there are issues while performing the decryption process.
         /// NOTE: The caller should copy the bytes from the return value and should not hold on to the
         /// return value.
-        std::string decryptStringPartial(const std::string &encryptedData, size_t offset, size_t length) override;
-#endif
+        std::vector<VBYTE> decryptDataPartial(const TDFStorageType &tdfStorageType, size_t offset, size_t length) override;
+
         /// Decrypt data from nano tdf format that are encrypted using old version of SDKs.
         /// \param encryptedData - The string containing a data to be decrypted.
         /// \return std::string - The string containing the plain data.
@@ -129,14 +131,6 @@ namespace virtru {
         /// NOTE: The caller should copy the bytes from the return value and should not hold on to the
         /// return value.
         std::string decryptStringUsingOldFormat(const std::string &plainData);
-
-        /// Decrypt the bytes from tdf format.
-        /// \param encryptedData - The vector containing the bytes to be decrypted.
-        /// \return std::vector - The vector containing the plain data.
-        /// NOTE: virtru::exception will be thrown if there are issues while performing the decryption process.
-        /// NOTE: The caller should copy the bytes from the return value and should not hold on to the
-        /// return value.
-        std::vector<VBYTE> decryptData(const std::vector<VBYTE> &encryptedData) override;
 
         /// Validate the TDF on decrypt(check if the TDF is singed by right entity). Throws exception
         /// on decrypt if the given public key doesn't match the one in TDF.

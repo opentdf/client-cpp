@@ -125,6 +125,7 @@ namespace virtru {
 
     static constexpr auto kHTTPBadRequest           = 400;
     static constexpr auto kHTTPOk                   = 200;
+    static constexpr auto kHTTPOkPartial            = 206;
 
     /// From: https://www.iana.org/assignments/message-headers/message-headers.xhtml
     /// HTTP Headers
@@ -143,11 +144,15 @@ namespace virtru {
     static constexpr auto kUserAgentValuePostFix   = "Virtru TDF C++ SDK";
     static constexpr auto kVirtruClientValue       = "virtru-cpp-sdk:0.0.0";
     static constexpr auto kVirtruNTDFHeaderKey     = "virtru-ntdf-version";
+    static constexpr auto kRangeRequest            = "Range";
+    static constexpr auto kContentTypeOctetStream  = "application/octet-stream";
 
     /// HTTP Verbs
     static constexpr auto kHttpGet                 = "GET";
+    static constexpr auto kHttpPut                 = "PUT";
     static constexpr auto kHttpPost                = "POST";
     static constexpr auto kHttpPatch               = "PATCH";
+    static constexpr auto kHttpHead                = "HEAD";
 
     /// HTML template attributes
     static constexpr auto kHTMLValueAttribute      = "value";
