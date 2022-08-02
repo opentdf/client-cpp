@@ -120,6 +120,24 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
     add_custom_command(TARGET ${PROJECT_NAME}static POST_BUILD
             COMMAND libtool -static -o ${TDF_COMBINED_LIB_FULL_PATH} ${TDF_STATIC_LIB_FULL_PATH}
+            COMMAND libtool -static -o ${TDF_COMBINED_LIB_FULL_PATH} ${TDF_STATIC_LIB_FULL_PATH}
+            ${CONAN_LIB_DIRS_BOOST}/libboost_regex.a
+            ${CONAN_LIB_DIRS_BOOST}/libboost_iostreams.a
+            ${CONAN_LIB_DIRS_OPENSSL}/libcrypto.a
+            ${CONAN_LIB_DIRS_OPENSSL}/libssl.a
+            ${CONAN_LIB_DIRS_ZLIB}/libz.a
+            ${CONAN_LIB_DIRS_BZIP2}/libbz2.a
+            ${CONAN_LIB_DIRS_LIBXML2}/libxml2.a
+            ${CONAN_LIB_DIRS_LIBICONV}/libiconv.a
+            ${CONAN_LIB_DIRS_LIBARCHIVE}/${LIBARCHIVE}
+
+
+            COMMENT "Combining libs and creating ${TDF_COMBINED_LIB_FILENAME}...")
+
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "iOS")
+    add_custom_command(TARGET ${PROJECT_NAME}static POST_BUILD
+            COMMAND libtool -static -o ${TDF_COMBINED_LIB_FULL_PATH} ${TDF_STATIC_LIB_FULL_PATH}
+            COMMAND libtool -static -o ${TDF_COMBINED_LIB_FULL_PATH} ${TDF_STATIC_LIB_FULL_PATH}
             ${CONAN_LIB_DIRS_BOOST}/libboost_regex.a
             ${CONAN_LIB_DIRS_BOOST}/libboost_iostreams.a
             ${CONAN_LIB_DIRS_OPENSSL}/libcrypto.a

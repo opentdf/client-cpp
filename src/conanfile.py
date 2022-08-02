@@ -5,6 +5,7 @@ class TDFLibConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
 
     def configure(self):
+        self.options["boost"].with_stacktrace_backtrace = False
         if str(self.settings.arch).startswith('arm'):
             self.options["openssl"].no_asm = True
             self.options["libxml2"].zlib = False
@@ -23,6 +24,7 @@ class TDFLibConan(ConanFile):
         self.requires("pybind11/2.6.2@")
         self.requires("nlohmann_json/3.10.4@")
         self.requires("jwt-cpp/0.4.0@")
+        self.requires("libarchive/3.5.1@")
 
     def build(self):
         cmake = CMake(self)

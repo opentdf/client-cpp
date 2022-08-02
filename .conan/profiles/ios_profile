@@ -1,0 +1,15 @@
+include(default)
+
+[settings]
+os=iOS
+os.version=13.0
+os.sdk=iphonesimulator
+os_build=Macos
+arch_build=armv8
+arch=x86_64
+compiler=apple-clang
+compiler.version=13.1
+compiler.libcxx=libc++
+
+[build_requires]
+darwin-toolchain/1.5.0@ezored/stable
