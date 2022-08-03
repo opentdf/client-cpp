@@ -11,11 +11,15 @@ cmake_minimum_required (VERSION 3.8)
 # enable verbose logging
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-#get version 
+#get version
 file(STRINGS ../../VERSION PKG_VERSION)
 
 # Set the project name
 project(opentdf VERSION ${PKG_VERSION})
+
+option(TDF_LIB_INSTALL_LOCATION "Replacement for CMAKE_INSTALL_PREFIX" ${PROJECT_SOURCE_DIR}/../../tdf-lib-cpp)
+option(TDF_INSTALL_DOCS "Install README, LICENSE and VERSION files" ON)
+
 
 configure_file(${PROJECT_SOURCE_DIR}/src/version.h.in ${PROJECT_SOURCE_DIR}/include/version.h)
 
@@ -176,7 +180,7 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     message(STATUS "msvc lib full path: ${TDF_STATIC_LIB_FULL_PATH_MSVC}")
 
     add_custom_command(TARGET ${PROJECT_NAME}static POST_BUILD
-        COMMAND lib -out:${TDF_COMBINED_LIB_FULL_PATH} 
+        COMMAND lib -out:${TDF_COMBINED_LIB_FULL_PATH}
         ${TDF_STATIC_LIB_FULL_PATH_MSVC}
         ${CONAN_LIB_DIRS_OPENSSL}/${WLIB}crypto${DEBUGSUFFIX}.lib
         ${CONAN_LIB_DIRS_OPENSSL}/${WLIB}ssl${DEBUGSUFFIX}.lib
@@ -217,13 +221,12 @@ endif()
 # Package tdf lib for customer
 ############################################################
 
-set(TDF_LIB_INSTALL_LOCATION  ${PROJECT_SOURCE_DIR}/../../tdf-lib-cpp)
 install(DIRECTORY DESTINATION ${TDF_LIB_INSTALL_LOCATION})
 
 # move the headers(to include) and tdf(to lib) directory under tdf-lib-cpp
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/
     DESTINATION ${TDF_LIB_INSTALL_LOCATION}/include)
-        
+
 install(FILES ${TDF_STATIC_LIB_FULL_PATH}
     DESTINATION ${TDF_LIB_INSTALL_LOCATION}/lib)
 
@@ -237,7 +240,8 @@ else()
     DESTINATION ${TDF_LIB_INSTALL_LOCATION}/lib)
 endif()
 
-install(FILES ${PROJECT_SOURCE_DIR}/../../README.md DESTINATION ${TDF_LIB_INSTALL_LOCATION})
-install(FILES ${PROJECT_SOURCE_DIR}/../../LICENSE DESTINATION ${TDF_LIB_INSTALL_LOCATION})
-install(FILES ${PROJECT_SOURCE_DIR}/../../VERSION DESTINATION ${TDF_LIB_INSTALL_LOCATION})
-        
+if (TDF_INSTALL_DOCS)
+  install(FILES ${PROJECT_SOURCE_DIR}/../../README.md DESTINATION ${TDF_LIB_INSTALL_LOCATION})
+  install(FILES ${PROJECT_SOURCE_DIR}/../../LICENSE DESTINATION ${TDF_LIB_INSTALL_LOCATION})
+  install(FILES ${PROJECT_SOURCE_DIR}/../../VERSION DESTINATION ${TDF_LIB_INSTALL_LOCATION})
+endif()
