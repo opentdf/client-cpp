@@ -18,6 +18,7 @@
 #include <boost/filesystem.hpp>
 #include <iostream>
 #include <istream>
+#include <fstream>
 
 #ifdef _WINDOWS
 #include <direct.h>

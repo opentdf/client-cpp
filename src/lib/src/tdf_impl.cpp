@@ -39,6 +39,7 @@
 #include <boost/interprocess/streams/bufferstream.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 #include <istream>
+#include <fstream>
 #include <jwt-cpp/jwt.h>
 #include <memory>
 #include <regex>
@@ -612,7 +613,7 @@ namespace virtru {
             return false;
         }
     }
-  
+
 
     /// Decrypt and return TDF metadata as a string. If the TDF content has
     /// no encrypted metadata, will return an empty string.
