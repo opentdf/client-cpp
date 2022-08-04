@@ -217,7 +217,7 @@ endif()
 # Package tdf lib for customer
 ############################################################
 
-set(TDF_LIB_INSTALL_LOCATION  ${PROJECT_SOURCE_DIR}/../../tdf-lib-cpp)
+set(TDF_LIB_INSTALL_LOCATION  ${CMAKE_INSTALL_PREFIX})
 install(DIRECTORY DESTINATION ${TDF_LIB_INSTALL_LOCATION})
 
 # move the headers(to include) and tdf(to lib) directory under tdf-lib-cpp
@@ -236,8 +236,3 @@ else()
   install(FILES ${TDF_SHARED_LIB_FULL_PATH}
     DESTINATION ${TDF_LIB_INSTALL_LOCATION}/lib)
 endif()
-
-install(FILES ${PROJECT_SOURCE_DIR}/../../README.md DESTINATION ${TDF_LIB_INSTALL_LOCATION})
-install(FILES ${PROJECT_SOURCE_DIR}/../../LICENSE DESTINATION ${TDF_LIB_INSTALL_LOCATION})
-install(FILES ${PROJECT_SOURCE_DIR}/../../VERSION DESTINATION ${TDF_LIB_INSTALL_LOCATION})
-        
