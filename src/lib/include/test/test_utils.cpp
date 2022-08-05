@@ -8,9 +8,6 @@
 //  TDF SDK
 //
 
-#include "nanotdf/ecc_mode.h"
-#include "nanotdf_client.h"
-
 #include "tdf_exception.h"
 #include "test_utils.h"
 

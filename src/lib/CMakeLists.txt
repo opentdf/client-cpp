@@ -60,16 +60,7 @@ include_directories(
 
 # enable warning
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    set(WLIB lib)
-    set(ZLIB zlib)
-    set(LIBXML2 libxml2_a)
-    set(OTHERLIBS crypt32 bcrypt)
-    if($ENV{VBUILDMODE} MATCHES $ENV{VBUILDDEBUG})
-        set(DEBUGSUFFIX d)
-    endif()
 else()
-    set(ZLIB z)
-    set(LIBXML2 xml2)
     add_compile_options(-Wall -Wextra -fPIC)
     if(DEFINED ENV{VBUILD_ADD_MACOS_FLAGS})
       if($ENV{VBUILD_ADD_MACOS_FLAGS} MATCHES "true")
@@ -90,15 +81,8 @@ link_directories(
     )
 
 link_libraries(
-    ${WLIB}boost_regex
-    ${WLIB}boost_iostreams
-    ${WLIB}crypto${DEBUGSUFFIX}
-    ${WLIB}ssl${DEBUGSUFFIX}
-    ${LIBXML2}
-    iconv
-    ${ZLIB}
-    bz2
-    ${OTHERLIBS}
+    ${CONAN_LIBS}
+    ${CONAN_SYSTEM_LIBS}
     )
 
 # generate the static library from the library sources
@@ -118,17 +102,16 @@ message(STATUS "Combined full path: ${TDF_COMBINED_LIB_FULL_PATH}")
 #TODO: Also need to handle iOS and Android(arm64).
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
-    add_custom_command(TARGET ${PROJECT_NAME}static POST_BUILD
-            COMMAND libtool -static -o ${TDF_COMBINED_LIB_FULL_PATH} ${TDF_STATIC_LIB_FULL_PATH}
-            ${CONAN_LIB_DIRS_BOOST}/libboost_regex.a
-            ${CONAN_LIB_DIRS_BOOST}/libboost_iostreams.a
-            ${CONAN_LIB_DIRS_OPENSSL}/libcrypto.a
-            ${CONAN_LIB_DIRS_OPENSSL}/libssl.a
-            ${CONAN_LIB_DIRS_ZLIB}/libz.a
-            ${CONAN_LIB_DIRS_BZIP2}/libbz2.a
-            ${CONAN_LIB_DIRS_LIBXML2}/libxml2.a
-            ${CONAN_LIB_DIRS_LIBICONV}/libiconv.a
+    FOREACH (LDIR ${CONAN_LIB_DIRS})
+        set(V_COMBINED_LIB_DIRS ${V_COMBINED_LIB_DIRS} -L${LDIR})
+    ENDFOREACH(LDIR)
 
+    FOREACH (LNAME ${CONAN_LIBS})
+        set(V_COMBINED_LIB_NAMES ${V_COMBINED_LIB_NAMES} -l${LNAME})
+    ENDFOREACH(LDIR)
+
+    add_custom_command(TARGET ${PROJECT_NAME}static POST_BUILD
+            COMMAND libtool -static -o ${TDF_COMBINED_LIB_FULL_PATH} ${TDF_STATIC_LIB_FULL_PATH} ${V_COMBINED_LIB_DIRS} ${V_COMBINED_LIB_NAMES}
 
             COMMENT "Combining libs and creating ${TDF_COMBINED_LIB_FILENAME}...")
 
@@ -144,10 +127,7 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     file(APPEND ${MRI_FILE} "addlib ${CONAN_LIB_DIRS_BOOST}/libboost_iostreams.a\n")
     file(APPEND ${MRI_FILE} "addlib ${CONAN_LIB_DIRS_OPENSSL}/libcrypto.a\n")
     file(APPEND ${MRI_FILE} "addlib ${CONAN_LIB_DIRS_OPENSSL}/libssl.a\n")
-    file(APPEND ${MRI_FILE} "addlib ${CONAN_LIB_DIRS_ZLIB}/libz.a\n")
-    file(APPEND ${MRI_FILE} "addlib ${CONAN_LIB_DIRS_BZIP2}/libbz2.a\n")
     file(APPEND ${MRI_FILE} "addlib ${CONAN_LIB_DIRS_LIBXML2}/libxml2.a\n")
-    file(APPEND ${MRI_FILE} "addlib ${CONAN_LIB_DIRS_LIBICONV}/libiconv.a\n")
     file(APPEND ${MRI_FILE} "save\n")
     file(APPEND ${MRI_FILE} "end\n")
 
@@ -175,20 +155,19 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(TDF_STATIC_LIB_FULL_PATH_MSVC ${MSVC_LIBRARY_OUTPUT_DIR}/${TDF_STATIC_LIB_FILENAME})
     message(STATUS "msvc lib full path: ${TDF_STATIC_LIB_FULL_PATH_MSVC}")
 
+    FOREACH (LDIR ${CONAN_LIB_DIRS})
+        set(V_COMBINED_LIB_DIRS ${V_COMBINED_LIB_DIRS} /LIBPATH ${LDIR})
+    ENDFOREACH(LDIR)
+
+    FOREACH (LNAME ${CONAN_LIBS})
+        set(V_COMBINED_LIB_NAMES ${V_COMBINED_LIB_NAMES} ${LNAME})
+    ENDFOREACH(LDIR)
+
     add_custom_command(TARGET ${PROJECT_NAME}static POST_BUILD
         COMMAND lib -out:${TDF_COMBINED_LIB_FULL_PATH} 
         ${TDF_STATIC_LIB_FULL_PATH_MSVC}
-        ${CONAN_LIB_DIRS_OPENSSL}/${WLIB}crypto${DEBUGSUFFIX}.lib
-        ${CONAN_LIB_DIRS_OPENSSL}/${WLIB}ssl${DEBUGSUFFIX}.lib
-        crypt32.lib
-        ws2_32.lib
-        bcrypt.lib
-        ${CONAN_LIB_DIRS_BOOST}/${WLIB}boost_regex.lib
-        ${CONAN_LIB_DIRS_BOOST}/${WLIB}boost_iostreams.lib
-        ${CONAN_LIB_DIRS_ZLIB}/zlib.lib
-        ${CONAN_LIB_DIRS_BZIP2}/bz2.lib
-        ${CONAN_LIB_DIRS_LIBXML2}/${WLIB}xml2_a.lib
-        ${CONAN_LIB_DIRS_LIBICONV}/iconv.lib
+        ${V_COMBINED_LIB_DIRS}
+        ${V_COMBINED_LIB_NAMES}
 
         COMMENT "Combining libs and creating ${TDF_COMBINED_LIB_FILENAME}...")
 else()
