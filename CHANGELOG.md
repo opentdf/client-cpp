@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 ### Added
+1.1.1
+ - PLAT-1963 Update subordinate lib versions, feedback from conan-center review
+
 1.1.0
  - PLAT-1871 opentdf 1.1.0 relase, custom zip and major api cleanup
 
