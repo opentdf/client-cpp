@@ -43,20 +43,14 @@ set (TDF_CPP_SDK_SOURCE_DIR ${PROJECT_SOURCE_DIR})
 include(${PROJECT_SOURCE_DIR}/CMakeSources.txt)
 set(SOURCE_FILES ${TDF_CPP_SDK_SOURCE_FILES})
 
-#############################################################
-## Add tao json library - is a zero-dependency C++17 header-only JSON library
-## Add jwt library - Depends on boringssl
-#############################################################
-set(TAO_CPP_JSON_DIR ${PROJECT_SOURCE_DIR}/../thirdparty-libs/common)
-
 include_directories(
     ${PROJECT_SOURCE_DIR}/include
     ${PROJECT_SOURCE_DIR}/include/crypto
     ${PROJECT_SOURCE_DIR}/include/network
     ${PROJECT_SOURCE_DIR}/src
-    ${TAO_CPP_JSON_DIR}
     ${CONAN_INCLUDE_DIRS}
     )
+message(STATUS "CONAN_INCLUDE_DIRS: ${CONAN_INCLUDE_DIRS}")
 
 # enable warning
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
