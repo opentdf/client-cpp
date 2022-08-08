@@ -22,6 +22,7 @@ class TDFLibConan(ConanFile):
         if not self.options.with_libiconv:
             self.options["boost"].without_locale = True
             self.options["boost"].without_log = True
+            self.options["libxml2"].iconv = False
         
     def requirements(self):
         self.requires("openssl/1.1.1q@")
