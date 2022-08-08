@@ -4,8 +4,8 @@ from conan.tools.scm import Version
 class TDFLibConan(ConanFile):
     generators = "cmake"
     settings = "os", "compiler", "build_type", "arch"
-    options = {"with_libiconv": [True, False], "with_zlib": [True, False], "with_libarchive": [True, False], "fPIC": [True, False], "branch_version": [True, False]}
-    default_options = {"with_libiconv": True, "with_zlib": True, "with_libarchive": False, "fPIC": True, "branch_version": False}
+    options = {"with_libiconv": [True, False], "with_zlib": [True, False], "fPIC": [True, False]}
+    default_options = {"with_libiconv": False, "with_zlib": False, "fPIC": True}
 
     def configure(self):
         if str(self.settings.arch).startswith('arm'):
@@ -15,9 +15,6 @@ class TDFLibConan(ConanFile):
             self.options["libxml2"].icu = False
 
     def config_options(self):
-        # Do not require libarchive as of 1.1.0
-        if Version(self.version) < "1.1.0":
-            self.options.with_libarchive = True
         if self.settings.os == "Windows":
             del self.options.fPIC
         if not self.options.with_zlib:
