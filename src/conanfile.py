@@ -8,10 +8,11 @@ class TDFLibConan(ConanFile):
     default_options = {"fPIC": True}
 
     def configure(self):
+        self.options["libxml2"].iconv = False
         if str(self.settings.arch).startswith('arm'):
             self.options["openssl"].no_asm = True
-            self.options["libxml2"].zlib = False
             self.options["libxml2"].lzma = False
+            self.options["libxml2"].zlib = False
             self.options["libxml2"].icu = False
 
     def config_options(self):
