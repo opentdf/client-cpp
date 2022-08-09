@@ -10,7 +10,6 @@ class TDFLibConan(ConanFile):
     def configure(self):
         self.options["libxml2"].iconv = False
         self.options["libxml2"].icu = False
-        self.options["boost"].i18n_backend = None
         self.options["boost"].i18n_backend_iconv = "off"
         self.options["boost"].i18n_backend_icu = False
         self.options["boost"].without_locale = True
@@ -28,7 +27,7 @@ class TDFLibConan(ConanFile):
         self.requires("openssl/1.1.1q")
         self.requires("boost/1.79.0")
         self.requires("ms-gsl/2.1.0")
-        self.requires("libxml2/2.9.14")
+        self.requires("libxml2/2.9.10")
         self.requires("nlohmann_json/3.11.1")
         self.requires("jwt-cpp/0.4.0")
         self.requires("zlib/1.2.12")
