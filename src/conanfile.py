@@ -8,11 +8,17 @@ class TDFLibConan(ConanFile):
     default_options = {"fPIC": True}
 
     def configure(self):
+        self.options["libxml2"].iconv = False
+        self.options["libxml2"].icu = False
+        self.options["boost"].i18n_backend = None
+        self.options["boost"].i18n_backend_iconv = "off"
+        self.options["boost"].i18n_backend_icu = False
+        self.options["boost"].without_locale = True
+        self.options["boost"].without_log = True
         if str(self.settings.arch).startswith('arm'):
             self.options["openssl"].no_asm = True
             self.options["libxml2"].lzma = False
             self.options["libxml2"].zlib = False
-            self.options["libxml2"].icu = False
 
     def config_options(self):
         if self.settings.os == "Windows":
