@@ -8,6 +8,8 @@ class TDFLibConan(ConanFile):
     default_options = {"fPIC": True}
 
     def configure(self):
+        if not self.settings.os == "Windows":
+            self.options["libxml2"].iconv = False
         if str(self.settings.arch).startswith('arm'):
             self.options["openssl"].no_asm = True
             self.options["libxml2"].lzma = False
@@ -17,8 +19,6 @@ class TDFLibConan(ConanFile):
     def config_options(self):
         if self.settings.os == "Windows":
             del self.options.fPIC
-        else:
-            self.options["libxml2"].iconv = False
         
     def requirements(self):
         self.requires("openssl/1.1.1q")
