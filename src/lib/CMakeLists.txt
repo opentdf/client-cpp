@@ -140,10 +140,12 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     FOREACH (LDIR ${CONAN_LIB_DIRS})
         set(V_COMBINED_LIB_DIRS ${V_COMBINED_LIB_DIRS} /LIBPATH:${LDIR})
     ENDFOREACH(LDIR)
+    message(STATUS "combined lib dirs: ${V_COMBINED_LIB_DIRS}")
 
     FOREACH (LNAME ${CONAN_LIBS})
         set(V_COMBINED_LIB_NAMES ${V_COMBINED_LIB_NAMES} "${LNAME}.lib")
     ENDFOREACH(LDIR)
+    message(STATUS "combined lib names: ${V_COMBINED_LIB_NAMES}")
 
     add_custom_command(TARGET ${PROJECT_NAME}static POST_BUILD
         COMMAND lib -out:${TDF_COMBINED_LIB_FULL_PATH} 

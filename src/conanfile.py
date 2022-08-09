@@ -8,8 +8,6 @@ class TDFLibConan(ConanFile):
     default_options = {"fPIC": True}
 
     def configure(self):
-        if not self.settings.os == "Windows":
-            self.options["libxml2"].iconv = False
         if str(self.settings.arch).startswith('arm'):
             self.options["openssl"].no_asm = True
             self.options["libxml2"].lzma = False
@@ -27,7 +25,7 @@ class TDFLibConan(ConanFile):
         self.requires("libxml2/2.9.14")
         self.requires("nlohmann_json/3.11.1")
         self.requires("jwt-cpp/0.4.0")
-        self.requires("zlib/1.2.12")
+        self.requires("zlib/1.2.14")
 
     def build(self):
         cmake = CMake(self)
