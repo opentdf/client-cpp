@@ -5,7 +5,7 @@ class TDFLibConan(ConanFile):
     generators = "cmake"
     settings = "os", "compiler", "build_type", "arch"
     options = {"with_libiconv": [True, False], "with_zlib": [True, False], "fPIC": [True, False]}
-    default_options = {"with_libiconv": False, "with_zlib": False, "fPIC": True}
+    default_options = {"with_libiconv": False, "with_zlib": True, "fPIC": True}
 
     def configure(self):
         if str(self.settings.arch).startswith('arm'):
@@ -34,6 +34,8 @@ class TDFLibConan(ConanFile):
         self.requires("libxml2/2.9.14@")
         self.requires("nlohmann_json/3.11.1@")
         self.requires("jwt-cpp/0.4.0@")
+        if not self.options.with_zlib:
+            self.requires("zlib/1.2.11@")
 
     def build(self):
         cmake = CMake(self)
