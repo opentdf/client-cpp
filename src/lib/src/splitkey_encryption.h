@@ -67,6 +67,11 @@ namespace virtru {
         /// \param key - The wrapped key.
         void setWrappedKey(const WrappedKey& key);
 
+        /// Set the payload key that will be used by split key encryption
+        /// \param key - The payload key.
+        void setPayloadKey(const WrappedKey& key);
+
+
     private:
         /// Encrypt the data using the cipher.
         /// \param data - A buffer which contains data to be encrypted
@@ -76,6 +81,8 @@ namespace virtru {
     private: // Data
         CipherType m_cipherType;
         WrappedKey m_key = symmetricKey<kKeyLength>();
+        WrappedKey m_payloadKey;
+        bool m_payloadKeyOverride{false};
         std::vector<std::unique_ptr<KeyAccess>> m_keyAccessObjects;
 
         // TODO: May want to have 2MB buffer which can be reused for encryption/decryption.

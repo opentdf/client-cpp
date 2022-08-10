@@ -244,6 +244,13 @@ namespace virtru {
         /// Validate the data set by the consumer of the TDFBuilder
         void validate();
 
+        /// Override payload key, this key will be used for encrypting the payload instead of the SDK generating
+        /// \param data - Symmetric key used to encrypt the payload
+        /// \param dataLength - The length of symmetric key(expect 32)
+        /// \return - Return a reference of this instance.
+        /// NOTE: This API is added to support CKS use case.
+        TDFBuilder& overridePayloadKey(const std::uint8_t* data, std::size_t dataLength);
+
     private: /// Data
         friend TDF;
         friend TDFImpl;

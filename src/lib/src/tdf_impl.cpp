@@ -144,6 +144,9 @@ namespace virtru {
 
         /// Create a split key and the key access object based on access type.
         auto splitKey = SplitKey{m_tdfBuilder.m_impl->m_cipherType};
+        if (m_tdfBuilder.m_impl->m_overridePayloadKey) {
+            splitKey.setPayloadKey(m_tdfBuilder.m_impl->m_payloadKey);
+        }
 
         auto keyAccessType = m_tdfBuilder.m_impl->m_keyAccessType;
         if (keyAccessType == KeyAccessType::Wrapped) {

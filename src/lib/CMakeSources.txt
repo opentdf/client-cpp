@@ -46,10 +46,10 @@ set (TDF_CPP_SDK_SOURCE_FILES_BASE
         ${TDF_CPP_SDK_SOURCE_DIR}/src/splitkey_encryption.cpp
         ${TDF_CPP_SDK_SOURCE_DIR}/src/splitkey_encryption.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/crypto/asym_encryption.cpp
-        ${TDF_CPP_SDK_SOURCE_DIR}/src/crypto/asym_encryption.h
+        ${TDF_CPP_SDK_SOURCE_DIR}/include/crypto/asym_encryption.h
         ${TDF_CPP_SDK_SOURCE_DIR}/include/crypto/openssl_deleters.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/crypto/asym_decryption.cpp
-        ${TDF_CPP_SDK_SOURCE_DIR}/src/crypto/asym_decryption.h
+        ${TDF_CPP_SDK_SOURCE_DIR}/include/crypto/asym_decryption.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/crypto/gcm_encryption.cpp
         ${TDF_CPP_SDK_SOURCE_DIR}/src/crypto/gcm_encryption.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/crypto/gcm_decryption.cpp
@@ -80,8 +80,6 @@ set (TDF_CPP_SDK_SOURCE_FILES_BASE
         ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_xml_writer.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_xml_reader.cpp
         ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_xml_reader.h
-        ${TDF_CPP_SDK_SOURCE_DIR}/include/test/test_utils.h
-        ${TDF_CPP_SDK_SOURCE_DIR}/include/test/test_utils.cpp
         ${TDF_CPP_SDK_SOURCE_DIR}/src/file_io_provider.cpp
         ${TDF_CPP_SDK_SOURCE_DIR}/src/s3_io_provider.cpp
         ${TDF_CPP_SDK_SOURCE_DIR}/src/stream_io_provider.cpp

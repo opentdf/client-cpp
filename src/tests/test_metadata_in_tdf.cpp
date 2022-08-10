@@ -11,7 +11,7 @@
 #include "network/http_client_service.h"
 #include "tdf_exception.h"
 #include "oidc_credentials.h"
-#include "test_utils.h"
+#include "support/test_utils.h"
 #include "tdf_storage_type.h"
 
 #include <boost/test/included/unit_test.hpp>
