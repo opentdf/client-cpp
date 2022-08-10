@@ -39,6 +39,7 @@
 #include <boost/interprocess/streams/bufferstream.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 #include <istream>
+#include <fstream>
 #include <jwt-cpp/jwt.h>
 #include <memory>
 #include <regex>

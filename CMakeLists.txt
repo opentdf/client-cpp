@@ -13,7 +13,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package("OpenSSL")
 find_package("Boost")
-find_package("ms_gsl")
+find_package("Microsoft.GSL")
 find_package("LibXml2")
 find_package("nlohmann_json")
 find_package("jwt-cpp")

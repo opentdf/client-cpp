@@ -8,9 +8,6 @@
 //  TDF SDK
 //
 
-#include "nanotdf/ecc_mode.h"
-#include "nanotdf_client.h"
-
 #include "tdf_exception.h"
 #include "test_utils.h"
 
@@ -18,6 +15,7 @@
 #include <boost/filesystem.hpp>
 #include <iostream>
 #include <istream>
+#include <fstream>
 
 #ifdef _WINDOWS
 #include <direct.h>
