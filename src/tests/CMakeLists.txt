@@ -79,7 +79,7 @@ link_libraries(
 # Collect all the files from the test dir
 file(GLOB TEST_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.cpp)
 
-file(GLOB SUPPORT_SRCS "support/*.*")
+file(GLOB SUPPORT_SRCS "support/*.cpp")
 
 # Run the leaks check if the valgrind is installed.
 set(CMAKE_VALGRIND_FOUND OFF)
