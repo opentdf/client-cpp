@@ -432,7 +432,7 @@ namespace virtru {
     }
 
     /// Override payload key, this key will be used for encrypting the payload instead of the SDK generating
-    TDFBuilder& TDFBuilder::overridePayloadKey(const std::vector<std::uint8_t> payloadKey) {
+    TDFBuilder& TDFBuilder::overridePayloadKey(const std::vector<std::uint8_t>& payloadKey) {
         if (payloadKey.size() != 32) {
             ThrowException("Incorrect payload key size.");
         }
