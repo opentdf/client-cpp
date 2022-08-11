@@ -432,12 +432,12 @@ namespace virtru {
     }
 
     /// Override payload key, this key will be used for encrypting the payload instead of the SDK generating
-    TDFBuilder& TDFBuilder::overridePayloadKey(const std::uint8_t* data, std::size_t dataLength) {
-        if (dataLength != 32 || data == nullptr) {
+    TDFBuilder& TDFBuilder::overridePayloadKey(const std::vector<std::uint8_t> payloadKey) {
+        if (payloadKey.size() != 32) {
             ThrowException("Incorrect payload key size.");
         }
 
-        std::memcpy(m_impl->m_payloadKey.data(), data, dataLength);
+        std::memcpy(m_impl->m_payloadKey.data(), payloadKey.data(), payloadKey.size());
         m_impl->m_overridePayloadKey = true;
     }
 } // namespace virtru
