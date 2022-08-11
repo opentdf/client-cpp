@@ -7,7 +7,7 @@
 
 #define BOOST_TEST_MODULE test_asym_decoding_suite
 
-#include "asym_decryption.cpp"
+#include "crypto/asym_decryption.cpp"
 #include "bytes.h"
 #include "crypto_utils.h"
 #include "openssl_deleters.h"

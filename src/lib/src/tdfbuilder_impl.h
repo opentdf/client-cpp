@@ -129,6 +129,8 @@ namespace virtru {
         HttpHeaders m_httpHeaders;
         std::weak_ptr<INetwork> m_networkServiceProvider;
         bool m_oidcMode{false}; //TODO toggle this to true once we remove all other deprecated auth methods
+        bool m_overridePayloadKey{false};
+        WrappedKey m_payloadKey;
     };
 }  // namespace virtru
 

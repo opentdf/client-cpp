@@ -16,7 +16,7 @@
 #include "tdf_exception.h"
 #include "crypto/rsa_key_pair.h"
 #include "oidc_credentials.h"
-#include "test_utils.h"
+#include "support/test_utils.h"
 #include "tdf_exception.h"
 #include "file_io_provider.h"
 #include "tdf_archive_reader.h"

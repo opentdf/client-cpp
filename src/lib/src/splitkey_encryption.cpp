@@ -175,6 +175,13 @@ namespace virtru {
         std::copy(key.begin(), key.end(), m_key.begin());
     }
 
+    /// Set the payload key that will be used by split key encryption
+    /// \param key - The payload key.
+    void SplitKey::setPayloadKey(const WrappedKey& key) {
+        std::copy(key.begin(), key.end(), m_payloadKey.begin());
+        m_payloadKeyOverride = true;
+    }
+
     /// Encrypt the data using the cipher.
     void SplitKey::encrypt(Bytes iv, Bytes data, WriteableBytes& encryptedData) const {
 
@@ -192,7 +199,11 @@ namespace virtru {
         // Adjust the span to add the IV vector at the start of the buffer
         auto encryptBufferSpan = bufferSpan.subspan(kGcmIvSize);
 
-        auto encoder = GCMEncryption::create(toBytes(m_key), iv);
+        auto payloadKey = m_key;
+        if (m_payloadKeyOverride) {
+            payloadKey = m_payloadKey;
+        }
+        auto encoder = GCMEncryption::create(toBytes(payloadKey), iv);
         encoder->encrypt(data, encryptBufferSpan);
         auto authTag = WriteableBytes{tag};
         encoder->finish(authTag);
