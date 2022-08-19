@@ -125,6 +125,8 @@ namespace virtru {
             uint64_t size;
             uint64_t offset;
             std::string fileName;
+            uint16_t fileTime;
+            uint16_t fileDate;
         };
 
         enum class PayloadState {

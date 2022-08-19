@@ -99,7 +99,7 @@ namespace virtru {
             }
 
             m_payloadState = PayloadState::Appending;
-            m_fileInfo.emplace_back(FileInfo{ m_payloadSize, m_currentOffset, m_payloadFilename});
+            m_fileInfo.emplace_back(FileInfo{ m_payloadSize, m_currentOffset, m_payloadFilename, fileTime, fileDate});
         }
 
 
@@ -173,7 +173,7 @@ namespace virtru {
         bytes = WriteableBytes{datafile};
         std::memcpy(datafile.data(), manifest.data(), manifest.length());
         m_outputProvider->writeBytes(bytes);
-        m_fileInfo.emplace_back(FileInfo{manifest.size(), m_currentOffset, m_manifestFilename});
+        m_fileInfo.emplace_back(FileInfo{manifest.size(), m_currentOffset, m_manifestFilename, fileTime, fileDate});
 
         m_currentOffset += sizeof(LocalFileHeader) + m_manifestFilename.length() + manifest.size();
         if (m_isZip64)
@@ -191,8 +191,8 @@ namespace virtru {
             cdfh.versionNeeded = 45;
             cdfh.flags = 0;
             cdfh.compressionMethod = 0;
-            cdfh.lastModifiedTime = 0;
-            cdfh.lastModifiedDate = 0;
+            cdfh.lastModifiedTime = fileInfo.fileTime;
+            cdfh.lastModifiedDate = fileInfo.fileDate;
             cdfh.crc32 = 0;
             cdfh.filenameLength = fileInfo.fileName.size();
             cdfh.fileCommentLength = 0;
