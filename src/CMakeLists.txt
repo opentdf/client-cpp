@@ -67,7 +67,7 @@ if (DEFINED ENV{VBUILD_UNIT_TESTS})
 else()
     message(STATUS "Skipping unit tests by default")
     set(VBUILD_UNIT_TESTS "false")
-endif
+endif()
 
 # Dump test failure logs to console to aid with debugging failures
 list(APPEND CMAKE_CTEST_ARGUMENTS "--output-on-failure")
