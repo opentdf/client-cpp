@@ -104,14 +104,29 @@ if(${VBUILD_CSHARP_BINDINGS} MATCHES "true")
    add_subdirectory(csharp-bindings)
 endif()
 
-if("$ENV{VBUILD_UNIT_TESTS}" MATCHES "true")
-  # Build unit tests.
-  enable_testing()
-  add_subdirectory(tests)
+if (DEFINED ENV{VBUILD_UNIT_TESTS})
+  if("$ENV{VBUILD_UNIT_TESTS}" MATCHES "true")
+    # Build unit tests.
+    enable_testing()
+    add_subdirectory(tests)
+  else()
+    message(STATUS "Skipping unit tests because of environment value: ${VBUILD_UNIT_TESTS}")
+  endif()
+else()
+    message(STATUS "Skipping unit tests by default")
+    set(VBUILD_UNIT_TESTS "false")
+endif
+
+if (DEFINED ENV{VIRTRU_RUN_E2E_TESTS})
+  if("$ENV{VIRTRU_RUN_E2E_TESTS}" STREQUAL "true")
+    add_subdirectory(e2e-tests)
+  else()
+    message(STATUS "Skipping E2E tests because of environment value: ${VIRTRU_RUN_E2E_TESTS}")
+  endif()
+else()
+    message(STATUS "Skipping E2E tests by default")
+    set(VIRTRU_RUN_E2E_TESTS "false")
 endif()
 
-if("$ENV{VIRTRU_RUN_E2E_TESTS}" STREQUAL "true")
-    add_subdirectory(e2e-tests)
-endif()
 # Dump test failure logs to console to aid with debugging failures
 list(APPEND CMAKE_CTEST_ARGUMENTS "--output-on-failure")
