@@ -21,14 +21,14 @@
 
 #include <boost/log/utility/setup/common_attributes.hpp>
 
+namespace virtru {
+
 // Wrapper function to remove gmtime call from logger.h to reduce windows warnings to this one spot
 // TODO: convert to gmtime_s() or equivalent to address warning
 struct tm *virtru_gmtime(const time_t *timer )
 {
     return gmtime(timer);
 }
-
-namespace virtru {
 
     using namespace std::chrono;
     static const std::string COMMON_FMT("[%TimeStamp%][%Severity%]%Message%");
