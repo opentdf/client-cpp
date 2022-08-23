@@ -18,14 +18,19 @@ Using [Hombrew](https://brew.sh) (for Mac and Linux)
 brew install conan cmake
 ```
 
-### Local Building
+### Installing a published release with Conan (recommended, will prefer prebuilt binaries but build missing deps from source)
+``` sh
+conan install opentdf-client/1.1.3@ --build=missing
+```
+For more details on Conan and publishing, see [OpenTDF/client-conan](https://github.com/opentdf/client-conan)
+
+### Local In-Tree Building
 
 1. `cd src`
 1. `sh build-all.sh`
 
-### Local Building+Testing
+### Local In-Tree Building+Testing
 
 1. `cd src`
 1. `sh build-all-test.sh`
 
-For more details on conan and publishing, see [OpenTDF/client-conan](https://github.com/opentdf/client-conan)
