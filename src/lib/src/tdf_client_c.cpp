@@ -80,9 +80,12 @@ DLL_PUBLIC TDFStorageTypePtr TDFCreateTDFStorageFileType(const char *filePath) {
     return storageType;
 }
 
-DLL_PUBLIC TDFStorageTypePtr TDFCreateTDFStorageStringType(const char *buffer) {
+DLL_PUBLIC TDFStorageTypePtr TDFCreateTDFStorageStringType(TDFCBytesPtr inBytesPtr,
+                                                           TDFBytesLength inBytesLength) {
     auto *storageType = new virtru::TDFStorageType();
-    storageType->setTDFStorageStringType(buffer);
+
+    storageType->setTDFStorageStringType({reinterpret_cast<char const *>(inBytesPtr),
+                                      inBytesLength});
 
     return storageType;
 }

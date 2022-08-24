@@ -174,7 +174,8 @@ DLL_PUBLIC TDFStorageTypePtr TDFCreateTDFStorageFileType(const char *filePath);
 
 /// Create a TDF Storage Type instance of type string
 /// \param buffer - The buffer for the data
-DLL_PUBLIC TDFStorageTypePtr TDFCreateTDFStorageStringType(const char *buffer);
+DLL_PUBLIC TDFStorageTypePtr TDFCreateTDFStorageStringType(TDFCBytesPtr inBytesPtr,
+                                                           TDFBytesLength inBytesLength);
 
 /// Create a TDF Storage Type instance of type S3
 /// \param S3Url - https-prefixed URL to the object to be read
