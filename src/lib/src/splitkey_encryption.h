@@ -61,7 +61,12 @@ namespace virtru {
 
         /// Return the wrapped key used by split key encryption
         /// \return - The wrapped key.
-        WrappedKey& getWrappedKey() { return m_key; }
+        WrappedKey& getWrappedKey() {
+            if (m_payloadKeyOverride) {
+                return m_payloadKey;
+            }
+            return m_key;
+        }
 
         /// Set the wrapped key that will be used by split key encryption
         /// \param key - The wrapped key.
@@ -76,7 +81,7 @@ namespace virtru {
         /// Encrypt the data using the cipher.
         /// \param data - A buffer which contains data to be encrypted
         /// \param encryptedData - A buffer for encrypted data output
-        void encrypt(Bytes iv, Bytes data, WriteableBytes& encryptedData) const;
+        void encrypt(Bytes iv, Bytes data, WriteableBytes& encryptedData, bool isMetaData = false) const;
         
     private: // Data
         CipherType m_cipherType;
