@@ -83,19 +83,7 @@ link_libraries(
 add_library(${PROJECT_NAME}static STATIC ${SOURCE_FILES})
 set_target_properties(${PROJECT_NAME}static PROPERTIES OUTPUT_NAME ${PROJECT_NAME}${TDF_STATIC_LIB_SUFFIX})
 
-# figure out where libs will be created
-message(STATUS "AAAAAAAAAAAAAAAAAAAAAA")
-message(STATUS "CMAKE_CONFIGURATION_TYPES ${CMAKE_CONFIGURATION_TYPES}")
-message(STATUS "CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE}")
-message(STATUS "CONFIG ${CONFIG}")
-message(STATUS "AAAAAAAAAAAAAAAAAAAAAA")
-
 set(TDF_LIB_DIR ${CMAKE_BINARY_DIR}/lib)
-if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    if (DEFINED CMAKE_CONFIGURATION_TYPES)
-      set(TDF_LIB_DIR ${CMAKE_BINARY_DIR}/lib/${CONFIG})
-    endif()
-endif()
 message(STATUS "Lib output dir: ${TDF_LIB_DIR}")
 
 get_target_property(TDF_STATIC_LIB_NAME ${PROJECT_NAME}static OUTPUT_NAME)
@@ -159,13 +147,25 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     ENDFOREACH(LNAME)
     message(STATUS "combined lib names: ${V_COMBINED_LIB_NAMES}")
 
-    add_custom_command(TARGET ${PROJECT_NAME}static POST_BUILD
-        COMMAND lib -out:${TDF_LIB_DIR}/$<CONFIG>/${TDF_COMBINED_LIB_FILENAME}
-        ${TDF_LIB_DIR}/$<CONFIG>/${TDF_STATIC_LIB_FILENAME}
-        ${V_COMBINED_LIB_DIRS}
-        ${V_COMBINED_LIB_NAMES}
+      # see if the bare directory without the config appended exists
+      file(GLOB TDF_LIB_DIR)
+      list(LENGTH RESULT RES_LEN)
+      if(RES_LEN EQUAL 0)
+        # if not, assume it needs config appended
+        set(TDF_LIB_DIR ${CMAKE_BINARY_DIR}/lib/Release)
+        message(STATUS "Appending config to lib dir")
+      else()
+        message(STATUS "Keeping lib dir bare")
+      endif()
+      message(STATUS "Updated lib output dir: ${TDF_LIB_DIR}")
 
-        COMMENT "Combining libs and creating ${TDF_COMBINED_LIB_FILENAME}...")
+    add_custom_command(TARGET ${PROJECT_NAME}static POST_BUILD
+      COMMAND lib -out:${TDF_LIB_DIR}/${TDF_COMBINED_LIB_FILENAME}
+      ${TDF_LIB_DIR}/${TDF_STATIC_LIB_FILENAME}
+      ${V_COMBINED_LIB_DIRS}
+      ${V_COMBINED_LIB_NAMES}
+
+      COMMENT "Combining libs and creating ${TDF_COMBINED_LIB_FILENAME}...")
 else()
     message(STATUS "${CMAKE_SYSTEM_NAME} - unknown system FIXME........")
 endif()
