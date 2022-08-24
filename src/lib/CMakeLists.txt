@@ -147,25 +147,13 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     ENDFOREACH(LNAME)
     message(STATUS "combined lib names: ${V_COMBINED_LIB_NAMES}")
 
-      # see if the bare directory without the config appended exists
-      file(GLOB TDF_LIB_DIR)
-      list(LENGTH RESULT RES_LEN)
-      if(RES_LEN EQUAL 0)
-        # if not, assume it needs config appended
-        set(TDF_LIB_DIR ${CMAKE_BINARY_DIR}/lib/Release)
-        message(STATUS "Appending config to lib dir")
-      else()
-        message(STATUS "Keeping lib dir bare")
-      endif()
-      message(STATUS "Updated lib output dir: ${TDF_LIB_DIR}")
-
     add_custom_command(TARGET ${PROJECT_NAME}static POST_BUILD
-      COMMAND lib -out:${TDF_LIB_DIR}/${TDF_COMBINED_LIB_FILENAME}
-      ${TDF_LIB_DIR}/${TDF_STATIC_LIB_FILENAME}
-      ${V_COMBINED_LIB_DIRS}
-      ${V_COMBINED_LIB_NAMES}
-
-      COMMENT "Combining libs and creating ${TDF_COMBINED_LIB_FILENAME}...")
+      COMMAND if exist ${TDF_LIB_DIR}/$<CONFIG>/${TDF_STATIC_LIB_FILENAME} (
+        lib -out:${TDF_LIB_DIR}/$<CONFIG>/${TDF_COMBINED_LIB_FILENAME} ${TDF_LIB_DIR}/$<CONFIG>/${TDF_STATIC_LIB_FILENAME} ${V_COMBINED_LIB_DIRS} ${V_COMBINED_LIB_NAMES}
+      ) else (
+        lib -out:${TDF_LIB_DIR}/${TDF_COMBINED_LIB_FILENAME} ${TDF_LIB_DIR}/${TDF_STATIC_LIB_FILENAME} ${V_COMBINED_LIB_DIRS} ${V_COMBINED_LIB_NAMES}
+      )
+    )
 else()
     message(STATUS "${CMAKE_SYSTEM_NAME} - unknown system FIXME........")
 endif()
