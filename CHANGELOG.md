@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 ### Added
+1.1.5
+ - PLAT-1972 - Update openTDF C++ SDK to support CKS(more changes)
+
 1.1.3
  - PLAT-1972 - Update openTDF C++ SDK to support CKS(more changes)
 
