@@ -21,6 +21,9 @@ DLL_PUBLIC TDF_STATUS TDFFreeMemory(void *memoryPtr);
 /// Destruct a credentials instance created with TDFCreateCredentialXXX
 DLL_PUBLIC void TDFDestroyCredential(TDFCredsPtr creds);
 
+/// Destruct a credentials instance created with TDFCreateTDFStorageXXX
+DLL_PUBLIC void TDFDestroyStorage(TDFStorageTypePtr storage);
+
 /// Create a new Credential instance configured for PKI authentication.
 /// \param oidcEndpoint - The OIDC server url
 /// \param clientId - The client id
@@ -174,7 +177,8 @@ DLL_PUBLIC TDFStorageTypePtr TDFCreateTDFStorageFileType(const char *filePath);
 
 /// Create a TDF Storage Type instance of type string
 /// \param buffer - The buffer for the data
-DLL_PUBLIC TDFStorageTypePtr TDFCreateTDFStorageStringType(const char *buffer);
+DLL_PUBLIC TDFStorageTypePtr TDFCreateTDFStorageStringType(TDFCBytesPtr inBytesPtr,
+                                                           TDFBytesLength inBytesLength);
 
 /// Create a TDF Storage Type instance of type S3
 /// \param S3Url - https-prefixed URL to the object to be read

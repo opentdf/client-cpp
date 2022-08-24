@@ -80,9 +80,12 @@ DLL_PUBLIC TDFStorageTypePtr TDFCreateTDFStorageFileType(const char *filePath) {
     return storageType;
 }
 
-DLL_PUBLIC TDFStorageTypePtr TDFCreateTDFStorageStringType(const char *buffer) {
+DLL_PUBLIC TDFStorageTypePtr TDFCreateTDFStorageStringType(TDFCBytesPtr inBytesPtr,
+                                                           TDFBytesLength inBytesLength) {
     auto *storageType = new virtru::TDFStorageType();
-    storageType->setTDFStorageStringType(buffer);
+
+    storageType->setTDFStorageStringType({reinterpret_cast<char const *>(inBytesPtr),
+                                      inBytesLength});
 
     return storageType;
 }
@@ -101,6 +104,12 @@ DLL_PUBLIC TDFStorageTypePtr TDFCreateTDFStorageS3Type(const char *S3Url,
 DLL_PUBLIC void TDFDestroyCredential(TDFCredsPtr creds) {
     auto *credsCast = static_cast<virtru::OIDCCredentials *>(creds);
     delete credsCast;
+}
+
+/// Destruct the storage instance.
+DLL_PUBLIC void TDFDestroyStorage(TDFStorageTypePtr storage) {
+    auto *storeCast = static_cast<virtru::TDFStorageType *>(storage);
+    delete storeCast;
 }
 
 /// Create a new TDF client using provided credentials object
