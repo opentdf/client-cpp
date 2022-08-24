@@ -106,6 +106,12 @@ DLL_PUBLIC void TDFDestroyCredential(TDFCredsPtr creds) {
     delete credsCast;
 }
 
+/// Destruct the storage instance.
+DLL_PUBLIC void TDFDestroyStorage(TDFStorageTypePtr storage) {
+    auto *storeCast = static_cast<virtru::TDFStorageType *>(storage);
+    delete storeCast;
+}
+
 /// Create a new TDF client using provided credentials object
 /// \param credsPtr - Creds object created by calling CreateCredentialXXX
 /// \param kasURL - URL of a key access service

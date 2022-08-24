@@ -21,6 +21,9 @@ DLL_PUBLIC TDF_STATUS TDFFreeMemory(void *memoryPtr);
 /// Destruct a credentials instance created with TDFCreateCredentialXXX
 DLL_PUBLIC void TDFDestroyCredential(TDFCredsPtr creds);
 
+/// Destruct a credentials instance created with TDFCreateTDFStorageXXX
+DLL_PUBLIC void TDFDestroyStorage(TDFStorageTypePtr storage);
+
 /// Create a new Credential instance configured for PKI authentication.
 /// \param oidcEndpoint - The OIDC server url
 /// \param clientId - The client id
