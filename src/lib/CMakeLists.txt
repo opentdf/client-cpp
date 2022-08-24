@@ -100,10 +100,10 @@ message(STATUS "Static lib name: ${TDF_STATIC_LIB_FILENAME}")
 
 # Workaround for *some* windows builds adding Release/Debug to lib output path
 if(DEFINED VBUILD_NO_RELEASEDEBUG)
-  set(VBUILD_RELEASEDEBUG "");
+  set(VBUILD_RELEASEDEBUG "")
 else()
   # TODO - add debug build support
-  set(VBUILD_RELEASEDEBUG "Release/");
+  set(VBUILD_RELEASEDEBUG "Release/")
 endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
