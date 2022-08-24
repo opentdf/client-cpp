@@ -50,6 +50,7 @@ namespace virtru {
     #define IsLogLevelError()    virtru::Logger::_IsLogLevel(virtru::LogLevel::Error)
     #define IsLogLevelFatal()    virtru::Logger::_IsLogLevel(virtru::LogLevel::Fatal)
 
+    struct tm *virtru_gmtime(const time_t *timer );
 
     /// Utility method to write timestamp in ISO8601 format to output stream
     /// \return std::ostream reference.
@@ -60,7 +61,7 @@ namespace virtru {
         auto ms = duration_cast<milliseconds>(now.time_since_epoch()) % 1000;
         auto in_time_t = system_clock::to_time_t(now);
 
-        ostream << std::put_time(gmtime(&in_time_t), "%FT%T");
+        ostream << std::put_time(virtru_gmtime(&in_time_t), "%FT%T");
         ostream << '.' << std::setfill('0') << std::setw(3) << ms.count() << 'Z';
 
         return ostream;
