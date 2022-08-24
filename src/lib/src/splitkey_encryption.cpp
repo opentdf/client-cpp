@@ -92,7 +92,7 @@ namespace virtru {
 
             std::vector<gsl::byte> encryptedData(kGcmIvSize + metadata.size() + kAesBlockSize);
             auto writeableBytes = WriteableBytes{encryptedData};
-            encrypt(toBytes(iv), toBytes(metadata), writeableBytes);
+            encrypt(toBytes(iv), toBytes(metadata), writeableBytes, true);
 
             nlohmann::json encryptedMetadataObj;
             encryptedMetadataObj[kCiphertext] = base64Encode(writeableBytes);
@@ -183,7 +183,7 @@ namespace virtru {
     }
 
     /// Encrypt the data using the cipher.
-    void SplitKey::encrypt(Bytes iv, Bytes data, WriteableBytes& encryptedData) const {
+    void SplitKey::encrypt(Bytes iv, Bytes data, WriteableBytes& encryptedData, bool isMetaData) const {
 
         long finalSize =  iv.size() + data.size() +  kAesBlockSize;
         if (encryptedData.size() < finalSize) {
@@ -200,7 +200,7 @@ namespace virtru {
         auto encryptBufferSpan = bufferSpan.subspan(kGcmIvSize);
 
         auto payloadKey = m_key;
-        if (m_payloadKeyOverride) {
+        if (m_payloadKeyOverride && !isMetaData) {
             payloadKey = m_payloadKey;
         }
         auto encoder = GCMEncryption::create(toBytes(payloadKey), iv);
