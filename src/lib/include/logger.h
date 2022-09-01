@@ -52,6 +52,11 @@ namespace virtru {
 
     struct tm *virtru_gmtime(const time_t *timer );
 
+    /// Returns a string that is suitable for logging
+    /// converts to hexdump for binary data
+    /// skips the middle of very long strings
+    std::string logFriendlyString(const std::string& inString, unsigned int maxLength = 256);
+
     /// Utility method to write timestamp in ISO8601 format to output stream
     /// \return std::ostream reference.
     inline std::ostream& logCurrentISO8601TimeUTC(std::ostream& ostream) {

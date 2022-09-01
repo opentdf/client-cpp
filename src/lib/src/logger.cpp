@@ -30,6 +30,89 @@ struct tm *virtru_gmtime(const time_t *timer )
     return gmtime(timer);
 }
 
+    // Get a 2-character ascii hex representation of a single character
+    std::string logHex(const unsigned char c)
+    {
+        std::string retVal;
+        static const char hexchars[] = "0123456789ABCDEF";
+
+        unsigned int sixteens = c % 16;
+        unsigned int ones = c - (sixteens * 16);
+        
+        std::string sSixteens;
+        sSixteens = hexchars[sixteens];
+        std::string sOnes;
+        sOnes = hexchars[ones];
+        retVal = sSixteens + sOnes;
+ 
+        return retVal;
+    }
+
+    std::string logHexdump(const std::string& inString)
+    {
+        std::string retVal;
+        unsigned int i;
+
+        std::string hexSide;
+        std::string charSide;
+        for(i=0; i<inString.length(); i++) {
+            std::string hexSide;
+            hexSide += logHex(inString[i]);
+            charSide += isprint(inString[i]) ? inString[i] : '.';
+            if (i && (i % 16)) {
+                // add line to output
+                retVal += hexSide + "  " + charSide + "\n";
+            }
+        }
+        if (i%16 != 0) {
+            // add leftovers at end
+            unsigned int iPadding = 16 - i%16;
+            std::string sPadding;
+            for (i=0; i< iPadding; i++)
+                sPadding += " ";
+            retVal += hexSide + sPadding + "  " + charSide + "\n";
+        }
+        return retVal;
+    }
+
+    std::string logFriendlyString(const std::string& inString, unsigned int maxFriendlyLength)
+    {
+        std::string retVal;
+        unsigned int halfFriendlyLength = maxFriendlyLength/2;
+        bool bHasBinary = false;
+        bool bIsVeryLong = false;
+
+        unsigned int i;
+
+        // Look for binary data
+        for (i=0; i<inString.length(); i++) {
+            if (!isprint(inString[i])) {
+                bHasBinary = true;
+                break;
+            }
+        }
+        if (inString.length() > maxFriendlyLength)
+            bIsVeryLong = true;
+
+        if (bHasBinary) {
+            if (bIsVeryLong) {
+                retVal = logHexdump(inString.substr(0, halfFriendlyLength)) + "/n.../n" + logHexdump(inString.substr(halfFriendlyLength, inString.length() - halfFriendlyLength));
+            } else {
+                retVal = logHexdump(inString);
+            }
+        } else {
+            if (bIsVeryLong) {
+                // Just a very long string
+                retVal = inString.substr(0, halfFriendlyLength) + "..." + inString.substr(halfFriendlyLength, inString.length() - halfFriendlyLength);
+            } else {
+                // Easy case - not long, not binary, just use it
+                retVal = inString;
+            }
+        }
+      
+        return retVal;
+    }
+
     using namespace std::chrono;
     static const std::string COMMON_FMT("[%TimeStamp%][%Severity%]%Message%");
 
