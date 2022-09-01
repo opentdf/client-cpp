@@ -68,7 +68,7 @@ namespace virtru::network {
         ioContext.run();
 
         // invoke the callback.
-        LogDebug("HTTPServiceProvider::executeGet responseBody="+responseBody);
+        LogDebug("HTTPServiceProvider::executeGet responseBody="+logFriendlyString(responseBody));
         callback(status, std::move(responseBody));
     }
 
@@ -122,7 +122,7 @@ namespace virtru::network {
         ioContext.run();
 
         // invoke the callback.
-        LogDebug("HTTPServiceProvider::executePut responseBody="+responseBody);
+        LogDebug("HTTPServiceProvider::executePut responseBody="+logFriendlyString(responseBody));
         callback(status, std::move(responseBody));
     }
 
@@ -175,7 +175,7 @@ namespace virtru::network {
         ioContext.run();
 
         // invoke the callback.
-        LogDebug("HTTPServiceProvider::executePost responseBody="+responseBody);
+        LogDebug("HTTPServiceProvider::executePost responseBody="+ logFriendlyString(responseBody));
         callback(status, std::move(responseBody));
     }
 
@@ -227,7 +227,7 @@ namespace virtru::network {
         ioContext.run();
 
         // invoke the callback.
-        LogDebug("HTTPServiceProvider::executePatch responseBody="+responseBody);
+        LogDebug("HTTPServiceProvider::executePatch responseBody="+logFriendlyString(responseBody));
         callback(status, std::move(responseBody));
     }
 
@@ -280,7 +280,7 @@ namespace virtru::network {
         ioContext.run();
 
         // invoke the callback.
-        LogDebug("HTTPServiceProvider::executeHead responseBody="+responseBody);
+        LogDebug("HTTPServiceProvider::executeHead responseBody="+logFriendlyString(responseBody));
         callback(status, std::move(responseBody));
     }
 
