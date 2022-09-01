@@ -27,7 +27,6 @@ void test_custom_zip_implementation(size_t fileMb) {
     constexpr auto tdfManifestFileName = "0.manifest.json";
     const std::string tdfOutputFile{"test_writer_reader.tdf"};
     FileOutputProvider iop(tdfOutputFile);
-    uint64_t totalSize = (uint64_t) oneMBSize * fileMb;
 
     std::string manifest{"test_custom_manifest.txt"};
 

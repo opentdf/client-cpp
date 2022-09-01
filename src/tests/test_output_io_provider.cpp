@@ -29,7 +29,7 @@ BOOST_AUTO_TEST_SUITE(test_output_provider_suite)
 
 class MockNetwork : public INetwork {
 public: //INetwork members
-    virtual void executeGet(const std::string &/*url*/, const HttpHeaders &headers, HTTPServiceCallback &&callback, const std::string& /*ca*/, const std::string& /*key*/, const std::string& /*cert*/) override
+    virtual void executeGet(const std::string &/*url*/, const HttpHeaders &/*headers*/, HTTPServiceCallback &&callback, const std::string& /*ca*/, const std::string& /*key*/, const std::string& /*cert*/) override
     {
         LogTrace("Mock Service::Get");
 

@@ -39,15 +39,13 @@
 // Credentials below assume a local quickstart OIDC environment
 #define LOCAL_QUICKSTART_SETUP 0
 
-constexpr auto user = "user1";
-constexpr auto user2 = "user2";
-constexpr auto easUrl = "http://localhost:8000/";
+#if LOCAL_QUICKSTART_SETUP
 constexpr auto OIDC_ENDPOINT = "http://localhost:65432/";
 constexpr auto KAS_URL = "http://localhost:65432/api/kas";
 constexpr auto CLIENT_ID = "tdf-client";
 constexpr auto CLIENT_SECRET = "123-456";
 constexpr auto ORGANIZATION_NAME = "tdf";
-
+#endif
 
 using namespace virtru::network;
 using namespace virtru::crypto;
@@ -127,7 +125,7 @@ BOOST_AUTO_TEST_CASE(test_big_file_local) {
 
             TDFStorageType encryptFileType;
             encryptFileType.setTDFStorageFileType(inPathEncrypt);
-            oidcClientTDF->encryptFileV2(encryptFileType, outPathEncrypt);
+            oidcClientTDF->encryptFile(encryptFileType, outPathEncrypt);
 
             TDFStorageType decryptFileType;
             decryptFileType.setTDFStorageFileType(outPathEncrypt);

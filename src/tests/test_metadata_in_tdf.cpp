@@ -424,7 +424,6 @@ DCzGcDpkNVkPR58v1BvBs4zZ
                 BOOST_FAIL("Failed to open file for reading.");
             }
 
-            std::ifstream::pos_type pos = ifs.tellg();
             fileData.reserve(ifs.tellg());
             ifs.seekg(0, std::ios::beg);
             std::for_each(std::istreambuf_iterator<char>(ifs),

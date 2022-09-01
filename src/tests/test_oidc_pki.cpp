@@ -54,7 +54,8 @@ using namespace virtru;
             "dlX0BQhvkkCJUvXwZjpWwYYby29FMtSaw2fl9OPTrhceqmF4MfQO4hTAc/X91QOi\n"
             "nfNeYqBVj/7rB7QgK7Y6f4hpcq2QYr+g\n"
             "-----END CERTIFICATE-----\n"s;
-
+// unused currently
+#if 0
     // openssl x509 -inform pem -in publickey.cer -pubkey -noout
     // Extract public key from cert
     const auto publicKeyPem = "-----BEGIN PUBLIC KEY-----\n"
@@ -66,6 +67,7 @@ using namespace virtru;
             "kaIMkYfK9MZpNtqrea2b+fcX+beLOBOYDl/FL5A/ALZT0TjJpfxwPzxS+hDeNvUm\n"
             "/wIDAQAB\n"
             "-----END PUBLIC KEY-----\n";
+#endif
 
     // $openssl genrsa -out privatekey.pem - generate a public key
     const auto privateKeyPem = "-----BEGIN RSA PRIVATE KEY-----\n"
@@ -158,10 +160,6 @@ using namespace virtru;
               }
 
               const auto OIDCAccessToken = "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJGRjJKM0o5TjNGQWQ0dnpLVDd2aEloZE1DTEVudE1PejVtLWhGNm5ScFNZIn0.eyJleHAiOjE2MTQxMTgzNzgsImlhdCI6MTYxNDExODA3OCwianRpIjoiNWQ4OTczYjYtYjg5Yy00OTBjLWIzYTYtMTM0ZDMxOTYxZTM3IiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4MDgwL2F1dGgvcmVhbG1zL2V4YW1wbGUtcmVhbG0iLCJhdWQiOiJhY2NvdW50Iiwic3ViIjoiN2ZkZGJkYWQtNDlmYS00NWU4LTg4MzItMzI3ZGI4ZjU1MDE1IiwidHlwIjoiQmVhcmVyIiwiYXpwIjoiZXhhbXBsZS1yZWFsbS1jbGllbnQiLCJzZXNzaW9uX3N0YXRlIjoiOTA0MTc4NTAtNWEwNC00ZmU1LTgxZWMtOTkzZDY1MmVhYmY5IiwiYWNyIjoiMSIsInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJvZmZsaW5lX2FjY2VzcyIsInVtYV9hdXRob3JpemF0aW9uIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJwcm9maWxlIGVtYWlsIiwic3VwaXJpIjoidG9rZW5fc3VwaXJpIiwiZW1haWxfdmVyaWZpZWQiOmZhbHNlLCJjbGFpbSI6eyJuYW1lIjp7InVzZXJuYW1lIjoiZm9vIn19LCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJqZWZmNS1leGFtcGxlIn0.NfM272HpLfyHACNJrXniyPF5klXjfB8QbhHBt_aTlZUF1-wO7W4-3qL02bMYe71dg_swR5WLFR0SL-zqa9zeKfsegL8E-lEeRSCcFwTvoSXPXSZ06tafFmSNxuA88MogG_3ZBhi9sUL5uAXtCoC3Rkb6xpb-JdHp42n68s_Mm1teCU2wx2rS6O1k23YCK3lY_xRsmV62sQ_tx973N5u7YHPxWsKVi-gHNlW3N0x23bRsEk-qcIq-3ug5cLOyADlNUeApTmug9lXGJxqxo3jlugnuf6VUtMwI1x8xSbePwC1pmGAfzZX2pS0kEUiGSHdH7flzibrMG70IXlutmS3e8Q";
-
-              const auto xOIDCAccessToken = "aaaaaaaaa";
-
-
 
               callback(200, "{\""+std::string(kAccessToken)+"\" : \""+OIDCAccessToken+"\", \""+std::string(kRefreshToken)+"\" : \"bbbbb\"}");
             }

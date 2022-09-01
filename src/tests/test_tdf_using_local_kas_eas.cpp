@@ -42,6 +42,7 @@
 #endif
 
 #define LOCAL_EAS_KAS_SETUP 0
+#if LOCAL_EAS_KAS_SETUP
 constexpr auto user = "user1";
 constexpr auto user2 = "user2";
 constexpr auto easUrl = "http://localhost:8000/";
@@ -50,7 +51,7 @@ constexpr auto KAS_URL = "http://localhost:65432/api/kas";
 constexpr auto CLIENT_ID = "tdf-client";
 constexpr auto CLIENT_SECRET = "123-456";
 constexpr auto ORGANIZATION_NAME = "tdf";
-
+#endif
 
 using namespace virtru::network;
 using namespace virtru::crypto;

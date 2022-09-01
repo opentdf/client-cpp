@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_SUITE(test_xml_reader_writer_suite)
         TDFXMLReader tdfxmlReader{inputProvider};
 
         BOOST_TEST(tdfxmlReader.getManifest() == manifest);
-        BOOST_TEST(tdfxmlReader.getPayloadSize() == 26);
+        BOOST_TEST(tdfxmlReader.getPayloadSize() == (std::uint64_t)26);
 
         auto index = 0;
         std::string  payloadBuffer;

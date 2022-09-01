@@ -72,12 +72,14 @@ namespace virtru {
     NanoTDFClient::~NanoTDFClient() = default;
 
     /// Encrypt the data by reading from inputProvider and writing to outputProvider.
-    void NanoTDFClient::encryptWithIOProviders(IInputProvider& inputProvider, IOutputProvider& outputProvider) {
+    void NanoTDFClient::encryptWithIOProviders(IInputProvider& /*inputProvider*/, IOutputProvider& /*outputProvider*/) {
+        // TODO - implement
         LogError("Not implemented");
     }
 
     /// Decrypt the tdf data by reading from inputProvider and writing to outputProvider.
-    void NanoTDFClient::decryptWithIOProviders(IInputProvider& inputProvider, IOutputProvider& outputProvider) {
+    void NanoTDFClient::decryptWithIOProviders(IInputProvider& /*inputProvider*/, IOutputProvider& /*outputProvider*/) {
+        // TODO - implement
         LogError("Not implemented");
     }
 

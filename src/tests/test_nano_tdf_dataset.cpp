@@ -49,7 +49,7 @@ std::string RandomString(size_t len) {
     return newstr;
 }
 
-void testWithDataSetAndDistribution(size_t dataSetLenght, size_t low, size_t high, uint32_t iteration) {
+void testWithDataSetAndDistribution(size_t dataSetLenght, size_t low, size_t high, uint32_t /*iteration*/) {
 
     std::vector<std::string> dataSet(dataSetLenght);
     std::vector<std::string> dataSetEncrypted(dataSetLenght);
