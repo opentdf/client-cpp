@@ -55,6 +55,12 @@ namespace virtru {
 
         S3Utilities::signHeaders(kHttpGet, m_headers, m_url, content, m_awsAccessKeyId, m_awsSecretAccessKey, m_awsRegionName);
 
+        for (auto const &pair:m_headers) {
+            std::cout << "{" << pair.first << ": " << pair.second << "}\n";
+        }
+
+        std::cout << "The URL" << m_url << std::endl;
+
         m_httpServiceProvider->executeGet(
                 m_url, m_headers,
                 [&netPromise, &netResponse, &status](

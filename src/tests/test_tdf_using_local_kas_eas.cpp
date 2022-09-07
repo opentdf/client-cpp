@@ -765,6 +765,7 @@ aviKeWq6GU4X5AJ/ZHmZmPqZjdpwsQxUiaVAFMrWjj4v3iwNeJD2fhjI
         clientCreds.setClientCredentialsClientSecret(CLIENT_ID, CLIENT_SECRET,
                                                      ORGANIZATION_NAME, OIDC_ENDPOINT);
         auto oidcClientTDF = std::make_unique<TDFClient>(clientCreds, KAS_URL);
+        oidcClientTDF->enableConsoleLogging(LogLevel::Debug);
 
         const size_t sizeOfData = 25 * 1024 * 1024; // 25 mb
 
@@ -792,6 +793,13 @@ aviKeWq6GU4X5AJ/ZHmZmPqZjdpwsQxUiaVAFMrWjj4v3iwNeJD2fhjI
             CustomInputProvider inputProvider{};
             CustomOutputProvider outputProvider{};
             oidcClientTDF->encryptWithIOProviders(inputProvider, outputProvider);
+
+            auto S3Url = "https://h3-jupyterhub.s3.us-west-2.amazonaws.com/location_data/location_100.csv.tdf";
+            auto aws_access_key_id="AKIAWM2OYTV3QKEQ455I";
+            auto aws_secret_access_key="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";
+            TDFStorageType decryptS3Type;
+            decryptS3Type.setTDFStorageS3Type(S3Url, aws_access_key_id, aws_secret_access_key, "us-west-2");
+            oidcClientTDF->decryptDataPartial(decryptS3Type, 0, 100);
 
 //            std::string writeData;
 //            writeData.append(reinterpret_cast<char *>(encryptedBuffer.data()), encryptedBuffer.size());
