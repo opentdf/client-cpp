@@ -9,7 +9,7 @@ on:
     - cron: "0 7 * * 1,3,5"
 env:
   VBUILD_UNIT_TESTS: true
-  CONAN_VER: 1.51.0
+  CONAN_VER: 1.51.3
 jobs:
 
   run-build-ubuntu:
