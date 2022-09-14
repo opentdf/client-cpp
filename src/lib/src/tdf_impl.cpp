@@ -31,6 +31,7 @@
 #include "tdf_archive_writer.h"
 #include "tdf_html_writer.h"
 #include "stream_io_provider.h"
+#include "benchmark.h"
 
 #include <memory>
 #include <stdint.h>
@@ -44,13 +45,6 @@
 #include <memory>
 #include <regex>
 #include <streambuf>
-
-/// Time logs are only for non production builds.
-#if VBUILD_BRANCH_PRODUCTION
-#define LOGTIME 0
-#else
-#define LOGTIME 1
-#endif
 
 namespace virtru {
 
@@ -79,9 +73,6 @@ namespace virtru {
     void TDFImpl::encryptIOProvider(IInputProvider& inputProvider,
                            IOutputProvider& outputProvider) {
 
-#if LOGTIME
-        auto t1 = std::chrono::high_resolution_clock::now();
-#endif
         if (m_tdfBuilder.m_impl->m_protocol == Protocol::Zip) {
 
             TDFArchiveWriter writer{&outputProvider,
@@ -113,16 +104,6 @@ namespace virtru {
             htmlOutputProvider.flush();
             generateHtmlTdf(manifestStr, htmlOutputProvider.stringStream, outputProvider);
         }
-
-#if LOGTIME
-        auto t2 = std::chrono::high_resolution_clock::now();
-        auto timeSpent = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
-
-        std::ostringstream os;
-        os << "Total encrypt-time:" << timeSpent << " ms";
-        LogInfo(os.str());
-#endif
-
     }
 
     /// Encrypt data from InputProvider and write to IOutputProvider
@@ -203,19 +184,8 @@ namespace virtru {
         std::vector<char> readBuffer(defaultSegmentSize); // TODO: may want use gsl::byte instead of char
         std::vector<gsl::byte> encryptedBuffer(encryptedBufferSize);
 
-#if LOGTIME
-        auto upsertT1 = std::chrono::high_resolution_clock::now();
-#endif
         /// upsert
         upsert(manifest);
-
-#if LOGTIME
-        auto upsertT2 = std::chrono::high_resolution_clock::now();
-        auto upsertTimeSpent = std::chrono::duration_cast<std::chrono::milliseconds>(upsertT2 - upsertT1).count();
-        std::ostringstream os;
-        os << "upsert time: " << upsertTimeSpent << "ms";
-        LogInfo(os.str());
-#endif
 
         ///
         /// Read the file in chucks of 'segmentSize'
@@ -309,10 +279,6 @@ namespace virtru {
     void TDFImpl::decryptIOProvider(IInputProvider& inputProvider,
                            IOutputProvider& outputProvider) {
 
-#if LOGTIME
-        auto t1 = std::chrono::high_resolution_clock::now();
-#endif
-
         auto protocol = encryptedWithProtocol(inputProvider);
         if (protocol == Protocol::Zip) {
             TDFArchiveReader reader{&inputProvider,
@@ -325,10 +291,6 @@ namespace virtru {
         } else { // HTML
 
             /// TODO: Improve the memory effeciency for html parsing.
-#if LOGTIME
-            auto t11 = std::chrono::high_resolution_clock::now();
-#endif
-
             auto dataSize = inputProvider.getSize();
             std::unique_ptr<std::uint8_t[]> buffer(new std::uint8_t[dataSize]);
 
@@ -344,23 +306,9 @@ namespace virtru {
             std::istringstream inputStream(tdfString);
             StreamInputProvider ipProvider{inputStream};
             TDFArchiveReader reader{&ipProvider, kTDFManifestFileName, kTDFPayloadFileName };
-#if LOGTIME
-            auto t12 = std::chrono::high_resolution_clock::now();
-            std::ostringstream os;
-            os << "Time spend extracting tdf data from html:" << std::chrono::duration_cast<std::chrono::milliseconds>(t12 - t11).count() << "ms";
-            LogInfo(os.str());
-#endif
+
             decryptIOProviderImpl(reader, outputProvider);
         }
-
-#if LOGTIME
-        auto t2 = std::chrono::high_resolution_clock::now();
-        auto timeSpent = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
-
-        std::ostringstream os;
-        os << "Total decrypt-time:" << timeSpent << " ms";
-        LogInfo(os.str());
-#endif
     }
 
     /// Decrypt data from reader and write to IOutputProvider
@@ -851,6 +799,8 @@ namespace virtru {
             return;
         }
 
+        Benchmark benchmark("Upsert");
+
         nlohmann::json requestBody;
         std::string upsertUrl;
 
@@ -971,6 +921,7 @@ namespace virtru {
     /// Unwrap the key from the manifest.
     WrappedKey TDFImpl::unwrapKey(nlohmann::json &manifest) const {
 
+        Benchmark benchmark("Unwrap");
         LogTrace("TDFImpl::unwrapKey");
 
         nlohmann::json keyAccessObjects = nlohmann::json::array();

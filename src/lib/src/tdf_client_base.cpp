@@ -54,6 +54,12 @@ namespace virtru {
         LogTrace("TDFClientBase::enableConsoleLogging");
     }
 
+    /// Enable benchmark logging.
+    void TDFClientBase::enableBenchmark(){
+        LogTrace("TDFClientBase::enableBenchmark");
+        Logger::getInstance().enableBenchmark();
+    }
+
     ///Read entity attributes
     std::vector<std::string> TDFClientBase::getEntityAttributes() {
         LogTrace("TDFClientBase::getEntityAttributes");

@@ -29,6 +29,7 @@
 #include "file_io_provider.h"
 #include "stream_io_provider.h"
 #include "s3_io_provider.h"
+#include "benchmark.h"
 
 #include <jwt-cpp/jwt.h>
 #include <sstream>
@@ -146,6 +147,9 @@ namespace virtru {
     /// Encrypt the file to tdf format.
     void TDFClient::encryptFile(const TDFStorageType &tdfStorageType, const std::string &outFilepath) {
         LogTrace("TDFClient::encryptFile");
+
+        Benchmark benchmark("Total encrypt file time:");
+
         // Initialize the TDF builder
         initTDFBuilder();
 
@@ -169,7 +173,9 @@ namespace virtru {
 
     /// Encrypt the bytes to tdf format.
     std::vector<VBYTE> TDFClient::encryptData(const TDFStorageType &tdfStorageType) {
-        LogTrace("TDFClient::encryptDataV2");
+        LogTrace("TDFClient::encryptData");
+
+        Benchmark benchmark("Total encrypt data time");
 
         // Initialize the TDF builder
         initTDFBuilder();
@@ -204,6 +210,9 @@ namespace virtru {
     /// Decrypt file to tdf file format.
     void TDFClient::decryptFile(const TDFStorageType &tdfStorageType, const std::string &outFilepath) {
         LogTrace("TDFClient::decryptFile");
+
+        Benchmark benchmark("Total decrypt file time");
+
         // Initialize the TDF builder
         initTDFBuilder();
 
@@ -230,7 +239,10 @@ namespace virtru {
 
     /// Decrypt the bytes to tdf format.
     std::vector<VBYTE> TDFClient::decryptData(const TDFStorageType &tdfStorageType) {
-        LogTrace("TDFClient::decryptFile");
+        LogTrace("TDFClient::decryptData");
+
+        Benchmark benchmark("Total decrypt data time");
+
         // Initialize the TDF builder
         initTDFBuilder();
 
@@ -266,6 +278,8 @@ namespace virtru {
     /// Decrypt part of the data of tdf storage type.
     std::vector<VBYTE> TDFClient::decryptDataPartial(const TDFStorageType &tdfStorageType, size_t offset, size_t length) {
         LogTrace("TDFClient::decryptPartial");
+
+        Benchmark benchmark("Total decrypt data partial time");
 
         // Initialize the TDF builder
         initTDFBuilder();
@@ -406,6 +420,8 @@ namespace virtru {
     /// used for encrypt and decrypt.
     void TDFClient::initTDFBuilder() {
         LogTrace("TDFClient::initTDFBuilder");
+
+        Benchmark benchmark("Authentication and sdk setup time");
 
         auto oidcMode = m_tdfBuilder->m_impl->m_oidcMode;
         auto entityObjectNotSet = m_tdfBuilder->m_impl->m_entityObject.getUserId().empty();
