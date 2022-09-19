@@ -51,6 +51,31 @@ namespace virtru {
         m_awsRegionName = awsRegionName;
     }
 
+    /// Return the unique, canonical descriptor/location this
+    /// StorageType is pointing to, so callers can distinguish between instances of TDFStorageType
+    ///
+    /// For S3, this might be a bucket URL. For file, this might be a path, etc.
+    /// \return The unique/canonical/locative descriptor this StorageType instance refers to.
+    std::string TDFStorageType::getStorageDescriptor() const  {
+        std::ostringstream osRetval;
+
+        //Return a hash of the buffer contents
+        if (m_tdfType == StorageType::Buffer) {
+            std::size_t bufHash = std::hash<std::string>{}(m_tdfBuffer);
+            osRetval << bufHash << std::endl;
+        //Return the file path
+        } else if (m_tdfType == StorageType::File) {
+            osRetval << m_filePath << std::endl;
+        //Return the S3 path
+        } else if (m_tdfType == StorageType::S3) {
+            osRetval << m_S3Url << std::endl;
+        } else {
+            osRetval << "No descriptor for this storage type" << std::endl;
+        }
+
+        return osRetval.str();
+    }
+
     /// Return the description of this object.
     std::string TDFStorageType::str() const {
         std::ostringstream osRetval;

@@ -100,6 +100,35 @@ DLL_PUBLIC TDFStorageTypePtr TDFCreateTDFStorageS3Type(const char *S3Url,
     return storageType;
 }
 
+DLL_PUBLIC TDF_STATUS TDFGetTDFStorageDescriptor(TDFStorageTypePtr storageTypePtr,
+                                                        TDFBytesPtr *outBytesPtr,
+                                                        TDFBytesLength *outBytesLength) {
+    if (storageTypePtr == nullptr ||
+        outBytesPtr == nullptr ||
+        outBytesLength == nullptr) {
+        return TDF_STATUS_INVALID_PARAMS;
+    }
+
+    try {
+        auto *storage = static_cast<virtru::TDFStorageType *>(storageTypePtr);
+
+        std::string descriptorStr = storage->getStorageDescriptor();
+
+        *outBytesLength = descriptorStr.length();
+        // Copy the policy string data to the out buffer.
+        *outBytesPtr = static_cast<unsigned char *>(malloc(*outBytesLength));
+        std::copy(descriptorStr.begin(), descriptorStr.end(),
+                  *outBytesPtr);
+
+        return TDF_STATUS_SUCCESS;
+    } catch (std::exception &e) {
+        LogError(e.what());
+    } catch (...) {
+        LogDefaultError();
+    }
+    return TDF_STATUS_FAILURE;
+}
+
 /// Destruct the credentials instance.
 DLL_PUBLIC void TDFDestroyCredential(TDFCredsPtr creds) {
     auto *credsCast = static_cast<virtru::OIDCCredentials *>(creds);

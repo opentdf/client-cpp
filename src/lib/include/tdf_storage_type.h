@@ -69,6 +69,13 @@ namespace virtru {
         /// \param awsRegionName - Region name for AWS credentials
         void setTDFStorageS3Type(const std::string &S3Url, const std::string& awsAccessKeyId, const std::string& awsSecretAccessKey, const std::string& awsRegionName);
 
+        /// Return the unique, canonical descriptor/location this
+        /// StorageType is pointing to.
+        ///
+        /// For S3, this might be a bucket URL. For file, this might be a path, etc.
+        /// \return The unique/canonical/locative descriptor this StorageType instance refers to.
+        std::string getStorageDescriptor() const;
+
         /// Return the description of this object.
         /// \return The description of this object.
         std::string str() const;
