@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+1.1.6
+ - PLAT-2045 - C++ SDK logs the TDF operation timelines.
+
 1.1.5
  - PLAT-1972 - Update openTDF C++ SDK to support CKS(more changes)
  - Add string length to C interop

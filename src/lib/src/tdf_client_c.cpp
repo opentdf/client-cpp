@@ -119,7 +119,7 @@ DLL_PUBLIC TDF_STATUS TDFGetTDFStorageDescriptor(TDFStorageTypePtr storageTypePt
         std::string descriptorStr = storage->getStorageDescriptor();
 
         *outBytesLength = descriptorStr.length();
-        // Copy the policy string data to the out buffer.
+        // Copy the string data to the out buffer.
         *outBytesPtr = static_cast<unsigned char *>(malloc(*outBytesLength));
         std::copy(descriptorStr.begin(), descriptorStr.end(),
                   *outBytesPtr);

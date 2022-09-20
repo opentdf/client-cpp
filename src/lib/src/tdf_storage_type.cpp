@@ -6,6 +6,7 @@
 */
 
 #include "tdf_storage_type.h"
+#include "tdf_exception.h"
 #include <sstream>
 
 namespace virtru {
@@ -70,7 +71,7 @@ namespace virtru {
         } else if (m_tdfType == StorageType::S3) {
             osRetval << m_S3Url << std::endl;
         } else {
-            osRetval << "No descriptor for this storage type" << std::endl;
+            ThrowException("No descriptor for this storage type", VIRTRU_SYSTEM_ERROR);
         }
 
         return osRetval.str();

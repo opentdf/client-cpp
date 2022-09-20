@@ -36,12 +36,13 @@ namespace virtru {
     #define __SOURCE_FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 
     /// macro for logging
-    #define LogTrace(message)    virtru::Logger::_LogTrace(message, __SOURCE_FILENAME__, __LINE__)
-    #define LogDebug(message)    virtru::Logger::_LogDebug(message, __SOURCE_FILENAME__, __LINE__)
-    #define LogInfo(message)     virtru::Logger::_LogInfo(message, __SOURCE_FILENAME__, __LINE__)
-    #define LogWarn(message)     virtru::Logger::_LogWarning(message, __SOURCE_FILENAME__, __LINE__)
-    #define LogError(message)    virtru::Logger::_LogError(message, __SOURCE_FILENAME__, __LINE__)
-    #define LogFatal(message)    virtru::Logger::_LogFatal(message, __SOURCE_FILENAME__, __LINE__)
+    #define LogTrace(message)       virtru::Logger::_LogTrace(message, __SOURCE_FILENAME__, __LINE__)
+    #define LogDebug(message)       virtru::Logger::_LogDebug(message, __SOURCE_FILENAME__, __LINE__)
+    #define LogInfo(message)        virtru::Logger::_LogInfo(message, __SOURCE_FILENAME__, __LINE__)
+    #define LogWarn(message)        virtru::Logger::_LogWarning(message, __SOURCE_FILENAME__, __LINE__)
+    #define LogError(message)       virtru::Logger::_LogError(message, __SOURCE_FILENAME__, __LINE__)
+    #define LogFatal(message)       virtru::Logger::_LogFatal(message, __SOURCE_FILENAME__, __LINE__)
+    #define LogBenchmark(message)   virtru::Logger::_LogBenchmark(message)
 
     #define IsLogLevelTrace()    virtru::Logger::_IsLogLevel(virtru::LogLevel::Trace)
     #define IsLogLevelDebug()    virtru::Logger::_IsLogLevel(virtru::LogLevel::Debug)
@@ -95,6 +96,9 @@ namespace virtru {
         /// Disable the logger to write logs to the console.
         void disableConsoleLogging();
 
+        /// Enable benchmark logging.
+        void enableBenchmark();
+
         /// Set the external logger.
         /// NOTE: once this is set, the console and file logger will be disabled entirely.
         /// \param externalLogger - The external logger weak ptr.
@@ -147,6 +151,14 @@ namespace virtru {
         /// \return - returns TRUE if logging is being emitted for the specified level
         static bool _IsLogLevel(LogLevel logLevel);
 
+        /// Log the bench mark message.
+        /// \param benchmarkMessage
+        static void _LogBenchmark(const std::string& benchmarkMessage);
+
+        /// Check if the benchmark logging enabled.
+        /// \return True if benchmark logging enabled.
+        static bool _IsBenchmarkLogEnabled();
+
     protected:
 
         /// Constructor
@@ -166,6 +178,7 @@ namespace virtru {
         boost::shared_ptr<consoleSink> m_consoleSink;
 #else
         bool m_enableConsoleLog;
+        bool m_enableBenchmarkLog{false};
 #endif
     };
 
