@@ -31,6 +31,7 @@
 #include "network/http_client_service.h"
 #include "network/network_util.h"
 #include "nanotdf_impl.h"
+#include "benchmark.h"
 
 #define DEBUG_LOG 0
 
@@ -585,6 +586,8 @@ namespace virtru {
         if (!requiresRewrap) {
             return m_decryptSymmetricKey;
         }
+
+        Benchmark benchmark("Symmetric key from KAS");
 
         // Request body as part of JWT payload
         nlohmann::json requestBody;
