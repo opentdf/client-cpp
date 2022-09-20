@@ -373,6 +373,7 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
             clientCreds.setClientCredentialsClientSecret(CLIENT_ID, CLIENT_SECRET,
                                                          ORGANIZATION_NAME, OIDC_ENDPOINT);
             auto oidcClientTDF = std::make_unique<TDFClient>(clientCreds, KAS_URL);
+            oidcClientTDF->enableBenchmark();
 
             auto attributes = oidcClientTDF->getSubjectAttributes();
             std::cout << "The subject attributes:" << std::endl;
@@ -440,6 +441,7 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
                 clientCreds.setClientCredentialsClientSecret(CLIENT_ID, CLIENT_SECRET,
                                                              ORGANIZATION_NAME, OIDC_ENDPOINT);
                 auto oidcClientTDF = std::make_unique<TDFClient>(clientCreds, KAS_URL);
+                oidcClientTDF->enableBenchmark();
 
                 TDFStorageType fileType;
                 fileType.setTDFStorageFileType(fileName);
@@ -550,8 +552,11 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
                                                      ORGANIZATION_NAME, OIDC_ENDPOINT);
 
         auto encryptNanoTDFClientOIDC = std::make_unique<NanoTDFClient>(clientCreds, KAS_URL);
+        encryptNanoTDFClientOIDC->enableBenchmark();
+
         //client1->shareWithUsers({user, user2});
         auto decryptNanoTDFClientOIDC = std::make_unique<NanoTDFClient>(clientCreds, KAS_URL);
+        decryptNanoTDFClientOIDC->enableBenchmark();
 
         auto attributes = encryptNanoTDFClientOIDC->getSubjectAttributes();
         std::cout << "The subject attributes:" << std::endl;

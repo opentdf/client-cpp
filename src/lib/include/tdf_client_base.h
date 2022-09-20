@@ -127,6 +127,9 @@ namespace virtru {
         /// \param logLevel - The log level
         void enableConsoleLogging(LogLevel logLevel = LogLevel::Current);
 
+        /// Enable benchmark logging.
+        void enableBenchmark();
+
     public: /// Policy interface(users, Attributes)
         /// Add access to the TDF file/data for the users in the list
         /// \param users - Share the TDF with the users in the vector
