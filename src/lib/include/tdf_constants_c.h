@@ -39,11 +39,21 @@
 extern "C" {
 #endif
 
-// Status code
+// Status codes
 typedef enum {
     TDF_STATUS_SUCCESS = 0,
     TDF_STATUS_FAILURE = 1, // Generic failure
-    TDF_STATUS_INVALID_PARAMS = 2 // Check the input parameters if they are valid.
+    TDF_STATUS_INVALID_PARAMS = 2, // Check the input parameters if they are valid.
+// TODO these more detailed codes map roughly to the C++ exception codes in tdf_error_codes.h, there is probably
+// a cleaner way to keep them in sync
+    TDF_STATUS_FAILURE_INTERNAL = 3,
+    TDF_STATUS_FAILURE_NETWORK = 4,
+    TDF_STATUS_FAILURE_CRYPTO = 5,
+    TDF_STATUS_FAILURE_TDF_FORMAT = 6,
+    TDF_STATUS_FAILURE_ATTR_OBJ = 7,
+    TDF_STATUS_FAILURE_POLICY_OBJ = 8,
+    TDF_STATUS_FAILURE_KAS_OBJ = 9,
+    TDF_STATUS_FAILURE_NANOTDF_FORMAT = 10,
 } TDF_STATUS;
 
 // TDF Protocol

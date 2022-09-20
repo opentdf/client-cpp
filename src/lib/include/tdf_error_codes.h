@@ -10,6 +10,17 @@
 //  Created by Elizabeth Healy on 2022/04/25.
 //
 
+//TODO these should be grouped more logically, by kind of failure,
+//in terms of what the *caller* is interested in, and correctly propagated back up thru the
+//SDK API.
+//
+//e.g.
+//- is this a Permission (key release) failure?
+//- is this a System (any of the following) failure?
+//  - is this a TDF format failure?
+//  - is this an "I can't talk to KAS" failure?
+//  - is this an "I can't authenticate via OIDC" failure?
+//etc etc
 namespace virtru {
 
     /// error codes

@@ -8,7 +8,9 @@
 #include "logger.h"
 #include "tdf_client.h"
 #include "tdf_client_c.h"
+#include "tdf_client_c_errors.h"
 #include "tdf_constants.h"
+#include "tdf_exception.h"
 
 #include <algorithm>
 #include <sstream>
@@ -27,6 +29,8 @@ DLL_PUBLIC TDF_STATUS TDFFreeMemory(void *memoryPtr) {
     try {
         free(memoryPtr);
         return TDF_STATUS_SUCCESS;
+    } catch (virtru::Exception &e) {
+        return convertVirtruExceptionToTDFStatus(e);
     } catch (std::exception &e) {
         LogError(e.what());
     } catch (...) {
@@ -121,6 +125,8 @@ DLL_PUBLIC TDF_STATUS TDFGetTDFStorageDescriptor(TDFStorageTypePtr storageTypePt
                   *outBytesPtr);
 
         return TDF_STATUS_SUCCESS;
+    } catch (virtru::Exception &e) {
+        return convertVirtruExceptionToTDFStatus(e);
     } catch (std::exception &e) {
         LogError(e.what());
     } catch (...) {
@@ -179,6 +185,8 @@ DLL_PUBLIC TDF_STATUS TDFAddDataAttribute(TDFClientPtr clientPtr,
         auto *client = static_cast<virtru::TDFClientBase *>(clientPtr);
         client->addDataAttribute(dataAttribute, kasUrl);
         return TDF_STATUS_SUCCESS;
+    } catch (virtru::Exception &e) {
+        return convertVirtruExceptionToTDFStatus(e);
     } catch (std::exception &e) {
         LogError(e.what());
     } catch (...) {
@@ -224,6 +232,8 @@ DLL_PUBLIC TDF_STATUS TDFEnableConsoleLogging(TDFClientPtr clientPtr, TDFLogLeve
         }
 
         return TDF_STATUS_SUCCESS;
+    } catch (virtru::Exception &e) {
+        return convertVirtruExceptionToTDFStatus(e);
     } catch (std::exception &e) {
         LogError(e.what());
     } catch (...) {
@@ -242,6 +252,8 @@ DLL_PUBLIC TDF_STATUS TDFEncryptFile(TDFClientPtr clientPtr, TDFStorageTypePtr d
         virtru::TDFStorageType *storage = static_cast<virtru::TDFStorageType *>(data);
         client->encryptFile(*storage, outFilepath);
         return TDF_STATUS_SUCCESS;
+    } catch (virtru::Exception &e) {
+        return convertVirtruExceptionToTDFStatus(e);
     } catch (std::exception &e) {
         LogError(e.what());
     } catch (...) {
@@ -262,6 +274,8 @@ DLL_PUBLIC TDF_STATUS TDFDecryptFile(TDFClientPtr clientPtr, TDFStorageTypePtr s
         client->decryptFile(*storage, outFilepath);
 
         return TDF_STATUS_SUCCESS;
+    } catch (virtru::Exception &e) {
+        return convertVirtruExceptionToTDFStatus(e);
     } catch (std::exception &e) {
         LogError(e.what());
     } catch (...) {
@@ -303,6 +317,8 @@ DLL_PUBLIC TDF_STATUS TDFEncryptString(TDFClientPtr clientPtr,
                   *outBytesPtr);
 
         return TDF_STATUS_SUCCESS;
+    } catch (virtru::Exception &e) {
+        return convertVirtruExceptionToTDFStatus(e);
     } catch (std::exception &e) {
         LogError(e.what());
     } catch (...) {
@@ -336,6 +352,8 @@ DLL_PUBLIC TDF_STATUS TDFDecryptString(TDFClientPtr clientPtr,
                   *outBytesPtr);
 
         return TDF_STATUS_SUCCESS;
+    } catch (virtru::Exception &e) {
+        return convertVirtruExceptionToTDFStatus(e);
     } catch (std::exception &e) {
         LogError(e.what());
     } catch (...) {
@@ -374,6 +392,8 @@ DLL_PUBLIC TDF_STATUS TDFDecryptDataPartial(TDFClientPtr clientPtr,
                   *outBytesPtr);
 
         return TDF_STATUS_SUCCESS;
+    } catch (virtru::Exception &e) {
+        return convertVirtruExceptionToTDFStatus(e);
     } catch (std::exception &e) {
         LogError(e.what());
     } catch (...) {
@@ -407,6 +427,8 @@ DLL_PUBLIC TDF_STATUS TDFGetPolicy(TDFClientPtr clientPtr,
                   *outBytesPtr);
 
         return TDF_STATUS_SUCCESS;
+    } catch (virtru::Exception &e) {
+        return convertVirtruExceptionToTDFStatus(e);
     } catch (std::exception &e) {
         LogError(e.what());
     } catch (...) {
@@ -434,6 +456,8 @@ DLL_PUBLIC TDF_STATUS TDFSetEncryptedMetadata(TDFClientPtr clientPtr,
                                       inBytesLength});
 
         return TDF_STATUS_SUCCESS;
+    } catch (virtru::Exception &e) {
+        return convertVirtruExceptionToTDFStatus(e);
     } catch (std::exception &e) {
         LogError(e.what());
     } catch (...) {
@@ -477,6 +501,8 @@ DLL_PUBLIC TDF_STATUS TDFGetEncryptedMetadata(TDFClientPtr clientPtr,
         }
 
         return TDF_STATUS_SUCCESS;
+    } catch (virtru::Exception &e) {
+        return convertVirtruExceptionToTDFStatus(e);
     } catch (std::exception &e) {
         LogError(e.what());
     } catch (...) {
