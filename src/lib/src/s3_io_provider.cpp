@@ -130,7 +130,7 @@ namespace virtru {
         //and then try to get our length value
         std::transform(netResponse.begin(), netResponse.end(), netResponse.begin(), ::tolower);
         auto vPos = netResponse.find(kContentLengthKeyLower);
-        if (vPos == std::string::npos) {
+        if (vPos != std::string::npos) {
             vPos += kContentLengthKeyLower.length() + 2; //value is beyond key and trailing ": "
             if (vPos >= netResponse.length()) {
                 const char* csError = "No value found for Content-Length";
