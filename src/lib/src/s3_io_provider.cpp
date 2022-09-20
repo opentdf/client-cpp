@@ -120,10 +120,18 @@ namespace virtru {
         }
 
         size_t result = 0;
-        const std::string kContentLengthKey("Content-Length");
-        auto vPos = netResponse.find(kContentLengthKey);
+        const std::string kContentLengthKeyLower("content-length");
+        //As per HTTP spec, header keys are not case sensitive.
+        //This means some servers will send `content-length` and others will send `Content-Length`,
+        //and we must accept both and treat them as the same thing. This makes a compelling case for using
+        //an off the shelf header manip library - but we have no such luxury here.
+        //
+        //So, convert the entire response to lowercase (we only care about content-length anyway)
+        //and then try to get our length value
+        std::transform(netResponse.begin(), netResponse.end(), netResponse.begin(), ::tolower);
+        auto vPos = netResponse.find(kContentLengthKeyLower);
         if (vPos != std::string::npos) {
-            vPos += kContentLengthKey.length() + 2; //value is beyond key and trailing ": "
+            vPos += kContentLengthKeyLower.length() + 2; //value is beyond key and trailing ": "
             if (vPos >= netResponse.length()) {
                 const char* csError = "No value found for Content-Length";
                 LogError(csError);
