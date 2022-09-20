@@ -24,6 +24,7 @@
 #include "nanotdf_client.h"
 #include "nanotdf_impl.h"
 #include "file_io_provider.h"
+#include "benchmark.h"
 
 #include <jwt-cpp/jwt.h>
 #include <fstream>
@@ -84,6 +85,8 @@ namespace virtru {
     /// Encrypt the file to tdf format.
     void NanoTDFClient::encryptFile(const TDFStorageType &tdfStorageType, const std::string &outFilepath) {
 
+        Benchmark benchmark("Total encrypt file time");
+
         // Initialize the nano tdf builder
         initNanoTDFBuilder();
 
@@ -114,6 +117,9 @@ namespace virtru {
 
     /// Decrypt file to nano tdf file format.
     void NanoTDFClient::decryptFile(const TDFStorageType &tdfStorageType, const std::string &outFilepath) {
+
+        Benchmark benchmark("Total decrypt file time");
+
         // Initialize the nano tdf builder
         initNanoTDFBuilder();
 
@@ -131,6 +137,8 @@ namespace virtru {
 
     /// Decrypt the bytes to nano tdf format.
     std::vector<VBYTE> NanoTDFClient::decryptData(const TDFStorageType &tdfStorageType) {
+
+        Benchmark benchmark("Total decrypt data time");
 
         // Initialize the nano tdf builder
         initNanoTDFBuilder();
@@ -154,6 +162,9 @@ namespace virtru {
 
     /// Encrypt the bytes to tdf format.
     std::vector<VBYTE> NanoTDFClient::encryptData(const TDFStorageType &tdfStorageType) {
+
+        Benchmark benchmark("Total encrypt data time");
+
         // Initialize the nano tdf builder
         initNanoTDFBuilder();
 
@@ -337,6 +348,8 @@ namespace virtru {
     /// Initialize the nano TDF builder which is used for creating the nano TDF
     /// instance used for encrypt and decrypt.
     void NanoTDFClient::initNanoTDFBuilder(bool newSDKKey) {
+
+        Benchmark benchmark("Authentication and sdk setup time");
 
         auto oidcMode = m_nanoTdfBuilder->m_impl->m_oidcMode;
         auto entityObjectNotSet = m_nanoTdfBuilder->m_impl->m_entityObject.getUserId().empty();

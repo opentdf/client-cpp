@@ -190,6 +190,11 @@ struct tm *virtru_gmtime(const time_t *timer )
 
     }
 
+    /// Enable benchmark logging.
+    void Logger::enableBenchmark() {
+        m_enableBenchmarkLog = true;
+    }
+    
     /// Set the external logger.
     void Logger::setExternalLogger(std::shared_ptr<ILogger> externalLogger) {
         m_callback = std::move(externalLogger);
@@ -402,4 +407,36 @@ struct tm *virtru_gmtime(const time_t *timer )
     bool Logger::_IsLogLevel(LogLevel logLevel) {
         return Logger::getInstance().m_logLevel <= logLevel;
     }
+
+    bool Logger::_IsBenchmarkLogEnabled() {
+        return Logger::getInstance().m_enableBenchmarkLog;
+    }
+
+    /// Log the bench mark message.
+    void Logger::_LogBenchmark(const std::string& benchmarkMessage) {
+        if (!Logger::getInstance().m_enableBenchmarkLog) {
+            return;
+        }
+
+        if (auto sp = std::move(Logger::getInstance().m_callback)) {
+            sp->TDFSDKLog({ LogLevel::Info,
+                            benchmarkMessage,
+                            "",
+                            "",
+                            0,
+                            duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count()});
+
+        } else {
+#if ENABLE_BOOST_LOG_FRAMEWORK
+            if (Logger::getInstance().m_logfileSink || Logger::getInstance().m_consoleSink) {
+                BOOST_LOG_TRIVIAL(fatal) << "[" << fileName << ":" << lineNumber << "]" << ":" << fatalMessage;
+            }
+#else
+
+            logCurrentISO8601TimeUTC(std::clog) << " " << "[Benchmark]";
+            std::clog << benchmarkMessage << "\n";
+#endif
+        }
+    }
+
 }  // namespace virtru
