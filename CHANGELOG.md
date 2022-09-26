@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+1.1.7
+ - Add support for getting TDFStorageObject descriptors 
+ - Improve error reporting granularity for C interop
+ - Fix `content-type` header case sensitivity check in S3 provider
+
 1.1.6
  - PLAT-2045 - C++ SDK logs the TDF operation timelines.
 
