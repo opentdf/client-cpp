@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+1.2.0
+ - Support full decrypt for all supported TDF storage types, instead of just partial decrypt.
+
 1.1.7
  - Add support for getting TDFStorageObject descriptors 
  - Improve error reporting granularity for C interop
