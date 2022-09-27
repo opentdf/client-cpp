@@ -114,6 +114,7 @@ namespace virtru {
             return tdf->getEncryptedMetadata(inputProvider);
         } else {
             std::string errorMsg{"Unknown TDF storage type"};
+            LogError(errorMsg);
             ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
         }
     }
@@ -167,6 +168,7 @@ namespace virtru {
             tdf->encryptIOProvider(inputProvider, outputProvider);
         } else {
             std::string errorMsg{"Unknown TDF storage type"};
+            LogError(errorMsg);
             ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
         }
     }
@@ -202,6 +204,7 @@ namespace virtru {
 
         } else {
             std::string errorMsg{"Unknown TDF storage type"};
+            LogError(errorMsg);
             ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
             return {};
         }
@@ -232,6 +235,7 @@ namespace virtru {
             tdf->decryptIOProvider(inputProvider, outputProvider);
         } else {
             std::string errorMsg{"Unknown TDF storage type"};
+            LogError(errorMsg);
             ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
         }
 
@@ -252,8 +256,23 @@ namespace virtru {
         auto policyObject = createPolicyObject();
         auto tdf = m_tdfBuilder->setPolicyObject(policyObject).build();
 
-        if (tdfStorageType.m_tdfType == TDFStorageType::StorageType::Buffer) {
+        if (tdfStorageType.m_tdfType == TDFStorageType::StorageType::File) {
 
+            // Create input provider
+            FileInputProvider inputProvider{tdfStorageType.m_filePath};
+
+            // Create output provider
+            std::ostringstream oStringStream;
+            StreamOutputProvider outputProvider{oStringStream};
+
+            tdf->decryptIOProvider(inputProvider, outputProvider);
+
+            // TODO: Find a efficient way of copying data from stream
+            std::string str = oStringStream.str();
+            std::vector<VBYTE> buffer(str.begin(), str.end());
+            return buffer;
+
+        } else if (tdfStorageType.m_tdfType == TDFStorageType::StorageType::Buffer) {
             // Create input provider
             std::istringstream inputStream(tdfStorageType.m_tdfBuffer);
             StreamInputProvider inputProvider{inputStream};
@@ -268,8 +287,24 @@ namespace virtru {
             std::string str = oStringStream.str();
             std::vector<VBYTE> buffer(str.begin(), str.end());
             return buffer;
+        } else if (tdfStorageType.m_tdfType == TDFStorageType::StorageType::S3) {
+
+            // Create input provider
+            S3InputProvider inputProvider{tdfStorageType.m_S3Url, tdfStorageType.m_awsAccessKeyId, tdfStorageType.m_awsSecretAccessKey, tdfStorageType.m_awsRegionName};
+
+            // Create output provider
+            std::ostringstream oStringStream;
+            StreamOutputProvider outputProvider{oStringStream};
+
+            tdf->decryptIOProvider(inputProvider, outputProvider);
+
+            // TODO: Find a efficient way of copying data from stream
+            std::string str = oStringStream.str();
+            std::vector<VBYTE> buffer(str.begin(), str.end());
+            return buffer;
         } else {
             std::string errorMsg{"Unknown TDF storage type"};
+            LogError(errorMsg);
             ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
             return {};
         }
@@ -334,10 +369,10 @@ namespace virtru {
             return buffer;
         } else {
             std::string errorMsg{"Unknown TDF storage type"};
+            LogError(errorMsg);
             ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
+            return {};
         }
-
-        return {};
     }
 
     /// Get the policy document as a JSON string from the encrypted TDF data.
@@ -367,6 +402,7 @@ namespace virtru {
             return tdf->getPolicy(inputProvider);
         } else {
             std::string errorMsg{"Unknown TDF storage type"};
+            LogError(errorMsg);
             ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
         }
     }
