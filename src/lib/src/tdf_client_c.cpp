@@ -350,6 +350,11 @@ DLL_PUBLIC TDF_STATUS TDFDecryptString(TDFClientPtr clientPtr,
         auto *client = static_cast<virtru::TDFClient *>(clientPtr);
         auto *storage = static_cast<virtru::TDFStorageType *>(storageTypePtr);
 
+        std::string descStr = storage->getStorageDescriptor();
+        LogDebug("TDFDecryptString - Storage descriptor: ");
+        LogDebug(descStr);
+
+
         auto decryptedData = client->decryptData(*storage);
 
         *outBytesLength = decryptedData.size();
@@ -426,6 +431,10 @@ DLL_PUBLIC TDF_STATUS TDFGetPolicy(TDFClientPtr clientPtr,
     try {
         auto *client = static_cast<virtru::TDFClient *>(clientPtr);
         auto *storage = static_cast<virtru::TDFStorageType *>(storageTypePtr);
+
+        std::string descStr = storage->getStorageDescriptor();
+        LogDebug("TDFGetPolicy - Storage descriptor: ");
+        LogDebug(descStr);
 
         std::string policyStr = client->getPolicy(*storage);
 
