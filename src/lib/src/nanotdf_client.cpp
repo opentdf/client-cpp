@@ -98,6 +98,7 @@ namespace virtru {
             nanoTDF->encryptFile(tdfStorageType.m_filePath, outFilepath);
         } else {
             std::string errorMsg{"Unknown TDF storage type"};
+            LogError(errorMsg);
             ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
         }
     }
@@ -131,6 +132,7 @@ namespace virtru {
             nanoTDF->decryptFile(tdfStorageType.m_filePath, outFilepath);
         } else {
             std::string errorMsg{"Unknown TDF storage type"};
+            LogError(errorMsg);
             ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
         }
     }
@@ -155,6 +157,7 @@ namespace virtru {
             return decryptedData;
         } else {
             std::string errorMsg{"Unknown TDF storage type"};
+            LogError(errorMsg);
             ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
         }
         return {};
@@ -180,6 +183,7 @@ namespace virtru {
             return encryptedData;
         } else {
             std::string errorMsg{"Unknown TDF storage type"};
+            LogError(errorMsg);
             ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
         }
         return {};
@@ -234,6 +238,7 @@ namespace virtru {
             return buffer;
         } else {
             std::string errorMsg{"Unknown TDF storage type"};
+            LogError(errorMsg);
             ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
         }
 

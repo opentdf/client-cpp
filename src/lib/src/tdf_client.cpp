@@ -114,6 +114,7 @@ namespace virtru {
             return tdf->getEncryptedMetadata(inputProvider);
         } else {
             std::string errorMsg{"Unknown TDF storage type"};
+            LogError(errorMsg);
             ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
         }
     }
@@ -167,6 +168,7 @@ namespace virtru {
             tdf->encryptIOProvider(inputProvider, outputProvider);
         } else {
             std::string errorMsg{"Unknown TDF storage type"};
+            LogError(errorMsg);
             ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
         }
     }
@@ -202,6 +204,7 @@ namespace virtru {
 
         } else {
             std::string errorMsg{"Unknown TDF storage type"};
+            LogError(errorMsg);
             ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
             return {};
         }
@@ -232,6 +235,7 @@ namespace virtru {
             tdf->decryptIOProvider(inputProvider, outputProvider);
         } else {
             std::string errorMsg{"Unknown TDF storage type"};
+            LogError(errorMsg);
             ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
         }
 
@@ -270,6 +274,7 @@ namespace virtru {
             return buffer;
         } else {
             std::string errorMsg{"Unknown TDF storage type"};
+            LogError(errorMsg);
             ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
             return {};
         }
@@ -334,6 +339,7 @@ namespace virtru {
             return buffer;
         } else {
             std::string errorMsg{"Unknown TDF storage type"};
+            LogError(errorMsg);
             ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
         }
 
@@ -367,6 +373,7 @@ namespace virtru {
             return tdf->getPolicy(inputProvider);
         } else {
             std::string errorMsg{"Unknown TDF storage type"};
+            LogError(errorMsg);
             ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
         }
     }
