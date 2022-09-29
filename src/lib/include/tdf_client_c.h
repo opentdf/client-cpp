@@ -193,8 +193,7 @@ DLL_PUBLIC TDFStorageTypePtr TDFCreateTDFStorageS3Type(const char *S3Url,
 /// Parse the data pointed to by the storage type, to determine if it is
 /// a potentially decryptable TDF or not.
 DLL_PUBLIC bool TDFIsTDF(TDFClientPtr clientPtr,
-                         TDFStorageTypePtr storageTypePtr,
-                         TDFBytesLength *outBytesLength);
+                         TDFStorageTypePtr storageTypePtr);
 
 #ifdef __cplusplus
 }
