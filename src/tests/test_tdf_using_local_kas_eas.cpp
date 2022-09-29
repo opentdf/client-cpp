@@ -331,7 +331,7 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
         encryptFileTypeValid.setTDFStorageFileType(validZipTDFFilePath);
 
         TDFStorageType encryptFileTypeInvalid;
-        encryptFileTypeValid.setTDFStorageFileType(invalidZipTDFFilePath);
+        encryptFileTypeInvalid.setTDFStorageFileType(invalidZipTDFFilePath);
 
         BOOST_TEST(TDFClient::isFileTDF(validZipTDFFilePath) == true);
         BOOST_TEST(TDFClient::isFileTDF(invalidZipTDFFilePath) == false);
