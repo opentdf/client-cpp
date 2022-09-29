@@ -536,8 +536,7 @@ DLL_PUBLIC TDF_STATUS TDFGetEncryptedMetadata(TDFClientPtr clientPtr,
 /// Parse the data pointed to by the storage type, to determine if it is
 /// a potentially decryptable TDF or not.
 DLL_PUBLIC bool TDFIsTDF(TDFClientPtr clientPtr,
-                         TDFStorageTypePtr storageTypePtr,
-                         TDFBytesLength *outBytesLength) {
+                         TDFStorageTypePtr storageTypePtr) {
 
     LogTrace("TDFIsTDF");
 
