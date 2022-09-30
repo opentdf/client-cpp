@@ -149,18 +149,23 @@ namespace virtru {
         /// \param kasUrl - kas url
         void addDataAttribute(const std::string &dataAttribute, const std::string &kasURL) override;
 
-        /// Check if file is TDF
+        /// Check if whatever the TDFStorageType is pointing to is a TDF
+        /// \param tdfStorageType - The storage object representing the tdf.
+        /// \return - Return true if file is TDF and false otherwise
+        static bool isTDF(const TDFStorageType &tdfStorageType);
+
+        /// Check if file is TDF (convenience wrapper for isTDF)
         /// \param inFilepath - The file on which the decryption is performed.
         /// \return - Return true if file is TDF and false otherwise
         static bool isFileTDF(const std::string &inFilepath);
 
-        /// Check if string is TDF
+        /// Check if string is TDF (convenience wrapper for isTDF)
         /// \param tdfString - The tdf data on which the check is performed.
         /// \return - Return true if string is TDF and false otherwise
         static bool isStringTDF(const std::string &tdfString);
 
 #ifndef SWIG_JAVA
-        /// Check if data is TDF
+        /// Check if data is TDF (convenience wrapper for isTDF)
         /// \param tdfData - The tdf data on which the check is performed.
         /// \return - Return true if data is TDF and false otherwise
         static bool isDataTDF(const std::vector<VBYTE> &tdfData);

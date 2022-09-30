@@ -319,7 +319,20 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
 
         std::string invalidHtmlTDFFilePath {currentDir };
         invalidHtmlTDFFilePath.append("/data/invalid_html_tdf.tdf");
+
 #endif
+        TDFStorageType encryptStringTypeValid;
+        encryptStringTypeValid.setTDFStorageStringType(TestUtils::getFileString(validZipTDFFilePath));
+
+        TDFStorageType encryptStringTypeInvalid;
+        encryptStringTypeInvalid.setTDFStorageStringType(TestUtils::getFileString(invalidZipTDFFilePath));
+
+        TDFStorageType encryptFileTypeValid;
+        encryptFileTypeValid.setTDFStorageFileType(validZipTDFFilePath);
+
+        TDFStorageType encryptFileTypeInvalid;
+        encryptFileTypeInvalid.setTDFStorageFileType(invalidZipTDFFilePath);
+
         BOOST_TEST(TDFClient::isFileTDF(validZipTDFFilePath) == true);
         BOOST_TEST(TDFClient::isFileTDF(invalidZipTDFFilePath) == false);
         BOOST_TEST(TDFClient::isStringTDF(invalidZipTDFFilePath) == false);
@@ -340,6 +353,13 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
 
         BOOST_TEST(TDFClient::isStringTDF(TestUtils::getFileString(validHtmlTDFFilePath)) == true);
         BOOST_TEST(TDFClient::isStringTDF(TestUtils::getFileString(invalidHtmlTDFFilePath)) == false);
+
+
+        BOOST_TEST(TDFClient::isTDF(encryptFileTypeValid) == true);
+        BOOST_TEST(TDFClient::isTDF(encryptFileTypeInvalid) == false);
+
+        BOOST_TEST(TDFClient::isTDF(encryptStringTypeValid) == true);
+        BOOST_TEST(TDFClient::isTDF(encryptStringTypeInvalid) == false);
     }
 
     BOOST_AUTO_TEST_CASE(test_tdf_kas_eas_local) {

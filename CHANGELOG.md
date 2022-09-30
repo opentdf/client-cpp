@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+1.3.0
+ - Add `isTDF(TDFStorageObject)` to the C/C++ API
+
 1.2.0
  - Support full decrypt for all supported TDF storage types, instead of just partial decrypt.
 

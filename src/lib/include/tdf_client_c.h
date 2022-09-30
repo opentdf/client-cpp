@@ -190,6 +190,11 @@ DLL_PUBLIC TDFStorageTypePtr TDFCreateTDFStorageS3Type(const char *S3Url,
                                                        const char *awsSecretAccessKey,
                                                        const char *awsRegionName);
 
+/// Parse the data pointed to by the storage type, to determine if it is
+/// a potentially decryptable TDF or not.
+DLL_PUBLIC bool TDFIsTDF(TDFClientPtr clientPtr,
+                         TDFStorageTypePtr storageTypePtr);
+
 #ifdef __cplusplus
 }
 #endif

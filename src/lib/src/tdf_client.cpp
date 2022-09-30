@@ -425,6 +425,32 @@ namespace virtru {
                                             m_tdfBuilder->m_impl->m_kasPublicKey, userKasURL);
     }
 
+    //TODO C++ makes it extremely difficult so I gave up, but it should be possible to do TDFStorageType to
+    //IInputProvider conversion centrally in a helper func, rather than copypaste this big conditional into
+    //*every single place* in this class where we do it inline.
+    bool TDFClient::isTDF(const TDFStorageType &tdfStorageType) {
+        if (tdfStorageType.m_tdfType == TDFStorageType::StorageType::File) {
+            // Create input provider
+            FileInputProvider inputProvider{tdfStorageType.m_filePath};
+            return TDF::isInputProviderTDF(inputProvider);
+        } else if(tdfStorageType.m_tdfType == TDFStorageType::StorageType::Buffer) {
+            // Create input provider
+            std::istringstream inputStream(tdfStorageType.m_tdfBuffer);
+            StreamInputProvider inputProvider{inputStream};
+            return TDF::isInputProviderTDF(inputProvider);
+        } else if (tdfStorageType.m_tdfType == TDFStorageType::StorageType::S3) {
+
+            // Create input provider
+            S3InputProvider inputProvider{tdfStorageType.m_S3Url, tdfStorageType.m_awsAccessKeyId, tdfStorageType.m_awsSecretAccessKey, tdfStorageType.m_awsRegionName};
+            return TDF::isInputProviderTDF(inputProvider);
+        } else {
+            std::string errorMsg{"Unknown TDF storage type"};
+            LogError(errorMsg);
+            ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
+            return false;
+        }
+    }
+
     //check if file is tdf
     bool TDFClient::isFileTDF(const std::string &inFilepath) {
         LogTrace("TDFClient::isFileTDF");
