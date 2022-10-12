@@ -190,8 +190,19 @@ DLL_PUBLIC TDFStorageTypePtr TDFCreateTDFStorageS3Type(const char *S3Url,
                                                        const char *awsSecretAccessKey,
                                                        const char *awsRegionName);
 
+/// Returns the unique storage descriptor (path, bucket/key, etc) of the TDF pointed to
+/// by a given TDFStorageType
+/// \param tdfStorageTypePtr - Pointer to TDF storage type
+/// \param outBytesPtr  - On success, it contains the descriptor string.
+/// \param outBytesLength  - On success, it is length of the descriptor string.
+DLL_PUBLIC TDF_STATUS TDFGetTDFStorageDescriptor(TDFStorageTypePtr storageTypePtr,
+                                                        TDFBytesPtr *outBytesPtr,
+                                                        TDFBytesLength *outBytesLength);
+
 /// Parse the data pointed to by the storage type, to determine if it is
 /// a potentially decryptable TDF or not.
+/// \param clientPtr - The pointer to Virtru client opaque object.
+/// \param tdfStorageTypePtr - Pointer to TDF storage type
 DLL_PUBLIC bool TDFIsTDF(TDFClientPtr clientPtr,
                          TDFStorageTypePtr storageTypePtr);
 
