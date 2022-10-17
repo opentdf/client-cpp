@@ -141,6 +141,7 @@ namespace virtru {
     static constexpr auto kAcceptKey               = "Accept";
     static constexpr auto kAcceptKeyValue          = "application/json; charset=utf-8";
     static constexpr auto kVirtruClientKey         = "X-Virtru-Client";
+    static constexpr auto kVirtruPublicKey         = "X-Virtru-Public-Key";
     static constexpr auto kUserAgentValuePostFix   = "Virtru TDF C++ SDK";
     static constexpr auto kVirtruClientValue       = "virtru-cpp-sdk:0.0.0";
     static constexpr auto kVirtruNTDFHeaderKey     = "virtru-ntdf-version";
