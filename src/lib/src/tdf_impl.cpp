@@ -967,7 +967,8 @@ namespace virtru {
 
         auto headers = m_tdfBuilder.m_impl->m_httpHeaders;
         if (m_tdfBuilder.m_impl->m_overridePayloadKey) {
-            headers[kVirtruPublicKey] = m_tdfBuilder.m_impl->m_publicKey;
+            auto base64PubKey = base64Encode(m_tdfBuilder.m_impl->m_publicKey);
+            headers[kVirtruPublicKey] =base64PubKey;
         }
 
         sp->executePost(rewrapUrl, headers, std::move(requestBodyStr),
