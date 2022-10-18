@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 ### Added
+1.3.2
+ - PLAT-2111 - OpenTDF client-cpp support VirtruSDK OIDC implementation
 
 1.3.1
  - Bugfix - `TDFGetTDFStorageDescriptor` was left out of the C interface header 

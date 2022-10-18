@@ -965,7 +965,13 @@ namespace virtru {
         std::promise<void> rewrapPromise;
         auto rewrapFuture = rewrapPromise.get_future();
 
-        sp->executePost(rewrapUrl, m_tdfBuilder.m_impl->m_httpHeaders, std::move(requestBodyStr),
+        auto headers = m_tdfBuilder.m_impl->m_httpHeaders;
+        if (m_tdfBuilder.m_impl->m_overridePayloadKey) {
+            auto base64PubKey = base64Encode(m_tdfBuilder.m_impl->m_publicKey);
+            headers[kVirtruPublicKey] =base64PubKey;
+        }
+
+        sp->executePost(rewrapUrl, headers, std::move(requestBodyStr),
                             [&rewrapPromise, &rewrapResponse, &status](unsigned int statusCode, std::string &&response) {
             status = statusCode;
             rewrapResponse = response.data();
