@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 ### Added
+1.3.3
+ -  PLAT-2060 - Combined static library should have all the required libraries
+
 1.3.2
  - PLAT-2111 - OpenTDF client-cpp support VirtruSDK OIDC implementation
 
