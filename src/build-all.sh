@@ -8,8 +8,6 @@ TDF_LIB_OUTPUT="tdf-lib-cpp"
 rm -rf build
 mkdir build
 cd build
-echo $PATH
-which conan
 conan install .. --build=missing
 conan build .. --build-folder .
 
