@@ -113,9 +113,9 @@ jobs:
         uses: actions/setup-python@v4
         with:
             python-version: 3.11
-            
+
       - name: Install Conan
-        run: pip3 install --user conan==${{ env.CONAN_VER }} --force
+        run: pip3 install conan==${{ env.CONAN_VER }} --force
 
       - name: Run build
         run: |
