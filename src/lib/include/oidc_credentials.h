@@ -87,6 +87,18 @@ namespace virtru {
                                      const std::string &organizationName,
                                      const std::string &oidcEndpoint);
 
+        /// Set the user credentials that will be use for authn with OIDC server
+        /// \param clientId - The client id
+        /// \param username - The registered username
+        /// \param password - The password associated with the user
+        /// \param organizationName - The OIDC realm or organization the client belongs to
+        /// \param oidcEndpoint - The OIDC server url
+        void setUserCredentialsUser(const std::string &clientId,
+                                    const std::string &username,
+                                    const std::string &password,
+                                    const std::string &organizationName,
+                                    const std::string &oidcEndpoint);
+
         /// Return the client id.
         /// \return - The client id as string
         std::string getClientId() const;
@@ -141,18 +153,6 @@ namespace virtru {
         std::string str() const;
 
       private: // Disable the PE support for now
-        /// Set the user credentials that will be use for authn with OIDC server
-        /// \param clientId - The client id
-        /// \param username - The registered username
-        /// \param password - The password associated with the user
-        /// \param organizationName - The OIDC realm or organization the client belongs to
-        /// \param oidcEndpoint - The OIDC server url
-        void setUserCredentialsUser(const std::string &clientId,
-                                    const std::string &username,
-                                    const std::string &password,
-                                    const std::string &organizationName,
-                                    const std::string &oidcEndpoint);
-
         /// Set the access token that will be used for communicating with the backend.
         /// \param accessToken - The OIDC token and set it as the Bearer token for all requests this client will make.
         void setAccessToken(const std::string &accessToken);
