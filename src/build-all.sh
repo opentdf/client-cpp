@@ -5,10 +5,6 @@ export VBUILD_UNIT_TESTS="true"
 #export VRUN_BACKEND_TESTS="true"
 TDF_LIB_OUTPUT="tdf-lib-cpp"
 
-# Find conan
-export PATH=$PATH:~/.local/bin
-echo $PATH
-
 rm -rf build
 mkdir build
 cd build
