@@ -8,6 +8,7 @@ TDF_LIB_OUTPUT="tdf-lib-cpp"
 rm -rf build
 mkdir build
 cd build
+pip3 show conan
 conan install .. --build=missing
 conan build .. --build-folder .
 
