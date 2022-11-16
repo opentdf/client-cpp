@@ -111,13 +111,12 @@ jobs:
       - name: Install Conan
         run: pip3 install --user conan==${{ env.CONAN_VER }} --force
 
-      - name: Find conan
-        run: echo "${HOME}/.local/bin" >> $GITHUB_PATH
-
       - name: Run build
         run: |
           cd ${{ github.workspace }}
           cd src
+          echo $PATH
+          export PATH=~/Library/Python/3.11/bin:$PATH
           echo $PATH
           ./build-all.sh
 
