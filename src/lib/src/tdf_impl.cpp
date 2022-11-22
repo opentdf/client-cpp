@@ -932,6 +932,8 @@ namespace virtru {
 
         // First object
         auto &keyAccess = keyAccessObjects.at(0);
+        auto keyAccessObject = KeyAccessObject::createKeyAccessObjectFromJson(to_string(keyAccess));
+        auto kasUrlFromTDF = keyAccessObject.getKasUrl();
 
         // Request body
         nlohmann::json requestBody;
@@ -945,11 +947,11 @@ namespace virtru {
         //Upsert and Rewrap V2 require OIDC and different payloads
         if (m_tdfBuilder.m_impl->m_oidcMode) {
             requestBodyStr = buildRewrapV2Payload(requestBody);
-            rewrapUrl = m_tdfBuilder.m_impl->m_kasUrl + kRewrapV2;
+            rewrapUrl = kasUrlFromTDF + kRewrapV2;
         } else {
             buildRewrapV1Payload(requestBody);
             requestBodyStr = to_string(requestBody);
-            rewrapUrl = m_tdfBuilder.m_impl->m_kasUrl + kRewrap;
+            rewrapUrl = kasUrlFromTDF + kRewrap;
         }
 
         LogDebug(requestBodyStr);
