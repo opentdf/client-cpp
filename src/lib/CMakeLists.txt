@@ -128,6 +128,7 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     file(APPEND ${MRI_FILE} "addlib ${CONAN_LIB_DIRS_OPENSSL}/libssl.a\n")
     file(APPEND ${MRI_FILE} "addlib ${CONAN_LIB_DIRS_LIBXML2}/libxml2.a\n")
     file(APPEND ${MRI_FILE} "addlib ${CONAN_LIB_DIRS_ZLIB}/libz.a\n")
+    file(APPEND ${MRI_FILE} "addlib ${CONAN_LIB_DIRS_LIBICONV}/libiconv.a\n")
     file(APPEND ${MRI_FILE} "save\n")
     file(APPEND ${MRI_FILE} "end\n")
 

@@ -932,6 +932,8 @@ namespace virtru {
 
         // First object
         auto &keyAccess = keyAccessObjects.at(0);
+        auto keyAccessObject = KeyAccessObject::createKeyAccessObjectFromJson(to_string(keyAccess));
+        auto kasUrlFromTDF = keyAccessObject.getKasUrl();
 
         // Request body
         nlohmann::json requestBody;
@@ -945,11 +947,11 @@ namespace virtru {
         //Upsert and Rewrap V2 require OIDC and different payloads
         if (m_tdfBuilder.m_impl->m_oidcMode) {
             requestBodyStr = buildRewrapV2Payload(requestBody);
-            rewrapUrl = m_tdfBuilder.m_impl->m_kasUrl + kRewrapV2;
+            rewrapUrl = kasUrlFromTDF + kRewrapV2;
         } else {
             buildRewrapV1Payload(requestBody);
             requestBodyStr = to_string(requestBody);
-            rewrapUrl = m_tdfBuilder.m_impl->m_kasUrl + kRewrap;
+            rewrapUrl = kasUrlFromTDF + kRewrap;
         }
 
         LogDebug(requestBodyStr);
@@ -965,7 +967,13 @@ namespace virtru {
         std::promise<void> rewrapPromise;
         auto rewrapFuture = rewrapPromise.get_future();
 
-        sp->executePost(rewrapUrl, m_tdfBuilder.m_impl->m_httpHeaders, std::move(requestBodyStr),
+        auto headers = m_tdfBuilder.m_impl->m_httpHeaders;
+        if (m_tdfBuilder.m_impl->m_overridePayloadKey) {
+            auto base64PubKey = base64Encode(m_tdfBuilder.m_impl->m_publicKey);
+            headers[kVirtruPublicKey] =base64PubKey;
+        }
+
+        sp->executePost(rewrapUrl, headers, std::move(requestBodyStr),
                             [&rewrapPromise, &rewrapResponse, &status](unsigned int statusCode, std::string &&response) {
             status = statusCode;
             rewrapResponse = response.data();

@@ -10,6 +10,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 ### Added
+1.3.4
+ -  PLAT-2196 - C++ Core SDK: When attempting to read/decrypt a TDF, the KAS URL is not being read from the TDF manifest
+
+1.3.3
+ -  PLAT-2060 - Combined static library should have all the required libraries
+
+1.3.2
+ - PLAT-2111 - OpenTDF client-cpp support VirtruSDK OIDC implementation
+
+1.3.1
+ - Bugfix - `TDFGetTDFStorageDescriptor` was left out of the C interface header 
 
 1.3.0
  - Add `isTDF(TDFStorageObject)` to the C/C++ API
