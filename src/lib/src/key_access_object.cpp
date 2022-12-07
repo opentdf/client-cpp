@@ -213,15 +213,13 @@ namespace virtru {
             }
             keyAccessObject.m_policyBindingHash = keyAccessObjectJson[kPolicyBinding];
 
-            if (!keyAccessObjectJson.contains(kEncryptedMetadata)) {
-                ThrowException("encryptedMetadata not found in key access object JSON", VIRTRU_KAS_OBJ_ERROR);
+            if (keyAccessObjectJson.contains(kEncryptedMetadata)) {
+                auto encryptedMetadata = keyAccessObjectJson[kEncryptedMetadata];
+                if (!encryptedMetadata.empty()) {
+                    // Get the encrypted meta data.
+                    keyAccessObject.m_encryptedMetadata = encryptedMetadata;
+                }
             }
-            auto encryptedMetadata = keyAccessObjectJson[kEncryptedMetadata];
-            if (!encryptedMetadata.empty()) {
-                // Get the encrypted meta data.
-                keyAccessObject.m_encryptedMetadata = encryptedMetadata;
-            }
-
         } catch (...) {
             LogError("Exception in KeyAccessObject::createKeyAccessObjectFromJson");
             ThrowException("Could not parse key access object from JSON: " + boost::current_exception_diagnostic_information(), VIRTRU_KAS_OBJ_ERROR);

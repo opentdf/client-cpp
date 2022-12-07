@@ -26,7 +26,7 @@ namespace virtru::nanotdf {
 
     /// Construct resource locator object from the url
     ResourceLocator::ResourceLocator(const std::string& resourceUrl) {
-        std::regex urlRegex("(http|https)://(\[^ ]*)");
+        std::regex urlRegex("(http|https)://([^ ]*)");
         std::cmatch what;
         if(!regex_match(resourceUrl.c_str(), what, urlRegex)) {
             std::string errorMsg{"Failed to parse url, expected:'(http|https)://<domain>/<target>' actual:"};
