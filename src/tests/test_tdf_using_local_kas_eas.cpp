@@ -35,7 +35,7 @@
 #define GetCurrentDir getcwd
 #endif
 
-#if 0
+#if RUN_BACKEND_TESTS
     #define TEST_OIDC 1
 #else
     #define TEST_OIDC 0
@@ -51,6 +51,7 @@ constexpr auto KAS_URL = "http://localhost:65432/api/kas";
 constexpr auto CLIENT_ID = "tdf-client";
 constexpr auto CLIENT_SECRET = "123-456";
 constexpr auto ORGANIZATION_NAME = "tdf";
+constexpr auto OPEN_ID_CONFIGURATION_URL = "http://localhost:65432/auth/realms/tdf/.well-known/openid-configuration";
 
 
 using namespace virtru::network;
@@ -369,9 +370,11 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
 #if TEST_OIDC
 
             { // PE authz
-                OIDCCredentials userCreds;
-                userCreds.setUserCredentialsUser(USER_CLIENT_ID, USER,
-                                             USER_PASSWORD, ORGANIZATION_NAME, OIDC_ENDPOINT);
+                OIDCCredentials userCreds{OPEN_ID_CONFIGURATION_URL};
+
+                userCreds.setClientIdAndUserCredentials(USER_CLIENT_ID,
+                                                        USER,
+                                                        USER_PASSWORD);
                 auto tdfOIDCClient = std::make_unique<TDFClient>(userCreds, KAS_URL);
 
                 auto attributes = tdfOIDCClient->getSubjectAttributes();

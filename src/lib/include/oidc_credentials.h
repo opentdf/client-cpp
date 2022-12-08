@@ -34,6 +34,10 @@ namespace virtru {
         /// Constructor
         OIDCCredentials();
 
+        /// Constructor
+        /// \param openIDConfigurationUrl - The openid configuration url
+        OIDCCredentials(const std::string &openIDConfigurationUrl);
+
         /// Destructor
         ~OIDCCredentials();
 
@@ -50,7 +54,7 @@ namespace virtru {
         OIDCCredentials &operator=(OIDCCredentials &&oidcCredentials);
 
       public: // Public methods
-        /// Set the secret client credentials that will be use for authn with OIDC server
+        /// Set the secret client credentials that will be use for auth with OIDC server
         /// \param clientId - The client id
         /// \param clientSecret - The client secret
         /// \param organizationName - The OIDC realm or organization the client belongs to
@@ -59,6 +63,12 @@ namespace virtru {
                                               const std::string &clientSecret,
                                               const std::string &organizationName,
                                               const std::string &oidcEndpoint);
+
+        /// Set the client id and client secret that will be use for auth with OIDC server
+        /// \param clientId - The client id
+        /// \param clientSecret - The client secret
+        void setClientIdAndClientSecret(const std::string &clientId,
+                                        const std::string &clientSecret);
 
         /// Set the secret client credentials and external exchange token
         /// that will be used for authn with OIDC server
@@ -72,6 +82,8 @@ namespace virtru {
                                                const std::string &externalExchangeToken,
                                                const std::string &organizationName,
                                                const std::string &oidcEndpoint);
+
+
 
         /// Set the PKI client credentials that will be use for authn with OIDC server
         /// \param clientId - The client id
@@ -87,6 +99,17 @@ namespace virtru {
                                      const std::string &organizationName,
                                      const std::string &oidcEndpoint);
 
+
+        /// Set the client id and PKI client credentials that will be use for auth with OIDC server
+        /// \param clientId - The client id
+        /// \param clientKeyFileName - The name of the file containing the client key
+        /// \param clientCertFileName - The name of the file containing the client certificate
+        /// \param certificateAuthority - The certificate authority to be used
+        void setClientIdAndPKI(const std::string &clientId,
+                               const std::string &clientKeyFileName,
+                               const std::string &clientCertFileName,
+                               const std::string &certificateAuthority);
+
         /// Set the user credentials that will be use for authn with OIDC server
         /// \param clientId - The client id
         /// \param username - The registered username
@@ -98,6 +121,20 @@ namespace virtru {
                                     const std::string &password,
                                     const std::string &organizationName,
                                     const std::string &oidcEndpoint);
+
+
+        /// Set the client id and user credentials that will be use for authn with OIDC server
+        /// \param clientId - The client id
+        /// \param username - The registered username
+        /// \param password - The password associated with the user
+        void setClientIdAndUserCredentials(const std::string &clientId,
+                                           const std::string &username,
+                                           const std::string &password);
+
+
+        /// Return the openid configuration url
+        /// \return  - The openid configuration url
+        std::string getOpenIDConfigurationUrl() const;
 
         /// Return the client id.
         /// \return - The client id as string
@@ -169,6 +206,7 @@ namespace virtru {
         std::string m_certificateAuthority;
         std::string m_extToken;
         std::string m_accessToken;
+        std::string m_openIdConfigurationUrl;
         AuthType m_authType{AuthType::None};
     };
 } // namespace virtru
