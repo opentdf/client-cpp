@@ -62,7 +62,8 @@ namespace virtru {
 
             authHeader.insert({kAuthorizationKey, authHeaderStream.str()});
         } else if (m_oidcCredentials.getAuthType() == OIDCCredentials::AuthType::ExternalAccessToken) {
-            authHeaderStream << kBearerToken << " " << m_oidcCredentials.getAccessToken();
+            m_accessToken = m_oidcCredentials.getAccessToken();
+            authHeaderStream << kBearerToken << " " << m_accessToken;
             authHeader.insert({kAuthorizationKey, authHeaderStream.str()});
         } else {
             ThrowException("OIDC auth type not supported");

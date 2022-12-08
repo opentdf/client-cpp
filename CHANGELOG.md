@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 ### Added
+
+1.3.5
+ -  PLAT-2172 - Provide API for username and password auth in Core SDK(C++)
+ 
 1.3.4
  -  PLAT-2196 - C++ Core SDK: When attempting to read/decrypt a TDF, the KAS URL is not being read from the TDF manifest
 

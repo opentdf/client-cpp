@@ -35,15 +35,16 @@
 #define GetCurrentDir getcwd
 #endif
 
-#if RUN_BACKEND_TESTS
+#if 0
     #define TEST_OIDC 1
 #else
     #define TEST_OIDC 0
 #endif
 
 #define LOCAL_EAS_KAS_SETUP 0
-constexpr auto user = "user1";
-constexpr auto user2 = "user2";
+constexpr auto USER = "user2";
+constexpr auto USER_PASSWORD = "testuser123";
+constexpr auto USER_CLIENT_ID = "browsertest";
 constexpr auto easUrl = "http://localhost:8000/";
 constexpr auto OIDC_ENDPOINT = "http://localhost:65432/";
 constexpr auto KAS_URL = "http://localhost:65432/api/kas";
@@ -367,39 +368,39 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
         try {
 #if TEST_OIDC
 
-#if 0 // Enable once the PE authz is supported
-            OIDCCredentials userCreds;
-            userCreds.setUserCredentials("browsertest", "user1",
-                                         "password", "tdf", OIDC_ENDPOINT);
-            auto tdfOIDCClient = std::make_unique<TDFClient>(userCreds, KAS_URL);
+            { // PE authz
+                OIDCCredentials userCreds;
+                userCreds.setUserCredentialsUser(USER_CLIENT_ID, USER,
+                                             USER_PASSWORD, ORGANIZATION_NAME, OIDC_ENDPOINT);
+                auto tdfOIDCClient = std::make_unique<TDFClient>(userCreds, KAS_URL);
 
-            auto attributes = tdfOIDCClient->getSubjectAttributes();
-            std::cout << "The subject attributes:" << std::endl;
-            for(const auto& attribute: attributes) {
-                std::cout << attribute << std::endl;
+                auto attributes = tdfOIDCClient->getSubjectAttributes();
+                std::cout << "The subject attributes:" << std::endl;
+                for(const auto& attribute: attributes) {
+                    std::cout << attribute << std::endl;
+                }
+
+                if (!attributes.empty()) {
+                    auto attribute = attributes.front();
+                    tdfOIDCClient->addDataAttribute(attribute, "");
+                }
+
+                // Test tdf with user creds
+                testTDFOperations(tdfOIDCClient.get());
             }
 
-            if (!attributes.empty()) {
-                auto attribute = attributes.front();
-                tdfOIDCClient->addDataAttribute(attribute, "");
-            }
+            {
+                OIDCCredentials clientCreds;
+                clientCreds.setClientCredentialsClientSecret(CLIENT_ID, CLIENT_SECRET,
+                                                             ORGANIZATION_NAME, OIDC_ENDPOINT);
+                auto oidcClientTDF = std::make_unique<TDFClient>(clientCreds, KAS_URL);
+                oidcClientTDF->enableBenchmark();
 
-            // Test tdf with user creds
-            testTDFOperations(tdfOIDCClient.get());
-
-#endif
-
-            OIDCCredentials clientCreds;
-            clientCreds.setClientCredentialsClientSecret(CLIENT_ID, CLIENT_SECRET,
-                                                         ORGANIZATION_NAME, OIDC_ENDPOINT);
-            auto oidcClientTDF = std::make_unique<TDFClient>(clientCreds, KAS_URL);
-            oidcClientTDF->enableBenchmark();
-
-            auto attributes = oidcClientTDF->getSubjectAttributes();
-            std::cout << "The subject attributes:" << std::endl;
-            for(const auto& attribute: attributes) {
-                std::cout << attribute << std::endl;
-            }
+                auto attributes = oidcClientTDF->getSubjectAttributes();
+                std::cout << "The subject attributes:" << std::endl;
+                for(const auto& attribute: attributes) {
+                    std::cout << attribute << std::endl;
+                }
 
 //            if (!attributes.empty()) {
 //                auto attribute = attributes.front();
@@ -407,8 +408,9 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
 //            }
 
 
-            // Test tdf with user creds
-            testTDFOperations(oidcClientTDF.get(), true);
+                // Test tdf with user creds
+                testTDFOperations(oidcClientTDF.get(), true);
+            }
 #endif
 
 #if LOCAL_EAS_KAS_SETUP
