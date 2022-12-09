@@ -189,7 +189,7 @@ namespace virtru {
         /// \return The description of this object.
         std::string str() const;
 
-      private: // Disable the PE support for now
+      private:
         /// Set the access token that will be used for communicating with the backend.
         /// \param accessToken - The OIDC token and set it as the Bearer token for all requests this client will make.
         void setAccessToken(const std::string &accessToken);
