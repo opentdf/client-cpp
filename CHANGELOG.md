@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+1.3.6
+ -  PLAT-2155 - OpenTDF C++ SDK use .well-known/openid-configuration
+
 1.3.5
  -  PLAT-2172 - Provide API for username and password auth in Core SDK(C++)
  
