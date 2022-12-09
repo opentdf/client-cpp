@@ -35,7 +35,7 @@
 #define GetCurrentDir getcwd
 #endif
 
-#if 1
+#if RUN_BACKEND_TESTS
     #define TEST_OIDC 1
 #else
     #define TEST_OIDC 0
