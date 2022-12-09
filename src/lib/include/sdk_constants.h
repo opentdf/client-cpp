@@ -186,6 +186,7 @@ namespace virtru {
     static constexpr auto kPassword = "password";
     static constexpr auto kRefreshToken = "refresh_token";
     static constexpr auto kAccessToken = "access_token";
+    static constexpr auto kTokenEndpoint = "token_endpoint";
     static constexpr auto kSubjectToken = "subject_token";
     static constexpr auto kTokenRequestAccess = "urn:ietf:params:oauth:token-type:access_token";
     static constexpr auto kExchangeToken = "urn:ietf:params:oauth:grant-type:token-exchange";

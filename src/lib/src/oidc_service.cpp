@@ -21,6 +21,7 @@
 #include "utils.h"
 #include <jwt-cpp/jwt.h>
 #include <boost/exception/diagnostic_information.hpp>
+#include "openid_configuration.h"
 
 namespace virtru {
 
@@ -401,13 +402,20 @@ namespace virtru {
 
     /// Get the OIDC url for fetching access token.
     std::string OIDCService::getOIDCUrl() {
-        auto oidcEndpoint =  m_oidcCredentials.getOIDCEndpoint();
-        if('/' == oidcEndpoint.back()) {
-            oidcEndpoint.pop_back();
-        }
 
-        std::string oidcUrl = oidcEndpoint + kKCRealmPath + m_oidcCredentials.getOrgName() + kOIDCTokenPath;
-        return oidcUrl;
+        auto openIdConfigUrl = m_oidcCredentials.getOpenIDConfigurationUrl();
+        if (openIdConfigUrl.empty()) {
+            auto oidcEndpoint =  m_oidcCredentials.getOIDCEndpoint();
+            if('/' == oidcEndpoint.back()) {
+                oidcEndpoint.pop_back();
+            }
+
+            std::string oidcUrl = oidcEndpoint + kKCRealmPath + m_oidcCredentials.getOrgName() + kOIDCTokenPath;
+            return oidcUrl;
+        } else {
+            OpenIDConfiguration openIdConfiguration{openIdConfigUrl};
+            return openIdConfiguration.getOIDCUrl();
+        }
     }
 
     void OIDCService::addFormData(std::ostringstream &ss, const std::string &key, const std::string &val) {

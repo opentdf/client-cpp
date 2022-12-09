@@ -31,6 +31,11 @@ namespace virtru {
     /// Construcor
     OIDCCredentials::OIDCCredentials() = default;
 
+    /// Constructor
+    /// \param openIDConfigurationUrl - The openid configuration url
+    OIDCCredentials::OIDCCredentials(const std::string &openIDConfigurationUrl)
+            :m_openIdConfigurationUrl(openIDConfigurationUrl) {}
+
     /// Destructor
     OIDCCredentials::~OIDCCredentials() = default;
 
@@ -52,7 +57,19 @@ namespace virtru {
         m_orgName = organizationName;
         m_oidcEndpoint = oidcEndpoint;
 
+        LogWarn("This API is deprecated, instead use setClientIdAndClientSecret instead with  OIDCCredentials(configUrl)");
         LogTrace("OIDCCredentials is of auth type client");
+    }
+
+    /// Set the client id and client secret that will be use for auth with OIDC server
+    void OIDCCredentials::setClientIdAndClientSecret(const std::string &clientId,
+                                                     const std::string &clientSecret) {
+        m_authType = AuthType::ClientSecret;
+
+        m_clientId = clientId;
+        m_clientSecret = clientSecret;
+
+        LogTrace("OIDCCredentials is of auth type client id and client secret");
     }
 
     /// Set the client credentials that will be use for authn with OIDC server, with an external
@@ -87,7 +104,21 @@ namespace virtru {
         m_orgName = organizationName;
         m_oidcEndpoint = oidcEndpoint;
 
+        LogWarn("This API is deprecated, instead use seClientIdAndUserCredentials instead with  OIDCCredentials(configUrl)");
         LogTrace("OIDCCredentials is of auth type user");
+    }
+
+    /// Set the client id and user credentials that will be use for authn with OIDC server
+    void OIDCCredentials::setClientIdAndUserCredentials(const std::string &clientId,
+                                                       const std::string &username,
+                                                       const std::string &password) {
+        m_authType = AuthType::User;
+
+        m_clientId = clientId;
+        m_username = username;
+        m_password = password;
+
+        LogTrace("OIDCCredentials is of auth type username and password");
     }
 
     /// Set the PKI client credentials that will be use for authn with OIDC server
@@ -107,6 +138,8 @@ namespace virtru {
         m_orgName = organizationName;
         m_oidcEndpoint = oidcEndpoint;
 
+        LogWarn("This API is deprecated, instead use setClientIdAndPKI instead with  OIDCCredentials(configUrl)");
+
         LogTrace("OIDCCredentials is of auth type PKI");
         LogDebug("clientId=" + clientId);
         LogDebug("clientKeyFileName=" + clientKeyFileName);
@@ -116,12 +149,30 @@ namespace virtru {
         LogDebug("oidcEndpoint=" + oidcEndpoint);
     }
 
+    /// Set the client id and PKI client credentials that will be use for auth with OIDC server
+    void OIDCCredentials::setClientIdAndPKI(const std::string &clientId,
+                                            const std::string &clientKeyFileName,
+                                            const std::string &clientCertFileName,
+                                            const std::string &certificateAuthority) {
+        m_authType = AuthType::PKI;
+
+        m_clientId = clientId;
+        m_clientKeyFileName = clientKeyFileName;
+        m_clientCertFileName = clientCertFileName;
+        m_certificateAuthority = certificateAuthority;
+    }
+
     /// Set the access token that will be used for communicating with the backend.
     void OIDCCredentials::setAccessToken(const std::string &accessToken) {
         m_authType = AuthType::ExternalAccessToken;
         m_accessToken = accessToken;
 
         LogTrace("OIDCCredentials is of auth type access token");
+    }
+
+    /// Return the openid configuration url
+    std::string OIDCCredentials::getOpenIDConfigurationUrl() const {
+        return m_openIdConfigurationUrl;
     }
 
     /// Return the client id.
