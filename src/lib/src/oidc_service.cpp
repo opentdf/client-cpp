@@ -21,7 +21,7 @@
 #include "utils.h"
 #include <jwt-cpp/jwt.h>
 #include <boost/exception/diagnostic_information.hpp>
-#include "openid_configuration.h"
+#include "oidc_configuration.h"
 
 namespace virtru {
 

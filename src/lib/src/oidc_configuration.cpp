@@ -19,7 +19,7 @@
 #include "utils.h"
 #include "version.h"
 #include <boost/algorithm/string.hpp>
-#include "openid_configuration.h"
+#include "oidc_configuration.h"
 #include <regex>
 
 namespace virtru {
@@ -27,9 +27,9 @@ namespace virtru {
     using namespace virtru::network;
 
     // Constructor
-    OpenIDConfiguration::OpenIDConfiguration(const std::string& openIdConfigUrl) : m_openIdConfigUrl{openIdConfigUrl} {
+    OIDCConfiguration::OIDCConfiguration(const std::string& oidcConfigUrl) : m_oidcConfigUrl{oidcConfigUrl} {
 
-        std::string openIdConfiguration;
+        std::string oidcConfiguration;
         HttpHeaders headers;
         std::shared_ptr<HTTPServiceProvider> sp = std::make_shared<HTTPServiceProvider>(headers);
 
@@ -38,7 +38,7 @@ namespace virtru {
         std::promise<void> netPromise;
         auto netFuture = netPromise.get_future();
 
-        sp->executeGet(m_openIdConfigUrl, {}, [&netPromise, &status, &oidcConfiguration](unsigned int statusCode, std::string &&response) {
+        sp->executeGet(m_oidcConfigUrl, {}, [&netPromise, &status, &oidcConfiguration](unsigned int statusCode, std::string &&response) {
                 status = statusCode;
                 oidcConfiguration = response;
                 netPromise.set_value();
@@ -58,7 +58,7 @@ namespace virtru {
         m_configuration = oidcConfiguration;
     }
 
-    std::string OpenIDConfiguration::getOIDCUrl() const {
+    std::string OIDCConfiguration::getOIDCUrl() const {
 
         auto configuration = nlohmann::json::parse(m_configuration);
         if (!configuration.contains(kTokenEndpoint)) {
@@ -77,9 +77,9 @@ namespace virtru {
         }
         auto target = std::string(what[4].first, what[4].second);
 
-        if(!regex_match(m_openIdConfigUrl.c_str(), what, urlRegex)) {
+        if(!regex_match(m_oidcConfigUrl.c_str(), what, urlRegex)) {
             std::string errorMsg{"Failed to parse url, expected:'(http|https)//<domain>/<target>' actual:"};
-            errorMsg.append(m_openIdConfigUrl);
+            errorMsg.append(m_oidcConfigUrl);
             ThrowException(std::move(errorMsg));
         }
 
