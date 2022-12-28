@@ -93,7 +93,7 @@ std::string appId() {
     if (appId) {
         return appId;
     }
-    return {"18b56e42-353e-4401-a703-ed3ed9f86bf5"};
+    return {""};
 }
 
 std::string getCurrentWorkingDir() {
@@ -801,7 +801,6 @@ BOOST_AUTO_TEST_SUITE(test_e2e_tdf_builder_suite)
                         BOOST_FAIL("Failed to open file for writing.");
                     }
 
-                    std::cout << "The tdf file is:" << ioStream.str() << std::endl;
                     outFileStream << ioStream.str();
                     outFileStream.close();
 

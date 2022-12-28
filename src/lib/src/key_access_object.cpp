@@ -201,17 +201,27 @@ namespace virtru {
                 ThrowException("Invalid protocol while parsing KeyAccessObject json string.", VIRTRU_KAS_OBJ_ERROR);
             }
 
-            // Get the wrapped key.
-            if (!keyAccessObjectJson.contains(kWrappedKey)) {
-                ThrowException("wrappedKey not found in key access object JSON", VIRTRU_KAS_OBJ_ERROR);
-            }
-            keyAccessObject.m_wrappedKey = keyAccessObjectJson[kWrappedKey];
+            if (boost::iequals(keyAccessKeyAsStr, kKeyAccessWrapped)) {
+                // Get the wrapped key.
+                if (!keyAccessObjectJson.contains(kWrappedKey)) {
+                    ThrowException("wrappedKey not found in key access object JSON", VIRTRU_KAS_OBJ_ERROR);
+                }
+                keyAccessObject.m_wrappedKey = keyAccessObjectJson[kWrappedKey];
 
-            // Get policy binding hash.
-            if (!keyAccessObjectJson.contains(kPolicyBinding)) {
-                ThrowException("policyBinding not found in key access object JSON", VIRTRU_KAS_OBJ_ERROR);
+                // Get policy binding hash.
+                if (!keyAccessObjectJson.contains(kPolicyBinding)) {
+                    ThrowException("policyBinding not found in key access object JSON", VIRTRU_KAS_OBJ_ERROR);
+                }
+                keyAccessObject.m_policyBindingHash = keyAccessObjectJson[kPolicyBinding];
+            } else if (boost::iequals(keyAccessKeyAsStr, kKeyAccessRemote)) {
+                if (keyAccessObjectJson.contains(kWrappedKey)) {
+                    keyAccessObject.m_wrappedKey = keyAccessObjectJson[kWrappedKey];
+                }
+
+                if (keyAccessObjectJson.contains(kPolicyBinding)) {
+                    keyAccessObject.m_policyBindingHash = keyAccessObjectJson[kPolicyBinding];
+                }
             }
-            keyAccessObject.m_policyBindingHash = keyAccessObjectJson[kPolicyBinding];
 
             if (keyAccessObjectJson.contains(kEncryptedMetadata)) {
                 auto encryptedMetadata = keyAccessObjectJson[kEncryptedMetadata];
