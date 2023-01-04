@@ -225,7 +225,7 @@ struct tm *virtru_gmtime(const time_t *timer )
             }
 #else
             if (Logger::getInstance().m_enableConsoleLog) {
-                logCurrentISO8601TimeUTC(std::clog) << " " << "[Trace]";
+                std::clog << logCurrentISO8601TimeUTC << " " << "[Trace]";
 
 #ifndef VBUILD_BRANCH_PRODUCTION
                 std::clog << "[" << fileName << ":" << lineNumber << "]";
@@ -259,7 +259,7 @@ struct tm *virtru_gmtime(const time_t *timer )
             }
 #else
             if (Logger::getInstance().m_enableConsoleLog) {
-                logCurrentISO8601TimeUTC(std::clog) << " " << "[Debug]";
+                std::clog << logCurrentISO8601TimeUTC << " " << "[Debug]";
 
 #ifndef VBUILD_BRANCH_PRODUCTION
                 std::clog << "[" << fileName << ":" << lineNumber << "]";
@@ -292,7 +292,7 @@ struct tm *virtru_gmtime(const time_t *timer )
             }
 #else
             if (Logger::getInstance().m_enableConsoleLog) {
-                logCurrentISO8601TimeUTC(std::clog) << " " << "[Info]";
+                std::clog << logCurrentISO8601TimeUTC << " " << "[Info]";
 
 #ifndef VBUILD_BRANCH_PRODUCTION
                 std::clog << "[" << fileName << ":" << lineNumber << "]";
@@ -325,7 +325,7 @@ struct tm *virtru_gmtime(const time_t *timer )
             }
 #else
             if (Logger::getInstance().m_enableConsoleLog) {
-                logCurrentISO8601TimeUTC(std::clog) << " " << "[Warn]";
+                std::clog << logCurrentISO8601TimeUTC << " " << "[Warn]";
 
 #ifndef VBUILD_BRANCH_PRODUCTION
                 std::clog << "[" << fileName << ":" << lineNumber << "]";
@@ -359,7 +359,7 @@ struct tm *virtru_gmtime(const time_t *timer )
             }
 #else
             if (Logger::getInstance().m_enableConsoleLog) {
-                logCurrentISO8601TimeUTC(std::clog) << " " << "[Error]";
+                std::clog << logCurrentISO8601TimeUTC << " " << "[Error]";
 
 #ifndef VBUILD_BRANCH_PRODUCTION
                 std::clog << "[" << fileName << ":" << lineNumber << "]";
@@ -392,7 +392,7 @@ struct tm *virtru_gmtime(const time_t *timer )
             }
 #else
             if (Logger::getInstance().m_enableConsoleLog) {
-                logCurrentISO8601TimeUTC(std::clog) << " " << "[Fatal]";
+                std::clog << logCurrentISO8601TimeUTC << " " << "[Fatal]";
 
 #ifndef VBUILD_BRANCH_PRODUCTION
                 std::clog << "[" << fileName << ":" << lineNumber << "]";
@@ -433,7 +433,7 @@ struct tm *virtru_gmtime(const time_t *timer )
             }
 #else
 
-            logCurrentISO8601TimeUTC(std::clog) << " " << "[Benchmark]";
+            std::clog << logCurrentISO8601TimeUTC << " " << "[Benchmark]";
             std::clog << benchmarkMessage << "\n";
 #endif
         }
