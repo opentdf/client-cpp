@@ -403,8 +403,8 @@ namespace virtru {
     /// Get the OIDC url for fetching access token.
     std::string OIDCService::getOIDCUrl() {
 
-        auto openIdConfigUrl = m_oidcCredentials.getOpenIDConfigurationUrl();
-        if (openIdConfigUrl.empty()) {
+        auto oidcConfigUrl = m_oidcCredentials.getOIDCConfigurationUrl();
+        if (oidcConfigUrl.empty()) {
             auto oidcEndpoint =  m_oidcCredentials.getOIDCEndpoint();
             if('/' == oidcEndpoint.back()) {
                 oidcEndpoint.pop_back();
@@ -413,8 +413,8 @@ namespace virtru {
             std::string oidcUrl = oidcEndpoint + kKCRealmPath + m_oidcCredentials.getOrgName() + kOIDCTokenPath;
             return oidcUrl;
         } else {
-            OpenIDConfiguration openIdConfiguration{openIdConfigUrl};
-            return openIdConfiguration.getOIDCUrl();
+            OIDCConfiguration oidcConfiguration{oidcConfigUrl};
+            return oidcConfiguration.getOIDCUrl();
         }
     }
 

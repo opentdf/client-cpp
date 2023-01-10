@@ -33,7 +33,6 @@ namespace virtru {
         HttpHeaders headers;
         std::shared_ptr<HTTPServiceProvider> sp = std::make_shared<HTTPServiceProvider>(headers);
 
-        std::string oidcConfiguration;
         unsigned status = kHTTPBadRequest;
         std::promise<void> netPromise;
         auto netFuture = netPromise.get_future();
