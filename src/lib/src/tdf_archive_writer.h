@@ -121,12 +121,13 @@ namespace virtru {
 
         struct FileInfo
         {
-            //uint32_t crc;
+            uint32_t crc;
             uint64_t size;
             uint64_t offset;
             std::string fileName;
             uint16_t fileTime;
             uint16_t fileDate;
+            uint16_t flag;
         };
 
         enum class PayloadState {
