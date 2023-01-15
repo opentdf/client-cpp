@@ -55,6 +55,7 @@ namespace virtru {
         if (PayloadState::Initial == m_payloadState) {
             lfh.signature = static_cast<uint32_t>(ZipSignatures::LocalFileHeaderSignature);
             lfh.version = 45;
+            //since payload is added by chunks we set General purpose bit flag to 0x08 (https://en.wikipedia.org/wiki/ZIP_(file_format))
             lfh.flags = 0x08;
 
             lfh.compressionMethod = 0;
@@ -146,6 +147,9 @@ namespace virtru {
                 m_outputProvider->writeBytes(bytes);
                 m_currentOffset = sizeof(LocalFileHeader) + m_payloadFilename.length() + m_payloadSize + sizeof(DataDescriptor32);
             }
+
+            current_size = 0;
+            computed_crc32_ = 0;
         }
     }
 
