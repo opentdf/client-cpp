@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 1.3.7 
  -  PLAT-2254 - Fix the CRC calculation for 64 bit zip in openTDF C++ SDK
 
+1.3.7
+ -  PLAT-2155 - Renamed for consistent naming of OIDC configuration support
+
 1.3.6
  -  PLAT-2155 - OpenTDF C++ SDK use .well-known/openid-configuration
 
