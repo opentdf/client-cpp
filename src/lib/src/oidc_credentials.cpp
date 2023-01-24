@@ -33,8 +33,8 @@ namespace virtru {
 
     /// Constructor
     /// \param openIDConfigurationUrl - The openid configuration url
-    OIDCCredentials::OIDCCredentials(const std::string &openIDConfigurationUrl)
-            :m_openIdConfigurationUrl(openIDConfigurationUrl) {}
+    OIDCCredentials::OIDCCredentials(const std::string &oidcConfigurationUrl)
+            :m_oidcConfigurationUrl(oidcConfigurationUrl) {}
 
     /// Destructor
     OIDCCredentials::~OIDCCredentials() = default;
@@ -171,8 +171,8 @@ namespace virtru {
     }
 
     /// Return the openid configuration url
-    std::string OIDCCredentials::getOpenIDConfigurationUrl() const {
-        return m_openIdConfigurationUrl;
+    std::string OIDCCredentials::getOIDCConfigurationUrl() const {
+        return m_oidcConfigurationUrl;
     }
 
     /// Return the client id.

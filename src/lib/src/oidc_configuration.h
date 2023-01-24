@@ -8,8 +8,8 @@
 // Created by Sujan Reddy on 12/2/22.
 //
 
-#ifndef TDF_CLIENT_OPENID_CONFIGURATION_H
-#define TDF_CLIENT_OPENID_CONFIGURATION_H
+#ifndef TDF_CLIENT_OIDC_CONFIGURATION_H
+#define TDF_CLIENT_OIDC_CONFIGURATION_H
 
 #include <string>
 
@@ -17,20 +17,20 @@
 
 
 namespace virtru {
-    class OpenIDConfiguration {
+    class OIDCConfiguration {
     public:
         // Constructor
-        explicit OpenIDConfiguration(const std::string& openIdConfigUrl);
+        explicit OIDCConfiguration(const std::string& oidcConfigUrl);
 
         // Destructor
-        ~OpenIDConfiguration() = default;
+        ~OIDCConfiguration() = default;
 
     public:
         [[nodiscard]] std::string getOIDCUrl() const;
 
     private:
         std::string m_configuration;
-        std::string m_openIdConfigUrl;
+        std::string m_oidcConfigUrl;
     };
 }
-#endif //TDF_CLIENT_OPENID_CONFIGURATION_H
+#endif //TDF_CLIENT_OIDC_CONFIGURATION_H

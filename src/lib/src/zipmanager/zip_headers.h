@@ -12,8 +12,9 @@ enum class ZipSignatures : uint32_t
     EndOfCentralDirectorySignature             = 0x06054b50,
     CentralFileHeaderSignature                 = 0x02014b50,
     LocalFileHeaderSignature                   = 0x04034b50,
-    Zip64EndOfCentralDirectoryLocatorSignature = 0x07064B50,
-    Zip64EndOfCentralDirectorySignature        = 0x06064B50,
+    DataDescriptorSignature                    = 0x08074b50,
+    Zip64EndOfCentralDirectoryLocatorSignature = 0x07064b50,
+    Zip64EndOfCentralDirectorySignature        = 0x06064b50,
 };
 
 
@@ -82,6 +83,22 @@ struct LocalFileHeader
     uint32_t uncompressedSize;
     uint16_t filenameLength;
     uint16_t extraFieldLength;
+};
+
+struct DataDescriptor32
+{
+    uint32_t signature;
+    uint32_t crc32;
+    uint32_t compressedSize;
+    uint32_t uncompressedSize;
+};
+
+struct DataDescriptor64
+{
+    uint32_t signature;
+    uint32_t crc32;
+    uint64_t compressedSize;
+    uint64_t uncompressedSize;
 };
 
 struct CentralDirectoryFileHeader

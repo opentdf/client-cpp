@@ -90,8 +90,8 @@ set (TDF_CPP_SDK_SOURCE_FILES_BASE
         ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_storage_type.cpp
         ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_html_writer.cpp
         ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_html_writer.h
-        ${TDF_CPP_SDK_SOURCE_DIR}/src/openid_configuration.cpp
-        ${TDF_CPP_SDK_SOURCE_DIR}/src/openid_configuration.h
+        ${TDF_CPP_SDK_SOURCE_DIR}/src/oidc_configuration.cpp
+        ${TDF_CPP_SDK_SOURCE_DIR}/src/oidc_configuration.h
     )
 
 set (TDF_CPP_SDK_SOURCE_FILES_NANOTDF
