@@ -31,7 +31,12 @@
 #include "tdf_archive_writer.h"
 #include "tdf_html_writer.h"
 #include "stream_io_provider.h"
+#include "rca_io_provider.h"
 #include "benchmark.h"
+#include "crypto/gcm_encryption.h"
+#include "crypto/gcm_decryption.h"
+#include "crypto/bytes.h"
+#include "utils.h"
 
 #include <memory>
 #include <stdint.h>
@@ -69,47 +74,10 @@ namespace virtru {
         LogTrace("TDFImpl::TDFImpl");
     }
 
-    /// Encrypt data from InputProvider and write to IOutputProvider
-    void TDFImpl::encryptIOProvider(IInputProvider& inputProvider,
-                           IOutputProvider& outputProvider) {
+    /// Encrypt data from InputProvider and write to RCA OutputProvider
+    std::string TDFImpl::encryptInputProviderToRCA(IInputProvider& inputProvider) {
 
-        if (m_tdfBuilder.m_impl->m_protocol == Protocol::Zip) {
-
-            TDFArchiveWriter writer{&outputProvider,
-                                    kTDFManifestFileName,
-                                    kTDFPayloadFileName};
-
-            encryptIOProviderImpl(inputProvider, writer);
-        } else if (m_tdfBuilder.m_impl->m_protocol == Protocol::Xml) {
-            TDFXMLWriter writer{outputProvider,
-                                kTDFManifestFileName,
-                                kTDFPayloadFileName};
-
-            encryptIOProviderImpl(inputProvider, writer);
-        } else { // HTML
-            struct HTMLOutputProvider: IOutputProvider {
-                void writeBytes(Bytes bytes) override {
-                    stringStream.write(toChar(bytes.data()), bytes.size());
-                }
-                void flush() override { stringStream.flush(); }
-                std::stringstream stringStream{};
-            };
-
-            HTMLOutputProvider htmlOutputProvider{};
-            TDFArchiveWriter writer{&htmlOutputProvider,
-                                    kTDFManifestFileName,
-                                    kTDFPayloadFileName};
-            auto manifestStr = encryptIOProviderImpl(inputProvider, writer);
-
-            htmlOutputProvider.flush();
-            generateHtmlTdf(manifestStr, htmlOutputProvider.stringStream, outputProvider);
-        }
-    }
-
-    /// Encrypt data from InputProvider and write to IOutputProvider
-    std::string TDFImpl::encryptIOProviderImpl(IInputProvider& inputProvider, ITDFWriter& writer) {
         LogTrace("TDFImpl::encryptIOProviderImpl");
-
 
         auto dataSize = inputProvider.getSize();
 
@@ -122,6 +90,12 @@ namespace virtru {
             m_tdfBuilder.m_impl->m_policyObject.getAttributeObjects().empty()) {
             LogWarn(kEmptyPolicyMsg);
         }
+
+        // For RCA override the m_payloadKey
+        WrappedKey payloadKey = symmetricKey<kKeyLength>();
+        std::vector<std::uint8_t> payloadKeyBuffer(kKeyLength);
+        std::memcpy(payloadKeyBuffer.data(), payloadKey.data(), kKeyLength);
+        m_tdfBuilder.overridePayloadKey(payloadKeyBuffer);
 
         /// Create a split key and the key access object based on access type.
         auto splitKey = SplitKey{m_tdfBuilder.m_impl->m_cipherType};
@@ -177,15 +151,37 @@ namespace virtru {
         auto defaultSegmentSize = m_tdfBuilder.m_impl->m_segmentSize;
 
         ///
-        // Create buffers for reading from file and for performing encryption.
-        // These buffers will be reused.
+        /// Create buffers for reading from file and for performing encryption.
+        /// These buffers will be reused.
         ///
         auto encryptedBufferSize = defaultSegmentSize + ivSize + kAesBlockSize;
         std::vector<char> readBuffer(defaultSegmentSize); // TODO: may want use gsl::byte instead of char
         std::vector<gsl::byte> encryptedBuffer(encryptedBufferSize);
 
         /// upsert
-        upsert(manifest);
+        auto upsertResponse = upsert(manifest);
+
+        std::cout << "Response from KAS is:" << upsertResponse << std::endl;
+
+        /// Generate kek = Kv(Kp) -> wrappedkey(payloadkey)
+        auto base64KeK = generateKeK(splitKey.getPolicyKey(), m_tdfBuilder.m_impl->m_payloadKey);
+        std::cout << "Size:" << base64KeK.size() << "Data:" << base64KeK << std::endl;
+
+        nlohmann::json upsertResponseObj;
+        try {
+            upsertResponseObj = nlohmann::json::parse(upsertResponse);
+        } catch (...) {
+            if (upsertResponseObj == ""){
+                ThrowException("No rewrap response from KAS", VIRTRU_NETWORK_ERROR);
+            } else {
+                ThrowException("Could not parse KAS rewrap response: " + boost::current_exception_diagnostic_information() + "  with response: " + upsertResponse, VIRTRU_NETWORK_ERROR);
+            }
+        }
+
+        RCAOutputProvider s3op("https://api.develop.virtru.com/rca", m_tdfBuilder.m_impl->m_httpHeaders);
+        TDFArchiveWriter writer{&s3op,
+                                kTDFManifestFileName,
+                                kTDFPayloadFileName};
 
         ///
         /// Read the file in chucks of 'segmentSize'
@@ -271,7 +267,359 @@ namespace virtru {
         writer.appendManifest(to_string(manifest));
         writer.finish();
 
-        return to_string(manifest);
+        std::cout << "Filename:" << s3op.remoteFileName() << std::endl;
+        std::cout << "Response from upsert is:" << to_string(upsertResponseObj) << std::endl;
+
+        auto &responseObj = upsertResponseObj.at(0);
+        auto uuid = responseObj["uuid"];
+
+        // Construct contract url
+        std::string uuidStr = uuid;
+        std::string contractUrl = "https://api-develop01.develop.virtru.com/acm/api/policies/";
+        contractUrl += uuidStr;
+        contractUrl += "/contract";
+
+        // Construct downloadUrl
+        std::string downloadUrl = "https://api-develop01.develop.virtru.com/encrypted-storage/";
+        downloadUrl += s3op.remoteFileName();
+        std::cout << "Download URL is:" << downloadUrl << std::endl;
+
+
+        std::ostringstream rcaLink;
+
+        rcaLink << "https://secure.develop.virtru.com/start/#v=4.0.0";
+        rcaLink << "&pu=";
+        rcaLink << Utils::urlEncode(contractUrl);
+        rcaLink << "&wu=";
+        rcaLink << Utils::urlEncode(downloadUrl);
+        rcaLink << "&wk=";
+        std::string kekStr = base64KeK;
+        rcaLink << kekStr;
+        rcaLink << "&al=AES-256-GCM";
+
+        std::cout << "RCA link:" << rcaLink.str() << std::endl;
+
+        nlohmann::json rcaInfo;
+        rcaInfo["downloadUrl"] = downloadUrl;
+        rcaInfo["kek"] = base64KeK;
+
+        return to_string(rcaInfo);
+    }
+
+    /// Decrypt RCA to OutputProvider
+    void TDFImpl::decryptRCAToOutputProvider(const std::string& downloadURL,
+                                             const std::string& kek,
+                                             IOutputProvider& outputProvider) {
+
+
+        RCAInputProvider s3op(downloadURL);
+        TDFArchiveReader reader{&s3op,
+                                kTDFManifestFileName,
+                                kTDFPayloadFileName};
+
+        auto manifestStr = reader.getManifest();
+
+        // Parse the manifest
+        auto manifest = nlohmann::json::parse(manifestStr);
+
+        // Validate the cipher type before creating a split key
+        validateCipherType(manifest);
+
+        WrappedKey wrappedKey = unwrapKey(manifest);
+        WrappedKey actualWrappedKey;
+
+        auto kekDecode = base64Decode(kek);
+        auto data = toBytes(kekDecode);
+
+        // Copy the auth tag from the data buffer.
+        ByteArray<kAesBlockSize> tag;
+        std::copy_n(data.last(kAesBlockSize).data(), kAesBlockSize, begin(tag));
+
+        // Update the input buffer size after the auth tag is copied.
+        auto inputSpan = data.first(data.size() - kAesBlockSize);
+        auto symDecoder = GCMDecryption::create(toBytes(wrappedKey), inputSpan.first(kGcmIvSize));
+
+        // Update the input buffer size after the IV is copied.
+        inputSpan = inputSpan.subspan(kGcmIvSize);
+
+        // decrypt
+        auto writeableBytes = WriteableBytes(actualWrappedKey);
+        symDecoder->decrypt(inputSpan, writeableBytes);
+        auto authTag = WriteableBytes{tag};
+        symDecoder->finish(authTag);
+
+        LogDebug("Obtained the wrappedKey from manifest.");
+
+        // Create a split key and the key access object based on access type.
+        auto splitKey = SplitKey{CipherType::Aes256GCM};
+        splitKey.setWrappedKey(actualWrappedKey);
+
+        // Validate the root signature from the manifest.
+        validateRootSignature(splitKey, manifest);
+
+        auto &integrityInformation = manifest[kEncryptionInformation][kIntegrityInformation];
+        size_t segmentSizeDefault = integrityInformation[kSegmentSizeDefault];
+        size_t defaultEncryptedSegmentSize = integrityInformation[kEncryptedSegSizeDefault];
+
+        auto ivSize = (m_tdfBuilder.m_impl->m_cipherType == CipherType::Aes256GCM) ? kGcmIvSize : kCbcIvSize;
+        if (segmentSizeDefault != (defaultEncryptedSegmentSize - ((ivSize + kAesBlockSize)))) {
+            ThrowException("EncryptedSegmentSizeDefault is missing in tdf", VIRTRU_TDF_FORMAT_ERROR);
+        }
+
+        const auto& segmentInfos = manifest[kEncryptionInformation][kIntegrityInformation][kSegments];
+
+        ///
+        /// Create buffers for reading from file and for performing decryption.
+        /// These buffers will be reused.
+        ///
+        std::vector<gsl::byte> readBuffer(defaultEncryptedSegmentSize);
+        std::vector<gsl::byte> decryptedBuffer(segmentSizeDefault);
+
+        std::string segmentHashAlg = integrityInformation[kSegmentHashAlg];
+        size_t payloadOffset = 0;
+        for (auto &segment : segmentInfos) {
+
+            // Adjust read buffer size
+            auto readBufferSpan = WriteableBytes{readBuffer};
+            if (segment.contains(kEncryptedSegmentSize)) {
+                int encryptedSegmentSize = segment[kEncryptedSegmentSize];
+                readBufferSpan = WriteableBytes{readBufferSpan.data(), encryptedSegmentSize};
+            }
+
+            // Adjust decrypt buffer size
+            auto outBufferSpan = WriteableBytes{decryptedBuffer};
+            if (segment.contains(kSegmentSize)) {
+                int segmentSize = segment[kSegmentSize];
+                outBufferSpan = WriteableBytes{outBufferSpan.data(), segmentSize};
+            }
+
+            // Read form zip reader.
+            reader.readPayload(payloadOffset, readBufferSpan.size(), readBufferSpan);
+            payloadOffset += readBufferSpan.size();
+
+            // Decrypt the payload.
+            splitKey.decrypt(readBufferSpan, outBufferSpan);
+
+            auto payloadSigStr = getSignature(readBufferSpan, splitKey, segmentHashAlg);
+            std::string hash = segment[kHash];
+
+            // Validate the hash.
+            if (hash != base64Encode(payloadSigStr)) {
+                ThrowException("Failed integrity check on segment hash", VIRTRU_CRYPTO_ERROR);
+            }
+
+            outputProvider.writeBytes(outBufferSpan);
+        }
+    }
+
+    /// Encrypt data from InputProvider and write to IOutputProvider
+    std::string TDFImpl::encryptIOProvider(IInputProvider& inputProvider,
+                                           IOutputProvider& outputProvider) {
+
+        if (m_tdfBuilder.m_impl->m_protocol == Protocol::Zip) {
+
+            TDFArchiveWriter writer{&outputProvider,
+                                    kTDFManifestFileName,
+                                    kTDFPayloadFileName};
+
+            auto response = encryptIOProviderImpl(inputProvider, writer);
+            return response.second;
+        } else if (m_tdfBuilder.m_impl->m_protocol == Protocol::Xml) {
+            TDFXMLWriter writer{outputProvider,
+                                kTDFManifestFileName,
+                                kTDFPayloadFileName};
+
+            auto response = encryptIOProviderImpl(inputProvider, writer);
+            return response.second;
+        } else { // HTML
+            struct HTMLOutputProvider: IOutputProvider {
+                void writeBytes(Bytes bytes) override {
+                    stringStream.write(toChar(bytes.data()), bytes.size());
+                }
+                void flush() override { stringStream.flush(); }
+                std::stringstream stringStream{};
+            };
+
+            HTMLOutputProvider htmlOutputProvider{};
+            TDFArchiveWriter writer{&htmlOutputProvider,
+                                    kTDFManifestFileName,
+                                    kTDFPayloadFileName};
+            auto response = encryptIOProviderImpl(inputProvider, writer);
+            auto manifestStr = response.first;
+            htmlOutputProvider.flush();
+            generateHtmlTdf(manifestStr, htmlOutputProvider.stringStream, outputProvider);
+            return response.second;
+        }
+    }
+
+    /// Encrypt data from InputProvider and write to IOutputProvider
+    std::pair<std::string, std::string> TDFImpl::encryptIOProviderImpl(IInputProvider& inputProvider,
+                                                                       ITDFWriter& writer) {
+        LogTrace("TDFImpl::encryptIOProviderImpl");
+
+
+        auto dataSize = inputProvider.getSize();
+
+        // Check if there is a policy object
+        if (m_tdfBuilder.m_impl->m_policyObject.getUuid().empty()) {
+            ThrowException("Policy object is missing.", VIRTRU_TDF_FORMAT_ERROR);
+        }
+
+        if (m_tdfBuilder.m_impl->m_policyObject.getDissems().empty() &&
+            m_tdfBuilder.m_impl->m_policyObject.getAttributeObjects().empty()) {
+            LogWarn(kEmptyPolicyMsg);
+        }
+
+        /// Create a split key and the key access object based on access type.
+        auto splitKey = SplitKey{m_tdfBuilder.m_impl->m_cipherType};
+        if (m_tdfBuilder.m_impl->m_overridePayloadKey) {
+            splitKey.setPayloadKey(m_tdfBuilder.m_impl->m_payloadKey);
+        }
+
+        auto keyAccessType = m_tdfBuilder.m_impl->m_keyAccessType;
+        if (keyAccessType == KeyAccessType::Wrapped) {
+            auto keyAccess = std::unique_ptr<KeyAccess>{std::make_unique<WrappedKeyAccess>(m_tdfBuilder.m_impl->m_kasUrl,
+                                                                                           m_tdfBuilder.m_impl->m_kasPublicKey,
+                                                                                           m_tdfBuilder.m_impl->m_policyObject,
+                                                                                           m_tdfBuilder.m_impl->m_metadataAsJsonStr)};
+            splitKey.addKeyAccess(std::move(keyAccess));
+
+            LogDebug("KeyAccessType is wrapped");
+        } else {
+
+            if (m_tdfBuilder.m_impl->m_metadataAsJsonStr.empty()) {
+                ThrowException("Remote key access type should have the meta data.", VIRTRU_TDF_FORMAT_ERROR);
+            }
+
+            auto keyAccess = std::unique_ptr<KeyAccess>{std::make_unique<RemoteKeyAccess>(m_tdfBuilder.m_impl->m_kasUrl,
+                                                                                          m_tdfBuilder.m_impl->m_kasPublicKey,
+                                                                                          m_tdfBuilder.m_impl->m_policyObject,
+                                                                                          m_tdfBuilder.m_impl->m_metadataAsJsonStr)};
+            splitKey.addKeyAccess(std::move(keyAccess));
+            LogDebug("KeyAccessType is remote");
+        }
+
+        auto segIntegrityAlg = m_tdfBuilder.m_impl->m_segmentIntegrityAlgorithm;
+        auto segIntegrityAlgStr = (segIntegrityAlg == IntegrityAlgorithm::HS256) ? kHmacIntegrityAlgorithm : kGmacIntegrityAlgorithm;
+        auto integrityAlg = m_tdfBuilder.m_impl->m_integrityAlgorithm;
+        auto integrityAlgStr = (integrityAlg == IntegrityAlgorithm::HS256) ? kHmacIntegrityAlgorithm : kGmacIntegrityAlgorithm;
+
+        auto encryptionInformationJson = splitKey.getManifest();
+
+        nlohmann::json payloadTypeObject;
+
+        auto protocol = (m_tdfBuilder.m_impl->m_protocol == Protocol::Zip) ? kPayloadZipProtcol : kPayloadHtmlProtcol;
+        payloadTypeObject[kPayloadReferenceType] = kPayloadReference;
+        payloadTypeObject[kUrl] = kTDFPayloadFileName;
+        payloadTypeObject[kProtocol] = protocol;
+        payloadTypeObject[kPayloadMimeType] = m_tdfBuilder.m_impl->m_mimeType;
+        payloadTypeObject[kPayloadIsEncrypted] = true;
+
+        nlohmann::json manifest;
+
+        manifest[kPayload] = payloadTypeObject;
+        manifest[kEncryptionInformation] = encryptionInformationJson;
+
+        auto ivSize = (m_tdfBuilder.m_impl->m_cipherType == CipherType::Aes256GCM) ? kGcmIvSize : kCbcIvSize;
+        auto defaultSegmentSize = m_tdfBuilder.m_impl->m_segmentSize;
+
+        ///
+        /// Create buffers for reading from file and for performing encryption.
+        /// These buffers will be reused.
+        ///
+        auto encryptedBufferSize = defaultSegmentSize + ivSize + kAesBlockSize;
+        std::vector<char> readBuffer(defaultSegmentSize); // TODO: may want use gsl::byte instead of char
+        std::vector<gsl::byte> encryptedBuffer(encryptedBufferSize);
+
+        /// upsert
+        auto upsertResponse = upsert(manifest);
+
+        ///
+        /// Read the file in chucks of 'segmentSize'
+        ///
+        std::string aggregateHash{};
+        nlohmann::json segmentInfos = nlohmann::json::array();
+
+        /// Calculate the actual size of the TDF payload.
+        /// Formula totalSegment = quotient + possible one(if the data size is not exactly divisible by segment size)
+        unsigned totalSegment = (dataSize / defaultSegmentSize) + ((dataSize % defaultSegmentSize == 0) ? 0 : 1);
+        if (totalSegment == 0) { // For empty file we still want to create a payload.
+            totalSegment = 1;
+        }
+
+        int64_t extraBytes = totalSegment * (ivSize + kAesBlockSize);
+        std::streampos actualTDFPayloadSize = dataSize + extraBytes;
+
+        LogDebug("Total segments:" + std::to_string(totalSegment));
+
+        writer.setPayloadSize(actualTDFPayloadSize);
+
+        size_t index{};
+        while (totalSegment != 0) {
+
+            auto readSize = defaultSegmentSize;
+            if ((dataSize - index) < defaultSegmentSize) {
+                readSize = (dataSize - index);
+            }
+
+            // Read the file in 'defaultSegmentSize' chuck max
+            auto bytes = toWriteableBytes(readBuffer);
+            inputProvider.readBytes(index, readSize, bytes);
+
+            // make sub span of 'defaultSegmentSize' or less
+            auto readBufferAsBytes = toBytes(readBuffer);
+            Bytes subSpanBuffer{readBufferAsBytes.data(), static_cast<std::ptrdiff_t>(readSize)};
+            auto writeableBytes = toWriteableBytes(encryptedBuffer);
+
+            // Encrypt the payload
+            splitKey.encrypt(subSpanBuffer, writeableBytes);
+
+            ///
+            // Check if all the bytes are encrypted.
+            ///
+            auto encryptedSize =readSize + ivSize + kAesBlockSize;
+            if (writeableBytes.size() != encryptedSize) {
+                ThrowException("Encrypted buffer output is not correct!", VIRTRU_TDF_FORMAT_ERROR);
+            }
+
+            // Generate signature for the encrypted payload.
+            auto payloadSigStr = getSignature(writeableBytes, splitKey, segIntegrityAlg);
+
+            // Append the aggregate payload signature.
+            aggregateHash.append(payloadSigStr);
+
+            nlohmann::json segmentInfo;
+            segmentInfo[kHash] = base64Encode(payloadSigStr);
+            segmentInfo[kSegmentSize] = readSize;
+            segmentInfo[kEncryptedSegmentSize] = encryptedSize;
+            segmentInfos.emplace_back(segmentInfo);
+
+            // write the encrypted data to tdf file.
+            writer.appendPayload(writeableBytes);
+
+            totalSegment--;
+            index += readSize;
+        }
+
+        LogDebug("Encryption is completed, preparing the manifest");
+
+        auto aggregateHashSigStr = getSignature(toBytes(aggregateHash), splitKey, integrityAlg);
+
+        manifest[kEncryptionInformation][kIntegrityInformation][kRootSignature][kRootSignatureSig] = base64Encode(aggregateHashSigStr);
+        manifest[kEncryptionInformation][kIntegrityInformation][kRootSignature][kRootSignatureAlg] = integrityAlgStr;
+
+        manifest[kEncryptionInformation][kIntegrityInformation][kSegmentSizeDefault] = defaultSegmentSize;
+        manifest[kEncryptionInformation][kIntegrityInformation][kEncryptedSegSizeDefault] = encryptedBufferSize;
+        manifest[kEncryptionInformation][kIntegrityInformation][kSegmentHashAlg] = segIntegrityAlgStr;
+
+        manifest[kEncryptionInformation][kIntegrityInformation][kSegments] = segmentInfos;
+        manifest[kEncryptionInformation][kMethod][kIsStreamable] = true;
+
+        writer.appendManifest(to_string(manifest));
+        writer.finish();
+
+        std::cout << "Response from upsert is:" << upsertResponse << std::endl;
+        return std::make_pair(to_string(manifest), upsertResponse);
     }
 
 
@@ -714,7 +1062,7 @@ namespace virtru {
         switch (alg) {
         case IntegrityAlgorithm::HS256:
 
-            return hexHmacSha256(payload, splitkey.getWrappedKey());
+            return hexHmacSha256(payload, splitkey.getPayloadKey());
 
         case IntegrityAlgorithm::GMAC:
             if (kGmacPayloadLength > payload.size()) {
@@ -790,13 +1138,13 @@ namespace virtru {
     }
 
     /// Upsert the key information.
-    void TDFImpl::upsert(nlohmann::json &manifest, bool ignoreKeyAccessType) const {
+    std::string TDFImpl::upsert(nlohmann::json &manifest, bool ignoreKeyAccessType) const {
 
         LogTrace("TDFImpl::upsert");
 
         if (!ignoreKeyAccessType && m_tdfBuilder.m_impl->m_keyAccessType == KeyAccessType::Wrapped) {
             LogDebug("Bypass upsert for wrapped key type.");
-            return;
+            return {};
         }
 
         Benchmark benchmark("Upsert");
@@ -869,6 +1217,8 @@ namespace virtru {
 
         keyAccess.erase(kWrappedKey);
         keyAccess.erase(kPolicyBinding);
+
+        return upsertResponse;
     }
 
     std::string TDFImpl::buildRewrapV2Payload(nlohmann::json &requestBody) const {
@@ -1372,4 +1722,44 @@ namespace virtru {
         }
     }
 
-} // namespace virtru
+    /// Generate a KeK for RCA. Kek -> policyKey(payloadKey)
+    std::string TDFImpl::generateKeK(Bytes policyKey, Bytes payloadKey) const {
+
+        ByteArray<kGcmIvSize> iv = symmetricKey<kGcmIvSize>();
+        auto encryptBufferSize = iv.size() + payloadKey.size() +  kAesBlockSize;
+        long finalSize =  encryptBufferSize;
+
+        ByteArray<kAesBlockSize> tag;
+        std::vector<gsl::byte> encryptedData(encryptBufferSize);
+        auto writeableBytes = WriteableBytes{encryptedData};
+        const auto bufferSpan = writeableBytes;
+
+        auto encryptedDataSize = 0;
+        const auto final = finalizeSize(writeableBytes, encryptedDataSize);
+
+        // Adjust the span to add the IV vector at the start of the buffer
+        auto encryptBufferSpan = bufferSpan.subspan(kGcmIvSize);
+
+        auto encoder = GCMEncryption::create(policyKey, iv);
+        encoder->encrypt(payloadKey, encryptBufferSpan);
+        auto authTag = WriteableBytes{tag};
+        encoder->finish(authTag);
+
+        // Copy IV at start
+        std::copy(iv.begin(), iv.end(), encryptedData.begin());
+
+        // Copy tag at end
+        std::copy(tag.begin(), tag.end(), encryptedData.begin() + kGcmIvSize + payloadKey.size());
+
+        // Final size.
+        encryptedDataSize = finalSize;
+
+        auto kek =  base64Encode(toBytes(encryptedData));
+
+        auto encryptedKek = base64Decode(toBytes(kek));
+        std::cout<< "Size of decoded base64:" << encryptedKek.size() << std::endl;
+
+        return kek;
+    }
+
+} // namespace virtrug

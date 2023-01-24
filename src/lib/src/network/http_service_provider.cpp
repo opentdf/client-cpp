@@ -104,9 +104,15 @@ namespace virtru::network {
                 os << errorCode.value() << " " << errorCode.message();
                 LogWarn(os.str());
                 responseBody = errorCode.message();
-            } else {
+            }  else {
                 status = Service::GetStatus(response.result());
-                responseBody = response.body();
+            }
+
+            // Return headers in response body since there is no body for a PUT response
+            for (auto &hIter: response.base()) {
+                std::ostringstream oss;
+                oss << hIter.name_string() << ": " << hIter.value() << "\n";
+                responseBody.append(oss.str());
             }
 
             // Not everything throws an errorCode

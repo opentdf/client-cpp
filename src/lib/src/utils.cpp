@@ -245,4 +245,24 @@ namespace virtru {
         return std::string("openstack-cpp-sdk:") + opentdf_VERSION;
     }
 
+    /// Parse the headers from the string
+    std::map<std::string, std::string> Utils::parseHeaders(const std::string& headersStr) {
+        std::map<std::string, std::string> httpHeaders;
+
+        std::istringstream resp(headersStr);
+        std::string header;
+        std::string::size_type index;
+        while (std::getline(resp, header) && header != "\r") {
+            index = header.find(':', 0);
+            if(index != std::string::npos) {
+                httpHeaders.insert(std::make_pair(
+                        boost::algorithm::trim_copy(header.substr(0, index)),
+                        boost::algorithm::trim_copy(header.substr(index + 1))
+                ));
+            }
+        }
+
+        return httpHeaders;
+    }
+
 } // namespace virtru

@@ -24,6 +24,8 @@
 #include "policy_object.h"
 #include "crypto/bytes.h"
 #include "io_provider.h"
+#include "rca_io_provider.h"
+#include "utils.h"
 
 #include "nlohmann/json.hpp"
 #include <memory>
@@ -63,11 +65,23 @@
 //constexpr auto easHost = "api-develop01.develop.virtru.com";
 //#endif
 
-constexpr auto kasPublicKeyUrl = "https://api.staging.virtru.com/kas/kas_public_key";
-constexpr auto kasHost = "api.staging.virtru.com";
-constexpr auto kasUrl = "https://api.staging.virtru.com/kas";
-constexpr auto easUrl = "https://api.staging.virtru.com/accounts";
-constexpr auto easHost = "api.staging.virtru.com";
+//constexpr auto kasPublicKeyUrl = "https://api.staging.virtru.com/kas/kas_public_key";
+//constexpr auto kasHost = "api.staging.virtru.com";
+//constexpr auto kasUrl = "https://api.staging.virtru.com/kas";
+//constexpr auto easUrl = "https://api.staging.virtru.com/accounts";
+//constexpr auto easHost = "api.staging.virtru.com";
+
+//constexpr auto kasPublicKeyUrl = "https://api.virtru.com/kas/kas_public_key";
+//constexpr auto kasHost = "api.virtru.com";
+//constexpr auto kasUrl = "https://api.virtru.com/kas";
+//constexpr auto easUrl = "https://api.virtru.com/accounts";
+//constexpr auto easHost = "api.virtru.com";
+
+constexpr auto kasPublicKeyUrl = "https://api-develop01.develop.virtru.com/kas/kas_public_key";
+constexpr auto kasHost = "api-develop01.develop.virtru.com";
+constexpr auto kasUrl = "https://api-develop01.develop.virtru.com/kas";
+constexpr auto easUrl = "https://api.develop.virtru.com/accounts";
+constexpr auto easHost = "api-develop01.develop.virtru.com";
 
 constexpr auto AcceptHeaderKey = "Accept";
 constexpr auto AcceptHeaderValue = "application/json; charset=utf-8";
@@ -93,7 +107,7 @@ std::string appId() {
     if (appId) {
         return appId;
     }
-    return {""};
+    return {"dc7f7d6e-d5f1-449f-8641-6a572ab8a1dd"};
 }
 
 std::string getCurrentWorkingDir() {
@@ -751,6 +765,103 @@ BOOST_AUTO_TEST_SUITE(test_e2e_tdf_builder_suite)
             std :: cout << "Unknown..." << std::endl;
         }
 
+    }
+
+    BOOST_AUTO_TEST_CASE(test_tdf_builder_RCA_tdf_type) {
+
+        try {
+
+            std::ostringstream authHeaderValue;
+            authHeaderValue << "Virtru [" << R"([")" << appId() << R"(",")" <<  user() << R"("])" << "]";
+            HttpHeaders headers = { {kUserAgentKey, UserAgentValuePostFix},
+                                    {kVirtruClientKey, VirtruClientKey},
+                                    {kAuthorizationKey, authHeaderValue.str()},
+                                    { "Authorization-User", user()}};
+
+            auto httpServiceProvider = std::make_shared<HTTPServiceProvider>();
+
+#if TEST_ENCRYPT_DECRYPT
+            { // Remote using tdf to encrypt stream
+
+                auto tdfBuilder = createTDFBuilder(LogLevel::Info, KeyAccessType::Remote, Protocol::Zip);
+                tdfBuilder->setHttpHeaders(headers).setHTTPServiceProvider(httpServiceProvider);
+
+                auto policyObject = PolicyObject{};
+                policyObject.addDissem(user());
+                policyObject.addDissem("sujankota@gmail.com");
+                policyObject.addDissem("dricaud@virtru.com");
+                policyObject.addDissem("ricaud512@gmail.com");
+
+                // Store the uuid for later verification.
+                auto policyUuid = policyObject.getUuid();
+
+                tdfBuilder->setPolicyObject(policyObject);
+
+                auto tdf = tdfBuilder->build();
+
+//                const size_t sizeOfData = 25 * 1024 * 1024; // 25 mb
+//                static std::vector<gsl::byte> plainData(sizeOfData);
+//                std::fill(plainData.begin(), plainData.end(), gsl::byte(0xFF));
+
+                static std::string plainData{"Hello World!"};
+                static std::vector<gsl::byte> decryptedBuffer;
+
+                { // Encrypt with I/O Providers
+                    struct CustomInputProvider : IInputProvider {
+                        void readBytes(size_t index, size_t length, WriteableBytes &bytes) override {
+                            std::memcpy(bytes.data(), plainData.data() + index, length);
+                        }
+
+                        size_t getSize() override { return plainData.size(); }
+                    };
+
+                    struct CustomOutputProvider: IOutputProvider {
+                        void writeBytes(Bytes bytes) override {
+                            decryptedBuffer.insert(decryptedBuffer.end(), bytes.begin(), bytes.end());
+                        }
+                        void flush() override { /* Do nothing */ }
+                    };
+
+
+                    CustomInputProvider inputProvider{};
+
+                    auto upsertResponse = tdf->encryptInputProviderToRCA(inputProvider);
+
+                    std::cout << "Upsert Response:" << upsertResponse << std::endl;
+                    nlohmann::json upsertResponseObj;
+                    try{
+                        upsertResponseObj = nlohmann::json::parse(upsertResponse);
+                    } catch (...){
+                        if (upsertResponseObj == ""){
+                            ThrowException("No rewrap response from KAS", VIRTRU_NETWORK_ERROR);
+                        }
+                        else{
+                            ThrowException("Could not parse KAS rewrap response: " + boost::current_exception_diagnostic_information() + "  with response: ", VIRTRU_NETWORK_ERROR);
+                        }
+                    }
+
+                    CustomOutputProvider outputProvider{};
+                    std::string downloadUrl = upsertResponseObj["downloadUrl"];
+                    std::string kek = upsertResponseObj["kek"];
+                    tdf->decryptRCAToOutputProvider(downloadUrl, kek, outputProvider);
+
+                    std::string decryptedMessage(reinterpret_cast<const char *>(&decryptedBuffer[0]), decryptedBuffer.size());
+                    BOOST_TEST(plainData == decryptedMessage);
+
+                    std::cout << "Dectypyed data:" << decryptedBuffer.size() << std::endl;
+                }
+            }
+#endif
+
+        }  catch ( const Exception& exception) {
+            BOOST_FAIL(exception.what());
+        }  catch ( const std::exception& exception) {
+            BOOST_FAIL(exception.what());
+            std :: cout << exception.what() << std::endl;
+        } catch ( ... ) {
+            BOOST_FAIL("Unknown exception...");
+            std :: cout << "Unknown..." << std::endl;
+        }
     }
 
     BOOST_AUTO_TEST_CASE(test_tdf_builder_stream_tdf_type) {

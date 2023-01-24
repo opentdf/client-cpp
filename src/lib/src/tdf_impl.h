@@ -46,9 +46,23 @@ namespace virtru {
         /// Encrypt data from InputProvider and write to IOutputProvider
         /// \param inputProvider - Input provider interface for reading data
         /// \param outputProvider - Out provider interface for writing data
+        /// \return Return the response from backend if the SDK communicates for encrypt.
         /// NOTE: virtru::exception will be thrown if there are issues while performing the encryption process.
-        void encryptIOProvider(IInputProvider& inputProvider,
-                               IOutputProvider& outputProvider);
+        std::string encryptIOProvider(IInputProvider& inputProvider,
+                                      IOutputProvider& outputProvider);
+
+        /// Encrypt data from InputProvider and write to RCA OutputProvider
+        /// \param inputProvider - Input provider interface for reading data
+        /// \return Return the response from backend if the SDK communicates for encrypt.
+        std::string encryptInputProviderToRCA(IInputProvider& inputProvider);
+
+        /// Decrypt RCA to OutputProvider
+        /// \param downloadURL - The url to download remote tdf
+        /// \param kek - kek key
+        /// \param outputProvider - - Out provider interface for writing data
+        void decryptRCAToOutputProvider(const std::string& downloadURL,
+                                        const std::string& kek,
+                                        IOutputProvider& outputProvider);
 
         /// Decrypt data from InputProvider and write to IOutputProvider
         /// \param inputProvider - Input provider interface for reading data
@@ -102,9 +116,9 @@ namespace virtru {
         /// Encrypt data from InputProvider and write to IOutputProvider
         /// \param inputProvider - Input provider interface for reading data
         /// \param writer - The writer to which tdf data will write to
-        /// \return Return manifest
+        /// \return Return the manifest and the response from backend if the SDK communicates for encrypt.
         /// NOTE: virtru::exception will be thrown if there are issues while performing the encryption process.
-        std::string encryptIOProviderImpl(IInputProvider& inputProvider, ITDFWriter& writer);
+        std::pair<std::string, std::string> encryptIOProviderImpl(IInputProvider& inputProvider, ITDFWriter& writer);
 
         /// Decrypt data from reader and write to IOutputProvider
         /// \param reader - TDF reader from which tdf data can be read
@@ -148,8 +162,9 @@ namespace virtru {
         /// \param manifest - The manifest of the tdf.
         /// \param ignoreKeyAccessType - If true skips the key access type before
         /// syncing.
+        /// \return Return the response from the KAS
         // ignoreType if true skips the key access type check when syncing
-        void upsert(nlohmann::json& manifest, bool ignoreKeyAccessType = false) const ;
+        std::string upsert(nlohmann::json& manifest, bool ignoreKeyAccessType = false) const ;
 
         /// Unwrap the key from the manifest.
         /// \param manifest - Manifest of the encrypted tdf
@@ -160,6 +175,11 @@ namespace virtru {
         /// \param unwrapResponse - The response string from '/rewrap'
         /// \return - Wrapped key.
         WrappedKey getWrappedKey(const std::string& unwrapResponse) const;
+
+        /// Generate a KeK for RCA. Kek -> policyKey(payloadKey)
+        /// \param policyKey - Policy Key used
+        /// \return
+        std::string generateKeK(Bytes policyKey, Bytes payloadKey) const;
 
         /// Generate a html tdf type file.
         /// \param manifest - Manifest of the tdf file.

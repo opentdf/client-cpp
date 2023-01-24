@@ -309,6 +309,7 @@ namespace virtru {
     void TDFArchiveWriter::finish() {
         writeCentralDirectory();
         writeEndOfCentralDirectory();
+        m_outputProvider->flush();
     }
 
 }

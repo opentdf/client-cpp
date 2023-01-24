@@ -80,6 +80,11 @@ namespace virtru {
         /// Get value of clientValue
         /// \return std::string - A string describing SDK client with version
         static std::string getClientValue();
+
+        /// Parse the headers from the string
+        /// \param headers - The string with headers
+        /// \return Map with HTTP headers values
+        static std::map<std::string, std::string> parseHeaders(const std::string& headers);
     };
 } // namespace virtru
 

@@ -82,6 +82,8 @@ set (TDF_CPP_SDK_SOURCE_FILES_BASE
         ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_xml_reader.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/file_io_provider.cpp
         ${TDF_CPP_SDK_SOURCE_DIR}/src/s3_io_provider.cpp
+        ${TDF_CPP_SDK_SOURCE_DIR}/src/rca_io_provider.cpp
+        ${TDF_CPP_SDK_SOURCE_DIR}/src/rca_io_provider.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/stream_io_provider.cpp
         ${TDF_CPP_SDK_SOURCE_DIR}/src/stream_io_provider.h
         ${TDF_CPP_SDK_SOURCE_DIR}/include/tdf_storage_type.h
