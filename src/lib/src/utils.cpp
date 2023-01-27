@@ -265,4 +265,20 @@ namespace virtru {
         return httpHeaders;
     }
 
+    std::map<std::string, std::string> Utils::parseParams(std::string query) {
+        std::map<std::string, std::string> params;
+        size_t curStart = 0;
+        do {
+            size_t delimIndex = query.find('&', curStart);
+            size_t equalIndex = query.find('=', curStart);
+            std::string newParam = query.substr(curStart, equalIndex - curStart);
+            std::string newValue = query.substr(equalIndex + 1, delimIndex - equalIndex - 1);
+
+            params[newParam] = newValue;
+            curStart = delimIndex + 1;
+        } while (curStart != 0);
+
+        return params;
+    }
+
 } // namespace virtru

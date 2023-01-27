@@ -85,6 +85,11 @@ namespace virtru {
         /// \param headers - The string with headers
         /// \return Map with HTTP headers values
         static std::map<std::string, std::string> parseHeaders(const std::string& headers);
+
+
+        ///
+
+        static std::map<std::string, std::string> parseParams(std::string query);
     };
 } // namespace virtru
 

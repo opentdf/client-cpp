@@ -293,9 +293,9 @@ namespace virtru {
         rcaLink << "&wu=";
         rcaLink << Utils::urlEncode(downloadUrl);
         rcaLink << "&wk=";
-        std::string kekStr = base64KeK;
-        rcaLink << kekStr;
+        rcaLink << Utils::urlEncode(base64KeK);
         rcaLink << "&al=AES-256-GCM";
+
 
         std::cout << "RCA link:" << rcaLink.str() << std::endl;
 
