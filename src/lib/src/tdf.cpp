@@ -48,10 +48,10 @@ namespace virtru {
     }
 
     /// Encrypt data from InputProvider and write to IOutputProvider
-    std::string TDF::encryptIOProvider(IInputProvider& inputProvider, IOutputProvider& outputProvider) {
+    void TDF::encryptIOProvider(IInputProvider& inputProvider, IOutputProvider& outputProvider) {
         LogInfo("encrypt io provider");
 
-        return m_impl->encryptIOProvider(inputProvider, outputProvider);
+        m_impl->encryptIOProvider(inputProvider, outputProvider);
     }
 
     /// Encrypt the stream data to tdf format.
@@ -63,24 +63,6 @@ namespace virtru {
         StreamOutputProvider outputProvider{outStream};
 
         m_impl->encryptIOProvider(inputProvider, outputProvider);
-    }
-
-    /// Encrypt data from InputProvider and write to RCA OutputProvider
-    std::string TDF::encryptInputProviderToRCA(IInputProvider& inputProvider) {
-
-        LogInfo("encrypt input provider to RCA...");
-
-        return m_impl->encryptInputProviderToRCA(inputProvider);
-    }
-
-    /// Decrypt RCA to OutputProvider
-    void TDF::decryptRCAToOutputProvider(const std::string& downloadURL,
-                                         const std::string& kek,
-                                         IOutputProvider& outputProvider) {
-        LogInfo("decrypt RCA to output provider...");
-
-        m_impl->decryptRCAToOutputProvider(downloadURL, kek, outputProvider);
-
     }
 
     void TDF::decryptIOProvider(IInputProvider& inputProvider, IOutputProvider& outputProvider) {

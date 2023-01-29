@@ -46,23 +46,9 @@ namespace virtru {
         /// Encrypt data from InputProvider and write to IOutputProvider
         /// \param inputProvider - Input provider interface for reading data
         /// \param outputProvider - Out provider interface for writing data
-        /// \return Return the response from backend if the SDK communicates for encrypt.
         /// NOTE: virtru::exception will be thrown if there are issues while performing the encryption process.
-        std::string encryptIOProvider(IInputProvider& inputProvider,
-                                      IOutputProvider& outputProvider);
-
-        /// Encrypt data from InputProvider and write to RCA OutputProvider
-        /// \param inputProvider - Input provider interface for reading data
-        /// \return Return the response from backend if the SDK communicates for encrypt.
-        std::string encryptInputProviderToRCA(IInputProvider& inputProvider);
-
-        /// Decrypt RCA to OutputProvider
-        /// \param downloadURL - The url to download remote tdf
-        /// \param kek - kek key
-        /// \param outputProvider - - Out provider interface for writing data
-        void decryptRCAToOutputProvider(const std::string& downloadURL,
-                                        const std::string& kek,
-                                        IOutputProvider& outputProvider);
+        void encryptIOProvider(IInputProvider& inputProvider,
+                               IOutputProvider& outputProvider);
 
         /// Decrypt data from InputProvider and write to IOutputProvider
         /// \param inputProvider - Input provider interface for reading data
@@ -116,9 +102,9 @@ namespace virtru {
         /// Encrypt data from InputProvider and write to IOutputProvider
         /// \param inputProvider - Input provider interface for reading data
         /// \param writer - The writer to which tdf data will write to
-        /// \return Return the manifest and the response from backend if the SDK communicates for encrypt.
+        /// \return Return manifest
         /// NOTE: virtru::exception will be thrown if there are issues while performing the encryption process.
-        std::pair<std::string, std::string> encryptIOProviderImpl(IInputProvider& inputProvider, ITDFWriter& writer);
+        std::string encryptIOProviderImpl(IInputProvider& inputProvider, ITDFWriter& writer);
 
         /// Decrypt data from reader and write to IOutputProvider
         /// \param reader - TDF reader from which tdf data can be read
@@ -132,7 +118,7 @@ namespace virtru {
         /// \param alg - Integrity algorithm to be used for performing signature.
         /// \return string - Result of the signature calculation.
         std::string getSignature(Bytes payload, SplitKey& splitkey, IntegrityAlgorithm alg) const ;
-        
+
         /// Generate a signature of the payload base on integrity algorithm.
         /// \param payload - A payload data
         /// \param splitkey - SplitKey object holding the wrapped key.
@@ -162,9 +148,8 @@ namespace virtru {
         /// \param manifest - The manifest of the tdf.
         /// \param ignoreKeyAccessType - If true skips the key access type before
         /// syncing.
-        /// \return Return the response from the KAS
         // ignoreType if true skips the key access type check when syncing
-        std::string upsert(nlohmann::json& manifest, bool ignoreKeyAccessType = false) const ;
+        void upsert(nlohmann::json& manifest, bool ignoreKeyAccessType = false) const ;
 
         /// Unwrap the key from the manifest.
         /// \param manifest - Manifest of the encrypted tdf
@@ -175,11 +160,6 @@ namespace virtru {
         /// \param unwrapResponse - The response string from '/rewrap'
         /// \return - Wrapped key.
         WrappedKey getWrappedKey(const std::string& unwrapResponse) const;
-
-        /// Generate a KeK for RCA. Kek -> policyKey(payloadKey)
-        /// \param policyKey - Policy Key used
-        /// \return
-        std::string generateKeK(Bytes policyKey, Bytes payloadKey) const;
 
         /// Generate a html tdf type file.
         /// \param manifest - Manifest of the tdf file.
@@ -194,7 +174,7 @@ namespace virtru {
         /// \param manifestData - If true return manifest data otherwise return tdf zip data.
         /// \return - TDF zip data.
         static std::vector<std::uint8_t> getTDFZipData(const std::string& htmlTDFFilepath,
-                                                bool manifestData = false);
+                                                       bool manifestData = false);
 
         /// Return tdf zip data by parsing html tdf file.
         /// \param bytes - The payload of the html.

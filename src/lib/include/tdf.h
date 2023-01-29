@@ -40,9 +40,8 @@ namespace virtru {
         /// Encrypt data from InputProvider and write to IOutputProvider
         /// \param inputProvider - Input provider interface for reading data
         /// \param outputProvider - Out provider interface for writing data
-        /// \return Return the response from backend if the SDK communicates for encrypt.
         /// NOTE: virtru::exception will be thrown if there are issues while performing the decryption process.
-        std::string encryptIOProvider(IInputProvider& inputProvider, IOutputProvider& outputProvider);
+        void encryptIOProvider(IInputProvider& inputProvider, IOutputProvider& outputProvider);
 
 #ifndef SWIG
         /// Encrypt the stream data to tdf format.
@@ -50,23 +49,6 @@ namespace virtru {
         /// \param outStream - The stream containing the encrypted data.
         void encryptStream(std::istream& inStream, std::ostream& outStream);
 #endif
-
-        /// Encrypt data from InputProvider and write to RCA OutputProvider
-        /// \param inputProvider - Input provider interface for reading data
-        /// \return Return the response from backend if the SDK communicates for encrypt.
-        std::string encryptInputProviderToRCA(IInputProvider& inputProvider);
-
-        /// Decrypt RCA to OutputProvider
-        /// \param inputProvider - Input provider interface for reading data
-        /// \return Return the response from backend if the SDK communicates for encrypt.
-
-        /// Decrypt RCA to OutputProvider
-        /// \param downloadURL - The url to download remote tdf
-        /// \param kek - kek key
-        /// \param outputProvider - - Out provider interface for writing data
-        void decryptRCAToOutputProvider(const std::string& downloadURL,
-                                        const std::string& kek,
-                                        IOutputProvider& outputProvider);
 
         /// Decrypt file.
         /// \param inFilepath - The file on which the decryption is performed.

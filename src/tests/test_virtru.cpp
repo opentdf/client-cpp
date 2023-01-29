@@ -27,6 +27,8 @@
 #include "rca_io_provider.h"
 #include "utils.h"
 #include "file_io_provider.h"
+#include "crypto/crypto_utils.h"
+#include "crypto/gcm_encryption.h"
 
 #include "nlohmann/json.hpp"
 #include <memory>
@@ -120,6 +122,46 @@ std::string getCurrentWorkingDir() {
     GetCurrentDir( buff, FILENAME_MAX );
     std::string current_working_dir(buff);
     return current_working_dir;
+}
+
+/// Generate a KeK for RCA. Kek -> policyKey(payloadKey)
+std::string generateKeK(Bytes policyKey, Bytes payloadKey) {
+
+    ByteArray<kGcmIvSize> iv = symmetricKey<kGcmIvSize>();
+    auto encryptBufferSize = iv.size() + payloadKey.size() +  kAesBlockSize;
+    long finalSize =  encryptBufferSize;
+
+    ByteArray<kAesBlockSize> tag;
+    std::vector<gsl::byte> encryptedData(encryptBufferSize);
+    auto writeableBytes = WriteableBytes{encryptedData};
+    const auto bufferSpan = writeableBytes;
+
+    auto encryptedDataSize = 0;
+    const auto final = finalizeSize(writeableBytes, encryptedDataSize);
+
+    // Adjust the span to add the IV vector at the start of the buffer
+    auto encryptBufferSpan = bufferSpan.subspan(kGcmIvSize);
+
+    auto encoder = GCMEncryption::create(policyKey, iv);
+    encoder->encrypt(payloadKey, encryptBufferSpan);
+    auto authTag = WriteableBytes{tag};
+    encoder->finish(authTag);
+
+    // Copy IV at start
+    std::copy(iv.begin(), iv.end(), encryptedData.begin());
+
+    // Copy tag at end
+    std::copy(tag.begin(), tag.end(), encryptedData.begin() + kGcmIvSize + payloadKey.size());
+
+    // Final size.
+    encryptedDataSize = finalSize;
+
+    auto kek =  base64Encode(toBytes(encryptedData));
+
+    auto encryptedKek = base64Decode(toBytes(kek));
+    std::cout<< "Size of decoded base64:" << encryptedKek.size() << std::endl;
+
+    return kek;
 }
 
 // EntityObject getEntityObject(const std::string& publicKey);
@@ -791,6 +833,24 @@ BOOST_AUTO_TEST_SUITE(test_e2e_tdf_builder_suite)
                 auto tdfBuilder = createTDFBuilder(LogLevel::Info, KeyAccessType::Remote, Protocol::Zip);
                 tdfBuilder->setHttpHeaders(headers).setHTTPServiceProvider(httpServiceProvider);
 
+                // Payload Key
+                WrappedKey payloadKey = symmetricKey<kKeyLength>();
+                {
+
+                    std::vector<std::uint8_t> keyBuffer(kKeyLength);
+                    std::memcpy(keyBuffer.data(), payloadKey.data(), kKeyLength);
+                    tdfBuilder->overridePayloadKey(keyBuffer);
+                }
+
+                // Policy Key
+                WrappedKey policyKey = symmetricKey<kKeyLength>();
+                {
+
+                    std::vector<std::uint8_t> keyBuffer(kKeyLength);
+                    std::memcpy(keyBuffer.data(), policyKey.data(), kKeyLength);
+                    tdfBuilder->setPolicyKey(keyBuffer);
+                }
+
                 auto policyObject = PolicyObject{};
                 policyObject.addDissem(user());
                 policyObject.addDissem("sujankota@gmail.com");
@@ -830,92 +890,36 @@ BOOST_AUTO_TEST_SUITE(test_e2e_tdf_builder_suite)
 
 
                     CustomInputProvider inputProvider{};
+                    RCAOutputProvider rcaOutputProvider("https://api.develop.virtru.com/rca", headers);
 
-                    auto upsertResponse = tdf->encryptInputProviderToRCA(inputProvider);
+                    tdf->encryptIOProvider(inputProvider, rcaOutputProvider);
 
-                    std::cout << "Upsert Response:" << upsertResponse << std::endl;
-                    nlohmann::json upsertResponseObj;
-                    try{
-                        upsertResponseObj = nlohmann::json::parse(upsertResponse);
-                    } catch (...){
-                        if (upsertResponseObj == ""){
-                            ThrowException("No rewrap response from KAS", VIRTRU_NETWORK_ERROR);
-                        }
-                        else{
-                            ThrowException("Could not parse KAS rewrap response: " + boost::current_exception_diagnostic_information() + "  with response: ", VIRTRU_NETWORK_ERROR);
-                        }
-                    }
+                    std::string kek = generateKeK(policyKey, payloadKey);
+                    std::cout << "The rca file name is:" << rcaOutputProvider.remoteFileName() << std::endl;
 
-                    CustomOutputProvider outputProvider{};
-                    std::string downloadUrl = upsertResponseObj["downloadUrl"];
-                    std::string kek = upsertResponseObj["kek"];
+                    std::string contractUrl = "https://api-develop01.develop.virtru.com/acm/api/policies/";
+                    contractUrl += policyUuid;
+                    contractUrl += "/contract";
 
-                    /*
-                     *         std::ostringstream rcaLink;
+                    // Construct downloadUrl
+                    std::string downloadUrl = "https://api-develop01.develop.virtru.com/encrypted-storage/";
+                    downloadUrl += rcaOutputProvider.remoteFileName();
 
-        rcaLink << "https://secure.develop.virtru.com/start/#v=4.0.0";
-        rcaLink << "&pu=";
-        rcaLink << Utils::urlEncode(contractUrl);
-        rcaLink << "&wu=";
-        rcaLink << Utils::urlEncode(downloadUrl);
-        rcaLink << "&wk=";
-        rcaLink << base64KeK;
-        rcaLink << "&al=AES-256-GCM";
-                     */
+                    std::ostringstream rcaLink;
+                    rcaLink << "https://secure.develop.virtru.com/start/#v=4.0.0";
+                    rcaLink << "&pu=";
+                    rcaLink << Utils::urlEncode(contractUrl);
+                    rcaLink << "&wu=";
+                    rcaLink << Utils::urlEncode(downloadUrl);
+                    rcaLink << "&wk=";
+                    rcaLink << Utils::urlEncode(kek);
+                    rcaLink << "&al=AES-256-G";
 
-//                    {
-//
-//                        // Construct contract url
-//                        std::string uuidStr = "123-45-555-555";
-//                        std::string contractUrl = "https://api-develop01.develop.virtru.com/acm/api/policies/";
-//                        contractUrl += uuidStr;
-//                        contractUrl += "/contract";
-//
-//                        // Construct downloadUrl
-//                        std::string downloadUrl = "https://api-develop01.develop.virtru.com/encrypted-storage/";
-//                        downloadUrl += "123-45-555-555.tdf";
-//                        std::cout << "Download URL is:" << downloadUrl << std::endl;
-//
-//                        url_view uv( "https://secure.develop.virtru.com/start" );
-//                        url u = uv;
-//                        u.set_fragment("#v=4.0.0");
-//                        u.params().append( {"pu", contractUrl});
-//
-//                        std::cout << u;
-//                    }
+                    auto rcaLinkStr = rcaLink.str();
+                    std::cout << "RCA link is:" << rcaLinkStr << std::endl;
 
-
-
-
-
-
-
-                    tdf->decryptRCAToOutputProvider(downloadUrl, kek, outputProvider);
-
-                    //std::string decryptedMessage(reinterpret_cast<const char *>(&decryptedBuffer[0]), decryptedBuffer.size());
-                    //BOOST_TEST(plainData == decryptedMessage);
-                    std::cout << "Dectypyed data:" << decryptedBuffer.size() << std::endl;
-
-
-                    std::string rcaLinkFromJS = "https://secure-develop01.develop.virtru.com/start/#v=4.0.0&pu=https%3A%2F%2Fapi-develop01.develop.virtru.com%2Facm%2Fapi%2Fpolicies%2Fd4e34d7d-4b8d-40a7-a385-8bf5b3028002%2Fcontract&wu=https%3A%2F%2Fapi-develop01.develop.virtru.com%2Fencrypted-storage%2F12d369de-6234-48ac-b512-0d07988be5c4.tdf&wk=sRAxupDzle8ApRDtmo9cU4P9aLELtkNgwdcllIG4W7ENoHin91fzevOEawmDpdaX7jUV%2BkY9QFlKQqi8&al=AES-256-GCM";
-                    pct_string_view s = rcaLinkFromJS;
-                    std::string buf;
-                    buf.resize(s.decoded_size());
-                    s.decode({}, string_token::assign_to(buf));
-
-//                    std::regex urlRegex("(.*)&wu=(.*)&");
-
-                    result<url_view> r = parse_uri( rcaLinkFromJS );
+                    result<url_view> r = parse_uri( rcaLinkStr );
                     url_view rcaUrl = r.value();
-                    //rcaUrl
-//
-
-
-
-//
-//                    url_view rcaUrl( rcaLinkFromJS );
-//                    rcaUrl.re
-//                    rcaLinkFromJS
 
                     std::cout << "The decoded URL is:" <<rcaUrl.fragment() << std::endl;
                     std::string fragment = rcaUrl.fragment();
@@ -923,15 +927,24 @@ BOOST_AUTO_TEST_SUITE(test_e2e_tdf_builder_suite)
                     for (const auto &[k, v] : parmas)
                         std::cout << k << ": " << v << "\n";
 
-
-
                     fragment.erase (std::remove(fragment.begin(), fragment.end(), '&'), fragment.end());
                     std::cout << "The decoded URL is:" <<fragment << std::endl;
 
                     decryptedBuffer.clear();
-                    tdf->decryptRCAToOutputProvider(parmas["wu"], parmas["wk"], outputProvider);
+
+                    RCAInputProvider rcaInputProvider(parmas["wu"]);
+                    CustomOutputProvider outputProvider{};
+
+                    {
+                        auto tdfBuilder = createTDFBuilder(LogLevel::Info, KeyAccessType::Remote, Protocol::Zip);
+                        tdfBuilder->setHttpHeaders(headers).setHTTPServiceProvider(httpServiceProvider);
+                        tdfBuilder->setKeyEncryptedKey(parmas["wk"]);
+                        auto tdf = tdfBuilder->build();
+                        tdf->decryptIOProvider(rcaInputProvider, outputProvider);
+                    }
+
                     std::string decryptedMessage(reinterpret_cast<const char *>(&decryptedBuffer[0]), decryptedBuffer.size());
-                    //BOOST_TEST(plainData == decryptedMessage);
+                    BOOST_TEST(plainData == decryptedMessage);
                     std::cout << "Dectypyed data:" << decryptedMessage << std::endl;
                 }
             }
@@ -990,6 +1003,24 @@ BOOST_AUTO_TEST_SUITE(test_e2e_tdf_builder_suite)
                 auto tdfBuilder = createTDFBuilder(LogLevel::Info, KeyAccessType::Remote, Protocol::Zip);
                 tdfBuilder->setHttpHeaders(headers).setHTTPServiceProvider(httpServiceProvider);
 
+                // Payload Key
+                WrappedKey payloadKey = symmetricKey<kKeyLength>();
+                {
+
+                    std::vector<std::uint8_t> keyBuffer(kKeyLength);
+                    std::memcpy(keyBuffer.data(), payloadKey.data(), kKeyLength);
+                    tdfBuilder->overridePayloadKey(keyBuffer);
+                }
+
+                // Policy Key
+                WrappedKey policyKey = symmetricKey<kKeyLength>();
+                {
+
+                    std::vector<std::uint8_t> keyBuffer(kKeyLength);
+                    std::memcpy(keyBuffer.data(), policyKey.data(), kKeyLength);
+                    tdfBuilder->setPolicyKey(keyBuffer);
+                }
+
                 auto policyObject = PolicyObject{};
                 policyObject.addDissem(user());
                 policyObject.addDissem("sujankota@gmail.com");
@@ -1005,27 +1036,79 @@ BOOST_AUTO_TEST_SUITE(test_e2e_tdf_builder_suite)
 
                 { // Encrypt with I/O Providers
 
+//                    RCAOutputProvider rcaOutputProvider("https://api.develop.virtru.com/rca", headers);
+//
+//                    tdf->encryptIOProvider(fileInputProvider, rcaOutputProvider);
+
+//                    std::cout << "Upsert Response:" << upsertResponse << std::endl;
+//                    nlohmann::json upsertResponseObj;
+//                    try{
+//                        upsertResponseObj = nlohmann::json::parse(upsertResponse);
+//                    } catch (...){
+//                        if (upsertResponseObj == ""){
+//                            ThrowException("No rewrap response from KAS", VIRTRU_NETWORK_ERROR);
+//                        }
+//                        else{
+//                            ThrowException("Could not parse KAS rewrap response: " + boost::current_exception_diagnostic_information() + "  with response: ", VIRTRU_NETWORK_ERROR);
+//                        }
+//                    }
+//
+//                    FileOutputProvider fileOutputProvider{outPathDecrypt};
+//                    std::string downloadUrl = upsertResponseObj["downloadUrl"];
+//                    std::string kek = upsertResponseObj["kek"];
+//                    //tdf->decryptRCAToOutputProvider(downloadUrl, kek, fileOutputProvider);
+
                     FileInputProvider fileInputProvider{inPathEncrypt};
+                    RCAOutputProvider rcaOutputProvider("https://api.develop.virtru.com/rca", headers);
 
-                    auto upsertResponse = tdf->encryptInputProviderToRCA(fileInputProvider);
+                    tdf->encryptIOProvider(fileInputProvider, rcaOutputProvider);
 
-                    std::cout << "Upsert Response:" << upsertResponse << std::endl;
-                    nlohmann::json upsertResponseObj;
-                    try{
-                        upsertResponseObj = nlohmann::json::parse(upsertResponse);
-                    } catch (...){
-                        if (upsertResponseObj == ""){
-                            ThrowException("No rewrap response from KAS", VIRTRU_NETWORK_ERROR);
-                        }
-                        else{
-                            ThrowException("Could not parse KAS rewrap response: " + boost::current_exception_diagnostic_information() + "  with response: ", VIRTRU_NETWORK_ERROR);
-                        }
-                    }
+                    std::string kek = generateKeK(policyKey, payloadKey);
+                    std::cout << "The rca file name is:" << rcaOutputProvider.remoteFileName() << std::endl;
+
+                    std::string contractUrl = "https://api-develop01.develop.virtru.com/acm/api/policies/";
+                    contractUrl += policyUuid;
+                    contractUrl += "/contract";
+
+                    // Construct downloadUrl
+                    std::string downloadUrl = "https://api-develop01.develop.virtru.com/encrypted-storage/";
+                    downloadUrl += rcaOutputProvider.remoteFileName();
+
+                    std::ostringstream rcaLink;
+                    rcaLink << "https://secure.develop.virtru.com/start/#v=4.0.0";
+                    rcaLink << "&pu=";
+                    rcaLink << Utils::urlEncode(contractUrl);
+                    rcaLink << "&wu=";
+                    rcaLink << Utils::urlEncode(downloadUrl);
+                    rcaLink << "&wk=";
+                    rcaLink << Utils::urlEncode(kek);
+                    rcaLink << "&al=AES-256-G";
+
+                    auto rcaLinkStr = rcaLink.str();
+                    std::cout << "RCA link is:" << rcaLinkStr << std::endl;
+
+                    result<url_view> r = parse_uri( rcaLinkStr );
+                    url_view rcaUrl = r.value();
+
+                    std::cout << "The decoded URL is:" <<rcaUrl.fragment() << std::endl;
+                    std::string fragment = rcaUrl.fragment();
+                    auto parmas = Utils::parseParams(fragment);
+                    for (const auto &[k, v] : parmas)
+                        std::cout << k << ": " << v << "\n";
+
+                    fragment.erase (std::remove(fragment.begin(), fragment.end(), '&'), fragment.end());
+                    std::cout << "The decoded URL is:" <<fragment << std::endl;
 
                     FileOutputProvider fileOutputProvider{outPathDecrypt};
-                    std::string downloadUrl = upsertResponseObj["downloadUrl"];
-                    std::string kek = upsertResponseObj["kek"];
-                    tdf->decryptRCAToOutputProvider(downloadUrl, kek, fileOutputProvider);
+                    RCAInputProvider rcaInputProvider(parmas["wu"]);
+
+                    {
+                        auto tdfBuilder = createTDFBuilder(LogLevel::Info, KeyAccessType::Remote, Protocol::Zip);
+                        tdfBuilder->setHttpHeaders(headers).setHTTPServiceProvider(httpServiceProvider);
+                        tdfBuilder->setKeyEncryptedKey(parmas["wk"]);
+                        auto tdf = tdfBuilder->build();
+                        tdf->decryptIOProvider(rcaInputProvider, fileOutputProvider);
+                    }
                 }
             }
 #endif

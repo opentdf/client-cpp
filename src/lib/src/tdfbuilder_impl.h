@@ -23,6 +23,7 @@
 #include "tdf.h"
 #include "network_interface.h"
 #include "sdk_constants.h"
+#include "crypto/crypto_utils.h"
 
 #include <boost/algorithm/string.hpp>
 #include <numeric>
@@ -115,6 +116,7 @@ namespace virtru {
         std::string m_rootCAs;
         std::string m_secureReaderUrl;
         std::string m_mimeType{kDefaultMimeType};
+        std::string m_kekBase64;
         unsigned int m_segmentSize {1024 * 1024};
         PolicyObject m_policyObject;
         std::vector<KeyAccessObject> m_keyAccessObjects;
@@ -130,7 +132,9 @@ namespace virtru {
         std::weak_ptr<INetwork> m_networkServiceProvider;
         bool m_oidcMode{false}; //TODO toggle this to true once we remove all other deprecated auth methods
         bool m_overridePayloadKey{false};
+        bool m_policyKeySet{false};
         WrappedKey m_payloadKey;
+        WrappedKey m_wrappedKey = symmetricKey<kKeyLength>();
     };
 }  // namespace virtru
 

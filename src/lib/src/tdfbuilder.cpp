@@ -14,6 +14,7 @@
 #include "attribute_objects_cache.h"
 #include "tdfbuilder_impl.h"
 #include "utils.h"
+#include "crypto/crypto_utils.h"
 
 #include <fstream>
 #include "nlohmann/json.hpp"
@@ -440,4 +441,19 @@ namespace virtru {
         std::memcpy(m_impl->m_payloadKey.data(), payloadKey.data(), payloadKey.size());
         m_impl->m_overridePayloadKey = true;
     }
+
+    /// Set policy key, this key will be used for encrypting the payload and the policy
+    void TDFBuilder::setPolicyKey(const std::vector<std::uint8_t>& policyKey) {
+        if (policyKey.size() != 32) {
+            ThrowException("Incorrect policy key size.");
+        }
+
+        std::memcpy(m_impl->m_wrappedKey.data(), policyKey.data(), policyKey.size());
+    }
+
+    /// Set Key encrypted key, which will be used on decrypting the payload
+    void TDFBuilder::setKeyEncryptedKey(const std::string& kekBase64) {
+        m_impl->m_kekBase64 = kekBase64;
+    }
+
 } // namespace virtru
