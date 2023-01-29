@@ -108,7 +108,7 @@ namespace virtru {
         /// \return - Unique ptr of the TDF3 instance.
         TDFBuilder& setHTTPServiceProvider(std::weak_ptr<INetwork> httpServiceProvider);
 
-    public:
+    protected:
         /// Optional - Meta data
 
         /// Set any meta data information than be leveraged by KAS/EAS server.
