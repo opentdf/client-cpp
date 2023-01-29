@@ -35,16 +35,6 @@ namespace virtru {
         /// Force provider to flush data to destination
         virtual void flush() = 0;
     };
-
-    class IRemoteOutputProvider {
-    public:
-        /// Write size of bytes from the provider
-        /// \param bytes - buffer containing data to be written
-        virtual void writeBytes(Bytes bytes, const std::string& url) = 0;
-
-        /// Force provider to flush data to destination
-        virtual void flush() = 0;
-    };
 }
 #endif //VIRTRU_IOPROVIDER_H
 

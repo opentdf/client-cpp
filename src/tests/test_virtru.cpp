@@ -114,7 +114,7 @@ std::string appId() {
     if (appId) {
         return appId;
     }
-    return {"dc7f7d6e-d5f1-449f-8641-6a572ab8a1dd"};
+    return {""};
 }
 
 std::string getCurrentWorkingDir() {

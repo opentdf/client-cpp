@@ -433,27 +433,33 @@ namespace virtru {
     }
 
     /// Override payload key, this key will be used for encrypting the payload instead of the SDK generating
-    void TDFBuilder::overridePayloadKey(const std::vector<std::uint8_t>& payloadKey) {
+    TDFBuilder& TDFBuilder::overridePayloadKey(const std::vector<std::uint8_t>& payloadKey) {
         if (payloadKey.size() != 32) {
             ThrowException("Incorrect payload key size.");
         }
 
         std::memcpy(m_impl->m_payloadKey.data(), payloadKey.data(), payloadKey.size());
         m_impl->m_overridePayloadKey = true;
+
+        return *this;
     }
 
     /// Set policy key, this key will be used for encrypting the payload and the policy
-    void TDFBuilder::setPolicyKey(const std::vector<std::uint8_t>& policyKey) {
+    TDFBuilder& TDFBuilder::setPolicyKey(const std::vector<std::uint8_t>& policyKey) {
         if (policyKey.size() != 32) {
             ThrowException("Incorrect policy key size.");
         }
 
         std::memcpy(m_impl->m_wrappedKey.data(), policyKey.data(), policyKey.size());
+
+        return *this;
     }
 
     /// Set Key encrypted key, which will be used on decrypting the payload
-    void TDFBuilder::setKeyEncryptedKey(const std::string& kekBase64) {
+    TDFBuilder& TDFBuilder::setKeyEncryptedKey(const std::string& kekBase64) {
         m_impl->m_kekBase64 = kekBase64;
+
+        return *this;
     }
 
 } // namespace virtru
