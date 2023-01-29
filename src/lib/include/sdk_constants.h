@@ -198,6 +198,7 @@ namespace virtru {
     static constexpr auto kKeycloakPubkeyHeader = "X-VirtruPubKey";
     static constexpr auto kContentTypeUrlFormEncode = "application/x-www-form-urlencoded";
 
+
 }  // namespace virtru
 
 #endif //VIRTRU_JSON_CONSTANTS_H
