@@ -198,16 +198,6 @@ namespace virtru {
     static constexpr auto kKeycloakPubkeyHeader = "X-VirtruPubKey";
     static constexpr auto kContentTypeUrlFormEncode = "application/x-www-form-urlencoded";
 
-    // RCA
-    static constexpr auto kRCACreate = "/create";
-    static constexpr auto kRCALinks = "/links";
-    static constexpr auto kRCAFinish = "/finish";
-    static constexpr auto kUploadId = "uploadId";
-    static constexpr auto kGeneratedKey = "generatedKey";
-    static constexpr auto kPartNumber = "partNumber";
-    static constexpr auto kRCALinkServiceKey = "key";
-    static constexpr auto kRCAEtag = "ETag";
-
 }  // namespace virtru
 
 #endif //VIRTRU_JSON_CONSTANTS_H
