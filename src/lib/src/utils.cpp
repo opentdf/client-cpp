@@ -265,6 +265,7 @@ namespace virtru {
         return httpHeaders;
     }
 
+    /// Parse the parameters from the string
     std::map<std::string, std::string> Utils::parseParams(std::string query) {
         std::map<std::string, std::string> params;
         size_t curStart = 0;
