@@ -428,8 +428,19 @@ namespace virtru {
             ThrowException("Secure reader url is missing for html protocol.");
         }
 
+        if (!m_impl->m_overrideWrappedKey) {
+            m_impl->m_wrappedKey = symmetricKey<kKeyLength>();
+        }
+
         // TODO: May be want to change to debug after production ready.
         LogInfo(m_impl->toString());
+    }
+
+    /// Reset the data keys set by the consumer of the TDFBuilder
+    void TDFBuilder::resetKeys() {
+        m_impl->m_overridePayloadKey = false;
+        m_impl->m_overrideWrappedKey = false;
+        m_impl->m_kekBase64.clear();
     }
 
     /// Override payload key, this key will be used for encrypting the payload instead of the SDK generating
@@ -451,6 +462,7 @@ namespace virtru {
         }
 
         std::memcpy(m_impl->m_wrappedKey.data(), policyKey.data(), policyKey.size());
+        m_impl->m_overrideWrappedKey = true;
 
         return *this;
     }

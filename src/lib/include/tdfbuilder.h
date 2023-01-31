@@ -244,6 +244,9 @@ namespace virtru {
         /// Validate the data set by the consumer of the TDFBuilder
         void validate();
 
+        /// Reset the data keys set by the consumer of the TDFBuilder
+        void resetKeys();
+
         /// Override payload key, this key will be used for encrypting the payload instead of the using policy key
         /// \param payloadKey - Symmetric key used to encrypt the payload, the key should be of length of 32 bytes
         /// NOTE: This API is added to support customer hosted key server use case.

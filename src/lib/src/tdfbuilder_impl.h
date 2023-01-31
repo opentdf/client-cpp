@@ -132,8 +132,8 @@ namespace virtru {
         std::weak_ptr<INetwork> m_networkServiceProvider;
         bool m_oidcMode{false}; //TODO toggle this to true once we remove all other deprecated auth methods
         bool m_overridePayloadKey{false};
-        bool m_policyKeySet{false};
         WrappedKey m_payloadKey;
+        bool m_overrideWrappedKey{false};
         WrappedKey m_wrappedKey = symmetricKey<kKeyLength>();
     };
 }  // namespace virtru
