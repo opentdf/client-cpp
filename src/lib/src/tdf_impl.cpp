@@ -32,6 +32,7 @@
 #include "tdf_html_writer.h"
 #include "stream_io_provider.h"
 #include "benchmark.h"
+#include "crypto/gcm_decryption.h"
 
 #include <memory>
 #include <stdint.h>
@@ -71,7 +72,7 @@ namespace virtru {
 
     /// Encrypt data from InputProvider and write to IOutputProvider
     void TDFImpl::encryptIOProvider(IInputProvider& inputProvider,
-                           IOutputProvider& outputProvider) {
+                                    IOutputProvider& outputProvider) {
 
         if (m_tdfBuilder.m_impl->m_protocol == Protocol::Zip) {
 
@@ -110,7 +111,6 @@ namespace virtru {
     std::string TDFImpl::encryptIOProviderImpl(IInputProvider& inputProvider, ITDFWriter& writer) {
         LogTrace("TDFImpl::encryptIOProviderImpl");
 
-
         auto dataSize = inputProvider.getSize();
 
         // Check if there is a policy object
@@ -127,6 +127,9 @@ namespace virtru {
         auto splitKey = SplitKey{m_tdfBuilder.m_impl->m_cipherType};
         if (m_tdfBuilder.m_impl->m_overridePayloadKey) {
             splitKey.setPayloadKey(m_tdfBuilder.m_impl->m_payloadKey);
+            splitKey.setWrappedKey(m_tdfBuilder.m_impl->m_wrappedKey);
+        } else {
+            splitKey.setWrappedKey(m_tdfBuilder.m_impl->m_wrappedKey);
         }
 
         auto keyAccessType = m_tdfBuilder.m_impl->m_keyAccessType;
@@ -277,7 +280,7 @@ namespace virtru {
 
     /// Decrypt data from InputProvider and write to IOutputProvider
     void TDFImpl::decryptIOProvider(IInputProvider& inputProvider,
-                           IOutputProvider& outputProvider) {
+                                    IOutputProvider& outputProvider) {
 
         auto protocol = encryptedWithProtocol(inputProvider);
         if (protocol == Protocol::Zip) {
@@ -323,6 +326,32 @@ namespace virtru {
         validateCipherType(manifest);
 
         WrappedKey wrappedKey = unwrapKey(manifest);
+
+        if (!m_tdfBuilder.m_impl->m_kekBase64.empty()) {
+            WrappedKey actualWrappedKey;
+
+            auto kekDecode = base64Decode(m_tdfBuilder.m_impl->m_kekBase64);
+            auto data = toBytes(kekDecode);
+
+            // Copy the auth tag from the data buffer.
+            ByteArray<kAesBlockSize> tag;
+            std::copy_n(data.last(kAesBlockSize).data(), kAesBlockSize, begin(tag));
+
+            // Update the input buffer size after the auth tag is copied.
+            auto inputSpan = data.first(data.size() - kAesBlockSize);
+            auto symDecoder = GCMDecryption::create(toBytes(wrappedKey), inputSpan.first(kGcmIvSize));
+
+            // Update the input buffer size after the IV is copied.
+            inputSpan = inputSpan.subspan(kGcmIvSize);
+
+            // decrypt
+            auto writeableBytes = WriteableBytes(actualWrappedKey);
+            symDecoder->decrypt(inputSpan, writeableBytes);
+            auto authTag = WriteableBytes{tag};
+            symDecoder->finish(authTag);
+
+            wrappedKey = actualWrappedKey;
+        }
 
         LogDebug("Obtained the wrappedKey from manifest.");
 
@@ -564,7 +593,7 @@ namespace virtru {
             return false;
         }
     }
-  
+
 
     /// Decrypt and return TDF metadata as a string. If the TDF content has
     /// no encrypted metadata, will return an empty string.
@@ -712,19 +741,19 @@ namespace virtru {
         constexpr auto kGmacPayloadLength = 16;
 
         switch (alg) {
-        case IntegrityAlgorithm::HS256:
+            case IntegrityAlgorithm::HS256:
 
-            return hexHmacSha256(payload, splitkey.getWrappedKey());
+                return hexHmacSha256(payload, splitkey.getPayloadKey());
 
-        case IntegrityAlgorithm::GMAC:
-            if (kGmacPayloadLength > payload.size()) {
-                ThrowException("Failed to create GMAC signature, invalid payload size.", VIRTRU_CRYPTO_ERROR);
-            }
+            case IntegrityAlgorithm::GMAC:
+                if (kGmacPayloadLength > payload.size()) {
+                    ThrowException("Failed to create GMAC signature, invalid payload size.", VIRTRU_CRYPTO_ERROR);
+                }
 
-            return hex(payload.last(kGmacPayloadLength));
-        default:
-            ThrowException("Unknown algorithm, can't calculate signature.", VIRTRU_CRYPTO_ERROR);
-            break;
+                return hex(payload.last(kGmacPayloadLength));
+            default:
+                ThrowException("Unknown algorithm, can't calculate signature.", VIRTRU_CRYPTO_ERROR);
+                break;
         }
         return std::string{};
     }
@@ -761,7 +790,7 @@ namespace virtru {
         std::string signedToken;
 
         signedToken = builder.sign(jwt::algorithm::rs256(m_tdfBuilder.m_impl->m_requestSignerPublicKey,
-                                                             m_tdfBuilder.m_impl->m_requestSignerPrivateKey));
+                                                         m_tdfBuilder.m_impl->m_requestSignerPrivateKey));
 
         signedTokenRequestBody[kSignedRequestToken] = signedToken;
         auto signedTokenRequestBodyStr = to_string(signedTokenRequestBody);
@@ -776,11 +805,11 @@ namespace virtru {
         // Generate a token which expires in a min.
         auto now = std::chrono::system_clock::now();
         auto authToken = jwt::create()
-                             .set_type(kAuthTokenType)
-                             .set_issued_at(now)
-                             .set_expires_at(now + std::chrono::seconds{60})
-                             .sign(jwt::algorithm::rs256(m_tdfBuilder.m_impl->m_publicKey,
-                                                         m_tdfBuilder.m_impl->m_privateKey));
+                .set_type(kAuthTokenType)
+                .set_issued_at(now)
+                .set_expires_at(now + std::chrono::seconds{60})
+                .sign(jwt::algorithm::rs256(m_tdfBuilder.m_impl->m_publicKey,
+                                            m_tdfBuilder.m_impl->m_privateKey));
 
         requestBody[kAuthToken] = authToken;
 
@@ -906,11 +935,11 @@ namespace virtru {
         // Generate a token which expires in a min.
         auto now = std::chrono::system_clock::now();
         auto authToken = jwt::create()
-                             .set_type(kAuthTokenType)
-                             .set_issued_at(now)
-                             .set_expires_at(now + std::chrono::seconds{60})
-                             .sign(jwt::algorithm::rs256(m_tdfBuilder.m_impl->m_publicKey,
-                                                         m_tdfBuilder.m_impl->m_privateKey));
+                .set_type(kAuthTokenType)
+                .set_issued_at(now)
+                .set_expires_at(now + std::chrono::seconds{60})
+                .sign(jwt::algorithm::rs256(m_tdfBuilder.m_impl->m_publicKey,
+                                            m_tdfBuilder.m_impl->m_privateKey));
 
         // Add entity object
         auto entityJson = nlohmann::json::parse(m_tdfBuilder.m_impl->m_entityObject.toJsonString());
@@ -974,12 +1003,12 @@ namespace virtru {
         }
 
         sp->executePost(rewrapUrl, headers, std::move(requestBodyStr),
-                            [&rewrapPromise, &rewrapResponse, &status](unsigned int statusCode, std::string &&response) {
-            status = statusCode;
-            rewrapResponse = response.data();
+                        [&rewrapPromise, &rewrapResponse, &status](unsigned int statusCode, std::string &&response) {
+                            status = statusCode;
+                            rewrapResponse = response.data();
 
-            rewrapPromise.set_value();
-        });
+                            rewrapPromise.set_value();
+                        });
 
         rewrapFuture.get();
 
@@ -1026,14 +1055,14 @@ namespace virtru {
 
     /// Return tdf zip data by parsing html tdf file.
     std::vector<std::uint8_t> TDFImpl::getTDFZipData(const std::string &htmlTDFFilepath,
-                                                      bool manifestData) {
+                                                     bool manifestData) {
         LogTrace("TDFImpl::getTDFZipData file");
 
         /// Protocol is .html
         XMLDocFreePtr xmlDoc{htmlReadFile(htmlTDFFilepath.data(), nullptr,
                                           HTML_PARSE_RECOVER | HTML_PARSE_NOWARNING |
-                                              HTML_PARSE_NOERROR | HTML_PARSE_NODEFDTD |
-                                              HTML_PARSE_NONET | HTML_PARSE_NOIMPLIED)};
+                                          HTML_PARSE_NOERROR | HTML_PARSE_NODEFDTD |
+                                          HTML_PARSE_NONET | HTML_PARSE_NOIMPLIED)};
 
         if (!xmlDoc) {
             std::string errorMsg{"Failed to parse file - "};
@@ -1052,8 +1081,8 @@ namespace virtru {
         XMLDocFreePtr xmlDoc{htmlReadMemory(reinterpret_cast<const char *>(bytes.data()), bytes.size(),
                                             nullptr, nullptr,
                                             HTML_PARSE_RECOVER | HTML_PARSE_NOWARNING |
-                                                HTML_PARSE_NOERROR | HTML_PARSE_NODEFDTD |
-                                                HTML_PARSE_NONET | HTML_PARSE_NOIMPLIED)};
+                                            HTML_PARSE_NOERROR | HTML_PARSE_NODEFDTD |
+                                            HTML_PARSE_NONET | HTML_PARSE_NOIMPLIED)};
 
         if (!xmlDoc) {
             ThrowException("Failed to parse file html payload", VIRTRU_TDF_FORMAT_ERROR);

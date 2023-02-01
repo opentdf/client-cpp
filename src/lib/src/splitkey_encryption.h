@@ -61,7 +61,7 @@ namespace virtru {
 
         /// Return the wrapped key used by split key encryption
         /// \return - The wrapped key.
-        WrappedKey& getWrappedKey() {
+        WrappedKey& getPayloadKey() {
             if (m_payloadKeyOverride) {
                 return m_payloadKey;
             }
@@ -76,6 +76,9 @@ namespace virtru {
         /// \param key - The payload key.
         void setPayloadKey(const WrappedKey& key);
 
+        /// Return the policy key used by split key encryption
+        /// \return - The policy key.
+        WrappedKey getPolicyKey() { return m_key;}
 
     private:
         /// Encrypt the data using the cipher.

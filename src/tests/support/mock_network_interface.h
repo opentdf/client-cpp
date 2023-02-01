@@ -15,6 +15,7 @@
 #include "map"
 #include "tuple"
 #include <functional>
+#include <vector>
 #include <memory>
 #include <string>
 #include <unordered_map>

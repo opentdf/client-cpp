@@ -118,7 +118,7 @@ namespace virtru {
         /// \param alg - Integrity algorithm to be used for performing signature.
         /// \return string - Result of the signature calculation.
         std::string getSignature(Bytes payload, SplitKey& splitkey, IntegrityAlgorithm alg) const ;
-        
+
         /// Generate a signature of the payload base on integrity algorithm.
         /// \param payload - A payload data
         /// \param splitkey - SplitKey object holding the wrapped key.
@@ -174,7 +174,7 @@ namespace virtru {
         /// \param manifestData - If true return manifest data otherwise return tdf zip data.
         /// \return - TDF zip data.
         static std::vector<std::uint8_t> getTDFZipData(const std::string& htmlTDFFilepath,
-                                                bool manifestData = false);
+                                                       bool manifestData = false);
 
         /// Return tdf zip data by parsing html tdf file.
         /// \param bytes - The payload of the html.

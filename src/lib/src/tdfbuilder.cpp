@@ -14,6 +14,7 @@
 #include "attribute_objects_cache.h"
 #include "tdfbuilder_impl.h"
 #include "utils.h"
+#include "crypto/crypto_utils.h"
 
 #include <fstream>
 #include "nlohmann/json.hpp"
@@ -427,17 +428,50 @@ namespace virtru {
             ThrowException("Secure reader url is missing for html protocol.");
         }
 
+        if (!m_impl->m_overrideWrappedKey) {
+            m_impl->m_wrappedKey = symmetricKey<kKeyLength>();
+        }
+
         // TODO: May be want to change to debug after production ready.
         LogInfo(m_impl->toString());
     }
 
+    /// Reset the data keys set by the consumer of the TDFBuilder
+    void TDFBuilder::resetKeys() {
+        m_impl->m_overridePayloadKey = false;
+        m_impl->m_overrideWrappedKey = false;
+        m_impl->m_kekBase64.clear();
+    }
+
     /// Override payload key, this key will be used for encrypting the payload instead of the SDK generating
-    void TDFBuilder::overridePayloadKey(const std::vector<std::uint8_t>& payloadKey) {
+    TDFBuilder& TDFBuilder::overridePayloadKey(const std::vector<std::uint8_t>& payloadKey) {
         if (payloadKey.size() != 32) {
             ThrowException("Incorrect payload key size.");
         }
 
         std::memcpy(m_impl->m_payloadKey.data(), payloadKey.data(), payloadKey.size());
         m_impl->m_overridePayloadKey = true;
+
+        return *this;
     }
+
+    /// Set policy key, this key will be used for encrypting the payload and the policy
+    TDFBuilder& TDFBuilder::setPolicyKey(const std::vector<std::uint8_t>& policyKey) {
+        if (policyKey.size() != 32) {
+            ThrowException("Incorrect policy key size.");
+        }
+
+        std::memcpy(m_impl->m_wrappedKey.data(), policyKey.data(), policyKey.size());
+        m_impl->m_overrideWrappedKey = true;
+
+        return *this;
+    }
+
+    /// Set Key encrypted key, which will be used on decrypting the payload
+    TDFBuilder& TDFBuilder::setKeyEncryptedKey(const std::string& kekBase64) {
+        m_impl->m_kekBase64 = kekBase64;
+
+        return *this;
+    }
+
 } // namespace virtru

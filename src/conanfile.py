@@ -20,7 +20,7 @@ class TDFLibConan(ConanFile):
         
     def requirements(self):
         self.requires("openssl/1.1.1q")
-        self.requires("boost/1.79.0")
+        self.requires("boost/1.81.0")
         self.requires("ms-gsl/2.1.0")
         self.requires("libxml2/2.9.10")
         self.requires("nlohmann_json/3.11.1")

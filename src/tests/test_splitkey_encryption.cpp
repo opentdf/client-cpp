@@ -125,7 +125,7 @@ BOOST_AUTO_TEST_SUITE(test_splitkey_encryption_suite)
         auto outputBufferSpan = WriteableBytes {outBuffer};
         decoder->decrypt(toBytes(decodedWrappedKey), outputBufferSpan);
 
-        auto wrappedKeyAsHex = hex(toBytes(splitKey.getWrappedKey()));
+        auto wrappedKeyAsHex = hex(toBytes(splitKey.getPayloadKey()));
         BOOST_TEST(wrappedKeyAsHex == hex(outputBufferSpan));
 
         ///
@@ -145,7 +145,7 @@ BOOST_AUTO_TEST_SUITE(test_splitkey_encryption_suite)
 
         // Update the input buffer size after the auth tag is copied.
         inputSpan = inputSpan.first(inputSpan.size() - kAesBlockSize);
-        auto symDecoder = GCMDecryption::create(splitKey.getWrappedKey(), inputSpan.first(kGcmIvSize));
+        auto symDecoder = GCMDecryption::create(splitKey.getPayloadKey(), inputSpan.first(kGcmIvSize));
 
         std::vector<gsl::byte> buffer(cipherText.size());
         auto outBufferSpan = WriteableBytes{buffer};
