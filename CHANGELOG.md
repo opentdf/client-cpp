@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 1.3.8
  - PLAT-2240 - RCA support in C++ Open SDK
+ - PLAT-2332 - Bump conan version to fix build
 
 1.3.7 
  -  PLAT-2254 - Fix the CRC calculation for 64 bit zip in openTDF C++ SDK
