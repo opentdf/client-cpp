@@ -8,7 +8,6 @@
 #define VIRTRU_SSTREAM_IO_PROVIDER_H
 
 #include "io_provider.h"
-#include "bytes.h"
 
 #include <sstream>
 

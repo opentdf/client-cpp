@@ -1,11 +1,12 @@
 /*
-* Copyright 2021 Virtru Corporation
+* Copyright 2023 Virtru Corporation
 *
 * SPDX - License Identifier: BSD-3-Clause-Clear
 *
 */
 //
-// Created by sujan kota on 12/8/21.
+//  TDF SDK
+//
 //
 
 #ifndef VIRTRU_TDF_WRITER_H
@@ -17,10 +18,10 @@ namespace virtru {
 
     using namespace virtru::crypto;
 
-    class TDFWriter {
+    class ITDFWriter {
     public:
         // Destructor
-        virtual ~TDFWriter() = default;
+        virtual ~ITDFWriter() = default;
 
         /// Set the payload size of the TDF
         /// \param payloadSize
@@ -35,6 +36,11 @@ namespace virtru {
         /// Append the manifest contents to the archive.
         /// \param payload - encrypted payload.
         virtual void appendPayload(Bytes payload) = 0;
+
+        /// Finalize archive entry.
+        virtual void finish() = 0;
     };
-}  // namespace virtru
+
+} // namespace virtru
+
 #endif //VIRTRU_TDF_WRITER_H
