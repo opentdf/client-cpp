@@ -79,6 +79,10 @@ namespace virtru {
         /// Finalize archive entry.
         void finish() override;
 
+    public:
+        /// Return the manifest stored in TDF
+        /// \return The manifest as string
+        std::string getManifest() const;
 
     private:
         /// Write archive central directory.
@@ -118,6 +122,7 @@ namespace virtru {
         IOutputProvider*        m_outputProvider;
         std::string             m_manifestFilename;
         std::string             m_payloadFilename;
+        std::string             m_manifest;
         uint64_t                m_payloadSize {0};
         uint64_t                m_currentOffset {0};
         uint64_t                m_lastOffsetCDFH {0};

@@ -80,13 +80,13 @@ namespace virtru {
                                     kTDFManifestFileName,
                                     kTDFPayloadFileName};
 
-            encryptIOProviderImpl(inputProvider, writer);
+            encryptInputProviderToTDFWriter(inputProvider, writer);
         } else if (m_tdfBuilder.m_impl->m_protocol == Protocol::Xml) {
             TDFXMLWriter writer{outputProvider,
                                 kTDFManifestFileName,
                                 kTDFPayloadFileName};
 
-            encryptIOProviderImpl(inputProvider, writer);
+            encryptInputProviderToTDFWriter(inputProvider, writer);
         } else { // HTML
             struct HTMLOutputProvider: IOutputProvider {
                 void writeBytes(Bytes bytes) override {
@@ -100,16 +100,16 @@ namespace virtru {
             TDFArchiveWriter writer{&htmlOutputProvider,
                                     kTDFManifestFileName,
                                     kTDFPayloadFileName};
-            auto manifestStr = encryptIOProviderImpl(inputProvider, writer);
+            encryptInputProviderToTDFWriter(inputProvider, writer);
 
             htmlOutputProvider.flush();
-            generateHtmlTdf(manifestStr, htmlOutputProvider.stringStream, outputProvider);
+            generateHtmlTdf(writer.getManifest(), htmlOutputProvider.stringStream, outputProvider);
         }
     }
 
-    /// Encrypt data from InputProvider and write to IOutputProvider
-    std::string TDFImpl::encryptIOProviderImpl(IInputProvider& inputProvider, ITDFWriter& writer) {
-        LogTrace("TDFImpl::encryptIOProviderImpl");
+    /// Encrypt data from input provider and write to ITDFWriter
+    void TDFImpl::encryptInputProviderToTDFWriter(IInputProvider& inputProvider, ITDFWriter& writer) {
+        LogTrace("TDFImpl::encryptInputProviderToTDFWriter");
 
         auto dataSize = inputProvider.getSize();
 
@@ -273,8 +273,6 @@ namespace virtru {
 
         writer.appendManifest(to_string(manifest));
         writer.finish();
-
-        return to_string(manifest);
     }
 
 
@@ -287,10 +285,10 @@ namespace virtru {
             TDFArchiveReader reader{&inputProvider,
                                     kTDFManifestFileName,
                                     kTDFPayloadFileName};
-            decryptIOProviderImpl(reader, outputProvider);
+            decryptTDFReaderToOutputProvider(reader, outputProvider);
         } else if (protocol == Protocol::Xml) {
             TDFXMLReader reader{inputProvider};
-            decryptIOProviderImpl(reader, outputProvider);
+            decryptTDFReaderToOutputProvider(reader, outputProvider);
         } else { // HTML
 
             /// TODO: Improve the memory effeciency for html parsing.
@@ -310,12 +308,12 @@ namespace virtru {
             StreamInputProvider ipProvider{inputStream};
             TDFArchiveReader reader{&ipProvider, kTDFManifestFileName, kTDFPayloadFileName };
 
-            decryptIOProviderImpl(reader, outputProvider);
+            decryptTDFReaderToOutputProvider(reader, outputProvider);
         }
     }
 
     /// Decrypt data from reader and write to IOutputProvider
-    void TDFImpl::decryptIOProviderImpl(ITDFReader& reader, IOutputProvider& outputProvider) {
+    void TDFImpl::decryptTDFReaderToOutputProvider(ITDFReader& reader, IOutputProvider& outputProvider) {
 
         auto manifestStr = reader.getManifest();
 
