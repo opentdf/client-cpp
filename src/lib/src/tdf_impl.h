@@ -50,6 +50,12 @@ namespace virtru {
         void encryptIOProvider(IInputProvider& inputProvider,
                                IOutputProvider& outputProvider);
 
+        /// Encrypt data from input provider and write to ITDFWriter
+        /// \param inputProvider - Input provider interface for reading data
+        /// \param writer - The writer to which tdf data will write to
+        /// NOTE: virtru::exception will be thrown if there are issues while performing the encryption process.
+        void encryptInputProviderToTDFWriter(IInputProvider& inputProvider, ITDFWriter& writer);
+
         /// Decrypt data from InputProvider and write to IOutputProvider
         /// \param inputProvider - Input provider interface for reading data
         /// \param outputProvider - Out provider interface for writing data
@@ -71,6 +77,11 @@ namespace virtru {
                                       IOutputProvider& outputProvider,
                                       size_t offset,
                                       size_t length);
+
+        /// Decrypt data from reader and write to output provider
+        /// \param reader - TDF reader from which tdf data can be read
+        /// \param outputProvider - The decrypted data will be write to output provider
+        void decryptTDFReaderToOutputProvider(ITDFReader& reader, IOutputProvider& outputProvider);
 
         /// Decrypt and return TDF metadata as a string. If the TDF content has
         /// no encrypted metadata, will return an empty string.
@@ -97,19 +108,6 @@ namespace virtru {
         /// \param inputProvider - The input provider containing a tdf data to be decrypted.
         /// \return Return true if data is TDF and false otherwise
         static bool isInputProviderTDF(IInputProvider& inputProvider);
-
-    private:
-        /// Encrypt data from InputProvider and write to IOutputProvider
-        /// \param inputProvider - Input provider interface for reading data
-        /// \param writer - The writer to which tdf data will write to
-        /// \return Return manifest
-        /// NOTE: virtru::exception will be thrown if there are issues while performing the encryption process.
-        std::string encryptIOProviderImpl(IInputProvider& inputProvider, ITDFWriter& writer);
-
-        /// Decrypt data from reader and write to IOutputProvider
-        /// \param reader - TDF reader from which tdf data can be read
-        /// \param outputProvider - The decrypted data will be write to output provider
-        void decryptIOProviderImpl(ITDFReader& reader, IOutputProvider& outputProvider);
 
     private:
         /// Generate a signature of the payload base on integrity algorithm.

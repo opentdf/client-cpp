@@ -156,6 +156,8 @@ namespace virtru {
     /// Append the manifest contents to the archive.
     void TDFArchiveWriter::appendManifest(std::string&& manifest) {
 
+        m_manifest = manifest;
+
         LogTrace("TDFArchiveWriter::appendManifest");
         LocalFileHeader lfh{};
         lfh.signature = static_cast<uint32_t>(ZipSignatures::LocalFileHeaderSignature);
@@ -167,10 +169,10 @@ namespace virtru {
         lfh.compressionMethod = 0;
         lfh.lastModifiedTime = fileTime;
         lfh.lastModifiedDate = fileDate;
-        std::vector<uint8_t> vec(manifest.begin(), manifest.end());
-        lfh.crc32 = crc32(0, vec.data(), manifest.size());;
-        lfh.compressedSize = manifest.size();
-        lfh.uncompressedSize = manifest.size();
+        std::vector<uint8_t> vec(m_manifest.begin(), m_manifest.end());
+        lfh.crc32 = crc32(0, vec.data(), m_manifest.size());;
+        lfh.compressedSize = m_manifest.size();
+        lfh.uncompressedSize = m_manifest.size();
         lfh.filenameLength = m_manifestFilename.length();
         if (m_isZip64) {
             lfh.compressedSize = ZIP64_MAGICVAL;
@@ -178,8 +180,8 @@ namespace virtru {
             lfh.extraFieldLength = sizeof(Zip64ExtendedLocalInfoExtraField);
         }
         else {
-            lfh.compressedSize = manifest.size();
-            lfh.uncompressedSize = manifest.size();
+            lfh.compressedSize = m_manifest.size();
+            lfh.uncompressedSize = m_manifest.size();
             lfh.extraFieldLength = 0;
         }
 
@@ -199,8 +201,8 @@ namespace virtru {
             Zip64ExtendedLocalInfoExtraField zip64ExtendedLocalInfo{};
             zip64ExtendedLocalInfo.signature = ZIP64_EXTID;
             zip64ExtendedLocalInfo.size = sizeof(Zip64ExtendedLocalInfoExtraField) - 4;
-            zip64ExtendedLocalInfo.originalSize = manifest.size();;
-            zip64ExtendedLocalInfo.compressedSize = manifest.size();;
+            zip64ExtendedLocalInfo.originalSize = m_manifest.size();;
+            zip64ExtendedLocalInfo.compressedSize = m_manifest.size();;
 
             std::vector<std::byte> zip64ExtendedLocalInfoBuffer(sizeof(zip64ExtendedLocalInfo));
             bytes = WriteableBytes{zip64ExtendedLocalInfoBuffer};
@@ -209,13 +211,15 @@ namespace virtru {
         }
 
         //Write manifest content
-        std::vector<std::byte> datafile(manifest.length());
+        std::vector<std::byte> datafile(m_manifest.length());
         bytes = WriteableBytes{datafile};
-        std::memcpy(datafile.data(), manifest.data(), manifest.length());
+        std::memcpy(datafile.data(), m_manifest.data(), m_manifest.length());
         m_outputProvider->writeBytes(bytes);
-        m_fileInfo.emplace_back(FileInfo{lfh.crc32, manifest.size(), m_currentOffset, m_manifestFilename, fileTime, fileDate, 0x0});
+        m_fileInfo.emplace_back(FileInfo{lfh.crc32, m_manifest.size(),
+                                         m_currentOffset, m_manifestFilename,
+                                         fileTime, fileDate, 0x0});
 
-        m_currentOffset += sizeof(LocalFileHeader) + m_manifestFilename.length() + manifest.size();
+        m_currentOffset += sizeof(LocalFileHeader) + m_manifestFilename.length() + m_manifest.size();
         if (m_isZip64)
             m_currentOffset += sizeof(Zip64ExtendedLocalInfoExtraField);
     }
@@ -350,6 +354,11 @@ namespace virtru {
         writeCentralDirectory();
         writeEndOfCentralDirectory();
         m_outputProvider->flush();
+    }
+
+    /// Return the manifest stored in TDF
+    std::string TDFArchiveWriter::getManifest() const {
+        return m_manifest;
     }
 
 }
