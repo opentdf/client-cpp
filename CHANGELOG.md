@@ -11,6 +11,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+1.3.9
+ - PLAT-2340 - OpenTDF C++ SDK - TDF reader and writer interface should be public
+
+1.3.8
+ - PLAT-2240 - RCA support in C++ Open SDK
+ - PLAT-2332 - Bump conan version to fix build
+
+1.3.7 
+ -  PLAT-2254 - Fix the CRC calculation for 64 bit zip in openTDF C++ SDK
+
+1.3.7
+ -  PLAT-2155 - Renamed for consistent naming of OIDC configuration support
+
 1.3.6
  -  PLAT-2155 - OpenTDF C++ SDK use .well-known/openid-configuration
 

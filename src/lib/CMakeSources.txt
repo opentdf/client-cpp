@@ -51,9 +51,9 @@ set (TDF_CPP_SDK_SOURCE_FILES_BASE
         ${TDF_CPP_SDK_SOURCE_DIR}/src/crypto/asym_decryption.cpp
         ${TDF_CPP_SDK_SOURCE_DIR}/include/crypto/asym_decryption.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/crypto/gcm_encryption.cpp
-        ${TDF_CPP_SDK_SOURCE_DIR}/src/crypto/gcm_encryption.h
+        ${TDF_CPP_SDK_SOURCE_DIR}/include/crypto/gcm_encryption.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/crypto/gcm_decryption.cpp
-        ${TDF_CPP_SDK_SOURCE_DIR}/src/crypto/gcm_decryption.h
+        ${TDF_CPP_SDK_SOURCE_DIR}/include/crypto/gcm_decryption.h
         ${TDF_CPP_SDK_SOURCE_DIR}/include/sdk_constants.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/libxml2_deleters.h
         ${TDF_CPP_SDK_SOURCE_DIR}/include/network_interface.h
@@ -74,22 +74,23 @@ set (TDF_CPP_SDK_SOURCE_FILES_BASE
         ${TDF_CPP_SDK_SOURCE_DIR}/src/oidc_service.cpp
         ${TDF_CPP_SDK_SOURCE_DIR}/src/network/http_service_provider.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/network/http_service_provider.cpp
-        ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_reader.h
-        ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_writer.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_xml_writer.cpp
         ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_xml_writer.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_xml_reader.cpp
         ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_xml_reader.h
+        ${TDF_CPP_SDK_SOURCE_DIR}/include/file_io_provider.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/file_io_provider.cpp
         ${TDF_CPP_SDK_SOURCE_DIR}/src/s3_io_provider.cpp
         ${TDF_CPP_SDK_SOURCE_DIR}/src/stream_io_provider.cpp
-        ${TDF_CPP_SDK_SOURCE_DIR}/src/stream_io_provider.h
+        ${TDF_CPP_SDK_SOURCE_DIR}/include/stream_io_provider.h
         ${TDF_CPP_SDK_SOURCE_DIR}/include/tdf_storage_type.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_storage_type.cpp
         ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_html_writer.cpp
         ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_html_writer.h
-        ${TDF_CPP_SDK_SOURCE_DIR}/src/openid_configuration.cpp
-        ${TDF_CPP_SDK_SOURCE_DIR}/src/openid_configuration.h
+        ${TDF_CPP_SDK_SOURCE_DIR}/src/oidc_configuration.cpp
+        ${TDF_CPP_SDK_SOURCE_DIR}/src/oidc_configuration.h
+        ${TDF_CPP_SDK_SOURCE_DIR}/include/tdf_reader.h
+        ${TDF_CPP_SDK_SOURCE_DIR}/include/tdf_writer.h
     )
 
 set (TDF_CPP_SDK_SOURCE_FILES_NANOTDF

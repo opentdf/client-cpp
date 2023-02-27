@@ -19,6 +19,7 @@
 
 #include "crypto/bytes.h"
 #include "io_provider.h"
+#include "tdf_writer.h"
 #include "logger.h"
 #include "tdf_constants.h"
 #include "zipmanager/zip_headers.h"
@@ -26,30 +27,6 @@
 namespace virtru {
 
     using namespace virtru::crypto;
-
-    class ITDFWriter {
-    public:
-        // Destructor
-        virtual ~ITDFWriter() = default;
-
-        /// Set the payload size of the TDF
-        /// \param payloadSize
-        virtual void setPayloadSize(int64_t payloadSize) = 0;
-
-        /// Append the manifest contents to the archive.
-        /// \param manifest - Contents of the manifest file.
-        /// NOTE: Manifest should be always be added at the end after writing the payload for TDF.
-        /// NOTE: Manifest should be always be added before writing the payload for TDF2.
-        virtual void appendManifest(std::string&& manifest) = 0;
-
-        /// Append the manifest contents to the archive.
-        /// \param payload - encrypted payload.
-        virtual void appendPayload(Bytes payload) = 0;
-
-        /// Finalize archive entry.
-        virtual void finish() = 0;
-    };
-
 
     class TDFArchiveWriter: public ITDFWriter{
     public:
@@ -102,6 +79,10 @@ namespace virtru {
         /// Finalize archive entry.
         void finish() override;
 
+    public:
+        /// Return the manifest stored in TDF
+        /// \return The manifest as string
+        std::string getManifest() const;
 
     private:
         /// Write archive central directory.
@@ -121,12 +102,13 @@ namespace virtru {
 
         struct FileInfo
         {
-            //uint32_t crc;
+            uint32_t crc;
             uint64_t size;
             uint64_t offset;
             std::string fileName;
             uint16_t fileTime;
             uint16_t fileDate;
+            uint16_t flag;
         };
 
         enum class PayloadState {
@@ -140,6 +122,7 @@ namespace virtru {
         IOutputProvider*        m_outputProvider;
         std::string             m_manifestFilename;
         std::string             m_payloadFilename;
+        std::string             m_manifest;
         uint64_t                m_payloadSize {0};
         uint64_t                m_currentOffset {0};
         uint64_t                m_lastOffsetCDFH {0};

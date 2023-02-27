@@ -245,4 +245,41 @@ namespace virtru {
         return std::string("openstack-cpp-sdk:") + opentdf_VERSION;
     }
 
+    /// Parse the headers from the string
+    std::map<std::string, std::string> Utils::parseHeaders(const std::string& headersStr) {
+        std::map<std::string, std::string> httpHeaders;
+
+        std::istringstream resp(headersStr);
+        std::string header;
+        std::string::size_type index;
+        while (std::getline(resp, header) && header != "\r") {
+            index = header.find(':', 0);
+            if(index != std::string::npos) {
+                httpHeaders.insert(std::make_pair(
+                        boost::algorithm::trim_copy(header.substr(0, index)),
+                        boost::algorithm::trim_copy(header.substr(index + 1))
+                ));
+            }
+        }
+
+        return httpHeaders;
+    }
+
+    /// Parse the parameters from the string
+    std::map<std::string, std::string> Utils::parseParams(std::string query) {
+        std::map<std::string, std::string> params;
+        size_t curStart = 0;
+        do {
+            size_t delimIndex = query.find('&', curStart);
+            size_t equalIndex = query.find('=', curStart);
+            std::string newParam = query.substr(curStart, equalIndex - curStart);
+            std::string newValue = query.substr(equalIndex + 1, delimIndex - equalIndex - 1);
+
+            params[newParam] = newValue;
+            curStart = delimIndex + 1;
+        } while (curStart != 0);
+
+        return params;
+    }
+
 } // namespace virtru

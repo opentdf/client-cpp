@@ -47,14 +47,17 @@ namespace virtru {
         if(m_payloadSize > ZIP64_MAGICVAL)
             m_isZip64 = true;
 
+        LocalFileHeader lfh{};
+        uint16_t fileTime = 0;
+        uint16_t fileDate = 0;
+        GetTimeDate(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()), fileTime, fileDate);
+
         if (PayloadState::Initial == m_payloadState) {
-            LocalFileHeader lfh{};
             lfh.signature = static_cast<uint32_t>(ZipSignatures::LocalFileHeaderSignature);
             lfh.version = 45;
-            lfh.flags = 0;
-            uint16_t fileTime = 0;
-            uint16_t fileDate = 0;
-            GetTimeDate(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()), fileTime, fileDate);
+            //since payload is added by chunks we set General purpose bit flag to 0x08 (https://en.wikipedia.org/wiki/ZIP_(file_format))
+            lfh.flags = 0x08;
+
             lfh.compressionMethod = 0;
             lfh.lastModifiedTime = fileTime;
             lfh.lastModifiedDate = fileDate;
@@ -66,8 +69,8 @@ namespace virtru {
                 lfh.extraFieldLength = sizeof(Zip64ExtendedLocalInfoExtraField);
             }
             else {
-                lfh.compressedSize = m_payloadSize;
-                lfh.uncompressedSize = m_payloadSize;
+                lfh.compressedSize = 0;
+                lfh.uncompressedSize = 0;
                 lfh.extraFieldLength = 0;
             }
 
@@ -99,7 +102,6 @@ namespace virtru {
             }
 
             m_payloadState = PayloadState::Appending;
-            m_fileInfo.emplace_back(FileInfo{ m_payloadSize, m_currentOffset, m_payloadFilename, fileTime, fileDate});
         }
 
 
@@ -108,13 +110,53 @@ namespace virtru {
         auto bytes = WriteableBytes{datafile};
         std::memcpy(datafile.data(), payload.data(), payload.size());
         m_outputProvider->writeBytes(bytes);
-        m_currentOffset = sizeof(LocalFileHeader) + m_payloadFilename.length() + m_payloadSize;
-        if (m_isZip64)
-            m_currentOffset += sizeof(Zip64ExtendedLocalInfoExtraField);
+        static uint32_t computed_crc32_ {0};
+        computed_crc32_ = crc32(computed_crc32_, reinterpret_cast<const unsigned char *>(payload.data()),
+                                                      payload.size());
+        static size_t current_size;
+        current_size += payload.size();
+
+        if (current_size >= m_payloadSize) {
+            m_payloadState = PayloadState::Finished;
+            m_fileInfo.emplace_back(FileInfo{ computed_crc32_, m_payloadSize,  m_currentOffset, m_payloadFilename, fileTime, fileDate, 0x08});
+        }
+
+        if (PayloadState::Finished == m_payloadState) {
+            // Write Data descriptor
+            if (m_isZip64) {
+                DataDescriptor64 dd64{};
+                dd64.signature = static_cast<uint32_t>(ZipSignatures::DataDescriptorSignature);
+                dd64.crc32 = computed_crc32_;
+                dd64.compressedSize = m_payloadSize;
+                dd64.uncompressedSize = m_payloadSize;
+                std::vector<std::byte> dd64Buffer(sizeof(dd64));
+                WriteableBytes bytes = WriteableBytes{dd64Buffer};
+                std::memcpy(&dd64Buffer[0], &dd64, sizeof(dd64));
+                m_outputProvider->writeBytes(bytes);
+                m_currentOffset = sizeof(LocalFileHeader) + m_payloadFilename.length() + m_payloadSize + sizeof(DataDescriptor64) + sizeof(Zip64ExtendedLocalInfoExtraField);
+            }
+            else {
+                DataDescriptor32 dd32{};
+                dd32.signature = static_cast<uint32_t>(ZipSignatures::DataDescriptorSignature);
+                dd32.crc32 = computed_crc32_;
+                dd32.compressedSize = m_payloadSize;
+                dd32.uncompressedSize = m_payloadSize;
+                std::vector<std::byte> dd32Buffer(sizeof(dd32));
+                WriteableBytes bytes = WriteableBytes{dd32Buffer};
+                std::memcpy(&dd32Buffer[0], &dd32, sizeof(dd32));
+                m_outputProvider->writeBytes(bytes);
+                m_currentOffset = sizeof(LocalFileHeader) + m_payloadFilename.length() + m_payloadSize + sizeof(DataDescriptor32);
+            }
+
+            current_size = 0;
+            computed_crc32_ = 0;
+        }
     }
 
     /// Append the manifest contents to the archive.
     void TDFArchiveWriter::appendManifest(std::string&& manifest) {
+
+        m_manifest = manifest;
 
         LogTrace("TDFArchiveWriter::appendManifest");
         LocalFileHeader lfh{};
@@ -127,10 +169,10 @@ namespace virtru {
         lfh.compressionMethod = 0;
         lfh.lastModifiedTime = fileTime;
         lfh.lastModifiedDate = fileDate;
-        std::vector<uint8_t> vec(manifest.begin(), manifest.end());
-        lfh.crc32 = crc32(0, vec.data(), manifest.size());;
-        lfh.compressedSize = manifest.size();
-        lfh.uncompressedSize = manifest.size();
+        std::vector<uint8_t> vec(m_manifest.begin(), m_manifest.end());
+        lfh.crc32 = crc32(0, vec.data(), m_manifest.size());;
+        lfh.compressedSize = m_manifest.size();
+        lfh.uncompressedSize = m_manifest.size();
         lfh.filenameLength = m_manifestFilename.length();
         if (m_isZip64) {
             lfh.compressedSize = ZIP64_MAGICVAL;
@@ -138,8 +180,8 @@ namespace virtru {
             lfh.extraFieldLength = sizeof(Zip64ExtendedLocalInfoExtraField);
         }
         else {
-            lfh.compressedSize = manifest.size();
-            lfh.uncompressedSize = manifest.size();
+            lfh.compressedSize = m_manifest.size();
+            lfh.uncompressedSize = m_manifest.size();
             lfh.extraFieldLength = 0;
         }
 
@@ -159,8 +201,8 @@ namespace virtru {
             Zip64ExtendedLocalInfoExtraField zip64ExtendedLocalInfo{};
             zip64ExtendedLocalInfo.signature = ZIP64_EXTID;
             zip64ExtendedLocalInfo.size = sizeof(Zip64ExtendedLocalInfoExtraField) - 4;
-            zip64ExtendedLocalInfo.originalSize = m_payloadSize;
-            zip64ExtendedLocalInfo.compressedSize = m_payloadSize;
+            zip64ExtendedLocalInfo.originalSize = m_manifest.size();;
+            zip64ExtendedLocalInfo.compressedSize = m_manifest.size();;
 
             std::vector<std::byte> zip64ExtendedLocalInfoBuffer(sizeof(zip64ExtendedLocalInfo));
             bytes = WriteableBytes{zip64ExtendedLocalInfoBuffer};
@@ -169,13 +211,15 @@ namespace virtru {
         }
 
         //Write manifest content
-        std::vector<std::byte> datafile(manifest.length());
+        std::vector<std::byte> datafile(m_manifest.length());
         bytes = WriteableBytes{datafile};
-        std::memcpy(datafile.data(), manifest.data(), manifest.length());
+        std::memcpy(datafile.data(), m_manifest.data(), m_manifest.length());
         m_outputProvider->writeBytes(bytes);
-        m_fileInfo.emplace_back(FileInfo{manifest.size(), m_currentOffset, m_manifestFilename, fileTime, fileDate});
+        m_fileInfo.emplace_back(FileInfo{lfh.crc32, m_manifest.size(),
+                                         m_currentOffset, m_manifestFilename,
+                                         fileTime, fileDate, 0x0});
 
-        m_currentOffset += sizeof(LocalFileHeader) + m_manifestFilename.length() + manifest.size();
+        m_currentOffset += sizeof(LocalFileHeader) + m_manifestFilename.length() + m_manifest.size();
         if (m_isZip64)
             m_currentOffset += sizeof(Zip64ExtendedLocalInfoExtraField);
     }
@@ -189,11 +233,11 @@ namespace virtru {
             cdfh.signature = static_cast<uint32_t>(ZipSignatures::CentralFileHeaderSignature);
             cdfh.versionCreated = 45;
             cdfh.versionNeeded = 45;
-            cdfh.flags = 0;
+            cdfh.flags = fileInfo.flag;
             cdfh.compressionMethod = 0;
             cdfh.lastModifiedTime = fileInfo.fileTime;
             cdfh.lastModifiedDate = fileInfo.fileDate;
-            cdfh.crc32 = 0;
+            cdfh.crc32 = fileInfo.crc;
             cdfh.filenameLength = fileInfo.fileName.size();
             cdfh.fileCommentLength = 0;
             cdfh.diskNumberStart = 0;
@@ -309,6 +353,12 @@ namespace virtru {
     void TDFArchiveWriter::finish() {
         writeCentralDirectory();
         writeEndOfCentralDirectory();
+        m_outputProvider->flush();
+    }
+
+    /// Return the manifest stored in TDF
+    std::string TDFArchiveWriter::getManifest() const {
+        return m_manifest;
     }
 
 }
