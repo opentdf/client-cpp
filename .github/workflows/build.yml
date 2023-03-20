@@ -1,4 +1,4 @@
-name: Run build on push
+name: Run build
 on:
   pull_request:
     types: [opened, synchronize, reopened]
@@ -70,7 +70,7 @@ jobs:
 
       - name: Get Timestamp
         run : |
-          TSTAMP=$(date +'%Y%m%d%H%M')
+          TSTAMP=$(date +'%Y%m%d%H%M%S')
           echo "V_TIMESTAMP=$TSTAMP" >> $GITHUB_ENV
 
       - name: Save artifacts
@@ -167,7 +167,7 @@ jobs:
 
       - name: Get Timestamp
         run : |
-          TSTAMP=$(date +'%Y%m%d%H%M')
+          TSTAMP=$(date +'%Y%m%d%H%M%S')
           echo "V_TIMESTAMP=$TSTAMP" >> $GITHUB_ENV
 
       - name: Save artifacts
