@@ -28,7 +28,6 @@ BOOST_AUTO_TEST_CASE(rsa_key_pair_2048)
 {
     auto keyPairOf2048 = vc::RsaKeyPair::Generate(2048);
     auto privateKey = keyPairOf2048->PrivateKeyInPEMFormat();
-    auto publicKey = keyPairOf2048->PublicKeyInPEMFormat();
 
     std::unique_ptr<BIO, BioDeleter> privateKeyBuffer { BIO_new_mem_buf(privateKey.data(), privateKey.size()) };
     std::unique_ptr<RSA, RsaDeleter> privateRSA { PEM_read_bio_RSAPrivateKey(privateKeyBuffer.get(),
@@ -46,7 +45,6 @@ BOOST_AUTO_TEST_CASE(rsa_key_pair_4096)
 {
     auto keyPairOf4096 = vc::RsaKeyPair::Generate(4096);
     auto privateKey = keyPairOf4096->PrivateKeyInPEMFormat();
-    auto publicKey = keyPairOf4096->PublicKeyInPEMFormat();
 
     std::unique_ptr<BIO, BioDeleter> privateKeyBuffer { BIO_new_mem_buf(privateKey.data(), privateKey.size()) };
     std::unique_ptr<RSA, RsaDeleter> privateRSA { PEM_read_bio_RSAPrivateKey(privateKeyBuffer.get(),
@@ -64,8 +62,6 @@ BOOST_AUTO_TEST_CASE(rsa_key_pair_negative_test)
 {
     try {
         auto desginedToFailkeyPair = vc::RsaKeyPair::Generate(-1);
-        auto privateKey = desginedToFailkeyPair->PrivateKeyInPEMFormat();
-        auto publicKey = desginedToFailkeyPair->PublicKeyInPEMFormat();
         BOOST_FAIL("We should not get here" );
     } catch ( const vc::CryptoException& exception) {
         BOOST_TEST_MESSAGE("Expect crypto exception");

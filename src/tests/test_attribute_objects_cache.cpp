@@ -82,7 +82,7 @@ DCzGcDpkNVkPR58v1BvBs4zZ
         auto entityObject = EntityObject{};
 
         // Build an array of attributes for creating jwt's
-        std::vector<std::string> attributes = { "https://example.com/attr/classification1",
+        std::array<std::string, 5> attributes = { "https://example.com/attr/classification1",
                                                 "https://example.com/attr/classification2",
                                                 "https://example.com/attr/classification3",
                                                 "https://example.com/attr/classification4",

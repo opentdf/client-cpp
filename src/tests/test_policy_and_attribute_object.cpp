@@ -129,7 +129,6 @@ BOOST_AUTO_TEST_SUITE(test_policy_and_attribute_object_suite)
         
         BOOST_TEST(to_string(boost::uuids::random_generator{}()).size() == policyObject.getUuid().size());
 
-        auto policyObjectJsonStr = policyObject.toJsonString(true);
         BOOST_TEST_MESSAGE(policyObject.toJsonString(true));
 
         const auto policyObjectStr1 = R"({

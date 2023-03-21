@@ -156,7 +156,7 @@ BOOST_AUTO_TEST_SUITE(test_html_template_suite)
         htmlTemplateData.assign((std::istreambuf_iterator<char>(ifs)),
                          std::istreambuf_iterator<char>());
 
-        std::vector<std::string> placeholders{ "<%= payload %>", "<%= manifest %>",
+        std::array<std::string, 5> placeholders{ "<%= payload %>", "<%= manifest %>",
                                                "<%= transferUrl %>", "<%= transferUrl %>", "<%= transferUrl %>" };
         std::vector<std::string> htmlTemplateTokens;
 
