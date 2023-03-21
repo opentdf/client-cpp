@@ -168,7 +168,7 @@ BOOST_AUTO_TEST_SUITE(test_tdf_archive_writer_suite)
     BOOST_AUTO_TEST_CASE(test_tdf_lib_archive_new_writer_reader) {
 
         // Array of file size in mb
-        std::vector<size_t> vec{1, 5, 10, 50};
+        std::array<size_t, 4> vec{1, 5, 10, 50};
 
         for (const auto& fileMB : vec) {
             test_custom_zip_implementation(fileMB);
