@@ -75,6 +75,7 @@ jobs:
 
       - name: Save artifacts
         uses: actions/upload-artifact@v3
+        if: (github.event_name != 'pull_request') && (github.event_name != 'schedule')
         with:
           name: opentdf-client-cpp-lin-${{ env.V_VERSION }}-${{ env.V_TIMESTAMP }}
           path: |
