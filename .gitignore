@@ -1,5 +1,6 @@
 examples/build/
 src/build/
+dist/
 src/lib/include/version.h
 examples/.idea/
 src/.idea/

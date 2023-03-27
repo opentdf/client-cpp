@@ -26,3 +26,13 @@ else
     echo "Error: Packaging ${TDF_LIB_OUTPUT} failed. Fix it!!"
     exit -1;
 fi
+
+# prepare artifact content in dist directory
+cd ..
+rm -rf ../dist
+mkdir ../dist
+cp -r build/package/* ../dist
+cp ../VERSION ../dist
+cp ../README.md ../dist
+cp ../LICENSE ../dist
+cp -r ../examples ../dist
