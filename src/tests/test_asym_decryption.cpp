@@ -179,7 +179,6 @@ BOOST_AUTO_TEST_SUITE(test_asym_decoding_suite)
         BOOST_TEST(plainTextMessage != decryptedMessage); // should fail
 
         // wrongKey
-        const auto cipherText2 = vc::base64Decode(base64Ciphertext);
         BOOST_CHECK_THROW(vc::AsymDecryption::create(rsa2048PublicKey), virtru::crypto::CryptoException);
     }
 

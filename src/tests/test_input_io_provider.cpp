@@ -45,9 +45,9 @@ BOOST_AUTO_TEST_SUITE(test_input_io_provider_suite)
             if (hPos != headers.end()) {
                 bFoundRange = true;
                 std::string rangeSpec = hPos->second;
-                std::string sBegin = rangeSpec.substr(6, rangeSpec.find("-")-6);
+                std::string sBegin = rangeSpec.substr(6, rangeSpec.find('-')-6);
                 rangeBegin = atol(sBegin.c_str());
-                std::string sEnd = rangeSpec.substr(rangeSpec.find("-")+1);
+                std::string sEnd = rangeSpec.substr(rangeSpec.find('-')+1);
                 rangeEnd = atol(sEnd.c_str());
             }
 
@@ -133,7 +133,7 @@ void test_input_provider_read(IInputProvider& inputProvider) {
              BOOST_FAIL(oss.str());
          }
 
-     } catch (std::exception e) {
+     } catch (std::exception &e) {
          LogDebug(e.what());
          std::ostringstream oss;
          oss << e.what();
@@ -157,7 +157,7 @@ void test_input_provider_read_partial_mid(IInputProvider& inputProvider) {
                 oss << "Bad data in read buffer at line " << __LINE__;
                 BOOST_FAIL(oss.str());
             }
-        } catch (std::exception e) {
+        } catch (std::exception &e) {
             LogDebug(e.what());
             std::ostringstream oss;
             oss << e.what();
@@ -181,7 +181,7 @@ void test_input_provider_read_partial_mid(IInputProvider& inputProvider) {
                 oss << "Bad data in read buffer at line " << __LINE__;
                 BOOST_FAIL(oss.str());
             }
-        } catch (std::exception e) {
+        } catch (std::exception &e) {
             LogDebug(e.what());
             std::ostringstream oss;
             oss << e.what();
@@ -205,7 +205,7 @@ void test_input_provider_read_partial_end(IInputProvider& inputProvider) {
                 oss << "Bad data in read buffer at line " << __LINE__;
                 BOOST_FAIL(oss.str());
             }
-        } catch (std::exception e) {
+        } catch (std::exception &e) {
             LogDebug(e.what());
             std::ostringstream oss;
             oss << e.what();
@@ -247,7 +247,7 @@ void test_input_provider_read_partial_multiple(IInputProvider& inputProvider) {
                 oss << "Bad data in read buffer at line " << __LINE__;
                 BOOST_FAIL(oss.str());
             }
-        } catch (std::exception e) {
+        } catch (std::exception &e) {
             LogDebug(e.what());
             std::ostringstream oss;
             oss << e.what();
@@ -265,7 +265,7 @@ void test_input_provider_read_getSize(IInputProvider& inputProvider) {
                 oss << "Bad file size returned.  Expected=" << buffer_size << " actual=" << fileSize;
                 BOOST_FAIL(oss.str());
             }
-        } catch (std::exception e) {
+        } catch (std::exception &e) {
             LogDebug(e.what());
             std::ostringstream oss;
             oss << e.what();
@@ -327,7 +327,7 @@ void test_input_provider_read_getSize(IInputProvider& inputProvider) {
 
             virtru::FileOutputProvider fop(testFile);
             fop.writeBytes(bytes);
-        } catch (std::exception e) {
+        } catch (std::exception &e) {
             LogDebug(e.what());
             std::ostringstream oss;
             oss << e.what();

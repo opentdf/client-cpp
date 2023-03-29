@@ -96,7 +96,6 @@ namespace virtru {
         }
 
         // Open the tdf output file.
-        std::ostringstream stream;
         std::ofstream outStream {outFilepath, std::ios_base::out | std::ios_base::binary};
         if (!outStream) {
             std::string errorMsg{"Failed to open file for writing:"};
@@ -288,7 +287,6 @@ namespace virtru {
         auto outBuffer = decryptString(toBytes(buffer));
 
         // Open the tdf output file.
-        std::ostringstream stream;
         std::ofstream outStream {outFilepath, std::ios_base::out | std::ios_base::binary};
         if (!outStream) {
             std::string errorMsg{"Failed to open file for writing:"};
@@ -566,7 +564,6 @@ namespace virtru {
 
         if (m_tdfBuilder.m_impl->m_useECDSABinding) {
             // Calculate the ecdsa binding
-            auto curveName = ECCMode::GetEllipticCurveName(m_tdfBuilder.m_impl->m_ellipticCurveType);
             auto policyBinding = ECKeyPair::ComputeECDSASig(toBytes(digest), m_tdfBuilder.m_impl->m_privateKey);
             payloadInfo.setPolicyBinding(toBytes(policyBinding));
         } else {
