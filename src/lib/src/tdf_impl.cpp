@@ -293,7 +293,7 @@ namespace virtru {
 
             /// TODO: Improve the memory effeciency for html parsing.
             auto dataSize = inputProvider.getSize();
-            std::unique_ptr<std::uint8_t[]> buffer(new std::uint8_t[dataSize]);
+            auto buffer = std::make_unique<std::uint8_t[]>(dataSize);
 
             // Read all the data from input provider
             auto htmlBytes = gsl::make_span(buffer.get(), dataSize);
@@ -567,7 +567,7 @@ namespace virtru {
                 return true;
             } else {
                 auto dataSize = inputProvider.getSize();
-                std::unique_ptr<std::uint8_t[]> buffer(new std::uint8_t[dataSize]);
+                auto buffer = std::make_unique<std::uint8_t[]>(dataSize);
 
                 // Read all the data from input stream
                 auto htmlBytes = gsl::make_span(buffer.get(), dataSize);
@@ -1168,7 +1168,7 @@ namespace virtru {
         std::vector<std::uint8_t> encodeBuffer(encoded_size(kZipReadSize));
 
         // Vectors m_encodeBufferSize and m_zipReadBuffer are sized in constructor if protocol is html
-        while (!inputStream.eof()) {
+        while (!inputStream.eof() && !inputStream.fail()) {
 
             // Read from the file.
             LogTrace("before zip read");
@@ -1295,7 +1295,7 @@ namespace virtru {
             }
 
             auto dataSize = inputProvider.getSize();
-            std::unique_ptr<std::uint8_t[]> buffer(new std::uint8_t[dataSize]);
+            auto buffer = std::make_unique<std::uint8_t[]>(dataSize);
 
             // Read all the data from input stream
             auto htmlBytes = gsl::make_span(buffer.get(), dataSize);

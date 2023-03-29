@@ -216,7 +216,7 @@ namespace virtru {
     /// <%= dataManifest %>, <%= url %>) and replace with tdf data.
     TDFBuilder &TDFBuilder::setHtmlTemplateData(std::string htmlTemplateData) {
 
-        std::vector<std::string> placeholders{"<%= payload %>", "<%= manifest %>",
+        std::array<std::string, 6> placeholders{"<%= payload %>", "<%= manifest %>",
                                               "<%= transferUrl %>", "<%= transferBaseUrl %>",
                                               "<%= transferUrl %>", "<%= transferUrl %>"};
 
