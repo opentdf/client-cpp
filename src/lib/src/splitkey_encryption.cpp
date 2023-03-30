@@ -46,7 +46,7 @@ namespace virtru {
     }
 
     /// Generate the manifest.
-    nlohmann::json SplitKey::getManifest() {
+    ManifestDataModel SplitKey::getManifest() {
 
         if (m_keyAccessObjects.empty()) {
             ThrowException("'Key Access Object' is missing.", VIRTRU_CRYPTO_ERROR);
@@ -106,36 +106,19 @@ namespace virtru {
         // Create policy string for manifest.
         auto policyForManifest = m_keyAccessObjects[0]->policyForManifest();
 
-        nlohmann::json manifest;
-        manifest[kKeyAccessType] = kKeyType;
-        manifest[kKeyAccess] = nlohmann::json::array();
-        manifest[kKeyAccess].emplace_back(nlohmann::json::parse(keyAccessObject.toJsonString()));
+        ManifestDataModel manifestDataModel;
+        manifestDataModel.encryptionInformation.keyAccessType = kKeyType;
+        manifestDataModel.encryptionInformation.keyAccessObjects.emplace_back(keyAccessObject.getDataModel());
 
-        nlohmann::json method;
-        method[kIsStreamable] = false;
-        method[kIV] = base64IV;
+        manifestDataModel.encryptionInformation.method.iv = base64IV;
         if (m_cipherType == CipherType::Aes256GCM) {
-            method[kCipherAlgorithm] = kCipherAlgorithmGCM;
+            manifestDataModel.encryptionInformation.method.algorithm = kCipherAlgorithmGCM;
         } else {
-            method[kCipherAlgorithm] = kCipherAlgorithmCBC;
+            manifestDataModel.encryptionInformation.method.algorithm = kCipherAlgorithmCBC;
         }
 
-        manifest[kMethod] = method;
-
-        nlohmann::json rootSignature;
-        rootSignature[kRootSignatureAlg] = kRootSignatureAlgDefault;
-        rootSignature[kRootSignatureSig] = std::string{};
-
-        nlohmann::json integrityInformation;
-        integrityInformation[kRootSignature] = rootSignature;
-        integrityInformation[kSegmentSizeDefault] = std::string{};
-        integrityInformation[kSegmentHashAlg] = std::string{};
-        integrityInformation[kSegments] = nlohmann::json::array();
-
-        manifest[kIntegrityInformation] = integrityInformation;
-        manifest[kPolicy] = policyForManifest;
-
-        return manifest;
+        manifestDataModel.encryptionInformation.policy = policyForManifest;
+        return manifestDataModel;
     }
 
     /// Encrypt the data using the cipher.
