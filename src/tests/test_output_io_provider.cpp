@@ -122,7 +122,7 @@ public: //INetwork members
 
          outputProvider.writeBytes(bytes);
 
-     } catch (std::exception e) {
+     } catch (std::exception &e) {
          LogDebug(e.what());
          std::ostringstream oss;
          oss << e.what();
@@ -146,7 +146,7 @@ public: //INetwork members
                 BOOST_FAIL(oss.str());
             }
 
-        } catch (std::exception e) {
+        } catch (std::exception &e) {
             LogDebug(e.what());
             std::ostringstream oss;
             oss << e.what();
