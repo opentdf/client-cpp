@@ -21,6 +21,7 @@
 
 #include <boost/filesystem.hpp>
 #include "nlohmann/json.hpp"
+#include "manifest_data_model.h"
 
 namespace virtru {
 
@@ -143,16 +144,16 @@ namespace virtru {
         void buildRewrapV1Payload(nlohmann::json& requestPayload) const;
 
         /// Upsert the key information.
-        /// \param manifest - The manifest of the tdf.
+        /// \param manifestDataModel - Data model contains manifest of the tdf.
         /// \param ignoreKeyAccessType - If true skips the key access type before
         /// syncing.
         // ignoreType if true skips the key access type check when syncing
-        void upsert(nlohmann::json& manifest, bool ignoreKeyAccessType = false) const ;
+        void upsert(ManifestDataModel& manifestDataModel, bool ignoreKeyAccessType = false) const ;
 
         /// Unwrap the key from the manifest.
-        /// \param manifest - Manifest of the encrypted tdf
+        /// \param manifestDataModel - Data model contains manifest of the tdf.
         /// \return - Wrapped key.
-        WrappedKey unwrapKey(nlohmann::json& manifest) const;
+        WrappedKey unwrapKey(ManifestDataModel& manifestDataModel) const;
 
         /// Parse the response and retrieve the wrapped key.
         /// \param unwrapResponse - The response string from '/rewrap'
@@ -207,13 +208,13 @@ namespace virtru {
         std::string getPolicyIdFromManifest(const std::string& manifestStr) const;
 
         /// Validate the supported cipher type
-        /// \param manifest - -The tdf manifest.
-        void validateCipherType(const nlohmann::json& manifest) const;
+        /// \param manifestDataModel - Manifest data model.
+        void validateCipherType(const ManifestDataModel& manifestDataModel) const;
 
         /// Validate the root signature.
         /// \param splitKey - split key to validate the signature
-        /// \param manifest -The tdf manifest.
-        void validateRootSignature(SplitKey& splitKey, const nlohmann::json& manifest) const;
+        /// \param manifestDataModel -TManifest data model.
+        void validateRootSignature(SplitKey& splitKey, const ManifestDataModel& manifestDataModel) const;
 
     private: /// Data
 

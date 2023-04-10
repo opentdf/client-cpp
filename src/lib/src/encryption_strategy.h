@@ -16,6 +16,7 @@
 #include "key_access.h"
 #include <string>
 #include "nlohmann/json.hpp"
+#include "manifest_data_model.h"
 
 namespace virtru {
 
@@ -33,7 +34,7 @@ namespace virtru {
 
         /// Generate and return manifest.
         /// \return - A json string holding the manifest information.
-        virtual nlohmann::json getManifest() = 0;
+        virtual ManifestDataModel getManifest() = 0;
 
         /// Encrypt the data using the cipher.
         /// \param data - A buffer which contains data to be encrypted

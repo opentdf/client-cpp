@@ -10,6 +10,7 @@
 #include "key_access_object.h"
 
 #include <boost/test/included/unit_test.hpp>
+#include "manifest_data_model.h"
 
 
 BOOST_AUTO_TEST_SUITE(test_key_access_object_suite)
@@ -36,10 +37,8 @@ BOOST_AUTO_TEST_SUITE(test_key_access_object_suite)
         keyAccessObject.setPolicyBindingHash(policyBindingHash);
         keyAccessObject.setEncryptedMetadata(encryptedMetadata);
 
-        auto keyAccessObjectAsJsonStr = keyAccessObject.toJsonString(true);
-
-        auto keyAccessObject1 = KeyAccessObject::createKeyAccessObjectFromJson(keyAccessObjectAsJsonStr);
-        std::cerr << "Key Access object as json str =" << keyAccessObjectAsJsonStr << std::endl;
+        auto keyAccessDataModel = keyAccessObject.getDataModel();
+        auto keyAccessObject1 = KeyAccessObject::createKeyAccessObjectFromDataModel(keyAccessDataModel);
 
         BOOST_TEST(keyAccessObject1.getWrappedKey() == wrappedKey);
         BOOST_TEST(keyAccessObject1.getPolicyBindingHash() == policyBindingHash);

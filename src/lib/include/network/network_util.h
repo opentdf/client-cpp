@@ -21,7 +21,7 @@ namespace virtru::network {
     #define ThrowBoostNetworkException(message, errorCode)  \
     virtru::network::_ThrowBoostNetworkException(message, errorCode,  __SOURCE_FILENAME__, __LINE__)
 
-    static constexpr auto gloablCertAuthority =
+    static constexpr auto globalCertAuthority =
             //		This is the DigiCert root certificate.
             //
             //		CN = DigiCert High Assurance EV Root CA
