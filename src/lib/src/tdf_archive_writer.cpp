@@ -154,9 +154,9 @@ namespace virtru {
     }
 
     /// Append the manifest contents to the archive.
-    void TDFArchiveWriter::appendManifest(std::string&& manifest) {
+    void TDFArchiveWriter::appendManifest(ManifestDataModel manifestDataModel) {
 
-        m_manifest = manifest;
+        m_manifest = manifestDataModel.toJson();
 
         LogTrace("TDFArchiveWriter::appendManifest");
         LocalFileHeader lfh{};

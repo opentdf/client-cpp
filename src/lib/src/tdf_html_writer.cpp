@@ -37,9 +37,9 @@ namespace virtru {
         m_binaryPayload.reserve(payloadSize);
     }
 
-    /// Append the manifest contents to the archive.
-    void TDFHTMLWriter::appendManifest(std::string&& manifest) {
-        m_manifest = std::move(manifest);
+    /// Append the manifest contents to the HTML output source.
+    void TDFHTMLWriter::appendManifest(ManifestDataModel manifestDataModel){
+        m_manifest = manifestDataModel.toJson();
     }
 
     /// Append the manifest contents to the archive.

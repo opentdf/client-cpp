@@ -259,7 +259,7 @@ namespace virtru {
         manifestDataModel.encryptionInformation.integrityInformation.segmentHashAlg = segIntegrityAlgStr;
         manifestDataModel.encryptionInformation.method.isStreamable = true;
 
-        writer.appendManifest(manifestDataModel.toJson());
+        writer.appendManifest(manifestDataModel);
         writer.finish();
     }
 

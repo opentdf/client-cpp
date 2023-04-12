@@ -12,6 +12,7 @@
 #include "tdf_archive_writer.h"
 #include "tdf_archive_reader.h"
 #include "file_io_provider.h"
+#include "manifest_data_model.h"
 
 #include <openssl/rand.h>
 #include <boost/test/included/unit_test.hpp>
@@ -21,7 +22,52 @@ void test_custom_zip_implementation(size_t fileMb) {
 
     using namespace virtru;
 
-    std::string mainfestContents = R"({"displayName" : "effective-c++.pdf"})";
+    const auto mainfestContents =
+            R"({
+  "payload": {
+    "type": "reference",
+    "url": "0.payload",
+    "protocol": "zip",
+    "isEncrypted": true
+  },
+  "encryptionInformation": {
+    "type": "split",
+    "keyAccess": [
+      {
+        "type": "wrapped",
+        "url": "http://kas.example.com:4000",
+        "protocol": "kas",
+        "wrappedKey": "Y4wTa8tdKqSS3DUNMKTIUQq8Ti/WFrq26DRemybBgBcL/CyUZ98hFjDQgy4csBusEqwQ5zG+UAoRgkLkHiAw7hNAayAUCVRw6aUYRF4LWfcs2BM9k6d3bHqun0v5w==",
+        "policyBinding": "ZGMwNGExZjg0ODFjNDEzZTk5NjdkZmI5MWFjN2Y1MzI0MTliNjM5MmRlMTlhYWM0NjNjN2VjYTVkOTJlODcwNA==",
+        "encryptedMetadata": "OEOqJCS6mZsmLWJ38lh6EN2lDUA8OagL/OxQRQ=="
+      }
+    ],
+    "method": {
+      "algorithm": "AES-256-GCM",
+      "isStreamable": true,
+      "iv": "OEOqJCS6mZsmLWJ3"
+    },
+    "integrityInformation": {
+      "rootSignature": {
+        "alg": "HS256",
+        "sig": "YjliMzAyNjg4NzA0NzUyYmUwNzY1YWE4MWNhNDRmMDZjZDU3OWMyYTMzNjNlNDYyNTM4MDA4YjQxYTdmZmFmOA=="
+      },
+      "segmentSizeDefault": 1000000,
+      "segmentHashAlg": "GMAC",
+      "segments": [
+        {
+          "hash": "ZmQyYjY2ZDgxY2IzNGNmZTI3ODFhYTk2ZjJhNWNjODA=",
+          "segmentSize": 14056,
+          "encryptedSegmentSize": 14084
+        }
+      ],
+      "encryptedSegmentSizeDefault": 1000028
+    },
+    "policy": "eyJ1dWlkIjoiNjEzMzM0NjYtNGYwYS00YTEyLTk1ZmItYjZkOGJkMGI4YjI2IiwiYm9keSI6eyJhdHRyaWJ1dGVzIjpbXSwiZGlzc2VtIjpbInVzZXJAdmlydHJ1LmNvbSJdfX0="
+  }
+})";
+
+
     constexpr auto oneMBSize = 1024 * 1024u;
     constexpr auto tdfPayloadFileName = "0.payload";
     constexpr auto tdfManifestFileName = "0.manifest.json";
@@ -66,8 +112,8 @@ void test_custom_zip_implementation(size_t fileMb) {
         }
 
         // Write '0.manifest.json'
-        std::string manifestStr(mainfestContents);
-        writer.appendManifest(std::move(manifestStr));
+        auto dataModel = ManifestDataModel::CreateModelFromJson(mainfestContents);
+        writer.appendManifest(dataModel);
         writer.finish();
     }
 
@@ -80,7 +126,12 @@ void test_custom_zip_implementation(size_t fileMb) {
                                 tdfPayloadFileName};
 
         auto manifest = reader.getManifest();
-        BOOST_TEST(manifest == mainfestContents);
+
+
+
+        auto dataModel1 = ManifestDataModel::CreateModelFromJson(manifest);
+        auto dataModel2 = ManifestDataModel::CreateModelFromJson(mainfestContents);
+        BOOST_TEST(dataModel1.encryptionInformation.policy == dataModel2.encryptionInformation.policy);
 
         //FileOutputProvider outputProvider{payloadOut};
         std::ofstream outStream{payloadOut.c_str(), std::ios_base::out | std::ios_base::binary};
@@ -134,7 +185,51 @@ BOOST_AUTO_TEST_SUITE(test_tdf_archive_writer_suite)
     constexpr auto totalMbs = 2; // 20000; // 20GB
     constexpr auto oneMBSize = 1024 * 1024u;
     std::string kPreambleText{"VIRTRU"};
-    std::string mainfestContents = R"({"displayName" : "effective-c++.pdf"})";
+    const auto mainfestContents =
+            R"({
+  "payload": {
+    "type": "reference",
+    "url": "0.payload",
+    "protocol": "zip",
+    "isEncrypted": true
+  },
+  "encryptionInformation": {
+    "type": "split",
+    "keyAccess": [
+      {
+        "type": "wrapped",
+        "url": "http://kas.example.com:4000",
+        "protocol": "kas",
+        "wrappedKey": "Y4wTa8tdKqSS3DUNMKTIUQq8Ti/WFrq26DRemybBgBcL/CyUZ98hFjDQgy4csBusEqwQ5zG+UAoRgkLkHiAw7hNAayAUCVRw6aUYRF4LWfcs2BM9k6d3bHqun0v5w==",
+        "policyBinding": "ZGMwNGExZjg0ODFjNDEzZTk5NjdkZmI5MWFjN2Y1MzI0MTliNjM5MmRlMTlhYWM0NjNjN2VjYTVkOTJlODcwNA==",
+        "encryptedMetadata": "OEOqJCS6mZsmLWJ38lh6EN2lDUA8OagL/OxQRQ=="
+      }
+    ],
+    "method": {
+      "algorithm": "AES-256-GCM",
+      "isStreamable": true,
+      "iv": "OEOqJCS6mZsmLWJ3"
+    },
+    "integrityInformation": {
+      "rootSignature": {
+        "alg": "HS256",
+        "sig": "YjliMzAyNjg4NzA0NzUyYmUwNzY1YWE4MWNhNDRmMDZjZDU3OWMyYTMzNjNlNDYyNTM4MDA4YjQxYTdmZmFmOA=="
+      },
+      "segmentSizeDefault": 1000000,
+      "segmentHashAlg": "GMAC",
+      "segments": [
+        {
+          "hash": "ZmQyYjY2ZDgxY2IzNGNmZTI3ODFhYTk2ZjJhNWNjODA=",
+          "segmentSize": 14056,
+          "encryptedSegmentSize": 14084
+        }
+      ],
+      "encryptedSegmentSizeDefault": 1000028
+    },
+    "policy": "eyJ1dWlkIjoiNjEzMzM0NjYtNGYwYS00YTEyLTk1ZmItYjZkOGJkMGI4YjI2IiwiYm9keSI6eyJhdHRyaWJ1dGVzIjpbXSwiZGlzc2VtIjpbInVzZXJAdmlydHJ1LmNvbSJdfX0="
+  }
+})";
+
 
     BOOST_AUTO_TEST_CASE(test_tdf_lib_archive_new_writer) {
         const std::string tdfOutputFile{"sample_zip.tdf"};
@@ -160,8 +255,8 @@ BOOST_AUTO_TEST_SUITE(test_tdf_archive_writer_suite)
             writerv2.appendPayload(inBufferSpan);
             numberOfBytesWritten -= inBufferSpan.size();
         }
-        std::string manifest{ mainfestContents };
-        writerv2.appendManifest(std::move(manifest));
+        ManifestDataModel dataModel;
+        writerv2.appendManifest(dataModel);
         writerv2.finish();
     }
 

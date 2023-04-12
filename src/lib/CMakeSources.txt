@@ -91,7 +91,7 @@ set (TDF_CPP_SDK_SOURCE_FILES_BASE
         ${TDF_CPP_SDK_SOURCE_DIR}/src/oidc_configuration.h
         ${TDF_CPP_SDK_SOURCE_DIR}/include/tdf_reader.h
         ${TDF_CPP_SDK_SOURCE_DIR}/include/tdf_writer.h
-        ${TDF_CPP_SDK_SOURCE_DIR}/src/manifest_data_model.h
+        ${TDF_CPP_SDK_SOURCE_DIR}/include/manifest_data_model.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/manifest_data_model.cpp
     )
 
