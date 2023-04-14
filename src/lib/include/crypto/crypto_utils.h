@@ -77,7 +77,7 @@ namespace virtru::crypto {
     class CryptoException : public std::runtime_error {
     public:
         explicit CryptoException(std::string &&what, int code = 1) :
-                std::runtime_error{"Error code "s + std::to_string(code) + ". " + move(what)},
+                std::runtime_error{"Error code "s + std::to_string(code) + ". " + std::move(what)},
                 m_code{code} {}
 
         int code() const noexcept {

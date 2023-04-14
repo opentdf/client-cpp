@@ -57,10 +57,10 @@ namespace virtru {
 
         //only log line number for DEBUG and TRACE
         if(IsLogLevelDebug() || IsLogLevelTrace()){
-            throw Exception { os.str() + move (errorStringPrefix), code};
+            throw Exception { os.str() + std::move (errorStringPrefix), code};
         }
         else{
-            throw Exception { move (errorStringPrefix), code};
+            throw Exception { std::move (errorStringPrefix), code};
         }
 
          
