@@ -33,6 +33,7 @@
 #include "stream_io_provider.h"
 #include "benchmark.h"
 #include "crypto/gcm_decryption.h"
+#include "tdf_xml_reader.h"
 
 #include <memory>
 #include <stdint.h>
@@ -303,10 +304,8 @@ namespace virtru {
     /// Decrypt data from reader and write to IOutputProvider
     void TDFImpl::decryptTDFReaderToOutputProvider(ITDFReader& reader, IOutputProvider& outputProvider) {
 
-        auto manifestStr = reader.getManifest();
-
         // Parse the manifest
-        auto manifestDataModel =  ManifestDataModel::CreateModelFromJson(manifestStr);
+        auto manifestDataModel =  reader.getManifest();
 
         // Validate the cipher type before creating a split key
         validateCipherType(manifestDataModel);
@@ -413,10 +412,9 @@ namespace virtru {
         }
 
         TDFArchiveReader reader{&inputProvider, kTDFManifestFileName, kTDFPayloadFileName };
-        auto manifestStr = reader.getManifest();
 
         // Parse the manifest
-        auto manifestDataModel = ManifestDataModel::CreateModelFromJson(manifestStr);
+        auto manifestDataModel = reader.getManifest();
 
         // Validate the cipher type before creating a split key
         validateCipherType(manifestDataModel);
@@ -580,8 +578,7 @@ namespace virtru {
     std::string TDFImpl::getEncryptedMetadata(IInputProvider& inputProvider) {
         LogTrace("TDFImpl::getEncryptedMetadata");
 
-        auto manifestStr = getManifest(inputProvider);
-        auto manifestDataModel = ManifestDataModel::CreateModelFromJson(manifestStr);
+        auto manifestDataModel = getManifest(inputProvider);
 
         if (manifestDataModel.encryptionInformation.keyAccessObjects.size() != 1) {
             ThrowException("Only supports one key access object - unwrap", VIRTRU_TDF_FORMAT_ERROR);
@@ -634,8 +631,8 @@ namespace virtru {
 
         LogTrace("TDFImpl::getPolicy");
 
-        auto manifestStr = getManifest(inputProvider);
-        return getPolicyFromManifest(manifestStr);
+        auto manifestDataModel = getManifest(inputProvider);
+        return getPolicyFromManifest(manifestDataModel);
     }
 
     /// Return the policy uuid from the input provider.
@@ -643,8 +640,8 @@ namespace virtru {
 
         LogTrace("TDFImpl::getPolicyUUID");
 
-        std::string manifestStr = getManifest(inputProvider);
-        return getPolicyIdFromManifest(manifestStr);
+        auto manifestDataModel = getManifest(inputProvider);
+        return getPolicyIdFromManifest(manifestDataModel);
     }
 
     /// Sync the tdf file, with symmetric wrapped key and Policy Object.
@@ -652,7 +649,7 @@ namespace virtru {
 
         LogTrace("TDFImpl::sync");
 
-        std::string manifestStr;
+        ManifestDataModel manifestDataModel;
 
         FileInputProvider inputProvider{encryptedTdfFilepath};
         auto protocol = encryptedWithProtocol(inputProvider);
@@ -668,18 +665,19 @@ namespace virtru {
             TDFArchiveReader reader{&inputProvider,
                                     kTDFManifestFileName,
                                     kTDFPayloadFileName};
-            manifestStr = reader.getManifest();
-        } else {
+            manifestDataModel = reader.getManifest();
+        } else if (protocol == Protocol::Xml) {
+            // TDFXMLReader reader{inputProvider};
+            // dataModel = reader.getManifest();
+        } else { // html format
 
-            if (protocol == Protocol::Xml) {
-                ThrowException("XML TDF not supported", VIRTRU_TDF_FORMAT_ERROR);
-            }
-
+            std::string manifestStr;
             auto tdfData = getTDFZipData(encryptedTdfFilepath, true);
             manifestStr.append(tdfData.begin(), tdfData.end());
+
+            manifestDataModel = ManifestDataModel::CreateModelFromJson(manifestStr);
         }
 
-        auto manifestDataModel = ManifestDataModel::CreateModelFromJson(manifestStr);
         if (manifestDataModel.encryptionInformation.keyAccessObjects.size() != 1) {
             ThrowException("Only supports one key access object.", VIRTRU_TDF_FORMAT_ERROR);
         }
@@ -1259,23 +1257,23 @@ namespace virtru {
         return protocol;
     }
 
-    /// Return the manifest from the tdf input provider.
-    std::string TDFImpl::getManifest(IInputProvider& inputProvider) const {
+    /// Return the manifest data model from the tdf input provider.
+    ManifestDataModel TDFImpl::getManifest(IInputProvider& inputProvider) const {
         LogTrace("TDFImpl::getManifest from tdf stream");
 
-        std::string manifestStr;
+        ManifestDataModel dataModel;
 
         auto protocol = encryptedWithProtocol(inputProvider);
         if (protocol == Protocol::Zip) {
             TDFArchiveReader reader{&inputProvider,
                                     kTDFManifestFileName,
                                     kTDFPayloadFileName};
-            manifestStr = reader.getManifest();
-        } else { // html format
+            dataModel = reader.getManifest();
 
-            if (protocol == Protocol::Xml) {
-                ThrowException("XML TDF not supported", VIRTRU_TDF_FORMAT_ERROR);
-            }
+        } else if (protocol == Protocol::Xml) {
+            TDFXMLReader reader{inputProvider};
+            dataModel = reader.getManifest();
+        } else { // html format
 
             auto dataSize = inputProvider.getSize();
             auto buffer = std::make_unique<std::uint8_t[]>(dataSize);
@@ -1288,39 +1286,28 @@ namespace virtru {
             auto bytes = gsl::make_span(buffer.get(), dataSize);
             auto manifestData = getTDFZipData(toBytes(bytes), true);
 
+            std::string manifestStr;
             manifestStr.append(manifestData.begin(), manifestData.end());
+
+            dataModel = ManifestDataModel::CreateModelFromJson(manifestStr);
         }
 
-        return manifestStr;
+        return dataModel;
     }
 
     /// Retrive the policy from the manifest.
-    std::string TDFImpl::getPolicyFromManifest(const std::string &manifestStr) const {
+    std::string TDFImpl::getPolicyFromManifest(const ManifestDataModel& manifestDataModel) const {
         LogTrace("TDFImpl::getPolicyFromManifest");
 
-        auto manifest = nlohmann::json::parse(manifestStr);
-
-        if (!manifest.contains(kEncryptionInformation)) {
-            std::string errorMsg{"'encryptionInformation' not found in the manifest of tdf."};
-            ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
-        }
-
-        auto &encryptionInformation = manifest[kEncryptionInformation];
-
-        if (!encryptionInformation.contains(kPolicy)) {
-            std::string errorMsg{"'policy' not found in the manifest of tdf."};
-            ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
-        }
-
         // Get policy
-        std::string base64Policy = encryptionInformation[kPolicy];
+        std::string base64Policy = manifestDataModel.encryptionInformation.policy;
         auto policyStr = base64Decode(base64Policy);
         return policyStr;
     }
 
     /// Retrive the policy uuid(id) from the manifest.
-    std::string TDFImpl::getPolicyIdFromManifest(const std::string &manifestStr) const {
-        auto policyStr = getPolicyFromManifest(manifestStr);
+    std::string TDFImpl::getPolicyIdFromManifest(const ManifestDataModel& manifestDataModel) const {
+        auto policyStr = getPolicyFromManifest(manifestDataModel);
         auto policy = nlohmann::json::parse(policyStr);
 
         if (!policy.contains(kUid)) {

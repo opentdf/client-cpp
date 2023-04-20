@@ -166,13 +166,46 @@ namespace virtru {
                                                      "dissemination list. This will allow any entity with a "
                                                      "valid Entity Object to access this TDF.";
 
-    // XML TDF elements
+    // ICTDF XML elements
+    static constexpr auto kTrustedDataCollectionElement = "TrustedDataCollection";
     static constexpr auto kTrustedDataObjectElement = "TrustedDataObject";
-    static constexpr auto kEncryptionInformationElement = "EncryptionInformation";
+    static constexpr auto kEncryptionInformationElement = "tdf:EncryptionInformation";
+    static constexpr auto kKeyAccessElement = "tdf:KeyAccess";
+    static constexpr auto kWrappedPDPKeyElement = "tdf:WrappedPDPKey";
+    static constexpr auto kKeyValueElement = "tdf:KeyValue";
+    static constexpr auto kKeySizeElement = "tdf:KeySize";
+    static constexpr auto kIVParamsElement = "tdf:IVParams";
+    static constexpr auto kAuthenticationTagElement = "tdf:AuthenticationTag";
+    static constexpr auto kAlgorithmElement = "tdf:algorithm";
+    static constexpr auto kRemoteStoredKeyElement = "tdf:RemoteStoredKey";
+    static constexpr auto kProtocolElement = "tdf:protocol";
+    static constexpr auto kUriElement = "tdf:uri";
+    static constexpr auto kEncryptionMethodElement = "tdf:EncryptionMethod";
+    static constexpr auto kEncryptedPolicyObjectElement = "tdf:EncryptedPolicyObject";
+    static constexpr auto kEncryptedPolicyObject = "EncryptedPolicyObject";
+    static constexpr auto kHandlingAssertionElement = "tdf:HandlingAssertion";
+    static constexpr auto kIdElement = "tdf:id";
+    static constexpr auto kScopeElement = "tdf:scope";
+    static constexpr auto kAppliesToStateElement = "tdf:appliesToState";
+
+    static constexpr auto kBindingElement = "tdf:Binding";
+
+    static constexpr auto kSignerElement = "tdf:Signer";
+
+    static constexpr auto kIssuerElement = "tdf:issuer";
+
+
+    static constexpr auto kSignatureValueElement = "tdf:SignatureValue";
+    static constexpr auto kSignatureAlgorithmElement = "tdf:signatureAlgorithm";
+
+
+
     static constexpr auto kBase64BinaryPayloadElement = "Base64BinaryPayload";
+    static constexpr auto kTDFReferenceValuePayload = "tdf:ReferenceValuePayload";
     static constexpr auto kMediaTypeAttribute = "mediaType";
     static constexpr auto kFilenameAttribute = "filename";
     static constexpr auto kIsEncryptedAttribute = "isEncrypted";
+    static constexpr auto kTdfUri = "tdf:uri";
     static constexpr auto kTextPlainMediaType = "text/plain";
     static constexpr auto kAttributeValueAsTrue = "true";
 

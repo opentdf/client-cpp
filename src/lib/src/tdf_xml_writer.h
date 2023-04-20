@@ -13,6 +13,7 @@
 
 #include <string>
 #include <vector>
+#include <unordered_map>
 #include "tdf_writer.h"
 #include "tdf_constants.h"
 #include "crypto/bytes.h"
@@ -23,6 +24,7 @@
 namespace virtru {
 
     using namespace virtru::crypto;
+    using XMLAttributesNamesAndValues = std::unordered_map<std::string, std::string>;
 
     class TDFXMLWriter : public ITDFWriter {
     public:
@@ -66,10 +68,40 @@ namespace virtru {
         /// NOTE: Caller is responsible for deleting the buffer
         xmlBufferPtr createTDFXML();
 
+        /// Add 'tdf:ReferenceValuePayload' element.
+        /// \param writer - xml text writer object
+        void addReferenceValuePayloadElement(xmlTextWriterPtr writer);
+
+        /// Add 'tdf:EncryptionInformation' element.
+        /// \param writer - xml text writer object
+        void addEncryptionInformationElement(xmlTextWriterPtr writer);
+
+        /// Add 'tdf:HandlingAssertion' element.
+        /// \param writer - xml text writer object
+        void addHandlingAssertionElement(xmlTextWriterPtr writer);
+
+        /// Add 'Base64BinaryPayload' element.
+        /// \param  writer - xml text writer object
+        void addPayloadElement(xmlTextWriterPtr writer);
+
+        /// Create encrypted policy object.
+        /// \return string - Base64 encoded encrypted policy object.
+        std::string createEncryptedPolicyObject();
+
+        /// Create XML element and xmlTextWriter
+        /// \param writer - xml text writer object
+        /// \param elementName - Element name
+        /// \param elementValue - Element value
+        /// \param attrubutesNameAndValues  - Dictionary of attributes names and values
+        void createElement(xmlTextWriterPtr writer,
+                           const std::string& elementName,
+                           const std::string& elementValue,
+                           XMLAttributesNamesAndValues xmlAttributesNamesAndValues);
+
     private: /// Data
         std::string             m_manifestFilename;
         std::string             m_payloadFileName;
-        std::string             m_manifest;
+        ManifestDataModel       m_manifestDataModel;
         std::vector<gsl::byte>  m_binaryPayload;
         IOutputProvider&        m_outputProvider;
     };

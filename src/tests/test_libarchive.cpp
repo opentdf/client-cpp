@@ -125,11 +125,7 @@ void test_custom_zip_implementation(size_t fileMb) {
                                 tdfManifestFileName,
                                 tdfPayloadFileName};
 
-        auto manifest = reader.getManifest();
-
-
-
-        auto dataModel1 = ManifestDataModel::CreateModelFromJson(manifest);
+        auto dataModel1 =  reader.getManifest();
         auto dataModel2 = ManifestDataModel::CreateModelFromJson(mainfestContents);
         BOOST_TEST(dataModel1.encryptionInformation.policy == dataModel2.encryptionInformation.policy);
 

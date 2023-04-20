@@ -19,6 +19,7 @@
 #include "crypto/bytes.h"
 #include "io_provider.h"
 #include "tdf_archive_reader.h"
+#include "libxml2_deleters.h"
 
 namespace virtru {
 
@@ -43,9 +44,9 @@ namespace virtru {
         TDFXMLReader & operator=(TDFXMLReader &&) = delete;
 
     public: // From ITDFReader
-        /// Get the manifest content.
-        /// \return - Return the manifest as string.
-        const std::string& getManifest() override;
+        /// Get the manifest data model.
+        /// \return - Return the manifest data model
+        ManifestDataModel getManifest() override;
 
         /// Read payload of length starting the index.
         /// \param index - index within data where read is to begin
@@ -57,9 +58,26 @@ namespace virtru {
         /// \return std::uint64_t - Size of the payload.
         std::uint64_t getPayloadSize() const override;
 
+    private:
+        /// Read encryption information from the xml
+        /// \param doc - XML document node ptr
+        /// \param curNodePtr - Current node ptr
+        /// \param dataModel - Data model that will updated with encryption information.
+        void readEncryptionInformation(xmlDocPtr doc, xmlNodePtr curNodePtr, ManifestDataModel& dataModel);
+
+        /// Read encryption information from the root encryption information xml
+        /// \param doc - XML document node ptr
+        /// \param curNodePtr - Current node ptr
+        /// \param dataModel - Data model that will updated with encryption information.
+        void readLeve2EncryptionInformation(xmlDocPtr doc, xmlNodePtr curNodePtr, ManifestDataModel& dataModel);
+
+        /// Parse the encrypted policy object XML
+        /// \param policyObjectStr - encrypted policy object as base64 string
+        /// \param dataModel - Manifest data model.
+        void parseEncryptedPolicyObject(const std::string& policyObjectStr, ManifestDataModel& dataModel);
+
     private: /// Data
         IInputProvider&         m_inputProvider;
-        std::string             m_manifest;
         std::vector<gsl::byte>  m_binaryPayload;
     };
 }
