@@ -1,0 +1,350 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?oxygen SCHSchema="../../Schematron/ISM/ISM_XML.sch"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ntk="urn:us:gov:ic:ntk" xmlns:edh="urn:us:gov:ic:edh"
+   xmlns:arh="urn:us:gov:ic:arh" xmlns:ism="urn:us:gov:ic:ism" xmlns:icid="urn:us:gov:ic:id"
+   xmlns:xhtml="http://www.w3.org/1999/xhtml-StopBrowserRendering" xmlns:usagency="urn:us:gov:ic:usagency"
+   xmlns:cct="urn:us:gov:ic:cvenum:ismcat:responsibleentity" targetNamespace="urn:us:gov:ic:edh"
+   attributeFormDefault="qualified" elementFormDefault="qualified" xml:lang="en" ism:resourceElement="true"
+   ism:createDate="2012-05-10" ism:DESVersion="201609" ism:classification="U" ism:ownerProducer="USA" version="201609">
+   <xs:annotation>
+      <xs:documentation>
+         <xhtml:h1 ism:ownerProducer="USA" ism:classification="U">Intelligence Community Technical Specification XML
+            Data Encoding Specification for Enterprise Data Header(IC-EDH.XML)</xhtml:h1>
+      </xs:documentation>
+
+      <xs:documentation>
+         <xhtml:h2 ism:ownerProducer="USA" ism:classification="U">Notices</xhtml:h2>
+         <xhtml:p ism:ownerProducer="USA" ism:classification="U">Distribution Notice: 
+           This document has been approved for Public Release and is available for use without restriction.
+       </xhtml:p>
+      </xs:documentation>
+
+      <xs:documentation>
+         <xhtml:h2 ism:ownerProducer="USA" ism:classification="U">Description</xhtml:h2>
+         <xhtml:p ism:ownerProducer="USA" ism:classification="U">W3C XML Schema for the XML Data Encoding Specification
+            for Enterprise Data Header(IC-EDH.XML).</xhtml:p>
+      </xs:documentation>
+
+      <xs:documentation>
+         <xhtml:h2 ism:ownerProducer="USA" ism:classification="U">Introduction</xhtml:h2>
+         <xhtml:p ism:ownerProducer="USA" ism:classification="U">This XML Schema file is one component of the XML Data
+            Encoding Specification (DES). Please see the document titled <xhtml:i>
+               <xhtml:a href="../../Documents/IC-EDH/DesEdhIcXml.pdf">XML Data Encoding Specification for Enterprise Data
+                  Header</xhtml:a>
+            </xhtml:i> for a complete description of the encoding as well as list of all components.</xhtml:p>
+         <xhtml:p ism:ownerProducer="USA" ism:classification="U">It is envisioned that this schema or its components, as
+            well as other parts of the DES may be overridden for localized implementations. Therefore, permission to
+            use, copy, modify and distribute this XML Schema and the other parts of the DES for any purpose is hereby
+            granted in perpetuity.</xhtml:p>
+         <xhtml:p ism:ownerProducer="USA" ism:classification="U">Please reference the preceding two paragraphs in all
+            copies or variations. The developers make no representation about the suitability of the schema or DES for
+            any purpose. It is provided "as is" without expressed or implied warranty.</xhtml:p>
+         <xhtml:p ism:ownerProducer="USA" ism:classification="U">If you modify this XML Schema in any way label your
+            schema as a variant of EDH.XML.</xhtml:p>
+         <xhtml:p ism:ownerProducer="USA" ism:classification="U">Please direct all questions, bug reports, or suggestions
+            for changes to the points of contact identified in the document referenced above.</xhtml:p>
+      </xs:documentation>
+
+      <xs:documentation>
+         <xhtml:h2 ism:ownerProducer="USA" ism:classification="U">Implementation Notes</xhtml:h2>
+         <xhtml:p ism:ownerProducer="USA" ism:classification="U">No implementation notes at this time.</xhtml:p>
+      </xs:documentation>
+
+      <xs:documentation>
+         <xhtml:h2 ism:ownerProducer="USA" ism:classification="U">Creators</xhtml:h2>
+         <xhtml:p ism:ownerProducer="USA" ism:classification="U">Office of the Director of National Intelligence
+            Intelligence Community Chief Information Officer</xhtml:p>
+      </xs:documentation>
+   </xs:annotation>
+   <!--***************************************************-->
+   <!--Start Import Statements-->
+   <!--***************************************************-->
+   <xs:import namespace="urn:us:gov:ic:arh" schemaLocation="../ARH/IC-ARH.xsd"/>
+   <xs:import namespace="urn:us:gov:ic:cvenum:ismcat:responsibleentity"
+      schemaLocation="../ISMCAT/CVEGenerated/CVEnumISMCATResponsibleEntity.xsd"/>
+   <xs:import namespace="urn:us:gov:ic:id" schemaLocation="../IC-ID/IC-ID.xsd"/>
+   <xs:import namespace="urn:us:gov:ic:ism" schemaLocation="../ISM/IC-ISM.xsd"/>
+   <xs:import namespace="urn:us:gov:ic:ntk" schemaLocation="../NTK/IC-NTK.xsd"/>
+   <xs:import namespace="urn:us:gov:ic:usagency" schemaLocation="../USAgency/USAgency.xsd"/>
+   <!--***************************************************-->
+   <!--End Import Statements-->
+   <!--***************************************************-->
+   <!--***************************************************-->
+   <!--Start All case-insensitive alphabetically-->
+   <!--***************************************************-->
+
+   <xs:element name="AuthorizationReference" type="edh:AuthorizationReferenceType">
+      <xs:annotation>
+         <xs:documentation>
+            <xhtml:p ism:ownerProducer="USA" ism:classification="U">Attribute to hold the authorization reference of the
+               data object referred to by the EDH. One or more indicators of a unique and documented legal basis for all
+               activities surrounding the creation, retention and use of an information resource.</xhtml:p>
+         </xs:documentation>
+      </xs:annotation>
+   </xs:element>
+
+   <xs:simpleType name="AuthorizationReferenceType">
+      <xs:annotation>
+         <xs:documentation>
+            <xhtml:p ism:ownerProducer="USA" ism:classification="U">One or more indicators of a unique and documented
+               legal basis for all activities surrounding the creation, retention and use of an information
+               resource.</xhtml:p>
+         </xs:documentation>
+      </xs:annotation>
+      <xs:restriction base="xs:NMTOKENS"/>
+   </xs:simpleType>
+
+   <xs:element name="Country" type="cct:CVEnumISMCATResponsibleEntity">
+      <xs:annotation>
+         <xs:documentation>
+            <xhtml:p ism:classification="U" ism:ownerProducer="USA">The ISO 3166 country code of the organization that
+               created the data item.</xhtml:p>
+         </xs:documentation>
+      </xs:annotation>
+   </xs:element>
+
+   <xs:element name="DataSet" type="ism:ShortStringWithSecurityType">
+      <xs:annotation>
+         <xs:documentation>
+            <xhtml:p ism:ownerProducer="USA" ism:classification="U">A means of indicating a particular association of data. MUST not impact access control, access control MUST be entirely contained in the ARH section.</xhtml:p>
+         </xs:documentation>
+      </xs:annotation>
+   </xs:element>
+   
+   <xs:element name="DataItemCreateDateTime" type="xs:dateTime">
+      <xs:annotation>
+         <xs:documentation>
+            <xhtml:p ism:ownerProducer="USA" ism:classification="U">The created dateTime of the data object referred to
+               by the EDH.</xhtml:p>
+         </xs:documentation>
+      </xs:annotation>
+   </xs:element>
+
+   <xs:attribute name="DESVersion">
+      <xs:annotation>
+         <xs:documentation xml:lang="en">
+            <xhtml:p ism:ownerProducer="USA" ism:classification="U">The version number of the DES</xhtml:p>
+         </xs:documentation>
+      </xs:annotation>
+      <xs:simpleType>
+         <xs:restriction base="xs:string">
+            <xs:pattern value="201609(\-.{1,23})?"/>
+            <xs:maxLength value="30"/>
+         </xs:restriction>
+      </xs:simpleType>
+   </xs:attribute>
+
+   <xs:element name="Edh">
+      <xs:annotation>
+         <xs:documentation>
+            <xhtml:p ism:ownerProducer="USA" ism:classification="U">Used for specifying an object's basic header
+               information required for exchange on the IC Enterprise when the object is present in the same instance
+               document as this element.</xhtml:p>
+         </xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:complexContent>
+            <xs:extension base="edh:EdhType">
+               <xs:sequence>
+                  <xs:element ref="arh:Security"/>
+               </xs:sequence>
+            </xs:extension>
+         </xs:complexContent>
+      </xs:complexType>
+   </xs:element>
+
+   <xs:complexType name="EdhType">
+      <xs:annotation>
+         <xs:documentation>
+            <xhtml:p ism:ownerProducer="USA" ism:classification="U">A base type to hold the common components of an
+               EDH.</xhtml:p>
+         </xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element ref="icid:Identifier" minOccurs="1" maxOccurs="1"/>
+         <xs:element ref="edh:DataItemCreateDateTime" minOccurs="1" maxOccurs="1"/>
+         <xs:element ref="edh:AuthorizationReference" minOccurs="0" maxOccurs="1"/>
+         <xs:element ref="edh:ResponsibleEntity" minOccurs="1" maxOccurs="2"/>
+         <xs:element ref="edh:DataSet" minOccurs="0" maxOccurs="1"/>
+      </xs:sequence>
+      <xs:attribute ref="edh:DESVersion" use="optional"/>
+      <xs:attribute ref="ism:DESVersion" use="optional"/>
+      <xs:attribute ref="ism:ISMCATCESVersion" use="required"/>
+      <xs:attribute ref="ntk:DESVersion" use="optional"/>
+      <xs:attribute ref="arh:DESVersion" use="optional"/>
+      <xs:attribute ref="icid:DESVersion" use="optional"/>
+      <xs:attribute ref="usagency:CESVersion" use="required"/>
+   </xs:complexType>
+
+   <xs:element name="ExternalEdh">
+      <xs:annotation>
+         <xs:documentation>
+            <xhtml:p ism:ownerProducer="USA" ism:classification="U">Used for specifying an object's basic header
+               information required for exchange on the IC Enterprise when the object is not in the instance document
+               that this element is used. Values specified in this header will not contribute to roll-up.</xhtml:p>
+         </xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:complexContent>
+            <xs:extension base="edh:EdhType">
+               <xs:sequence>
+                  <xs:element ref="arh:ExternalSecurity"/>
+               </xs:sequence>
+            </xs:extension>
+         </xs:complexContent>
+      </xs:complexType>
+   </xs:element>
+
+   <xs:element name="Organization" type="xs:NMTOKEN">
+      <xs:annotation>
+         <xs:documentation>
+            <xhtml:p ism:ownerProducer="USA" ism:classification="U">The organization within the country specified that
+               created the data item.</xhtml:p>
+         </xs:documentation>
+      </xs:annotation>
+   </xs:element>
+
+   <xs:element name="ResponsibleEntity" type="edh:ResponsibleEntityWithRoleType">
+      <xs:annotation>
+         <xs:documentation>
+            <xhtml:p ism:ownerProducer="USA" ism:classification="U">The creator entity that created the data item
+               referenced by the EDH.</xhtml:p>
+         </xs:documentation>
+      </xs:annotation>
+      
+   </xs:element>
+   
+   <xs:simpleType name="ResponsibleEntityRoleType">
+      <xs:annotation>
+         <xs:documentation>
+            <xhtml:p ism:ownerProducer="USA" ism:classification="U">
+               Role identifies the relationships of the ResponsibleEntity to the data item
+               referenced by the EDH. The role of Originator represents that the ResponsibleEntity is the creator/originator/author of the data item
+               referenced by the EDH. The role of Custodian represents that the ResponsibleEntity is responsible for the data item
+               referenced by the EDH being on the network but is not necessarily the creator/originator/author of it.
+               You must have one and only one Custodian, and you may have zero or one Originator.
+            </xhtml:p>
+         </xs:documentation>
+      </xs:annotation>
+      <xs:restriction base="xs:NMTOKEN">
+         <xs:enumeration value="Originator"/>
+         <xs:enumeration value="Custodian"/>
+      </xs:restriction>
+   </xs:simpleType>
+   
+   <xs:complexType name="ResponsibleEntityWithRoleType">
+      <xs:annotation>
+         <xs:documentation>
+            <xhtml:p ism:ownerProducer="USA" ism:classification="U">A base type to hold the common components of an
+               EDH. It enforces the presence of a role attribute.</xhtml:p>
+         </xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element ref="edh:Country" maxOccurs="1" minOccurs="1"/>
+         <xs:element ref="edh:Organization" minOccurs="1" maxOccurs="1"/>
+         <xs:element ref="edh:SubOrganization" minOccurs="0" maxOccurs="1"/>
+      </xs:sequence>
+      <xs:attribute name="role" type="edh:ResponsibleEntityRoleType" use="required">
+         <xs:annotation>
+            <xs:documentation>
+               <xhtml:p ism:ownerProducer="USA" ism:classification="U">Role identifies the relationships of the ResponsibleEntity to the data item
+                  referenced by the EDH. The role of Originator represents that the ResponsibleEntity is the creator/originator/author of the data item
+                  referenced by the EDH. The role of Custodian represents that the ResponsibleEntity is responsible for the data item
+                  referenced by the EDH being on the network but is not necessarily the creator/originator/author of it. 
+                  You must have one and only one Custodian, and you may have zero or one Originator.</xhtml:p>
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attributeGroup ref="ism:SecurityAttributesOptionGroup"/>
+   </xs:complexType>
+   
+   <xs:complexType name="ResponsibleEntityType">
+      <xs:annotation>
+         <xs:documentation>
+            <xhtml:p ism:ownerProducer="USA" ism:classification="U">A base type to hold the common components of an
+               EDH.</xhtml:p>
+         </xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element ref="edh:Country" maxOccurs="1" minOccurs="1"/>
+         <xs:element ref="edh:Organization" minOccurs="1" maxOccurs="1"/>
+         <xs:element ref="edh:SubOrganization" minOccurs="0" maxOccurs="1"/>
+      </xs:sequence>
+      <xs:attributeGroup ref="ism:SecurityAttributesOptionGroup"/>
+   </xs:complexType>
+   
+   <xs:element name="SubOrganization" type="xs:NMTOKEN">
+      <xs:annotation>
+         <xs:documentation>
+            <xhtml:p ism:ownerProducer="USA" ism:classification="U">The suborganization within the organization
+               specified that created the data item.</xhtml:p>
+         </xs:documentation>
+      </xs:annotation>
+   </xs:element>
+   <!--***************************************************-->
+   <!--End All case-insensitive alphabetically-->
+   <!--***************************************************-->
+   <xs:annotation>
+      <xs:documentation>
+         <xhtml:h2 ism:ownerProducer="USA" ism:classification="U">Formal Change List</xhtml:h2>
+         <xhtml:table ism:ownerProducer="USA" ism:classification="U" id="ChangeHistory">
+            <xhtml:caption>Change History</xhtml:caption>
+            <xhtml:thead>
+               <xhtml:tr>
+                  <th>Version</th>
+                  <th>Date</th>
+                  <th>By</th>
+                  <th>Description</th>
+               </xhtml:tr>
+            </xhtml:thead>
+            <xhtml:tbody>
+               <xhtml:tr>
+                  <xhtml:td>2016-SEP</xhtml:td>
+                  <xhtml:td>2016-02-17</xhtml:td>
+                  <xhtml:td>IC CIO</xhtml:td>
+                  <xhtml:td>The schema change logs will no longer be maintained as of the 2016-SEP release. 
+                     The existing change logs will only serve as legacy information. 
+                     For changes to schema as of and after 2016-SEP, reference the change history in the DES.</xhtml:td>
+               </xhtml:tr>
+               <xhtml:tr>
+                  <xhtml:td>2015-AUG</xhtml:td>
+                  <xhtml:td>2015-04-16</xhtml:td>
+                  <xhtml:td>IC CIO</xhtml:td>
+                  <xhtml:td>Refactored schema to use ISMCAT Responsible Entity CVE for edh:Country.</xhtml:td>
+               </xhtml:tr>
+               <xhtml:tr>
+                  <xhtml:td>2015-AUG</xhtml:td>
+                  <xhtml:td>2015-04-16</xhtml:td>
+                  <xhtml:td>IC CIO</xhtml:td>
+                  <xhtml:td>Refactored schema to use types and avoid inline element declarations.</xhtml:td>
+               </xhtml:tr>
+               <xhtml:tr>
+                  <xhtml:td>4</xhtml:td>
+                  <xhtml:td>2013-08-16</xhtml:td>
+                  <xhtml:td>IC CIO</xhtml:td>
+                  <xhtml:td>Added an optional attribute to declare the CES Version for ISMCAT on the IC-EDH root elements.</xhtml:td>
+               </xhtml:tr>
+               <xhtml:tr>
+                  <xhtml:td>4</xhtml:td>
+                  <xhtml:td>2013-08-16</xhtml:td>
+                  <xhtml:td>IC CIO</xhtml:td>
+                  <xhtml:td>Added the US Agency CES Version attribute to the EDH top-level element.</xhtml:td>
+               </xhtml:tr>
+               <xhtml:tr>
+                  <xhtml:td>3</xhtml:td>
+                  <xhtml:td>2012-01-31</xhtml:td>
+                  <xhtml:td>Clay, ODNI/CIO/ME/DIA</xhtml:td>
+                  <xhtml:td>Added a dependency on the IC-ID specification. Updated the Edh type to reference the
+                     Identifier element defined in IC-ID and removed the local definition.</xhtml:td>
+               </xhtml:tr>
+               <xhtml:tr>
+                  <xhtml:td>1</xhtml:td>
+                  <xhtml:td>2012-11-05</xhtml:td>
+                  <xhtml:td>Hodges, ODNI/CIO/ME/DIA</xhtml:td>
+                  <xhtml:td>Initial release of this module</xhtml:td>
+               </xhtml:tr>
+            </xhtml:tbody>
+         </xhtml:table>
+      </xs:documentation>
+   </xs:annotation>
+</xs:schema>
