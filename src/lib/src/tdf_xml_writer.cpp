@@ -329,7 +329,7 @@ namespace virtru {
                 ThrowException(std::move(errorMsg));
             }
 
-            std::string algorithm("AES");
+            std::string algorithm(kCipherAlgorithmGCM);
             rc = xmlTextWriterWriteAttribute(writer, reinterpret_cast<const xmlChar *>(kAlgorithmElement),
                                              reinterpret_cast<const xmlChar *>(algorithm.c_str()));
             if (rc < 0) {
@@ -569,7 +569,9 @@ namespace virtru {
 
         // Add 'encryptedMetaData'
         auto encryptedMetaData = m_manifestDataModel.encryptionInformation.keyAccessObjects[0].encryptedMetadata;
-        createElement(writer.get(), kEncryptedMetadata, policyBinding, {});
+        if (!encryptedMetaData.empty()) {
+            createElement(writer.get(), kEncryptedMetadata, encryptedMetaData, {});
+        }
 
         rc = xmlTextWriterEndElement(writer.get());
         if (rc < 0) {

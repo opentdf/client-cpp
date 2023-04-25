@@ -114,6 +114,16 @@ namespace virtru {
 
         auto dataSize = inputProvider.getSize();
 
+        // The max file size of 64gb can be encrypted.
+        if (dataSize > kMaxFileSizeSupported) {
+            ThrowException("Current version of Virtru SDKs do not support file size greater than 64 GB.", VIRTRU_TDF_FORMAT_ERROR);
+        }
+
+        // For XML(ICTDF) there will be only one segment and it's the size of the payload.
+        if (m_tdfBuilder.m_impl->m_protocol == Protocol::Xml) {
+            m_tdfBuilder.m_impl->m_segmentSize = dataSize;
+        }
+
         // Check if there is a policy object
         if (m_tdfBuilder.m_impl->m_policyObject.getUuid().empty()) {
             ThrowException("Policy object is missing.", VIRTRU_TDF_FORMAT_ERROR);
@@ -391,7 +401,7 @@ namespace virtru {
             auto hash = segment.hash;
 
             // Validate the hash.
-            if (hash != base64Encode(payloadSigStr)) {
+            if (m_tdfBuilder.m_impl->m_protocol != Protocol::Xml && hash != base64Encode(payloadSigStr)) {
                 ThrowException("Failed integrity check on segment hash", VIRTRU_CRYPTO_ERROR);
             }
 
@@ -1336,6 +1346,11 @@ namespace virtru {
 
     /// Validate the root signature.
     void TDFImpl::validateRootSignature(SplitKey& splitKey, const ManifestDataModel& manifestDataModel) const {
+
+        // Bypass root signature check for xml(ictdf) since we have only one segment.
+        if (m_tdfBuilder.m_impl->m_protocol == Protocol::Xml) {
+            return;
+        }
 
         auto rootSignatureAlg = manifestDataModel.encryptionInformation.integrityInformation.rootSignature.algorithm;
         auto rootSignatureSig = manifestDataModel.encryptionInformation.integrityInformation.rootSignature.signature;

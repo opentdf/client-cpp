@@ -140,7 +140,17 @@ namespace virtru {
             auto const result = decode(&m_binaryPayload[0],
                                        reinterpret_cast<const char *>(xmlCharBase64Payload.get()),
                                        base64PayloadLength);
-            m_binaryPayload.resize(result.first);
+            auto encryptedSize = result.first;
+            m_binaryPayload.resize(encryptedSize);
+            dataModel.encryptionInformation.integrityInformation.encryptedSegmentSizeDefault = encryptedSize;
+
+            auto payloadSize = (encryptedSize - (kGcmIvSize + kAesBlockSize));
+            dataModel.encryptionInformation.integrityInformation.segmentSizeDefault = payloadSize;
+
+            SegmentInfoDataModel segmentInfo;
+            segmentInfo.encryptedSegmentSize = encryptedSize;
+            segmentInfo.segmentSize = payloadSize;
+            dataModel.encryptionInformation.integrityInformation.segments.emplace_back(segmentInfo);
         }
 
         return dataModel;
@@ -223,6 +233,7 @@ namespace virtru {
 
                 std::string keyValueStr(reinterpret_cast<const char*>(keyValue.get()), xmlStrlen(keyValue.get()));
                 dataModel.encryptionInformation.keyAccessObjects[0].wrappedKey = keyValueStr;
+                dataModel.encryptionInformation.keyAccessObjects[0].keyType = kKeyAccessWrapped;
             }
 
             // Get tdf:EncryptedPolicyObject
@@ -327,7 +338,7 @@ namespace virtru {
             }
 
             // Get encrypted meta data
-            if (!xmlStrcmp(cur->name, reinterpret_cast<const xmlChar *>(kPolicyBinding))) {
+            if (!xmlStrcmp(cur->name, reinterpret_cast<const xmlChar *>(kEncryptedMetadata))) {
 
                 XMLCharFreePtr xmlCharFreePtr;
                 xmlChar* encryptedMetaData = xmlNodeListGetString(doc.get(), cur->xmlChildrenNode, 1);
