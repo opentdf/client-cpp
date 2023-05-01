@@ -67,7 +67,7 @@ namespace virtru :: network {
             ServiceCallback cb_;
             void report (ErrorCode ec ) {
                 if ( cb_ ) {
-                    cb_ ( ec, move ( res_ ) );
+                    cb_ ( ec, std::move ( res_ ) );
                     cb_ = nullptr;
                 }
             }
@@ -80,11 +80,11 @@ namespace virtru :: network {
                     HttpRequest && req,
                     ServiceCallback && cb
             ):
-                    host {move ( host ) },
+                    host {std::move ( host ) },
                     resolver_ { io },
                     stream_ { io, ctx },
-                    req_ { move ( req ) },
-                    cb_ { move ( cb ) }
+                    req_ { std::move ( req ) },
+                    cb_ { std::move ( cb ) }
             {
                 parser_.body_limit((std::numeric_limits<std::uint64_t>::max)());
             }
@@ -180,7 +180,7 @@ namespace virtru :: network {
 
             void on_read_headers (
                     bs :: error_code ec,
-                    std::size_t bytes_transferred
+                    std::size_t /*bytes_transferred*/
             ) {
                 if ( ec )
                     return report ( ec );
@@ -231,7 +231,7 @@ namespace virtru :: network {
             ServiceCallback cb_;
             void report (ErrorCode ec ) {
                 if ( cb_ ) {
-                    cb_ ( ec, move ( res_ ) );
+                    cb_ ( ec, std::move ( res_ ) );
                     cb_ = nullptr;
                 }
             }
@@ -243,11 +243,11 @@ namespace virtru :: network {
                     HttpRequest && req,
                     ServiceCallback && cb
             ):
-                    host {move ( host ) },
+                    host {std::move ( host ) },
                     resolver_ { io },
                     stream_ { io },
-                    req_ { move ( req ) },
-                    cb_ { move ( cb ) }
+                    req_ { std::move ( req ) },
+                    cb_ { std::move ( cb ) }
             {
                 parser_.body_limit((std::numeric_limits<std::uint64_t>::max)());
             }
@@ -323,7 +323,7 @@ namespace virtru :: network {
 
             void on_read_headers (
                     bs :: error_code ec,
-                    std::size_t bytes_transferred
+                    std::size_t /*bytes_transferred*/
             ) {
                 if ( ec )
                     return report ( ec );
@@ -442,12 +442,12 @@ namespace virtru :: network {
         m_request.method(HttpVerb::get);
 
         if (isSSLSocket()) {
-            std::make_shared<SSLSession>(move(m_host), ioContext, m_sslContext,
-                                         move(m_request), move(callback))->start(m_schema);
+            std::make_shared<SSLSession>(std::move(m_host), ioContext, m_sslContext,
+                                         std::move(m_request), std::move(callback))->start(m_schema);
         }
         else {
-            std::make_shared<Session>(move(m_host), ioContext,
-                                      move(m_request), move(callback))->start(m_schema);
+            std::make_shared<Session>(std::move(m_host), ioContext,
+                                      std::move(m_request), std::move(callback))->start(m_schema);
         }
     }
 
@@ -458,12 +458,12 @@ namespace virtru :: network {
         m_request.method(HttpVerb::head);
 
         if (isSSLSocket()) {
-            std::make_shared<SSLSession>(move(m_host), ioContext, m_sslContext,
-                                         move(m_request), move(callback))->start(m_schema);
+            std::make_shared<SSLSession>(std::move(m_host), ioContext, m_sslContext,
+                                         std::move(m_request), std::move(callback))->start(m_schema);
         }
         else {
-            std::make_shared<Session>(move(m_host), ioContext,
-                                      move(m_request), move(callback))->start(m_schema);
+            std::make_shared<Session>(std::move(m_host), ioContext,
+                                      std::move(m_request), std::move(callback))->start(m_schema);
         }
     }
 
@@ -477,12 +477,12 @@ namespace virtru :: network {
         m_request.prepare_payload();
 
         if (isSSLSocket()) {
-            std::make_shared<SSLSession>(move(m_host), ioContext, m_sslContext,
-                                         move(m_request), move(callback))->start(m_schema);
+            std::make_shared<SSLSession>(std::move(m_host), ioContext, m_sslContext,
+                                         std::move(m_request), std::move(callback))->start(m_schema);
         }
         else {
-            std::make_shared<Session>(move(m_host), ioContext,
-                                      move(m_request), move(callback))->start(m_schema);
+            std::make_shared<Session>(std::move(m_host), ioContext,
+                                      std::move(m_request), std::move(callback))->start(m_schema);
         }
     }
 
@@ -496,12 +496,12 @@ namespace virtru :: network {
         m_request.prepare_payload();
 
         if (isSSLSocket()) {
-            std::make_shared<SSLSession>(move(m_host), ioContext, m_sslContext,
-                                         move(m_request), move(callback))->start(m_schema);
+            std::make_shared<SSLSession>(std::move(m_host), ioContext, m_sslContext,
+                                         std::move(m_request), std::move(callback))->start(m_schema);
         }
         else {
-            std::make_shared<Session>(move(m_host), ioContext,
-                                      move(m_request), move(callback))->start(m_schema);
+            std::make_shared<Session>(std::move(m_host), ioContext,
+                                      std::move(m_request), std::move(callback))->start(m_schema);
         }
     }
 
@@ -515,12 +515,12 @@ namespace virtru :: network {
         m_request.prepare_payload();
 
         if (isSSLSocket()) {
-            std::make_shared<SSLSession>(move(m_host), ioContext, m_sslContext,
-                                         move(m_request), move(callback))->start(m_schema);
+            std::make_shared<SSLSession>(std::move(m_host), ioContext, m_sslContext,
+                                         std::move(m_request), std::move(callback))->start(m_schema);
         }
         else {
-            std::make_shared<Session>(move(m_host), ioContext,
-                                      move(m_request), move(callback))->start(m_schema);
+            std::make_shared<Session>(std::move(m_host), ioContext,
+                                      std::move(m_request), std::move(callback))->start(m_schema);
         }
     }
 
