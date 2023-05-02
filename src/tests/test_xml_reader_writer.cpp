@@ -22,12 +22,55 @@ BOOST_AUTO_TEST_SUITE(test_xml_reader_writer_suite)
     using namespace virtru;
     using namespace virtru::crypto;
 
-    static const std::string manifest = R"({"name":"John", "age":30, "car":null})";
+    const auto manifestInJson =
+            R"({
+  "payload": {
+    "type": "reference",
+    "url": "0.payload",
+    "protocol": "zip",
+    "isEncrypted": true
+  },
+  "encryptionInformation": {
+    "type": "split",
+    "keyAccess": [
+      {
+        "type": "wrapped",
+        "url": "http://kas.example.com:4000",
+        "protocol": "kas",
+        "wrappedKey": "Y4wTa8tdKqSS3DUNMKTIUQq8Ti/WFrq26DRemybBgBcL/CyUZ98hFjDQgy4csBusEqwQ5zG+UAoRgkLkHiAw7hNAayAUCVRw6aUYRF4LWfcs2BM9k6d3bHqun0v5w==",
+        "policyBinding": "ZGMwNGExZjg0ODFjNDEzZTk5NjdkZmI5MWFjN2Y1MzI0MTliNjM5MmRlMTlhYWM0NjNjN2VjYTVkOTJlODcwNA==",
+        "encryptedMetadata": "OEOqJCS6mZsmLWJ38lh6EN2lDUA8OagL/OxQRQ=="
+      }
+    ],
+    "method": {
+      "algorithm": "AES-256-GCM",
+      "isStreamable": true,
+      "iv": "OEOqJCS6mZsmLWJ3"
+    },
+    "integrityInformation": {
+      "rootSignature": {
+        "alg": "HS256",
+        "sig": "YjliMzAyNjg4NzA0NzUyYmUwNzY1YWE4MWNhNDRmMDZjZDU3OWMyYTMzNjNlNDYyNTM4MDA4YjQxYTdmZmFmOA=="
+      },
+      "segmentSizeDefault": 1000000,
+      "segmentHashAlg": "GMAC",
+      "segments": [
+        {
+          "hash": "ZmQyYjY2ZDgxY2IzNGNmZTI3ODFhYTk2ZjJhNWNjODA=",
+          "segmentSize": 14056,
+          "encryptedSegmentSize": 14084
+        }
+      ],
+      "encryptedSegmentSizeDefault": 1000028
+    },
+    "policy": "eyJ1dWlkIjoiNjEzMzM0NjYtNGYwYS00YTEyLTk1ZmItYjZkOGJkMGI4YjI2IiwiYm9keSI6eyJhdHRyaWJ1dGVzIjpbXSwiZGlzc2VtIjpbInVzZXJAdmlydHJ1LmNvbSJdfX0="
+  }
+})";
+
     static const std::string payload = R"(abcdefghijklmnopqrstuvwxyz)";
     static const std::string tdfXML = R"(<?xml version="1.0" encoding="UTF-8"?>
-<TrustedDataObject><EncryptionInformation>eyJuYW1lIjoiSm9obiIsICJhZ2UiOjMwLCAiY2FyIjpudWxsfQ==</EncryptionInformation><Base64BinaryPayload mediaType="text/plain" filename="0.payload" isEncrypted="true">YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXo=</Base64BinaryPayload></TrustedDataObject>
+<TrustedDataCollection><TrustedDataObject><tdf:ReferenceValuePayload isEncrypted="true" mediaType="application/octet-stream"/><tdf:EncryptionInformation><tdf:KeyAccess><tdf:WrappedPDPKey><tdf:KeyValue>Y4wTa8tdKqSS3DUNMKTIUQq8Ti/WFrq26DRemybBgBcL/CyUZ98hFjDQgy4csBusEqwQ5zG+UAoRgkLkHiAw7hNAayAUCVRw6aUYRF4LWfcs2BM9k6d3bHqun0v5w==</tdf:KeyValue><tdf:EncryptedPolicyObject>PD94bWwgdmVyc2lvbj0iMS4wIj8+CjxFbmNyeXB0ZWRQb2xpY3lPYmplY3Q+PHBvbGljeT5leUoxZFdsa0lqb2lOakV6TXpNME5qWXROR1l3WVMwMFlURXlMVGsxWm1JdFlqWmtPR0prTUdJNFlqSTJJaXdpWW05a2VTSTZleUpoZEhSeWFXSjFkR1Z6SWpwYlhTd2laR2x6YzJWdElqcGJJblZ6WlhKQWRtbHlkSEoxTG1OdmJTSmRmWDA9PC9wb2xpY3k+PHBvbGljeUJpbmRpbmc+WkdNd05HRXhaamcwT0RGak5ERXpaVGs1Tmpka1ptSTVNV0ZqTjJZMU16STBNVGxpTmpNNU1tUmxNVGxoWVdNME5qTmpOMlZqWVRWa09USmxPRGN3TkE9PTwvcG9saWN5QmluZGluZz48ZW5jcnlwdGVkTWV0YWRhdGE+T0VPcUpDUzZtWnNtTFdKMzhsaDZFTjJsRFVBOE9hZ0wvT3hRUlE9PTwvZW5jcnlwdGVkTWV0YWRhdGE+PC9FbmNyeXB0ZWRQb2xpY3lPYmplY3Q+Cg==</tdf:EncryptedPolicyObject><tdf:EncryptionInformation><tdf:KeyAccess><tdf:RemoteStoredKey tdf:protocol="kas" tdf:uri="http://kas.example.com:4000"/></tdf:KeyAccess><tdf:EncryptionMethod tdf:algorithm="AES-256-GCM"><tdf:KeySize>32</tdf:KeySize><tdf:IVParams>OEOqJCS6mZsmLWJ3</tdf:IVParams><tdf:AuthenticationTag>B20abww4lLmNOqa43sas</tdf:AuthenticationTag></tdf:EncryptionMethod></tdf:EncryptionInformation></tdf:WrappedPDPKey></tdf:KeyAccess></tdf:EncryptionInformation><Base64BinaryPayload>YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXo=</Base64BinaryPayload></TrustedDataObject></TrustedDataCollection>
 )";
-
     BOOST_AUTO_TEST_CASE(test_tdf_xml_writer) {
 
         // Create output provider
@@ -35,11 +78,14 @@ BOOST_AUTO_TEST_SUITE(test_xml_reader_writer_suite)
         StreamOutputProvider outputProvider{oStringStream};
 
         TDFXMLWriter tdfxmlWriter{outputProvider, kTDFManifestFileName, kTDFPayloadFileName};
-        std::string localCopy(manifest);
+        auto dataModel = ManifestDataModel::CreateModelFromJson(manifestInJson);
         tdfxmlWriter.setPayloadSize(payload.size());
-        tdfxmlWriter.appendManifest(std::move(localCopy));
+        tdfxmlWriter.appendManifest(dataModel);
         tdfxmlWriter.appendPayload(toBytes(payload));
         tdfxmlWriter.finish();
+
+        std::cout << "ICTDF XML:\n" << oStringStream.str() << std::endl;
+
         BOOST_TEST(oStringStream.str() == tdfXML);
     }
 
@@ -51,7 +97,9 @@ BOOST_AUTO_TEST_SUITE(test_xml_reader_writer_suite)
         StreamInputProvider inputProvider{inputStream};
         TDFXMLReader tdfxmlReader{inputProvider};
 
-        BOOST_TEST(tdfxmlReader.getManifest() == manifest);
+        auto dataModel1 = tdfxmlReader.getManifest();
+        auto dataModel2 = ManifestDataModel::CreateModelFromJson(manifestInJson);
+        BOOST_TEST(dataModel1.encryptionInformation.policy == dataModel2.encryptionInformation.policy);
         BOOST_TEST(tdfxmlReader.getPayloadSize() == 26);
 
         auto index = 0;

@@ -48,9 +48,7 @@ namespace virtru {
         TDFArchiveReader & operator=(TDFArchiveReader &&) = delete;
 
     public: // From ITDFReader
-        /// Get the manifest content.
-        /// \return - Return the manifest as string.
-        const std::string& getManifest() override { return m_manifest; };
+        ManifestDataModel getManifest() override { return ManifestDataModel::CreateModelFromJson(m_manifest); }
 
         /// Read payload of length starting the index.
         /// \param index - index within data where read is to begin

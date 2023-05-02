@@ -192,20 +192,20 @@ namespace virtru {
         /// \return TDF protocol used to encrypt the input stream data
         static Protocol encryptedWithProtocol(IInputProvider& inputProvider);
 
-        /// Retrive the policy uuid(id) from the manifest.
-        /// \param manifestStr - The tdf manifest.
+        /// Retrive the policy uuid(id) from the manifest data model.
+        /// \param manifestDataModel - The manifest data model
         /// \return String - The policy id.
-        std::string getPolicyFromManifest(const std::string& manifestStr) const;
+        std::string getPolicyFromManifest(const ManifestDataModel& manifestDataModel) const;
 
-        /// Return the manifest from the tdf input provider.
+        /// Return the manifest data model from the tdf input provider.
         /// \param inputProvider - Input provider interface for reading data
-        /// \return string - The manifest of the tdf.
-        std::string getManifest(IInputProvider& inputProvider) const;
+        /// \return - Return the manifest data model
+        ManifestDataModel getManifest(IInputProvider& inputProvider) const;
 
-        /// Retrive the policy uuid(id) from the manifest.
-        /// \param manifestStr - The tdf manifest.
+        /// Retrive the policy uuid(id) from the manifest data model.
+        /// \param manifestDataModel - The manifest data model
         /// \return String - The policy id.
-        std::string getPolicyIdFromManifest(const std::string& manifestStr) const;
+        std::string getPolicyIdFromManifest(const ManifestDataModel& manifestDataModel) const;
 
         /// Validate the supported cipher type
         /// \param manifestDataModel - Manifest data model.

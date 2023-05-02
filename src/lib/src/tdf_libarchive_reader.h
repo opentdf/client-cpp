@@ -64,9 +64,9 @@ namespace virtru {
         TDFArchiveReader & operator=(TDFArchiveReader &&) = delete;
 
     public: // From TDFReader
-        /// Get the manifest content.
-        /// \return - Return the manifest as string.
-        const std::string& getManifest() override { return m_manifest; };
+        /// Get the manifest data model.
+        /// \return - Return the manifest data model
+        ManifestDataModel getManifest() override { return ManifestDataModel::CreateModelFromJson(m_manifest); }
 
         /// Read the payload contents into the buffer.
         /// The size of buffer could be less than requested size.
