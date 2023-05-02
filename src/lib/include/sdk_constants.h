@@ -169,43 +169,43 @@ namespace virtru {
     // ICTDF XML elements
     static constexpr auto kTrustedDataCollectionElement = "TrustedDataCollection";
     static constexpr auto kTrustedDataObjectElement = "TrustedDataObject";
-    static constexpr auto kEncryptionInformationElement = "tdf:EncryptionInformation";
-    static constexpr auto kKeyAccessElement = "tdf:KeyAccess";
-    static constexpr auto kWrappedPDPKeyElement = "tdf:WrappedPDPKey";
-    static constexpr auto kKeyValueElement = "tdf:KeyValue";
-    static constexpr auto kKeySizeElement = "tdf:KeySize";
-    static constexpr auto kIVParamsElement = "tdf:IVParams";
-    static constexpr auto kAuthenticationTagElement = "tdf:AuthenticationTag";
-    static constexpr auto kAlgorithmElement = "tdf:algorithm";
-    static constexpr auto kRemoteStoredKeyElement = "tdf:RemoteStoredKey";
-    static constexpr auto kProtocolElement = "tdf:protocol";
-    static constexpr auto kUriElement = "tdf:uri";
-    static constexpr auto kEncryptionMethodElement = "tdf:EncryptionMethod";
-    static constexpr auto kEncryptedPolicyObjectElement = "tdf:EncryptedPolicyObject";
+    static constexpr auto kEncryptionInformationElement = "EncryptionInformation";
+    static constexpr auto kKeyAccessElement = "KeyAccess";
+    static constexpr auto kWrappedPDPKeyElement = "WrappedPDPKey";
+    static constexpr auto kKeyValueElement = "KeyValue";
+    static constexpr auto kKeySizeElement = "KeySize";
+    static constexpr auto kIVParamsElement = "IVParams";
+    static constexpr auto kAuthenticationTagElement = "AuthenticationTag";
+    static constexpr auto kAlgorithmElement = "algorithm";
+    static constexpr auto kRemoteStoredKeyElement = "RemoteStoredKey";
+    static constexpr auto kProtocolElement = "protocol";
+    static constexpr auto kUriElement = "uri";
+    static constexpr auto kEncryptionMethodElement = "EncryptionMethod";
+    static constexpr auto kEncryptedPolicyObjectElement = "EncryptedPolicyObject";
     static constexpr auto kEncryptedPolicyObject = "EncryptedPolicyObject";
-    static constexpr auto kHandlingAssertionElement = "tdf:HandlingAssertion";
-    static constexpr auto kIdElement = "tdf:id";
-    static constexpr auto kScopeElement = "tdf:scope";
-    static constexpr auto kAppliesToStateElement = "tdf:appliesToState";
+    static constexpr auto kHandlingAssertionElement = "HandlingAssertion";
+    static constexpr auto kIdElement = "id";
+    static constexpr auto kScopeElement = "scope";
+    static constexpr auto kAppliesToStateElement = "appliesToState";
 
-    static constexpr auto kBindingElement = "tdf:Binding";
+    static constexpr auto kBindingElement = "Binding";
 
-    static constexpr auto kSignerElement = "tdf:Signer";
+    static constexpr auto kSignerElement = "Signer";
 
-    static constexpr auto kIssuerElement = "tdf:issuer";
+    static constexpr auto kIssuerElement = "issuer";
 
 
-    static constexpr auto kSignatureValueElement = "tdf:SignatureValue";
-    static constexpr auto kSignatureAlgorithmElement = "tdf:signatureAlgorithm";
+    static constexpr auto kSignatureValueElement = "SignatureValue";
+    static constexpr auto kSignatureAlgorithmElement = "signatureAlgorithm";
 
 
 
     static constexpr auto kBase64BinaryPayloadElement = "Base64BinaryPayload";
-    static constexpr auto kTDFReferenceValuePayload = "tdf:ReferenceValuePayload";
+    static constexpr auto kTDFReferenceValuePayload = "ReferenceValuePayload";
     static constexpr auto kMediaTypeAttribute = "mediaType";
     static constexpr auto kFilenameAttribute = "filename";
     static constexpr auto kIsEncryptedAttribute = "isEncrypted";
-    static constexpr auto kTdfUri = "tdf:uri";
+    static constexpr auto kTdfUri = "uri";
     static constexpr auto kTextPlainMediaType = "text/plain";
     static constexpr auto kAttributeValueAsTrue = "true";
 
