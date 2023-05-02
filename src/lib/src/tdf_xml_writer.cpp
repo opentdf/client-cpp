@@ -77,6 +77,14 @@ namespace virtru {
             ThrowException(std::move(errorMsg));
         }
 
+        rc = xmlTextWriterWriteAttribute(writer.get(),
+                                         BAD_CAST"xmlns:tdf",
+                                         BAD_CAST "urn:us:gov:ic:tdf");
+        if (rc < 0) {
+            std::string errorMsg{"Error at xmlTextWriterWriteAttribute \"xmlns:tdf\""};
+            ThrowException(std::move(errorMsg));
+        }
+
         // Start an element named "TrustedDataObject".
         rc = xmlTextWriterStartElement(writer.get(), reinterpret_cast<const xmlChar *>(kTrustedDataObjectElement));
         if (rc < 0) {
