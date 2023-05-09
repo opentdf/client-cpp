@@ -40,7 +40,7 @@ namespace virtru::network {
                                      const char* fileName, unsigned int lineNumber) {
         std::ostringstream os;
         os << " [" << fileName << ":" << lineNumber << "] ";
-        throw Exception { os.str() + "Network - " + move(errorString), errorCode };
+        throw Exception { os.str() + "Network - " + std::move(errorString), errorCode };
     }
 }  // namespace virtru::network
 

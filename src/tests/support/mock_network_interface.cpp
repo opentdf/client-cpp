@@ -27,7 +27,7 @@ namespace virtru {
         {
             std::cout << "Matched GET mock: " << result->first.url;
             auto matchedMock = result->second;
-            callback(std::get<1>(matchedMock), move(std::get<0>(matchedMock)));
+            callback(std::get<1>(matchedMock), std::move(std::get<0>(matchedMock)));
         } else {
             callback(69, "Didn't match mock");
         }
@@ -48,9 +48,9 @@ namespace virtru {
             if (POSTTransformer != 0 && std::get<0>(matchedMock).empty()) {
                 auto transformedBody = POSTTransformer(body);
                 std::cout << "Transformed POST body: " << transformedBody << std::endl;
-                callback(std::get<1>(matchedMock), move(transformedBody));
+                callback(std::get<1>(matchedMock), std::move(transformedBody));
             } else {
-                callback(std::get<1>(matchedMock), move(std::get<0>(matchedMock)));
+                callback(std::get<1>(matchedMock), std::move(std::get<0>(matchedMock)));
             }
         } else {
             callback(69, "Didn't match mock");

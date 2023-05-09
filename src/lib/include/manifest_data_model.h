@@ -85,6 +85,17 @@ namespace virtru {
         /// \return Json string representation of key access data model object.
         static std::string keyAccessDataModelAsJson(const KeyAccessDataModel& keyAccessDataModel);
 
+        /// Construct encrypted policy object for ICTDF format
+        /// \param ManifestDataModel - The manifest data model
+        /// \return Return json string of encrypted policy object representation
+        static std::string constructEncryptedPolicyObject(const ManifestDataModel& dataModel);
+
+        /// Update the data model with encrypted policy object information.
+        /// \param encryptedPolicyObjectAsJsonStr - Json string of encrypted policy object representation
+        /// \param dataModel - The manifest data model
+        static void updateDataModelWithEncryptedPolicyObject(const std::string& encryptedPolicyObjectAsJsonStr,
+                                                             ManifestDataModel& dataModel);
+
     public:
         /// Constructor
         ManifestDataModel() = default;

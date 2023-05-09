@@ -176,7 +176,7 @@ namespace virtru {
     static constexpr auto kKeySizeElement = "KeySize";
     static constexpr auto kIVParamsElement = "IVParams";
     static constexpr auto kAuthenticationTagElement = "AuthenticationTag";
-    static constexpr auto kAlgorithmElement = "algorithm";
+    static constexpr auto kAlgorithmAttribute = "algorithm";
     static constexpr auto kRemoteStoredKeyElement = "RemoteStoredKey";
     static constexpr auto kProtocolElement = "protocol";
     static constexpr auto kUriElement = "uri";

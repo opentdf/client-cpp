@@ -8,6 +8,7 @@
 // Created by sujan kota on 12/8/21.
 //
 
+#include <iostream>
 #include "libxml2_deleters.h"
 #include "logger.h"
 #include "tdf_constants.h"
@@ -20,8 +21,14 @@
 namespace virtru {
 
     using namespace boost::beast::detail::base64;
+    using namespace virtru::crypto;
 
     constexpr auto kXMLEncoding = "UTF-8";
+    constexpr auto kICTDFVersion = "1.0";
+    constexpr auto kTDFNameSpaceHref = "urn:us:gov:ic:tdf";
+    constexpr auto kTDFPrefix = "tdf";
+    constexpr auto kXMLHref = "http://www.w3.org/2001/XMLSchema-instance";
+    constexpr auto kXSIPrefix = "xsi";
 
     /// Constructor for TDFXMLWriter
     TDFXMLWriter::TDFXMLWriter(IOutputProvider& outputProvider, std::string manifestFilename, std::string payloadFileName)
@@ -45,141 +52,9 @@ namespace virtru {
         m_binaryPayload.insert(m_binaryPayload.end(), payload.begin(), payload.end());
     }
 
-    /// Create XML TDF buffer
-    xmlBufferPtr TDFXMLWriter::createTDFXML() {
-
-        xmlBufferFreePtr xmlBuffer{xmlBufferCreate()};
-        if (!xmlBuffer) {
-            std::string errorMsg{"Fail to create XML Buffer for creating the XML TDF"};
-            ThrowException(std::move(errorMsg));
-        }
-
-        // Create a new XmlWriter to write the xml with no compression.
-        xmlTextWriterFreePtr writer{xmlNewTextWriterMemory(xmlBuffer.get(), 0)};
-        if (!writer) {
-            std::string errorMsg{"Error creating the xml writer"};
-            ThrowException(std::move(errorMsg));
-        }
-
-        // Start the document with the xml default for the version, encoding UTF-8 and
-        // the default for the standalone declaration.
-        auto rc = xmlTextWriterStartDocument(writer.get(), nullptr, kXMLEncoding, nullptr);
-        if (rc < 0) {
-            std::string errorMsg{"Error creating the xml writer and starting document"};
-            ThrowException(std::move(errorMsg));
-        }
-
-        // Start an element named "TrustedDataCollection". Since this is the first
-        // element, this will be the root element of the XML TDF
-        rc = xmlTextWriterStartElement(writer.get(), reinterpret_cast<const xmlChar *>(kTrustedDataCollectionElement));
-        if (rc < 0) {
-            std::string errorMsg{"Error at xmlTextWriterStartElement (TrustedDataCollection)"};
-            ThrowException(std::move(errorMsg));
-        }
-
-        rc = xmlTextWriterWriteAttribute(writer.get(),
-                                         BAD_CAST"xmlns:tdf",
-                                         BAD_CAST "urn:us:gov:ic:tdf");
-        if (rc < 0) {
-            std::string errorMsg{"Error at xmlTextWriterWriteAttribute \"xmlns:tdf\""};
-            ThrowException(std::move(errorMsg));
-        }
-
-        // Start an element named "TrustedDataObject".
-        rc = xmlTextWriterStartElement(writer.get(), reinterpret_cast<const xmlChar *>(kTrustedDataObjectElement));
-        if (rc < 0) {
-            std::string errorMsg{"Error at xmlTextWriterStartElement (TrustedDataObject)"};
-            ThrowException(std::move(errorMsg));
-        }
-
-        // Add 'ReferenceValuePayload'
-        addReferenceValuePayloadElement(writer.get());
-
-        // Add 'EncryptionInformation'
-        addEncryptionInformationElement(writer.get());
-
-        // Add assertions
-        //addHandlingAssertionElement(writer.get());
-
-        // Add 'Base64BinaryPayload'
-        addPayloadElement(writer.get());
-
-        // Close the element named TrustedDataObject
-        rc = xmlTextWriterEndElement(writer.get());
-        if (rc < 0) {
-            std::string errorMsg{"Error at xmlTextWriterEndElement (TrustedDataObject)"};
-            ThrowException(std::move(errorMsg));
-        }
-
-        // Close the element named TrustedDataCollection
-        rc = xmlTextWriterEndElement(writer.get());
-        if (rc < 0) {
-            std::string errorMsg{"Error at xmlTextWriterEndElement (TrustedDataCollection)"};
-            ThrowException(std::move(errorMsg));
-        }
-
-        // Close the document
-        rc = xmlTextWriterEndDocument(writer.get());
-        if (rc < 0) {
-            std::string errorMsg{"Error at xmlTextWriterEndDocument"};
-            ThrowException(std::move(errorMsg));
-        }
-
-        return xmlBuffer.release();
-    }
-
-    /// Finalize archive entry.
-    void TDFXMLWriter::finish() {
-        auto xmlBufferPtr = createTDFXML();
-
-        xmlBufferFreePtr xmlBuffer{xmlBufferPtr};
-        if (!xmlBuffer) {
-            std::string errorMsg{"Fail to create XML Buffer for creating the XML TDF"};
-            ThrowException(std::move(errorMsg));
-        }
-
-        auto data = gsl::make_span(reinterpret_cast<const gsl::byte *>(xmlBuffer.get()->content),
-                                   xmlBufferLength(xmlBuffer.get()));
-        m_outputProvider.writeBytes(data);
-    }
-
-    /// Add 'tdf:ReferenceValuePayload' element.
-    void TDFXMLWriter::addReferenceValuePayloadElement(xmlTextWriterPtr writer) {
-
-        /* <tdf:ReferenceValuePayload tdf:isEncrypted="true" tdf:uri="zip://0.payload"/> */
-        // Start an element named "tdf:ReferenceValuePayload" child of "TrustedDataObject"
-        auto rc = xmlTextWriterStartElement(writer, reinterpret_cast<const xmlChar *>(kTDFReferenceValuePayload));
-        if (rc < 0) {
-            std::string errorMsg{"Error at xmlTextWriterStartElement - tdf:ReferenceValuePayload"};
-            ThrowException(std::move(errorMsg));
-        }
-
-        // Add 'isEncrypted' attribute to element tdf:ReferenceValuePayload
-        std::string isEncryptedStr = m_manifestDataModel.payload.isEncrypted ? "true" : "false";
-        rc = xmlTextWriterWriteAttribute(writer, reinterpret_cast<const xmlChar *>(kIsEncryptedAttribute),
-                                         reinterpret_cast<const xmlChar *>(isEncryptedStr.c_str()));
-        if (rc < 0) {
-            std::string errorMsg{"Error at xmlTextWriterWriteAttribute (isEncrypted)"};
-            ThrowException(std::move(errorMsg));
-        }
-
-        rc = xmlTextWriterWriteAttribute(writer, reinterpret_cast<const xmlChar *>(kMediaTypeAttribute),
-                                         reinterpret_cast<const xmlChar *>(m_manifestDataModel.payload.mimeType.c_str()));
-        if (rc < 0) {
-            std::string errorMsg{"Error at xmlTextWriterWriteAttribute (mediaType)"};
-            ThrowException(std::move(errorMsg));
-        }
-
-        // Close the element named tdf:ReferenceValuePayload
-        rc = xmlTextWriterEndElement(writer);
-        if (rc < 0) {
-            std::string errorMsg{"Error at xmlTextWriterEndElement (tdf:ReferenceValuePayload)"};
-            ThrowException(std::move(errorMsg));
-        }
-    }
 
     /// Add 'tdf:EncryptionInformation' element.
-    void TDFXMLWriter::addEncryptionInformationElement(xmlTextWriterPtr writer) {
+    void TDFXMLWriter::addEncryptionInformationElement(xmlNodePtr rootNode, xmlNsPtr ns) {
 
         /*
          * <tdf:EncryptionInformation>
@@ -198,130 +73,39 @@ namespace virtru {
          *    </tdf:KeyAccess>
          *  </tdf:EncryptionInformation>
          */
-        auto rc = xmlTextWriterStartElement(writer, reinterpret_cast<const xmlChar *>(kEncryptionInformationElement));
-        if (rc < 0) {
-            std::string errorMsg{"Error at xmlTextWriterStartElement (tdf:EncryptionInformation)"};
-            ThrowException(std::move(errorMsg));
-        }
 
-        rc = xmlTextWriterStartElement(writer, reinterpret_cast<const xmlChar *>(kKeyAccessElement));
-        if (rc < 0) {
-            std::string errorMsg{"Error at xmlTextWriterStartElement (tdf:KeyAccess)"};
-            ThrowException(std::move(errorMsg));
-        }
+        auto encryptionInformationElement = xmlNewChild(rootNode,
+                                                        ns,
+                                                        reinterpret_cast<const xmlChar *>(kEncryptionInformationElement),
+                                                        nullptr);
 
-        rc = xmlTextWriterStartElement(writer, reinterpret_cast<const xmlChar *>(kWrappedPDPKeyElement));
-        if (rc < 0) {
-            std::string errorMsg{"Error at xmlTextWriterStartElement (tdf:WrappedPDPKey)"};
-            ThrowException(std::move(errorMsg));
-        }
 
-        // <tdf:KeyValue>YBkqvsiDnyDfw5JQzux2S2IaiClhsojZuLYYHiAw7hNAayAUCVRw6aUYRF4LWfcs2BM9k6d3bHqun0v5w==</tdf:KeyValue>
-        {
-            rc = xmlTextWriterStartElement(writer, reinterpret_cast<const xmlChar *>(kKeyValueElement));
-            if (rc < 0) {
-                std::string errorMsg{"Error at xmlTextWriterStartElement (tdf:KeyValue)"};
-                ThrowException(std::move(errorMsg));
-            }
+        auto keyAccessElement = xmlNewChild(encryptionInformationElement,
+                                                        ns,
+                                                        reinterpret_cast<const xmlChar *>(kKeyAccessElement),
+                                                        nullptr);
 
-            if (m_manifestDataModel.encryptionInformation.keyAccessObjects.size() != 1) {
-                std::string errorMsg{"Invalid count of key access objects."};
-                ThrowException(std::move(errorMsg));
-            }
 
-            rc = xmlTextWriterWriteRawLen(writer,
-                                          reinterpret_cast<const xmlChar *>(m_manifestDataModel.encryptionInformation.keyAccessObjects[0].wrappedKey.data()),
-                                          m_manifestDataModel.encryptionInformation.keyAccessObjects[0].wrappedKey.size());
-            if (rc < 0) {
-                std::string errorMsg{"Error at xmlTextWriterWriteRawLen - tdf:WrappedPDPKey"};
-                ThrowException(std::move(errorMsg));
-            }
 
-            rc = xmlTextWriterEndElement(writer);
-            if (rc < 0) {
-                std::string errorMsg{"Error at xmlTextWriterEndElement (tdf:KeyValue)"};
-                ThrowException(std::move(errorMsg));
-            }
-        }
+        auto wrappedPDPKeyElement = xmlNewChild(keyAccessElement,
+                                            ns,
+                                            reinterpret_cast<const xmlChar *>(kWrappedPDPKeyElement),
+                                            nullptr);
 
         // <tdf:EncryptedPolicyObject>2S2IaiClhsojZuLYYHiAw7hN...</tdf:EncryptedPolicyObject>
         {
-            rc = xmlTextWriterStartElement(writer, reinterpret_cast<const xmlChar *>(kEncryptedPolicyObjectElement));
-            if (rc < 0) {
-                std::string errorMsg{"Error at xmlTextWriterStartElement (tdf:EncryptedPolicyObject)"};
-                ThrowException(std::move(errorMsg));
-            }
+            auto encryptedPolicyObject = ManifestDataModel::constructEncryptedPolicyObject(m_manifestDataModel);
+            auto encodedSize = encoded_size(encryptedPolicyObject.size());
+            std::string encodeBuffer(encodedSize, '0');
+            auto actualEncodedBufSize = encode(encodeBuffer.data(), encryptedPolicyObject.data(), encryptedPolicyObject.size());
+            encodeBuffer.resize(actualEncodedBufSize);
 
-            auto policy = createEncryptedPolicyObject();
-            rc = xmlTextWriterWriteRawLen(writer,
-                                          reinterpret_cast<const xmlChar *>(policy.data()),
-                                          policy.size());
-            if (rc < 0) {
-                std::string errorMsg{"Error at xmlTextWriterWriteRawLen:tdf:EncryptedPolicyObject"};
-                ThrowException(std::move(errorMsg));
-            }
-
-            rc = xmlTextWriterEndElement(writer);
-            if (rc < 0) {
-                std::string errorMsg{"Error at xmlTextWriterEndElement (tdf:EncryptedPolicyObject)"};
-                ThrowException(std::move(errorMsg));
-            }
+            xmlNewChild(wrappedPDPKeyElement,
+                        ns,
+                        reinterpret_cast<const xmlChar *>(kEncryptedPolicyObjectElement),
+                        reinterpret_cast<const xmlChar *>(encodeBuffer.c_str()));
         }
 
-        rc = xmlTextWriterStartElement(writer, reinterpret_cast<const xmlChar *>(kEncryptionInformationElement));
-        if (rc < 0) {
-            std::string errorMsg{"Error at xmlTextWriterStartElement (tdf:EncryptionInformation)"};
-            ThrowException(std::move(errorMsg));
-        }
-
-
-        /*
-         *   <tdf:KeyAccess>
-         *     <tdf:RemoteStoredKey tdf:protocol="KAS" tdf:uri="http://kas.example.com:4000">
-         *     </tdf:RemoteStoredKey>
-         *   </tdf:KeyAccess>
-         */
-        {
-            rc = xmlTextWriterStartElement(writer, reinterpret_cast<const xmlChar *>(kKeyAccessElement));
-            if (rc < 0) {
-                std::string errorMsg{"Error at xmlTextWriterStartElement (tdf:KeyAccess)"};
-                ThrowException(std::move(errorMsg));
-            }
-
-            rc = xmlTextWriterStartElement(writer, reinterpret_cast<const xmlChar *>(kRemoteStoredKeyElement));
-            if (rc < 0) {
-                std::string errorMsg{"Error at xmlTextWriterStartElement (tdf:RemoteStoredKey)"};
-                ThrowException(std::move(errorMsg));
-            }
-
-            auto protocol = m_manifestDataModel.encryptionInformation.keyAccessObjects[0].protocol;
-            rc = xmlTextWriterWriteAttribute(writer, reinterpret_cast<const xmlChar *>(kProtocolElement),
-                                             reinterpret_cast<const xmlChar *>(protocol.c_str()));
-            if (rc < 0) {
-                std::string errorMsg{"Error at xmlTextWriterWriteAttribute (tdf:protocol)"};
-                ThrowException(std::move(errorMsg));
-            }
-
-            auto uri = m_manifestDataModel.encryptionInformation.keyAccessObjects[0].url;
-            rc = xmlTextWriterWriteAttribute(writer, reinterpret_cast<const xmlChar *>(kUriElement),
-                                             reinterpret_cast<const xmlChar *>(uri.c_str()));
-            if (rc < 0) {
-                std::string errorMsg{"Error at xmlTextWriterWriteAttribute (tdf:uri)"};
-                ThrowException(std::move(errorMsg));
-            }
-
-            rc = xmlTextWriterEndElement(writer);
-            if (rc < 0) {
-                std::string errorMsg{"Error at xmlTextWriterEndElement (tdf:RemoteStoredKey)"};
-                ThrowException(std::move(errorMsg));
-            }
-
-            rc = xmlTextWriterEndElement(writer);
-            if (rc < 0) {
-                std::string errorMsg{"Error at xmlTextWriterEndElement (tdf:KeyAccess)"};
-                ThrowException(std::move(errorMsg));
-            }
-        }
 
         /*
          * <tdf:EncryptionMethod tdf:algorithm="AES">
@@ -331,115 +115,118 @@ namespace virtru {
          * </tdf:EncryptionMethod>
          */
         {
-            rc = xmlTextWriterStartElement(writer, reinterpret_cast<const xmlChar *>(kEncryptionMethodElement));
-            if (rc < 0) {
-                std::string errorMsg{"Error at xmlTextWriterStartElement (tdf:EncryptionMethod)"};
-                ThrowException(std::move(errorMsg));
-            }
+            auto encryptionMethodElement = xmlNewChild(encryptionInformationElement,
+                                                       ns,
+                                                       reinterpret_cast<const xmlChar *>(kEncryptionMethodElement),
+                                                       nullptr);
 
             std::string algorithm(kCipherAlgorithmGCM);
-            rc = xmlTextWriterWriteAttribute(writer, reinterpret_cast<const xmlChar *>(kAlgorithmElement),
-                                             reinterpret_cast<const xmlChar *>(algorithm.c_str()));
-            if (rc < 0) {
-                std::string errorMsg{"Error at xmlTextWriterWriteAttribute (tdf:algorithm)"};
-                ThrowException(std::move(errorMsg));
-            }
-
-            rc = xmlTextWriterStartElement(writer, reinterpret_cast<const xmlChar *>(kKeySizeElement));
-            if (rc < 0) {
-                std::string errorMsg{"Error at xmlTextWriterStartElement (tdf:KeySize)"};
-                ThrowException(std::move(errorMsg));
-            }
+            xmlNewNsProp(encryptionMethodElement,
+                         ns,
+                         reinterpret_cast<const xmlChar *>(kAlgorithmAttribute),
+                         reinterpret_cast<const xmlChar *>(algorithm.c_str()));
 
             auto keySizeStr = std::to_string(32);
-            rc = xmlTextWriterWriteRawLen(writer,
-                                          reinterpret_cast<const xmlChar *>(keySizeStr.data()),
-                                          keySizeStr.size());
-            if (rc < 0) {
-                std::string errorMsg{"Error at xmlTextWriterWriteRawLen:tdf:KeySize"};
-                ThrowException(std::move(errorMsg));
-            }
+            xmlNewChild(encryptionMethodElement,
+                        ns,
+                        reinterpret_cast<const xmlChar *>(kKeySizeElement),
+                        reinterpret_cast<const xmlChar *>(keySizeStr.c_str()));
 
-            rc = xmlTextWriterEndElement(writer);
-            if (rc < 0) {
-                std::string errorMsg{"Error at xmlTextWriterEndElement (tdf:KeySize)"};
-                ThrowException(std::move(errorMsg));
-            }
-
-
-            rc = xmlTextWriterStartElement(writer, reinterpret_cast<const xmlChar *>(kIVParamsElement));
-            if (rc < 0) {
-                std::string errorMsg{"Error at xmlTextWriterStartElement (tdf:IVParams)"};
-                ThrowException(std::move(errorMsg));
-            }
-
-            // TODO: THis need to come from the wrapped key if present, for remote key we can avoid it
             auto iv = m_manifestDataModel.encryptionInformation.method.iv;
-            rc = xmlTextWriterWriteRawLen(writer,
-                                          reinterpret_cast<const xmlChar *>(iv.data()),
-                                          iv.size());
-            if (rc < 0) {
-                std::string errorMsg{"Error at xmlTextWriterWriteRawLen:tdf:IVParams"};
-                ThrowException(std::move(errorMsg));
-            }
-
-            rc = xmlTextWriterEndElement(writer);
-            if (rc < 0) {
-                std::string errorMsg{"Error at xmlTextWriterEndElement (tdf:IVParams)"};
-                ThrowException(std::move(errorMsg));
-            }
-
-            rc = xmlTextWriterStartElement(writer, reinterpret_cast<const xmlChar *>(kAuthenticationTagElement));
-            if (rc < 0) {
-                std::string errorMsg{"Error at xmlTextWriterStartElement (tdf:AuthenticationTag)"};
-                ThrowException(std::move(errorMsg));
-            }
+            xmlNewChild(encryptionMethodElement,
+                        ns,
+                        reinterpret_cast<const xmlChar *>(kIVParamsElement),
+                        reinterpret_cast<const xmlChar *>(iv.c_str()));
 
             // TODO: THis need to come from the wrapped key if present, for remote key we can avoid it
-            std::string authenticationTag("B20abww4lLmNOqa43sas");
-            rc = xmlTextWriterWriteRawLen(writer,
-                                          reinterpret_cast<const xmlChar *>(authenticationTag.data()),
-                                          authenticationTag.size());
-            if (rc < 0) {
-                std::string errorMsg{"Error at xmlTextWriterWriteRawLen:tdf:AuthenticationTag"};
-            }
-
-            rc = xmlTextWriterEndElement(writer);
-            if (rc < 0) {
-                std::string errorMsg{"Error at xmlTextWriterEndElement (tdf:AuthenticationTag)"};
-                ThrowException(std::move(errorMsg));
-            }
-
-            rc = xmlTextWriterEndElement(writer);
-            if (rc < 0) {
-                std::string errorMsg{"Error at xmlTextWriterEndElement (tdf:EncryptionMethod)"};
-                ThrowException(std::move(errorMsg));
-            }
+//            std::string authenticationTag("B20abww4lLmNOqa43sas");
+//            xmlNewChild(encryptionMethodElement,
+//                        ns,
+//                        reinterpret_cast<const xmlChar *>(kAuthenticationTagElement),
+//                        reinterpret_cast<const xmlChar *>(authenticationTag.c_str()));
         }
+    }
 
-        rc = xmlTextWriterEndElement(writer);
-        if (rc < 0) {
-            std::string errorMsg{"Error at xmlTextWriterEndElement (ttdf:EncryptionInformation)"};
+    /// Add 'Base64BinaryPayload' element.
+    void TDFXMLWriter::addPayloadElement(xmlNodePtr rootNode, xmlNsPtr ns) {
+
+        /* <Base64BinaryPayload> </Base64BinaryPayload> */
+        auto payloadEncodedSize = encoded_size(m_binaryPayload.size());
+        std::string encodeBuffer(payloadEncodedSize, '0');
+        auto actualEncodedBufSize = encode(encodeBuffer.data(), m_binaryPayload.data(), m_binaryPayload.size());
+        encodeBuffer.resize(actualEncodedBufSize);
+
+        auto base64BinaryPayloadElement = xmlNewChild(rootNode,
+                                            ns,
+                                            reinterpret_cast<const xmlChar *>(kBase64BinaryPayloadElement),
+                                            reinterpret_cast<const xmlChar *>(encodeBuffer.c_str()));
+
+        // Add 'isEncrypted' attribute to element tdf:Base64BinaryPayload
+        std::string isEncryptedStr = m_manifestDataModel.payload.isEncrypted ? "true" : "false";
+        xmlNewNsProp(base64BinaryPayloadElement,
+                    ns,
+                    reinterpret_cast<const xmlChar *>(kIsEncryptedAttribute),
+                    reinterpret_cast<const xmlChar *>(isEncryptedStr.c_str()));
+
+        xmlNewNsProp(base64BinaryPayloadElement,
+                        ns,
+                    reinterpret_cast<const xmlChar *>(kMediaTypeAttribute),
+                    reinterpret_cast<const xmlChar *>(m_manifestDataModel.payload.mimeType.c_str()));
+    }
+
+
+
+    /// Finalize archive entry.
+    void TDFXMLWriter::finish() {
+
+        XmlDocFreePtr doc{ xmlNewDoc(reinterpret_cast<const xmlChar *>(kICTDFVersion))};
+        if (!doc) {
+            std::string errorMsg{"Fail to create XML document for creating the TDF"};
             ThrowException(std::move(errorMsg));
         }
 
-        rc = xmlTextWriterEndElement(writer);
-        if (rc < 0) {
-            std::string errorMsg{"Error at xmlTextWriterEndElement (tdf:WrappedPDPKey)"};
+        xmlNode* rootNode = xmlNewNode(nullptr, reinterpret_cast<const xmlChar *>(kTrustedDataObjectElement));
+        if (!rootNode) {
+            std::string errorMsg{"Fail to create 'TrustedDataObject' node"};
             ThrowException(std::move(errorMsg));
         }
 
-        rc = xmlTextWriterEndElement(writer);
-        if (rc < 0) {
-            std::string errorMsg{"Error at xmlTextWriterEndElement (tdf:KeyAccess))"};
+        // Create a name spaces
+        xmlNsPtr ns = xmlNewNs(rootNode,
+                               reinterpret_cast<const xmlChar *>(kTDFNameSpaceHref),
+                               nullptr);
+
+        xmlNsPtr xsiNs = xmlNewNs(rootNode,
+                                  reinterpret_cast<const xmlChar *>(kXMLHref),
+                                  reinterpret_cast<const xmlChar *>(kXSIPrefix));
+
+        xmlNsPtr tdfNs = xmlNewNs(rootNode,
+                                  reinterpret_cast<const xmlChar *>(kTDFNameSpaceHref),
+                                  reinterpret_cast<const xmlChar *>(kTDFPrefix));
+        if (!ns || !xsiNs || !tdfNs) {
+            std::string errorMsg{"Fail to create namespace for creating XML TDF"};
             ThrowException(std::move(errorMsg));
         }
 
-        rc = xmlTextWriterEndElement(writer);
-        if (rc < 0) {
-            std::string errorMsg{"Error at xmlTextWriterEndElement (tdf:EncryptionInformation))"};
-            ThrowException(std::move(errorMsg));
-        }
+        xmlSetNs(rootNode, tdfNs);
+        xmlDocSetRootElement(doc.get(), rootNode);
+
+        // Add 'tdf:EncryptionInformationElement' element
+        addEncryptionInformationElement(rootNode, tdfNs);
+
+        // Add 'tdf:Base64BinaryPayload' element
+        addPayloadElement(rootNode, tdfNs);
+
+        // Load the xml doc into buffer
+        xmlChar* output = nullptr;
+        XMLCharFreePtr xmlCharFreePtr{output};
+        int size = 0;
+
+        xmlDocDumpMemoryEnc(doc.get(), &output, &size, kXMLEncoding);
+
+
+        auto bytes = gsl::make_span(reinterpret_cast<const gsl::byte *>(output), size);
+        m_outputProvider.writeBytes(bytes);
     }
 
     /// Add 'tdf:HandlingAssertion' element.
@@ -497,112 +284,6 @@ namespace virtru {
             std::string errorMsg{"Error at xmlTextWriterEndElement - tdf:HandlingAssertion"};
             ThrowException(std::move(errorMsg));
         }
-    }
-
-    /// Add 'Base64BinaryPayload' element.
-    void TDFXMLWriter::addPayloadElement(xmlTextWriterPtr writer) {
-
-        /* <Base64BinaryPayload> </Base64BinaryPayload> */
-        auto rc = xmlTextWriterStartElement(writer, reinterpret_cast<const xmlChar *>(kBase64BinaryPayloadElement));
-        if (rc < 0) {
-            std::string errorMsg{"Error at xmlTextWriterStartElement - Base64BinaryPayload"};
-            ThrowException(std::move(errorMsg));
-        }
-
-        auto payloadEncodedSize = encoded_size(m_binaryPayload.size());
-        std::vector<char> encodeBuffer(payloadEncodedSize);
-        auto actualEncodedBufSize = encode(encodeBuffer.data(), m_binaryPayload.data(), m_binaryPayload.size());
-
-        rc = xmlTextWriterWriteRawLen(writer,
-                                      reinterpret_cast<const xmlChar *>(encodeBuffer.data()),
-                                      actualEncodedBufSize);
-        if (rc < 0) {
-            std::string errorMsg{"Error at xmlTextWriterWriteRawLen - Base64BinaryPayload"};
-            ThrowException(std::move(errorMsg));
-        }
-
-        // Close the element named tdf:ReferenceValuePayload
-        rc = xmlTextWriterEndElement(writer);
-        if (rc < 0) {
-            std::string errorMsg{"Error at xmlTextWriterEndElement - Base64BinaryPayload"};
-            ThrowException(std::move(errorMsg));
-        }
-    }
-
-    /// Create encrypted policy object.
-    std::string TDFXMLWriter::createEncryptedPolicyObject() {
-        /*
-         *   <EncryptedPolicyObject>
-         *     <policy>base64 of policy</policy>
-         *     <policySignature>payloadKey.sign(policyb64)</policySignature>
-         *     <encryptedMetadata>payloadKey(json object)</encryptedMetadata>
-         *   </EncryptedPolicyObject>
-         */
-        xmlBufferFreePtr xmlBuffer{xmlBufferCreate()};
-        if (!xmlBuffer) {
-            std::string errorMsg{"Fail to create XML Buffer for creating the EncryptedPolicyObject XML"};
-            ThrowException(std::move(errorMsg));
-        }
-
-        // Create a new XmlWriter to write the xml with no compression.
-        xmlTextWriterFreePtr writer{xmlNewTextWriterMemory(xmlBuffer.get(), 0)};
-        if (!writer) {
-            std::string errorMsg{"Error creating the xml writer"};
-            ThrowException(std::move(errorMsg));
-        }
-
-        auto rc = xmlTextWriterStartDocument(writer.get(), nullptr, nullptr, nullptr);
-        if (rc < 0) {
-            std::string errorMsg{"Error creating the xml writer and starting document"};
-            ThrowException(std::move(errorMsg));
-        }
-
-        rc = xmlTextWriterStartElement(writer.get(), reinterpret_cast<const xmlChar *>(kEncryptedPolicyObject));
-        if (rc < 0) {
-            std::string errorMsg{"Error at xmlTextWriterStartElement - EncryptedPolicyObject"};
-            ThrowException(std::move(errorMsg));
-        }
-
-        if (m_manifestDataModel.encryptionInformation.keyAccessObjects.size() != 1) {
-            std::string errorMsg{"Invalid count of key access objects."};
-            ThrowException(std::move(errorMsg));
-        }
-
-        // Add 'policy'
-        createElement(writer.get(), kPolicy, m_manifestDataModel.encryptionInformation.policy, {});
-
-        // Add 'policyBinding'
-        auto policyBinding = m_manifestDataModel.encryptionInformation.keyAccessObjects[0].policyBinding;
-        createElement(writer.get(), kPolicyBinding, policyBinding, {});
-
-        // Add 'encryptedMetaData'
-        auto encryptedMetaData = m_manifestDataModel.encryptionInformation.keyAccessObjects[0].encryptedMetadata;
-        if (!encryptedMetaData.empty()) {
-            createElement(writer.get(), kEncryptedMetadata, encryptedMetaData, {});
-        }
-
-        rc = xmlTextWriterEndElement(writer.get());
-        if (rc < 0) {
-            std::string errorMsg{"Error at xmlTextWriterEndElement - EncryptedPolicyObject"};
-            ThrowException(std::move(errorMsg));
-        }
-
-        // Close the document
-        rc = xmlTextWriterEndDocument(writer.get());
-        if (rc < 0) {
-            std::string errorMsg{"Error at xmlTextWriterEndDocument"};
-            ThrowException(std::move(errorMsg));
-        }
-
-        std::string data(reinterpret_cast<const char *>(xmlBuffer.get()->content),
-                         xmlBufferLength(xmlBuffer.get()));
-
-        auto encodedSize = encoded_size(data.size());
-        std::string base64Data (encodedSize, '\0');
-        auto actualEncodedBufSize = encode(base64Data.data(), data.data(), data.size());
-        base64Data.resize(actualEncodedBufSize);
-
-        return base64Data;
     }
 
     /// Create XML element and xmlTextWriter

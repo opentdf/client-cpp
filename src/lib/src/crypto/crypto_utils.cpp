@@ -145,13 +145,13 @@ namespace virtru::crypto {
         //only log line numbers for DEBUG and TRACE
         if(IsLogLevelDebug() || IsLogLevelTrace()){
             throw CryptoException {
-                os.str() + move (errorStringPrefix) + openssl_error_string_buffer.data(),
+                os.str() + std::move (errorStringPrefix) + openssl_error_string_buffer.data(),
                 static_cast<int>(error)
             };
         }
         else{
             throw CryptoException {
-                move (errorStringPrefix) + openssl_error_string_buffer.data(),
+                std::move (errorStringPrefix) + openssl_error_string_buffer.data(),
                 static_cast<int>(error)
             };
         }

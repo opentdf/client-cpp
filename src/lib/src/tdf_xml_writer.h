@@ -63,30 +63,19 @@ namespace virtru {
         void finish() override;
 
     private:
-        /// Create XML TDF buffer
-        /// \return The xmlBuffer containing the TDF
-        /// NOTE: Caller is responsible for deleting the buffer
-        xmlBufferPtr createTDFXML();
-
-        /// Add 'tdf:ReferenceValuePayload' element.
-        /// \param writer - xml text writer object
-        void addReferenceValuePayloadElement(xmlTextWriterPtr writer);
-
         /// Add 'tdf:EncryptionInformation' element.
-        /// \param writer - xml text writer object
-        void addEncryptionInformationElement(xmlTextWriterPtr writer);
+        /// \param rootNode - The root node
+        /// \param ns - The namespace to be applied to all the child elements.
+        void addEncryptionInformationElement(xmlNodePtr rootNode, xmlNsPtr ns);
 
         /// Add 'tdf:HandlingAssertion' element.
         /// \param writer - xml text writer object
         void addHandlingAssertionElement(xmlTextWriterPtr writer);
 
         /// Add 'Base64BinaryPayload' element.
-        /// \param  writer - xml text writer object
-        void addPayloadElement(xmlTextWriterPtr writer);
-
-        /// Create encrypted policy object.
-        /// \return string - Base64 encoded encrypted policy object.
-        std::string createEncryptedPolicyObject();
+        /// \param rootNode - The root node
+        /// \param ns - The namespace to be applied to all the child elements.
+        void addPayloadElement(xmlNodePtr rootNode, xmlNsPtr ns);
 
         /// Create XML element and xmlTextWriter
         /// \param writer - xml text writer object
