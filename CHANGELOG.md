@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 1.3.11
  - PLAT-2015 - More compiler warning cleanup
+ - PLAT-2460 - Bug - fix TDFIsTDF C API function so it returns only true/false values
 
 1.3.10
  - No changes - version added to trigger Conan Center Index automation
