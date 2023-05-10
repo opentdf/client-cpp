@@ -76,6 +76,12 @@ namespace virtru {
         /// \param dataModel - Manifest data model.
         void parseEncryptedPolicyObject(const std::string& policyObjectStr, ManifestDataModel& dataModel);
 
+        /// Return the nodes after evaluating the XPath
+        /// \param doc - XML document node ptr
+        /// \param xpath - XPath string
+        /// \return XPathObject for retrieving the nodes
+        xmlXPathObjectPtr getNodeset(xmlDocPtr doc, xmlChar *xpath);
+
     private: /// Data
         IInputProvider&         m_inputProvider;
         std::vector<gsl::byte>  m_binaryPayload;

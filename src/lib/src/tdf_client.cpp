@@ -117,6 +117,8 @@ namespace virtru {
             LogError(errorMsg);
             ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
         }
+
+        return {};
     }
 
     /// Encrypt the data by reading from inputProvider and writing to outputProvider.
@@ -405,6 +407,8 @@ namespace virtru {
             LogError(errorMsg);
             ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
         }
+
+        return {};
     }
 
     ///Add data attribute

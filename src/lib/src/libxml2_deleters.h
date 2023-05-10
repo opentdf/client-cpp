@@ -41,6 +41,15 @@ namespace virtru {
     struct XMLBufferDelete { void operator()(xmlBuffer* buffer) {::xmlBufferFree(buffer);} };
     using xmlBufferFreePtr = std::unique_ptr<xmlBuffer, XMLBufferDelete>;
 
+    struct XmlCharDeleter { void operator()(xmlChar* xmlCharPtr) { xmlFree(xmlCharPtr); } };
+    using XmlCharFreePtr = std::unique_ptr<xmlChar, XmlCharDeleter>;
+
+    struct XmlDocDeleter { void operator()(xmlDoc* doc) { xmlFreeDoc(doc); } };
+    using XmlDocFreePtr = std::unique_ptr<xmlDoc, XmlDocDeleter>;
+
+    struct XmlXPathObjectDeleter { void operator()(xmlXPathObject* xmlPath) { xmlXPathFreeObject(xmlPath); } };
+    using XmlXPathObjectFreePtr = std::unique_ptr<xmlXPathObject, XmlXPathObjectDeleter>;
+
 }  // namespace virtru
 
 #endif //VIRTRU_LIBXML2_DELETERS_H
