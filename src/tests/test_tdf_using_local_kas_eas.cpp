@@ -203,6 +203,17 @@ void testNanoTDFOperations(TDFClientBase* client1, NanoTDFClient* client2) {
     }
 }
 
+void twoFilesAreSame(const std::string& filename1, const std::string& filename2) {
+    std::ifstream ifs1(filename1);
+    std::ifstream ifs2(filename2);
+
+    std::istream_iterator<char> b1(ifs1), e1;
+    std::istream_iterator<char> b2(ifs2), e2;
+
+    BOOST_CHECK_EQUAL_COLLECTIONS(b1, e1, b2, e2);
+}
+
+
 BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
 
     using namespace virtru;
@@ -546,6 +557,43 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
 
             // Test tdf with user creds
             testTDFOperations(oidcClientTDF.get());
+
+            // create a sample file
+            std::string testFile("testing-ictdf-tdf.txt");
+            std::string ictdfTestFile("testing-xml.tdf");
+
+            {
+                std::ofstream outStream{testFile.c_str(), std::ios_base::out | std::ios_base::binary};
+                if (!outStream) {
+                    BOOST_FAIL("Failed to open file for writing sample data.");
+                }
+
+                auto sampleText = "Virtru";
+
+                // Write to a file
+                outStream.write(sampleText, std::strlen(sampleText));
+            }
+
+            auto ictdfClient = std::make_unique<TDFClient>(clientCreds, KAS_URL);
+            ictdfClient->setXMLFormat();
+            TDFStorageType plainTextFile;
+            plainTextFile.setTDFStorageFileType(testFile);
+            ictdfClient->encryptFile(plainTextFile, ictdfTestFile);
+
+            TDFClient::convertICTDFToTDF(ictdfTestFile, "testing-json.tdf");
+
+            auto jsonTDFClient = std::make_unique<TDFClient>(clientCreds, KAS_URL);
+            TDFStorageType jsonTDFFile;
+            jsonTDFFile.setTDFStorageFileType("testing-json.tdf");
+            jsonTDFClient->decryptFile(jsonTDFFile, "testing-ictdf-tdf-1.txt");
+            twoFilesAreSame("testing-ictdf-tdf-1.txt", testFile);
+
+            TDFClient::convertTDFToICTDF("testing-json.tdf", "testing-xml.tdf");
+
+            TDFStorageType xmlTDFFile;
+            xmlTDFFile.setTDFStorageFileType("testing-xml.tdf");
+            jsonTDFClient->decryptFile(xmlTDFFile, "testing-ictdf-tdf-2.txt");
+            twoFilesAreSame("testing-ictdf-tdf-2.txt", testFile);
 #endif
 
         }

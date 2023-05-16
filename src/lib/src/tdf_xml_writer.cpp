@@ -31,9 +31,8 @@ namespace virtru {
     constexpr auto kXSIPrefix = "xsi";
 
     /// Constructor for TDFXMLWriter
-    TDFXMLWriter::TDFXMLWriter(IOutputProvider& outputProvider, std::string manifestFilename, std::string payloadFileName)
-            : m_manifestFilename{std::move(manifestFilename)}, m_payloadFileName{std::move(payloadFileName)},
-            m_outputProvider(outputProvider){
+    TDFXMLWriter::TDFXMLWriter(IOutputProvider& outputProvider)
+            : m_outputProvider(outputProvider){
     }
 
     /// Set the payload size of the TDF
