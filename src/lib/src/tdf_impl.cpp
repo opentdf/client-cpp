@@ -580,7 +580,7 @@ namespace virtru {
         auto dataModel = reader.getManifest();
 
         if (dataModel.encryptionInformation.integrityInformation.segments.size() != 1) {
-            ThrowException("Cannot covert ICTDF to json formatted TDF since there are more one segment.", VIRTRU_GENERAL_ERROR);
+            ThrowException("Cannot convert ICTDF to json formatted TDF because there is more than one segment.", VIRTRU_GENERAL_ERROR);
         }
 
         auto payloadSize = reader.getPayloadSize();
