@@ -8,7 +8,7 @@ TDF_LIB_OUTPUT="tdf-lib-cpp"
 rm -rf build
 mkdir build
 cd build
-conan install .. --build=missing
+conan install .. --build=missing --profile:build=default --profile:host=wasm -s build_type=Release
 conan build .. --build-folder .
 
 # run unit tests
