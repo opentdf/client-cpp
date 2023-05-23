@@ -83,6 +83,7 @@ set (TDF_CPP_SDK_SOURCE_FILES_BASE
         ${TDF_CPP_SDK_SOURCE_DIR}/src/s3_io_provider.cpp
         ${TDF_CPP_SDK_SOURCE_DIR}/src/stream_io_provider.cpp
         ${TDF_CPP_SDK_SOURCE_DIR}/include/stream_io_provider.h
+        ${TDF_CPP_SDK_SOURCE_DIR}/include/tdf_assertion.h
         ${TDF_CPP_SDK_SOURCE_DIR}/include/tdf_storage_type.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_storage_type.cpp
         ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_html_writer.cpp

@@ -11,6 +11,8 @@
 #include "tdf_xml_reader.h"
 #include "tdf_xml_writer.h"
 #include "stream_io_provider.h"
+#include "file_io_provider.h"
+#include "support/test_utils.h"
 
 #include <ostream>
 #include <boost/test/included/unit_test.hpp>
@@ -87,6 +89,25 @@ BOOST_AUTO_TEST_SUITE(test_xml_reader_writer_suite)
         std::cout << "ICTDF XML:\n" << oStringStream.str() << std::endl;
 
         BOOST_TEST(oStringStream.str() == tdfXML);
+    }
+
+    BOOST_AUTO_TEST_CASE(test_tdf_advaced_xml_writer) {
+
+        std::string currentDir = TestUtils::getCurrentWorkingDir();
+
+        // TODO: BUGBUG: We should use std::filesystem once all the compilers catch up.
+#ifdef _WINDOWS
+        std::string inPathXML {currentDir };
+        inPathXML.append("\\data\\tdf.ictdf");
+#else
+        std::string inPathXML{currentDir};
+        inPathXML.append("/data/tdf.ictdf");
+#endif
+        FileInputProvider fileInputProvider{inPathXML};
+        TDFXMLReader tdfXMLReader{fileInputProvider};
+
+        auto dataModel = tdfXMLReader.getManifest();
+
     }
 
     BOOST_AUTO_TEST_CASE(test_tdf_xml_reader) {
