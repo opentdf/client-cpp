@@ -135,10 +135,12 @@ namespace virtru {
             auto payloadSize = (encryptedSize - (kGcmIvSize + kAesBlockSize));
             dataModel.encryptionInformation.integrityInformation.segmentSizeDefault = payloadSize;
 
-            SegmentInfoDataModel segmentInfo;
-            segmentInfo.encryptedSegmentSize = encryptedSize;
-            segmentInfo.segmentSize = payloadSize;
-            dataModel.encryptionInformation.integrityInformation.segments.emplace_back(segmentInfo);
+            if (dataModel.encryptionInformation.integrityInformation.segments.size() != 1) {
+                ThrowException("ICTDF Only supports one segment.", VIRTRU_TDF_FORMAT_ERROR);
+            }
+
+            dataModel.encryptionInformation.integrityInformation.segments[0].encryptedSegmentSize = encryptedSize;
+            dataModel.encryptionInformation.integrityInformation.segments[0].segmentSize = payloadSize;
         }
 
         return dataModel;
@@ -174,8 +176,6 @@ namespace virtru {
 		 *		</tdf:EncryptionMethod>
 		 *  </tdf:EncryptionInformation>
          */
-
-        dataModel.encryptionInformation.keyAccessObjects.emplace_back(KeyAccessDataModel());
 
         // Get tdf:EncryptedPolicyObject using xPath
         {

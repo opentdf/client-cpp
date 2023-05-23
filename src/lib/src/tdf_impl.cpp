@@ -83,9 +83,7 @@ namespace virtru {
 
             encryptInputProviderToTDFWriter(inputProvider, writer);
         } else if (m_tdfBuilder.m_impl->m_protocol == Protocol::Xml) {
-            TDFXMLWriter writer{outputProvider,
-                                kTDFManifestFileName,
-                                kTDFPayloadFileName};
+            TDFXMLWriter writer{outputProvider};
 
             encryptInputProviderToTDFWriter(inputProvider, writer);
         } else { // HTML
@@ -539,6 +537,66 @@ namespace virtru {
         outputProvider.writeBytes(toBytes(bytesToWrite));
     }
 
+    /// Convert the xml formatted TDF(ICTDF) to the json formatted TDF
+    void TDFImpl::convertICTDFToTDF(const std::string& ictdfFilePath, const std::string& tdfFilePath) {
+        LogTrace("TDFImpl::convertICTDFToTDF");
+
+        FileInputProvider inputProvider{ictdfFilePath};
+        auto protocol = encryptedWithProtocol(inputProvider);
+        if (protocol != Protocol::Xml) {
+            ThrowException("Input file is not ICTDF file", VIRTRU_TDF_FORMAT_ERROR);
+        }
+
+        // Read the manifest and payload from ICTDF
+        TDFXMLReader reader{inputProvider};
+        auto dataModel = reader.getManifest();
+        auto payloadSize = reader.getPayloadSize();
+        std::vector<gsl::byte> payload(payloadSize);
+        auto writeableBytes = toWriteableBytes(payload);
+        reader.readPayload(0, payloadSize, writeableBytes);
+
+        FileOutputProvider fileOutputProvider{tdfFilePath};
+        TDFArchiveWriter writer{&fileOutputProvider,
+                                kTDFManifestFileName,
+                                kTDFPayloadFileName};
+        writer.setPayloadSize(payloadSize);
+        writer.appendPayload(writeableBytes);
+        writer.appendManifest(dataModel);
+        writer.finish();
+    }
+
+    /// Convert the json formatted TDF to xml formatted TDF(ICTDF)
+    void TDFImpl::convertTDFToICTDF(const std::string& tdfFilePath, const std::string& ictdfFilePath) {
+        LogTrace("TDFImpl::convertTDFToICTDF");
+
+        FileInputProvider inputProvider{tdfFilePath};
+        auto protocol = encryptedWithProtocol(inputProvider);
+        if (protocol != Protocol::Zip) {
+            ThrowException("Input file is not json formatted TDF file", VIRTRU_TDF_FORMAT_ERROR);
+        }
+
+        // Read the manifest and payload from TDF
+        TDFArchiveReader reader{&inputProvider, kTDFManifestFileName, kTDFPayloadFileName};
+        auto dataModel = reader.getManifest();
+
+        if (dataModel.encryptionInformation.integrityInformation.segments.size() != 1) {
+            ThrowException("Cannot convert ICTDF to json formatted TDF because there is more than one segment.", VIRTRU_GENERAL_ERROR);
+        }
+
+        auto payloadSize = reader.getPayloadSize();
+        std::vector<gsl::byte> payload(payloadSize);
+        auto writeableBytes = toWriteableBytes(payload);
+        reader.readPayload(0, payloadSize, writeableBytes);
+
+        FileOutputProvider fileOutputProvider{ictdfFilePath};
+
+        TDFXMLWriter writer{fileOutputProvider};
+        writer.appendManifest(dataModel);
+        writer.setPayloadSize(payloadSize);
+        writer.appendPayload(writeableBytes);
+        writer.finish();
+    }
+
     bool TDFImpl::isInputProviderTDF(IInputProvider& inputProvider) {
         LogTrace("TDFImpl::isInputProviderTDF");
 
@@ -677,8 +735,8 @@ namespace virtru {
                                     kTDFPayloadFileName};
             manifestDataModel = reader.getManifest();
         } else if (protocol == Protocol::Xml) {
-            // TDFXMLReader reader{inputProvider};
-            // dataModel = reader.getManifest();
+            TDFXMLReader reader{inputProvider};
+            manifestDataModel = reader.getManifest();
         } else { // html format
 
             std::string manifestStr;
@@ -1346,11 +1404,6 @@ namespace virtru {
 
     /// Validate the root signature.
     void TDFImpl::validateRootSignature(SplitKey& splitKey, const ManifestDataModel& manifestDataModel) const {
-
-        // Bypass root signature check for xml(ictdf) since we have only one segment.
-        if (m_tdfBuilder.m_impl->m_protocol == Protocol::Xml) {
-            return;
-        }
 
         auto rootSignatureAlg = manifestDataModel.encryptionInformation.integrityInformation.rootSignature.algorithm;
         auto rootSignatureSig = manifestDataModel.encryptionInformation.integrityInformation.rootSignature.signature;

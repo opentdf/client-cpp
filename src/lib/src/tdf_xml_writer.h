@@ -29,10 +29,8 @@ namespace virtru {
     class TDFXMLWriter : public ITDFWriter {
     public:
         /// Constructor
-        /// \param manifestFilename - A manifest file name to be used in the TDF file (manifest.xml - TDF2,
-        ///                           manifest.json - TDF).
-        /// \param payloadFileName - A payload file name to be used in the TDF file
-        TDFXMLWriter(IOutputProvider& outputProvider, std::string manifestFilename, std::string payloadFileName);
+        /// \param outputProvider - The ictdf data will write to the output provider.
+        TDFXMLWriter(IOutputProvider& outputProvider);
 
         /// Delete default constructor
         TDFXMLWriter() = delete;
@@ -88,8 +86,6 @@ namespace virtru {
                            XMLAttributesNamesAndValues xmlAttributesNamesAndValues);
 
     private: /// Data
-        std::string             m_manifestFilename;
-        std::string             m_payloadFileName;
         ManifestDataModel       m_manifestDataModel;
         std::vector<gsl::byte>  m_binaryPayload;
         IOutputProvider&        m_outputProvider;

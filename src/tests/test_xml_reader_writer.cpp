@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_SUITE(test_xml_reader_writer_suite)
         std::ostringstream oStringStream;
         StreamOutputProvider outputProvider{oStringStream};
 
-        TDFXMLWriter tdfxmlWriter{outputProvider, kTDFManifestFileName, kTDFPayloadFileName};
+        TDFXMLWriter tdfxmlWriter{outputProvider};
         auto dataModel = ManifestDataModel::CreateModelFromJson(manifestInJson);
         tdfxmlWriter.setPayloadSize(payload.size());
         tdfxmlWriter.appendManifest(dataModel);
