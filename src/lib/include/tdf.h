@@ -140,6 +140,16 @@ namespace virtru {
         /// \return Return true if data is TDF and false otherwise
         static bool isInputProviderTDF(IInputProvider& inputProvider);
 
+        /// Convert the xml formatted TDF(ICTDF) to the json formatted TDF
+        /// \param ictdfFilePath -  The xml formatted TDF file path
+        /// \param tdfFilePath - The zip formatted TDF file path
+        static void convertICTDFToTDF(const std::string& ictdfFilePath, const std::string& tdfFilePath);
+
+        /// Convert the json formatted TDF to xml formatted TDF(ICTDF)
+        /// \param tdfFilePath - The zip formatted TDF file path
+        /// \param ictdfFilePath -  The json formatted TDF file path
+        static void convertTDFToICTDF(const std::string& tdfFilePath, const std::string& ictdfFilePath);
+
         /// Destructor
         ~TDF();
 

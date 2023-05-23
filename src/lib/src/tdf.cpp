@@ -182,6 +182,20 @@ namespace virtru {
         m_impl->sync(encryptedTdfFilepath);
     }
 
+    /// Convert the zip formatted TDF to the xml formatted TDF(ICTDF)
+    void TDF::convertICTDFToTDF(const std::string& ictdfFilePath, const std::string& tdfFilePath) {
+        LogInfo("Convert ICTDF o TDF");
+
+        TDFImpl::convertICTDFToTDF(ictdfFilePath, tdfFilePath);
+    }
+
+    /// Convert the json formatted TDF to xml formatted TDF(ICTDF)
+    void TDF::convertTDFToICTDF(const std::string& tdfFilePath, const std::string& ictdfFilePath) {
+        LogInfo("Convert TDF to ICTDF");
+
+        TDFImpl::convertTDFToICTDF(tdfFilePath, ictdfFilePath);
+    }
+
     bool TDF::isInputProviderTDF(IInputProvider& inputProvider) {
         LogInfo("check if input provider is tdf");
 

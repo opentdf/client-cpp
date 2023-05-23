@@ -482,6 +482,24 @@ namespace virtru {
         return TDF::isInputProviderTDF(inputProvider);
     }
 
+    /// Convert the zip formatted TDF to the xml formatted TDF(ICTDF)
+    void TDFClient::convertICTDFToTDF(const std::string& ictdfFilePath, const std::string& tdfFilePath) {
+
+        LogTrace("TDFClient::convertToTDF");
+
+        Benchmark benchmark("Total tdf conversion file time");
+        TDF::convertICTDFToTDF(ictdfFilePath, tdfFilePath);
+    }
+
+    /// Convert the json formatted TDF to xml formatted TDF(ICTDF)
+    void TDFClient::convertTDFToICTDF(const std::string& tdfFilePath, const std::string& ictdfFilePath) {
+
+        LogTrace("TDFClient::convertTDFToICTDF");
+
+        Benchmark benchmark("Total tdf conversion file time");
+        TDF::convertTDFToICTDF(tdfFilePath, ictdfFilePath);
+    }
+
     /// Initialize the TDF builder which is used for creating the TDF instance
     /// used for encrypt and decrypt.
     void TDFClient::initTDFBuilder() {
