@@ -17,6 +17,10 @@
 #include <boost/beast/core/detail/base64.hpp>
 #include <iostream>
 
+#include <libxml/xmlreader.h>
+#include <libxml/encoding.h>
+#include <libxml/xmlwriter.h>
+
 namespace virtru {
 
     using namespace boost::beast::detail::base64;
@@ -440,4 +444,65 @@ namespace virtru {
         return result.release();
     }
 
+    // Based on https://stackoverflow.com/questions/54124989/libxml2-get-xsd-validation-errors
+    static void schemaParseErrorHandler(void *arg, xmlErrorPtr error)
+    {
+        fprintf(stderr, "Error at line %d, column %d\n%s", error->line, error->int2, error->message);
+        *((bool*)arg) = true;
+    }
+
+    bool TDFXMLReader::validateXML(const char* xmlfile, const char* schemafile) {
+        bool retval = false;
+
+        xmlInitParser();
+        xmlSchemaPtr schema = NULL;
+        xmlSchemaParserCtxtPtr schema_parser_ctxt = NULL;
+        int has_schema_errors = 0;
+        int ret = -1;
+        xmlSchemaValidCtxtPtr valid_ctxt = NULL;
+        if ((schema_parser_ctxt = xmlSchemaNewParserCtxt(schemafile)))
+        {
+            schema = xmlSchemaParse(schema_parser_ctxt);
+            xmlSchemaFreeParserCtxt(schema_parser_ctxt);
+            if (schema)
+            {
+                valid_ctxt = xmlSchemaNewValidCtxt(schema);
+            }
+        }
+        xmlTextReaderPtr reader = NULL;
+        reader = xmlReaderForFile(xmlfile, /*RPCXmlStream::STD_ENCODING,*/ NULL, 0);
+
+        if (reader != NULL)
+        {
+            if (valid_ctxt)
+            {
+                xmlTextReaderSchemaValidateCtxt(reader, valid_ctxt, 0);
+                xmlSchemaSetValidStructuredErrors(valid_ctxt, schemaParseErrorHandler, &has_schema_errors);
+            }
+            ret = xmlTextReaderRead(reader);
+            while (ret == 1 && !has_schema_errors)
+            {
+                //... procesing informations
+                ret = xmlTextReaderRead(reader);
+            }
+        }
+
+        if (ret != 0)
+        {
+            xmlErrorPtr err = xmlGetLastError();
+            fprintf(stdout, "%s: failed to parse in line %d, col %d. Error %d: %s\n",
+                    err->file,
+                    err->line,
+                    err->int2,
+                    err->code,
+                    err->message);
+            retval = false;
+        } else {
+            retval = true;
+        }
+        xmlFreeTextReader(reader);
+        xmlCleanupParser();
+
+        return retval;
+    }
 }

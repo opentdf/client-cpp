@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns="urn:us:gov:ic:cvenum:revrecall:action"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            elementFormDefault="qualified"
+            xml:lang="en"
+            targetNamespace="urn:us:gov:ic:cvenum:revrecall:action">
+   <xsd:annotation>
+      <xsd:documentation>
+                    The W3C XML Schema fragment encoding types for CVEnumRevRecallAction Version 2 controlled vocabulary enumerations. This file is generated, so edits should be made to the CVEnumRevRecallAction.xml CVE it is based on, instead of here.
+                </xsd:documentation>
+   </xsd:annotation>
+   <!--*************************************************************-->
+<!--Generated TYPE DEFINITIONS ..................................-->
+<!--*************************************************************-->
+<xsd:simpleType name="CVEnumRevRecallAction">
+      <xsd:annotation>
+         <xsd:documentation>(U) Actions to be taken for a Revision/Recall.
+                         PERMISSIBLE VALUES
+                         
+                         The permissible values for this simple type are defined in the Controlled Value Enumeration:
+                         
+                         CVEnumRevRecallAction.xml
+                         
+                     </xsd:documentation>
+      </xsd:annotation>
+      <xsd:restriction base="xsd:token">
+         <xsd:enumeration value="PURGE">
+            <xsd:annotation>
+               <xsd:documentation>Immediately remove and destroy all copies of the revision of
+                the product that has been revised or recalled.</xsd:documentation>
+            </xsd:annotation>
+         </xsd:enumeration>
+         <xsd:enumeration value="RETAIN_WARN">
+            <xsd:annotation>
+               <xsd:documentation>Retain the existing copies of the revision of the product
+                but indicate that it is not the latest revision.</xsd:documentation>
+            </xsd:annotation>
+         </xsd:enumeration>
+         <xsd:enumeration value="RETAIN_HIDE">
+            <xsd:annotation>
+               <xsd:documentation>Retain the existing copies of the revision of the product
+                but prevent access and distribution.</xsd:documentation>
+            </xsd:annotation>
+         </xsd:enumeration>
+         <xsd:enumeration value="MANUAL_INSTRUCTION">
+            <xsd:annotation>
+               <xsd:documentation>The action to be taken as a result of the
+                revision or recall requires manual intervention by a human to read and follow the
+                included instructions.</xsd:documentation>
+            </xsd:annotation>
+         </xsd:enumeration>
+      </xsd:restriction>
+   </xsd:simpleType>
+</xsd:schema>

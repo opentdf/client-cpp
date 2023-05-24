@@ -58,6 +58,11 @@ namespace virtru {
         /// \return std::uint64_t - Size of the payload.
         std::uint64_t getPayloadSize() const override;
 
+        /// Validate input XML against supplied schema
+        /// \param xmlfile - name of file containing XML data
+        /// \param schemafile - name of file containing XSD schema
+        bool validateXML(const char* xmlfile, const char* schemafile);
+
     private:
         /// Read encryption information from the xml
         /// \param doc - XML document node ptr

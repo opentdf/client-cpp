@@ -127,4 +127,47 @@ BOOST_AUTO_TEST_SUITE(test_xml_reader_writer_suite)
         BOOST_TEST(actualPayload == payload);
     }
 
+
+    BOOST_AUTO_TEST_CASE(test_tdf_xml_validation) {
+
+        const char *xmlfilegood = "data/valid_xml_tdf.tdf";
+        const char *xmlfilebad = "data/invalid_xml_tdf.tdf";
+
+        const char *schemafile = "data/IC-TDF/Schema/IC-TDF/IC-TDF.xsd";
+
+        bool result;
+
+        BOOST_TEST_MESSAGE("Beginning test of valid XML input");
+        std::cout << "Beginning test of valid XML input" << std::endl;
+        try {
+            std::istringstream inputStream(tdfXML);
+            StreamInputProvider inputProvider{inputStream};
+            TDFXMLReader tdfxmlReader{inputProvider};
+
+            result = tdfxmlReader.validateXML(xmlfilegood, schemafile);
+            BOOST_TEST(result == true);
+        } catch (std::exception e) {
+            LogDebug(e.what());
+            std::ostringstream oss;
+            oss << e.what();
+            BOOST_FAIL("Caught exception: " + oss.str());
+        }
+
+        BOOST_TEST_MESSAGE("Beginning test of INvalid XML input");
+        std::cout << "Beginning test of INvalid XML input" << std::endl;
+        try {
+            std::istringstream inputStream(tdfXML);
+            StreamInputProvider inputProvider{inputStream};
+            TDFXMLReader tdfxmlReader{inputProvider};
+
+            result = tdfxmlReader.validateXML(xmlfilebad, schemafile);
+            BOOST_TEST(result == false);
+        } catch (std::exception e) {
+            LogDebug(e.what());
+            std::ostringstream oss;
+            oss << e.what();
+            BOOST_FAIL("Caught exception: " + oss.str());
+        }
+    }
+
 BOOST_AUTO_TEST_SUITE_END()
