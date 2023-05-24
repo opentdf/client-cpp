@@ -73,7 +73,7 @@ namespace virtru {
         /// Read default assertions from the xml
         /// \param doc - XML document node ptr
         /// \param dataModel - Data model that will updated with handling assertion.
-        void readBaseAssertion(xmlDocPtr doc, ManifestDataModel& dataModel);
+        void readDefaultAssertion(xmlDocPtr doc, ManifestDataModel& dataModel);
 
         /// Read statement group from the assertion node
         /// \param doc - XML document node ptr

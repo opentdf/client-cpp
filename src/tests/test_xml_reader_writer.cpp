@@ -108,6 +108,16 @@ BOOST_AUTO_TEST_SUITE(test_xml_reader_writer_suite)
 
         auto dataModel = tdfXMLReader.getManifest();
 
+        std::ostringstream oStringStream;
+        StreamOutputProvider outputProvider{oStringStream};
+        TDFXMLWriter tdfxmlWriter{outputProvider};
+        tdfxmlWriter.setPayloadSize(payload.size());
+        tdfxmlWriter.appendManifest(dataModel);
+        tdfxmlWriter.appendPayload(toBytes(payload));
+        tdfxmlWriter.finish();
+
+        std::cout << "ICTDF XML:\n" << oStringStream.str() << std::endl;
+
     }
 
     BOOST_AUTO_TEST_CASE(test_tdf_xml_reader) {

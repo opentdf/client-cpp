@@ -56,8 +56,8 @@ namespace virtru {
         // Parse HandlingAssertion
         readHandlingAssertion(doc.get(), dataModel);
 
-        // Parse base assertions
-        readBaseAssertion(doc.get(), dataModel);
+        // Parse default assertions
+        readDefaultAssertion(doc.get(), dataModel);
 
         XMLCharFreePtr xmlCharBase64Payload;
 
@@ -414,8 +414,8 @@ namespace virtru {
         }
     }
 
-    /// Read base assertions from the xml
-    void TDFXMLReader::readBaseAssertion(xmlDocPtr doc, ManifestDataModel& dataModel) {
+    /// Read default assertions from the xml
+    void TDFXMLReader::readDefaultAssertion(xmlDocPtr doc, ManifestDataModel& dataModel) {
         /*
          *  <tdf:Assertion tdf:id="assertion1" tdf:scope="TDO">
          *      <tdf:StringStatement tdf:isEncrypted="false">This is the first
@@ -529,15 +529,15 @@ namespace virtru {
                     }
                 }
 
-                if (xmlStrEqual(attr->name, reinterpret_cast<const xmlChar *>(kAppliesToStateAttribute))) {
-                    std::string appliesToStateAttribute(reinterpret_cast<const char *>(attr->children->content),
-                                                        xmlStrlen(attr->children->content));
-                    std::cout << "appliesToState attribute" << appliesToStateAttribute << std::endl;
-                    auto appliesToStateAsEnum = magic_enum::enum_cast<AppliesToState>(appliesToStateAttribute);
-                    if (appliesToStateAsEnum.has_value()) {
-                        assertion.setAppliedState(appliesToStateAsEnum.value());
-                    }
-                }
+//                if (xmlStrEqual(attr->name, reinterpret_cast<const xmlChar *>(kAppliesToStateAttribute))) {
+//                    std::string appliesToStateAttribute(reinterpret_cast<const char *>(attr->children->content),
+//                                                        xmlStrlen(attr->children->content));
+//                    std::cout << "appliesToState attribute" << appliesToStateAttribute << std::endl;
+//                    auto appliesToStateAsEnum = magic_enum::enum_cast<AppliesToState>(appliesToStateAttribute);
+//                    if (appliesToStateAsEnum.has_value()) {
+//                        assertion.setAppliedState(appliesToStateAsEnum.value());
+//                    }
+//                }
 
                 if (xmlStrEqual(attr->name, reinterpret_cast<const xmlChar *>(kIdAttribute))) {
                     std::string idAttribute;
@@ -558,7 +558,7 @@ namespace virtru {
     void TDFXMLReader::readStatementGroup(xmlDocPtr doc, xmlNodePtr node, StatementGroup& statementGroup) {
 
         XMLCharFreePtr xmlCharStatement;
-        xmlChar* statement = xmlNodeListGetString(doc, node, 1);
+        xmlChar* statement = xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
         if (statement) {
             xmlCharStatement.reset(statement);
             std::string statementValue;

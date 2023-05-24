@@ -102,7 +102,7 @@ namespace virtru {
             m_isEncrypted = isEncrypted;
         }
 
-    private:
+    public:
         StatementType m_type{StatementType::XMLBase64};
         std::string m_filename;
         std::string m_mediaType;
@@ -143,19 +143,13 @@ namespace virtru {
         /// Set the id for the assertion
         /// \param id
         void setId(std::string id) {
-            m_assertionId = id;
+            m_id = id;
         }
 
         /// Set the type for the assertion
         /// \param type
         void setType(std::string type) {
             m_type = type;
-        }
-
-        /// Set the applied state for the assertion.
-        /// \param appliesToState
-        void setAppliedState(AppliesToState appliesToState) {
-            m_appliesToState = appliesToState;
         }
 
         /// Set the statement group for the assertion.
@@ -170,11 +164,10 @@ namespace virtru {
             m_statementMetaData = statementMetaData;
         }
 
-    private:
+    public:
         Scope m_scope;
-        std::string m_assertionId;
+        std::string m_id;
         std::string m_type;
-        AppliesToState m_appliesToState;
         StatementGroup m_statementGroup{StatementType::Unknow};
         std::vector<std::string> m_statementMetaData;
     };
@@ -226,7 +219,7 @@ namespace virtru {
             m_handlingStatement = handlingStatement;
         }
 
-    private:
+    public:
         Scope m_scope;
         AppliesToState m_appliesToState;
         std::string m_id;
