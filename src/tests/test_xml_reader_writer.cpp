@@ -130,7 +130,7 @@ BOOST_AUTO_TEST_SUITE(test_xml_reader_writer_suite)
 
     BOOST_AUTO_TEST_CASE(test_tdf_xml_validation) {
 
-        const char *xmlfilegood = "data/valid_xml_tdf.tdf";
+        const char *xmlfilegood = "data/good.tdf.ictdf";
         const char *xmlfilebad = "data/invalid_xml_tdf.tdf";
 
         const char *schemafile = "data/IC-TDF/Schema/IC-TDF/IC-TDF.xsd";
@@ -152,6 +152,8 @@ BOOST_AUTO_TEST_SUITE(test_xml_reader_writer_suite)
             oss << e.what();
             BOOST_FAIL("Caught exception: " + oss.str());
         }
+        BOOST_TEST_MESSAGE("End of test of valid XML input");
+        std::cout << "End of test of valid XML input" << std::endl;
 
         BOOST_TEST_MESSAGE("Beginning test of INvalid XML input");
         std::cout << "Beginning test of INvalid XML input" << std::endl;
@@ -168,6 +170,8 @@ BOOST_AUTO_TEST_SUITE(test_xml_reader_writer_suite)
             oss << e.what();
             BOOST_FAIL("Caught exception: " + oss.str());
         }
+        BOOST_TEST_MESSAGE("End of test of INvalid XML input");
+        std::cout << "End of test of INvalid XML input" << std::endl;
     }
 
 BOOST_AUTO_TEST_SUITE_END()
