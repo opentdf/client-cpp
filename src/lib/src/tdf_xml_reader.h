@@ -20,10 +20,36 @@
 #include "io_provider.h"
 #include "tdf_archive_reader.h"
 #include "libxml2_deleters.h"
+#include <libxml/xmlreader.h>
 
 namespace virtru {
 
     using namespace virtru::crypto;
+
+    class TDFXMLValidator {
+      public:
+        /// Validate input XML against supplied schema
+        /// \param schemafile - name of file containing XSD schema
+        TDFXMLValidator( const char * schema);
+
+        /// destructor
+        ~TDFXMLValidator();
+
+        /// Validate input XML against supplied schema
+        /// \param xmlfile - name of file containing XML data
+        bool validateXML(const char* xmlfile);
+
+        /// Validate input XML against supplied schema
+        /// \param reader - pointer to reader for input XML
+        bool validateXML(xmlTextReaderPtr reader);
+
+        /// Validate input XML against supplied schema
+        /// \param doc - XML document node ptr
+        bool validateXML(xmlDocPtr doc);
+
+      private:
+        xmlSchemaValidCtxtPtr m_valid_ctxt;
+    };
 
     class TDFXMLReader : public ITDFReader {
     public:
@@ -57,11 +83,6 @@ namespace virtru {
         /// Get the size of the payload.
         /// \return std::uint64_t - Size of the payload.
         std::uint64_t getPayloadSize() const override;
-
-        /// Validate input XML against supplied schema
-        /// \param xmlfile - name of file containing XML data
-        /// \param schemafile - name of file containing XSD schema
-        bool validateXML(const char* xmlfile, const char* schemafile);
 
     private:
         /// Read encryption information from the xml

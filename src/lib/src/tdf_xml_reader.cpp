@@ -16,7 +16,6 @@
 #include "crypto/crypto_utils.h"
 #include <boost/beast/core/detail/base64.hpp>
 #include <iostream>
-
 #include <libxml/xmlreader.h>
 #include <libxml/encoding.h>
 #include <libxml/xmlwriter.h>
@@ -41,6 +40,14 @@ namespace virtru {
         XMLDocFreePtr doc{xmlParseMemory(reinterpret_cast<const char *>(xmlBuf.data()), xmlBuf.size())};
         if (!doc) {
             std::string errorMsg{"Error - Document not parsed successfully."};
+            ThrowException(std::move(errorMsg));
+        }
+
+        // TODO FIXME - schema url should not be hardcoded
+        TDFXMLValidator validator("data/IC-TDF/Schema/IC-TDF/IC-TDF.xsd");
+        bool valid = validator.validateXML(doc.get());
+        if (!valid) {
+            std::string errorMsg{"Error - document did not pass schema validation"};
             ThrowException(std::move(errorMsg));
         }
 
@@ -451,38 +458,65 @@ namespace virtru {
         *((bool*)arg) = true;
     }
 
-    bool TDFXMLReader::validateXML(const char* xmlfile, const char* schemafile) {
-        bool retval = false;
-
-        xmlInitParser();
+    TDFXMLValidator::TDFXMLValidator(const char *schemafile) {
         xmlSchemaPtr schema = NULL;
         xmlSchemaParserCtxtPtr schema_parser_ctxt = NULL;
-        int has_schema_errors = 0;
-        int ret = -1;
-        xmlSchemaValidCtxtPtr valid_ctxt = NULL;
+        m_valid_ctxt = NULL;
+
+        xmlInitParser();
+
         if ((schema_parser_ctxt = xmlSchemaNewParserCtxt(schemafile)))
         {
             schema = xmlSchemaParse(schema_parser_ctxt);
             xmlSchemaFreeParserCtxt(schema_parser_ctxt);
             if (schema)
             {
-                valid_ctxt = xmlSchemaNewValidCtxt(schema);
+                m_valid_ctxt = xmlSchemaNewValidCtxt(schema);
             }
         }
+    }
+
+    TDFXMLValidator::~TDFXMLValidator() {
+        xmlCleanupParser();
+    }
+
+    bool TDFXMLValidator::validateXML(const char *xmlfile) {
         xmlTextReaderPtr reader = NULL;
-        reader = xmlReaderForFile(xmlfile, /*RPCXmlStream::STD_ENCODING,*/ NULL, 0);
+        bool retval = false;
+
+        reader = xmlReaderForFile(xmlfile, 0, 0);
+        retval = validateXML(reader);
+        xmlFreeTextReader(reader);
+
+        return retval;
+    }
+
+    bool TDFXMLValidator::validateXML(xmlDoc* doc) {
+        xmlTextReaderPtr reader = NULL;
+        bool retval = false;
+
+        reader = xmlReaderWalker(doc);
+        retval = validateXML(reader);
+        xmlFreeTextReader(reader);
+
+        return retval;
+    }
+
+    bool TDFXMLValidator::validateXML(xmlTextReaderPtr reader) {
+        bool retval = false;
+        int has_schema_errors = 0;
+        int ret = -1;
 
         if (reader != NULL)
         {
-            if (valid_ctxt)
+            if (m_valid_ctxt)
             {
-                xmlTextReaderSchemaValidateCtxt(reader, valid_ctxt, 0);
-                xmlSchemaSetValidStructuredErrors(valid_ctxt, schemaParseErrorHandler, &has_schema_errors);
+                xmlTextReaderSchemaValidateCtxt(reader, m_valid_ctxt, 0);
+                xmlSchemaSetValidStructuredErrors(m_valid_ctxt, schemaParseErrorHandler, &has_schema_errors);
             }
             ret = xmlTextReaderRead(reader);
             while (ret == 1 && !has_schema_errors)
             {
-                //... procesing informations
                 ret = xmlTextReaderRead(reader);
             }
         }
@@ -490,18 +524,11 @@ namespace virtru {
         if (ret != 0)
         {
             xmlErrorPtr err = xmlGetLastError();
-            fprintf(stdout, "%s: failed to parse in line %d, col %d. Error %d: %s\n",
-                    err->file,
-                    err->line,
-                    err->int2,
-                    err->code,
-                    err->message);
+            fprintf(stdout, "%s: failed to parse in line %d, col %d. Error %d: %s\n", err->file, err->line, err->int2, err->code, err->message);
             retval = false;
         } else {
             retval = true;
         }
-        xmlFreeTextReader(reader);
-        xmlCleanupParser();
 
         return retval;
     }
