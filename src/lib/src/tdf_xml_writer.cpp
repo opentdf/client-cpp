@@ -15,6 +15,7 @@
 #include "sdk_constants.h"
 #include "tdf_exception.h"
 #include "tdf_xml_writer.h"
+#include "tdf_xml_validator.h"
 
 #include <boost/beast/core/detail/base64.hpp>
 
@@ -33,6 +34,14 @@ namespace virtru {
     /// Constructor for TDFXMLWriter
     TDFXMLWriter::TDFXMLWriter(IOutputProvider& outputProvider)
             : m_outputProvider(outputProvider){
+    }
+
+    /// Destructor
+    TDFXMLWriter::~TDFXMLWriter() {
+        if (m_schemaValidatorPtr) {
+            delete m_schemaValidatorPtr;
+            m_schemaValidatorPtr = 0;
+        }
     }
 
     /// Set the payload size of the TDF
@@ -223,9 +232,22 @@ namespace virtru {
 
         xmlDocDumpMemoryEnc(doc.get(), &output, &size, kXMLEncoding);
 
+        if (m_schemaValidatorPtr) {
+            bool valid = m_schemaValidatorPtr->validateXML(doc.get());
+            if (!valid) {
+                std::string errorMsg{"Error - document did not pass schema validation"};
+                ThrowException(std::move(errorMsg));
+            }
+        }
 
         auto bytes = gsl::make_span(reinterpret_cast<const gsl::byte *>(output), size);
         m_outputProvider.writeBytes(bytes);
+    }
+
+    /// Establish a validator schema to verify input against
+    bool TDFXMLWriter::setValidatorSchema(const char *url) {
+        m_schemaValidatorPtr = new TDFXMLValidator(url);
+        return m_schemaValidatorPtr->isSchemaValid();
     }
 
     /// Add 'tdf:HandlingAssertion' element.

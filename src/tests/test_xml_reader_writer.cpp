@@ -10,6 +10,7 @@
 #include "sdk_constants.h"
 #include "tdf_xml_reader.h"
 #include "tdf_xml_writer.h"
+#include "tdf_xml_validator.h"
 #include "stream_io_provider.h"
 
 #include <ostream>

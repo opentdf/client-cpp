@@ -20,6 +20,7 @@
 #include "io_provider.h"
 #include "libxml2_deleters.h"
 #include "tdf_archive_writer.h"
+#include "tdf_xml_validator.h"
 
 namespace virtru {
 
@@ -36,7 +37,7 @@ namespace virtru {
         TDFXMLWriter() = delete;
 
         /// Destructor
-        ~TDFXMLWriter() override = default;
+        ~TDFXMLWriter();
 
         /// Not supported.
         TDFXMLWriter(const TDFXMLWriter &) = delete;
@@ -59,6 +60,11 @@ namespace virtru {
 
         /// Finalize archive entry.
         void finish() override;
+
+        /// Establish a validator schema to verify input against
+        /// \param url - URL or file path to schema to use
+        /// \return - false if the supplied schema did not load correctly
+        bool setValidatorSchema(const char* url);
 
     private:
         /// Add 'tdf:EncryptionInformation' element.
@@ -89,6 +95,7 @@ namespace virtru {
         ManifestDataModel       m_manifestDataModel;
         std::vector<gsl::byte>  m_binaryPayload;
         IOutputProvider&        m_outputProvider;
+        TDFXMLValidator*        m_schemaValidatorPtr = 0;
     };
 }
 

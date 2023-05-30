@@ -19,6 +19,7 @@
 #include "crypto/bytes.h"
 #include "io_provider.h"
 #include "tdf_archive_reader.h"
+#include "tdf_xml_validator.h"
 #include "libxml2_deleters.h"
 #include <libxml/xmlreader.h>
 
@@ -26,30 +27,6 @@ namespace virtru {
 
     using namespace virtru::crypto;
 
-    class TDFXMLValidator {
-      public:
-        /// Validate input XML against supplied schema
-        /// \param schemafile - name of file containing XSD schema
-        TDFXMLValidator( const char * schema);
-
-        /// destructor
-        ~TDFXMLValidator();
-
-        /// Validate input XML against supplied schema
-        /// \param xmlfile - name of file containing XML data
-        bool validateXML(const char* xmlfile);
-
-        /// Validate input XML against supplied schema
-        /// \param reader - pointer to reader for input XML
-        bool validateXML(xmlTextReaderPtr reader);
-
-        /// Validate input XML against supplied schema
-        /// \param doc - XML document node ptr
-        bool validateXML(xmlDocPtr doc);
-
-      private:
-        xmlSchemaValidCtxtPtr m_valid_ctxt;
-    };
 
     class TDFXMLReader : public ITDFReader {
     public:
@@ -61,7 +38,7 @@ namespace virtru {
         TDFXMLReader() = delete;
 
         /// Destructor
-        ~TDFXMLReader() override = default;
+        ~TDFXMLReader();
 
         /// Not supported.
         TDFXMLReader(const TDFXMLReader &) = delete;
@@ -83,6 +60,11 @@ namespace virtru {
         /// Get the size of the payload.
         /// \return std::uint64_t - Size of the payload.
         std::uint64_t getPayloadSize() const override;
+
+        /// Establish a validator schema to verify input against
+        /// \param url - URL or file path to schema to use
+        /// \return - false if the supplied schema did not load correctly
+        bool setValidatorSchema(const char* url);
 
     private:
         /// Read encryption information from the xml
@@ -111,6 +93,7 @@ namespace virtru {
     private: /// Data
         IInputProvider&         m_inputProvider;
         std::vector<gsl::byte>  m_binaryPayload;
+        TDFXMLValidator*        m_schemaValidatorPtr = 0;
     };
 }
 

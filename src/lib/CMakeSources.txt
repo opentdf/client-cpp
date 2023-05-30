@@ -78,6 +78,8 @@ set (TDF_CPP_SDK_SOURCE_FILES_BASE
         ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_xml_writer.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_xml_reader.cpp
         ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_xml_reader.h
+        ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_xml_validator.cpp
+        ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_xml_validator.h
         ${TDF_CPP_SDK_SOURCE_DIR}/include/file_io_provider.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/file_io_provider.cpp
         ${TDF_CPP_SDK_SOURCE_DIR}/src/s3_io_provider.cpp

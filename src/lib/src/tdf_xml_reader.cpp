@@ -13,6 +13,7 @@
 #include "tdf_constants.h"
 #include "sdk_constants.h"
 #include "tdf_xml_reader.h"
+#include "tdf_xml_validator.h"
 #include "crypto/crypto_utils.h"
 #include <boost/beast/core/detail/base64.hpp>
 #include <iostream>
@@ -25,7 +26,7 @@ namespace virtru {
     using namespace boost::beast::detail::base64;
 
     /// Constructor
-    TDFXMLReader::TDFXMLReader(IInputProvider& inputProvider): m_inputProvider(inputProvider) { }
+    TDFXMLReader::TDFXMLReader(IInputProvider &inputProvider) : m_inputProvider(inputProvider) {}
 
     /// Get the manifest data model.
     ManifestDataModel TDFXMLReader::getManifest() {
@@ -43,12 +44,12 @@ namespace virtru {
             ThrowException(std::move(errorMsg));
         }
 
-        // TODO FIXME - schema url should not be hardcoded
-        TDFXMLValidator validator("data/IC-TDF/Schema/IC-TDF/IC-TDF.xsd");
-        bool valid = validator.validateXML(doc.get());
-        if (!valid) {
-            std::string errorMsg{"Error - document did not pass schema validation"};
-            ThrowException(std::move(errorMsg));
+        if (m_schemaValidatorPtr) {
+            bool valid = m_schemaValidatorPtr->validateXML(doc.get());
+            if (!valid) {
+                std::string errorMsg{"Error - document did not pass schema validation"};
+                ThrowException(std::move(errorMsg));
+            }
         }
 
         // Get the root element(TrustedDataCollection) of the XML.
@@ -75,7 +76,7 @@ namespace virtru {
 
             // Get Base64BinaryPayload
             if (!xmlStrcmp(cur->name, reinterpret_cast<const xmlChar *>(kBase64BinaryPayloadElement))) {
-                xmlChar* base64Data = xmlNodeListGetString(doc.get(), cur->xmlChildrenNode, 1);
+                xmlChar *base64Data = xmlNodeListGetString(doc.get(), cur->xmlChildrenNode, 1);
                 if (!base64Data) {
                     std::string errorMsg{"Error binary payload information is missing from the XML TDF"};
                     ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
@@ -84,7 +85,7 @@ namespace virtru {
 
                 // isEncrypted attribute
                 XMLCharFreePtr isEncryptedFreePtr;
-                xmlChar* isEncryptedAsXmlChar = xmlGetProp(cur,
+                xmlChar *isEncryptedAsXmlChar = xmlGetProp(cur,
                                                            reinterpret_cast<const xmlChar *>(kIsEncryptedAttribute));
                 if (!isEncryptedAsXmlChar) {
                     std::string errorMsg{"Error - isEncrypted attribute is missing from the XML TDF"};
@@ -92,7 +93,7 @@ namespace virtru {
                 }
                 isEncryptedFreePtr.reset(isEncryptedAsXmlChar);
 
-                std::string isEncryptedStr(reinterpret_cast<const char*>(isEncryptedFreePtr.get()),
+                std::string isEncryptedStr(reinterpret_cast<const char *>(isEncryptedFreePtr.get()),
                                            xmlStrlen(isEncryptedFreePtr.get()));
                 bool isEncryptedAsBool = false;
                 if ((isEncryptedStr.compare("true") == 0)) {
@@ -102,7 +103,7 @@ namespace virtru {
 
                 // mediaType attribute
                 XMLCharFreePtr mediaTypeFreePtr;
-                xmlChar* mediaTypeAsXmlChar = xmlGetProp(cur,
+                xmlChar *mediaTypeAsXmlChar = xmlGetProp(cur,
                                                          reinterpret_cast<const xmlChar *>(kMediaTypeAttribute));
                 if (!mediaTypeAsXmlChar) {
                     std::string errorMsg{"Error - mediaType attribute is missing from the XML TDF"};
@@ -110,7 +111,7 @@ namespace virtru {
                 }
                 mediaTypeFreePtr.reset(mediaTypeAsXmlChar);
 
-                std::string mediaTypeStr(reinterpret_cast<const char*>(mediaTypeFreePtr.get()),
+                std::string mediaTypeStr(reinterpret_cast<const char *>(mediaTypeFreePtr.get()),
                                          xmlStrlen(mediaTypeFreePtr.get()));
                 dataModel.payload.mimeType = mediaTypeStr;
             }
@@ -149,6 +150,14 @@ namespace virtru {
         return dataModel;
     }
 
+    /// Destructor
+    TDFXMLReader::~TDFXMLReader() {
+        if (m_schemaValidatorPtr) {
+            delete m_schemaValidatorPtr;
+            m_schemaValidatorPtr = 0;
+        }
+    }
+
     /// Read payload of length starting the index.
     void TDFXMLReader::readPayload(size_t index, size_t length, WriteableBytes &bytes) {
 
@@ -161,9 +170,15 @@ namespace virtru {
         return m_binaryPayload.size();
     }
 
+    /// Establish a validator schema to verify input against
+    bool TDFXMLReader::setValidatorSchema(const char *url) {
+        m_schemaValidatorPtr = new TDFXMLValidator(url);
+        return m_schemaValidatorPtr->isSchemaValid();
+    }
+
     /// Read encryption information from the xml
     void TDFXMLReader::readEncryptionInformation(xmlDocPtr doc,
-            xmlNodePtr curNodePtr, ManifestDataModel& dataModel) {
+                                                 xmlNodePtr curNodePtr, ManifestDataModel &dataModel) {
 
         /*
          * 	<tdf:EncryptionInformation>
@@ -182,13 +197,13 @@ namespace virtru {
 
         // Get tdf:EncryptedPolicyObject using xPath
         {
-            xmlChar *encryptedPolicyObjectXPath = (xmlChar*) "/*[local-name(.) = 'TrustedDataObject']"
+            xmlChar *encryptedPolicyObjectXPath = (xmlChar *)"/*[local-name(.) = 'TrustedDataObject']"
                                                              "/*[local-name(.) = 'EncryptionInformation']"
                                                              "/*[local-name(.) = 'KeyAccess']"
                                                              "/*[local-name(.) = 'WrappedPDPKey']"
                                                              "/*[local-name(.) = 'EncryptedPolicyObject']";
 
-            XmlXPathObjectFreePtr result{ getNodeset(doc, encryptedPolicyObjectXPath) };
+            XmlXPathObjectFreePtr result{getNodeset(doc, encryptedPolicyObjectXPath)};
             if (!result) {
                 std::string errorMsg{"Error EncryptedPolicyObject element is missing from the XML TDF"};
                 ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
@@ -199,19 +214,19 @@ namespace virtru {
                 ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
             }
 
-            XmlCharFreePtr encryptedPolicy { xmlNodeListGetString(doc, result.get()->nodesetval->nodeTab[0]->xmlChildrenNode, 1) };
-            std::string encryptedPolicyStr(reinterpret_cast<const char*>(encryptedPolicy.get()),
+            XmlCharFreePtr encryptedPolicy{xmlNodeListGetString(doc, result.get()->nodesetval->nodeTab[0]->xmlChildrenNode, 1)};
+            std::string encryptedPolicyStr(reinterpret_cast<const char *>(encryptedPolicy.get()),
                                            xmlStrlen(encryptedPolicy.get()));
             parseEncryptedPolicyObject(encryptedPolicyStr, dataModel);
         }
 
         // Get tdf:algorithm attribute from tdf:EncryptionMethod
         {
-            xmlChar *encryptionMethodXPath = (xmlChar*) "/*[local-name(.) = 'TrustedDataObject']"
+            xmlChar *encryptionMethodXPath = (xmlChar *)"/*[local-name(.) = 'TrustedDataObject']"
                                                         "/*[local-name(.) = 'EncryptionInformation']"
                                                         "/*[local-name(.) = 'EncryptionMethod']";
 
-            XmlXPathObjectFreePtr result{ getNodeset(doc, encryptionMethodXPath) };
+            XmlXPathObjectFreePtr result{getNodeset(doc, encryptionMethodXPath)};
             if (!result) {
                 std::string errorMsg{"Error EncryptionMethod element is missing from the XML TDF"};
                 ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
@@ -225,7 +240,7 @@ namespace virtru {
             xmlAttr *attr = result.get()->nodesetval->nodeTab[0]->properties;
             while (attr) {
                 if (xmlStrEqual(attr->name, reinterpret_cast<const xmlChar *>(kAlgorithmAttribute))) {
-                    std::string algorithmAttribute(reinterpret_cast<const char*>(attr->children->content),
+                    std::string algorithmAttribute(reinterpret_cast<const char *>(attr->children->content),
                                                    xmlStrlen(attr->children->content));
                     dataModel.encryptionInformation.method.algorithm = algorithmAttribute;
                 }
@@ -235,12 +250,12 @@ namespace virtru {
 
         // Get tdf:KeySize using XPath
         {
-            xmlChar *keySizeXPath = (xmlChar*) "/*[local-name(.) = 'TrustedDataObject']"
+            xmlChar *keySizeXPath = (xmlChar *)"/*[local-name(.) = 'TrustedDataObject']"
                                                "/*[local-name(.) = 'EncryptionInformation']"
                                                "/*[local-name(.) = 'EncryptionMethod']"
                                                "/*[local-name(.) = 'KeySize']";
 
-            XmlXPathObjectFreePtr keySizeResult{ getNodeset(doc, keySizeXPath) };
+            XmlXPathObjectFreePtr keySizeResult{getNodeset(doc, keySizeXPath)};
             if (!keySizeResult) {
                 std::string errorMsg{"Error KeySize element is missing from the XML TDF"};
                 ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
@@ -251,8 +266,8 @@ namespace virtru {
                 ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
             }
 
-            XmlCharFreePtr keySize { xmlNodeListGetString(doc, keySizeResult.get()->nodesetval->nodeTab[0]->xmlChildrenNode, 1) };
-            std::string keySizeStr(reinterpret_cast<const char*>(keySize.get()),
+            XmlCharFreePtr keySize{xmlNodeListGetString(doc, keySizeResult.get()->nodesetval->nodeTab[0]->xmlChildrenNode, 1)};
+            std::string keySizeStr(reinterpret_cast<const char *>(keySize.get()),
                                    xmlStrlen(keySize.get()));
 
             if (keySizeStr != "32") {
@@ -263,12 +278,12 @@ namespace virtru {
 
         // Get tdf:IVParams using XPath
         {
-            xmlChar *ivParamsXPath = (xmlChar*) "/*[local-name(.) = 'TrustedDataObject']"
+            xmlChar *ivParamsXPath = (xmlChar *)"/*[local-name(.) = 'TrustedDataObject']"
                                                 "/*[local-name(.) = 'EncryptionInformation']"
                                                 "/*[local-name(.) = 'EncryptionMethod']"
                                                 "/*[local-name(.) = 'IVParams']";
 
-            XmlXPathObjectFreePtr ivParamsResult{ getNodeset(doc, ivParamsXPath) };
+            XmlXPathObjectFreePtr ivParamsResult{getNodeset(doc, ivParamsXPath)};
             if (!ivParamsResult) {
                 std::string errorMsg{"Error IVParams element is missing from the XML TDF"};
                 ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
@@ -279,16 +294,16 @@ namespace virtru {
                 ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
             }
 
-            XmlCharFreePtr ivParams { xmlNodeListGetString(doc, ivParamsResult.get()->nodesetval->nodeTab[0]->xmlChildrenNode, 1) };
-            std::string ivParamsStr(reinterpret_cast<const char*>(ivParams.get()),
+            XmlCharFreePtr ivParams{xmlNodeListGetString(doc, ivParamsResult.get()->nodesetval->nodeTab[0]->xmlChildrenNode, 1)};
+            std::string ivParamsStr(reinterpret_cast<const char *>(ivParams.get()),
                                     xmlStrlen(ivParams.get()));
 
             dataModel.encryptionInformation.method.iv = ivParamsStr;
         }
     }
 
-    void TDFXMLReader::parseEncryptedPolicyObject(const std::string& base64PolicyObjectStr,
-                                                  ManifestDataModel& dataModel) {
+    void TDFXMLReader::parseEncryptedPolicyObject(const std::string &base64PolicyObjectStr,
+                                                  ManifestDataModel &dataModel) {
 
         auto size = base64PolicyObjectStr.size();
 
@@ -304,7 +319,7 @@ namespace virtru {
 
     void TDFXMLReader::readLeve2EncryptionInformation(xmlDocPtr doc,
                                                       xmlNodePtr curNodePtr,
-                                                      ManifestDataModel& dataModel) {
+                                                      ManifestDataModel &dataModel) {
 
         curNodePtr = curNodePtr->xmlChildrenNode;
         while (curNodePtr != nullptr) {
@@ -321,7 +336,7 @@ namespace virtru {
 
                     // tdf:protocol attribute
                     XMLCharFreePtr protocolFreePtr;
-                    xmlChar* protocolAsXmlChar = xmlGetProp(remoteStoredKeyNodePtr,
+                    xmlChar *protocolAsXmlChar = xmlGetProp(remoteStoredKeyNodePtr,
                                                             reinterpret_cast<const xmlChar *>(kProtocolElement));
                     if (!protocolAsXmlChar) {
                         std::string errorMsg{"Error -tdf:protocol attribute is missing from the XML TDF"};
@@ -329,22 +344,22 @@ namespace virtru {
                     }
                     protocolFreePtr.reset(protocolAsXmlChar);
 
-                    std::string protocolStr(reinterpret_cast<const char*>(protocolFreePtr.get()),
-                                                     xmlStrlen(protocolFreePtr.get()));
+                    std::string protocolStr(reinterpret_cast<const char *>(protocolFreePtr.get()),
+                                            xmlStrlen(protocolFreePtr.get()));
                     dataModel.encryptionInformation.keyAccessObjects[0].protocol = protocolStr;
 
                     // tdf:uri attribute
                     XMLCharFreePtr uriFreePtr;
-                    xmlChar* uriAsXmlChar = xmlGetProp(remoteStoredKeyNodePtr,
-                                                            reinterpret_cast<const xmlChar *>(kUriElement));
+                    xmlChar *uriAsXmlChar = xmlGetProp(remoteStoredKeyNodePtr,
+                                                       reinterpret_cast<const xmlChar *>(kUriElement));
                     if (!uriAsXmlChar) {
                         std::string errorMsg{"Error -tdf:uri attribute is missing from the XML TDF"};
                         ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
                     }
                     uriFreePtr.reset(uriAsXmlChar);
 
-                    std::string uriStr(reinterpret_cast<const char*>(uriFreePtr.get()),
-                                            xmlStrlen(uriFreePtr.get()));
+                    std::string uriStr(reinterpret_cast<const char *>(uriFreePtr.get()),
+                                       xmlStrlen(uriFreePtr.get()));
                     dataModel.encryptionInformation.keyAccessObjects[0].url = uriStr;
                 }
             }
@@ -360,18 +375,17 @@ namespace virtru {
 
                 // tdf:algorithm attribute
                 XMLCharFreePtr algorithmFreePtr;
-                xmlChar* algorithmAsXmlChar = xmlGetProp(curNodePtr,
-                                                        reinterpret_cast<const xmlChar *>(kAlgorithmAttribute));
+                xmlChar *algorithmAsXmlChar = xmlGetProp(curNodePtr,
+                                                         reinterpret_cast<const xmlChar *>(kAlgorithmAttribute));
                 if (!algorithmAsXmlChar) {
                     std::string errorMsg{"Error - tdf:algorithm attribute is missing from the XML TDF"};
                     ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
                 }
                 algorithmFreePtr.reset(algorithmAsXmlChar);
 
-                std::string algorithmStr(reinterpret_cast<const char*>(algorithmFreePtr.get()),
-                                        xmlStrlen(algorithmFreePtr.get()));
+                std::string algorithmStr(reinterpret_cast<const char *>(algorithmFreePtr.get()),
+                                         xmlStrlen(algorithmFreePtr.get()));
                 dataModel.encryptionInformation.method.algorithm = algorithmStr;
-
 
                 auto nodePtr = curNodePtr->xmlChildrenNode;
                 while (nodePtr != nullptr) {
@@ -379,16 +393,16 @@ namespace virtru {
                     if (!xmlStrcmp(nodePtr->name, reinterpret_cast<const xmlChar *>(kKeySizeElement))) {
 
                         XMLCharFreePtr xmlCharFreePtr;
-                        xmlChar* keySize = xmlNodeListGetString(doc, nodePtr->xmlChildrenNode, 1);
+                        xmlChar *keySize = xmlNodeListGetString(doc, nodePtr->xmlChildrenNode, 1);
                         if (!keySize) {
                             std::string errorMsg{"Error - key size  is missing from the XML TDF"};
                             ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
                         }
                         xmlCharFreePtr.reset(keySize);
 
-                        std::string keySizeStr(reinterpret_cast<const char*>(xmlCharFreePtr.get()),
-                                              xmlStrlen(xmlCharFreePtr.get()));
-                        auto keySizeAsInt = std::stoi( keySizeStr);
+                        std::string keySizeStr(reinterpret_cast<const char *>(xmlCharFreePtr.get()),
+                                               xmlStrlen(xmlCharFreePtr.get()));
+                        auto keySizeAsInt = std::stoi(keySizeStr);
                         if (keySizeAsInt != 32) {
                             std::string errorMsg{"Error -invalid key size in XML TDF"};
                             ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
@@ -398,30 +412,30 @@ namespace virtru {
                     if (!xmlStrcmp(nodePtr->name, reinterpret_cast<const xmlChar *>(kIVParamsElement))) {
 
                         XMLCharFreePtr xmlCharFreePtr;
-                        xmlChar* ivParams = xmlNodeListGetString(doc, nodePtr->xmlChildrenNode, 1);
+                        xmlChar *ivParams = xmlNodeListGetString(doc, nodePtr->xmlChildrenNode, 1);
                         if (!ivParams) {
                             std::string errorMsg{"Error - iv params is missing from the XML TDF"};
                             ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
                         }
                         xmlCharFreePtr.reset(ivParams);
 
-                        std::string ivParamsStr(reinterpret_cast<const char*>(xmlCharFreePtr.get()),
-                                               xmlStrlen(xmlCharFreePtr.get()));
+                        std::string ivParamsStr(reinterpret_cast<const char *>(xmlCharFreePtr.get()),
+                                                xmlStrlen(xmlCharFreePtr.get()));
                         dataModel.encryptionInformation.method.iv = ivParamsStr;
                     }
 
                     if (!xmlStrcmp(nodePtr->name, reinterpret_cast<const xmlChar *>(kAuthenticationTagElement))) {
 
                         XMLCharFreePtr xmlCharFreePtr;
-                        xmlChar* authTag = xmlNodeListGetString(doc, nodePtr->xmlChildrenNode, 1);
+                        xmlChar *authTag = xmlNodeListGetString(doc, nodePtr->xmlChildrenNode, 1);
                         if (!authTag) {
                             std::string errorMsg{"Error - authentication tag is missing from the XML TDF"};
                             ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
                         }
                         xmlCharFreePtr.reset(authTag);
 
-                        std::string authTagStr(reinterpret_cast<const char*>(xmlCharFreePtr.get()),
-                                                xmlStrlen(xmlCharFreePtr.get()));
+                        std::string authTagStr(reinterpret_cast<const char *>(xmlCharFreePtr.get()),
+                                               xmlStrlen(xmlCharFreePtr.get()));
                     }
                     nodePtr = nodePtr->next;
                 }
@@ -429,7 +443,6 @@ namespace virtru {
 
             curNodePtr = curNodePtr->next;
         }
-
     }
 
     xmlXPathObjectPtr TDFXMLReader::getNodeset(xmlDocPtr doc, xmlChar *xpath) {
@@ -439,97 +452,15 @@ namespace virtru {
             return nullptr;
         }
 
-        XmlXPathObjectFreePtr result{ xmlXPathEvalExpression(xpath, context.get())};
+        XmlXPathObjectFreePtr result{xmlXPathEvalExpression(xpath, context.get())};
         if (!result) {
             return nullptr;
         }
 
-        if (xmlXPathNodeSetIsEmpty(result->nodesetval)){
+        if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
             return nullptr;
         }
 
         return result.release();
-    }
-
-    // Based on https://stackoverflow.com/questions/54124989/libxml2-get-xsd-validation-errors
-    static void schemaParseErrorHandler(void *arg, xmlErrorPtr error)
-    {
-        fprintf(stderr, "Error at line %d, column %d\n%s", error->line, error->int2, error->message);
-        *((bool*)arg) = true;
-    }
-
-    TDFXMLValidator::TDFXMLValidator(const char *schemafile) {
-        xmlSchemaPtr schema = NULL;
-        xmlSchemaParserCtxtPtr schema_parser_ctxt = NULL;
-        m_valid_ctxt = NULL;
-
-        xmlInitParser();
-
-        if ((schema_parser_ctxt = xmlSchemaNewParserCtxt(schemafile)))
-        {
-            schema = xmlSchemaParse(schema_parser_ctxt);
-            xmlSchemaFreeParserCtxt(schema_parser_ctxt);
-            if (schema)
-            {
-                m_valid_ctxt = xmlSchemaNewValidCtxt(schema);
-            }
-        }
-    }
-
-    TDFXMLValidator::~TDFXMLValidator() {
-        xmlCleanupParser();
-    }
-
-    bool TDFXMLValidator::validateXML(const char *xmlfile) {
-        xmlTextReaderPtr reader = NULL;
-        bool retval = false;
-
-        reader = xmlReaderForFile(xmlfile, 0, 0);
-        retval = validateXML(reader);
-        xmlFreeTextReader(reader);
-
-        return retval;
-    }
-
-    bool TDFXMLValidator::validateXML(xmlDoc* doc) {
-        xmlTextReaderPtr reader = NULL;
-        bool retval = false;
-
-        reader = xmlReaderWalker(doc);
-        retval = validateXML(reader);
-        xmlFreeTextReader(reader);
-
-        return retval;
-    }
-
-    bool TDFXMLValidator::validateXML(xmlTextReaderPtr reader) {
-        bool retval = false;
-        int has_schema_errors = 0;
-        int ret = -1;
-
-        if (reader != NULL)
-        {
-            if (m_valid_ctxt)
-            {
-                xmlTextReaderSchemaValidateCtxt(reader, m_valid_ctxt, 0);
-                xmlSchemaSetValidStructuredErrors(m_valid_ctxt, schemaParseErrorHandler, &has_schema_errors);
-            }
-            ret = xmlTextReaderRead(reader);
-            while (ret == 1 && !has_schema_errors)
-            {
-                ret = xmlTextReaderRead(reader);
-            }
-        }
-
-        if (ret != 0)
-        {
-            xmlErrorPtr err = xmlGetLastError();
-            fprintf(stdout, "%s: failed to parse in line %d, col %d. Error %d: %s\n", err->file, err->line, err->int2, err->code, err->message);
-            retval = false;
-        } else {
-            retval = true;
-        }
-
-        return retval;
     }
 }
