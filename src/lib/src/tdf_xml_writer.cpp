@@ -179,13 +179,13 @@ namespace virtru {
     /// Finalize archive entry.
     void TDFXMLWriter::finish() {
 
-        XmlDocFreePtr doc{xmlNewDoc(reinterpret_cast<const xmlChar *>(kICTDFVersion))};
+        XmlDocFreePtr doc{ xmlNewDoc(reinterpret_cast<const xmlChar *>(kICTDFVersion))};
         if (!doc) {
             std::string errorMsg{"Fail to create XML document for creating the TDF"};
             ThrowException(std::move(errorMsg));
         }
 
-        xmlNode *rootNode = xmlNewNode(nullptr, reinterpret_cast<const xmlChar *>(kTrustedDataObjectElement));
+        xmlNode* rootNode = xmlNewNode(nullptr, reinterpret_cast<const xmlChar *>(kTrustedDataObjectElement));
         if (!rootNode) {
             std::string errorMsg{"Fail to create 'TrustedDataObject' node"};
             ThrowException(std::move(errorMsg));
@@ -218,7 +218,7 @@ namespace virtru {
         addPayloadElement(rootNode, tdfNs);
 
         // Load the xml doc into buffer
-        xmlChar *output = nullptr;
+        xmlChar* output = nullptr;
         XMLCharFreePtr xmlCharFreePtr{output};
         int size = 0;
 
