@@ -36,14 +36,6 @@ namespace virtru {
             : m_outputProvider(outputProvider){
     }
 
-    /// Destructor
-    TDFXMLWriter::~TDFXMLWriter() {
-        if (m_schemaValidatorPtr) {
-            delete m_schemaValidatorPtr;
-            m_schemaValidatorPtr = 0;
-        }
-    }
-
     /// Set the payload size of the TDF
     /// \param payloadSize
     void TDFXMLWriter::setPayloadSize(int64_t payloadSize)  {
@@ -187,13 +179,13 @@ namespace virtru {
     /// Finalize archive entry.
     void TDFXMLWriter::finish() {
 
-        XmlDocFreePtr doc{ xmlNewDoc(reinterpret_cast<const xmlChar *>(kICTDFVersion))};
+        XmlDocFreePtr doc{xmlNewDoc(reinterpret_cast<const xmlChar *>(kICTDFVersion))};
         if (!doc) {
             std::string errorMsg{"Fail to create XML document for creating the TDF"};
             ThrowException(std::move(errorMsg));
         }
 
-        xmlNode* rootNode = xmlNewNode(nullptr, reinterpret_cast<const xmlChar *>(kTrustedDataObjectElement));
+        xmlNode *rootNode = xmlNewNode(nullptr, reinterpret_cast<const xmlChar *>(kTrustedDataObjectElement));
         if (!rootNode) {
             std::string errorMsg{"Fail to create 'TrustedDataObject' node"};
             ThrowException(std::move(errorMsg));
@@ -226,18 +218,16 @@ namespace virtru {
         addPayloadElement(rootNode, tdfNs);
 
         // Load the xml doc into buffer
-        xmlChar* output = nullptr;
+        xmlChar *output = nullptr;
         XMLCharFreePtr xmlCharFreePtr{output};
         int size = 0;
 
         xmlDocDumpMemoryEnc(doc.get(), &output, &size, kXMLEncoding);
 
-        if (m_schemaValidatorPtr) {
-            bool valid = m_schemaValidatorPtr->validateXML(doc.get());
-            if (!valid) {
-                std::string errorMsg{"Error - document did not pass schema validation"};
-                ThrowException(std::move(errorMsg));
-            }
+        bool valid = m_XmlValidatorPtr.validate(doc.get());
+        if (!valid) {
+            std::string errorMsg{"Error - document did not pass schema validation"};
+            ThrowException(std::move(errorMsg));
         }
 
         auto bytes = gsl::make_span(reinterpret_cast<const gsl::byte *>(output), size);
@@ -245,9 +235,9 @@ namespace virtru {
     }
 
     /// Establish a validator schema to verify input against
-    bool TDFXMLWriter::setValidatorSchema(const char *url) {
-        m_schemaValidatorPtr = new TDFXMLValidator(url);
-        return m_schemaValidatorPtr->isSchemaValid();
+    bool TDFXMLWriter::setValidatorSchema(const std::string& url) {
+        m_XmlValidatorPtr.setSchema(url);
+        return m_XmlValidatorPtr.isSchemaValid();
     }
 
     /// Add 'tdf:HandlingAssertion' element.

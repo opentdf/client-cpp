@@ -44,12 +44,10 @@ namespace virtru {
             ThrowException(std::move(errorMsg));
         }
 
-        if (m_schemaValidatorPtr) {
-            bool valid = m_schemaValidatorPtr->validateXML(doc.get());
-            if (!valid) {
-                std::string errorMsg{"Error - document did not pass schema validation"};
-                ThrowException(std::move(errorMsg));
-            }
+        bool valid = m_XmlValidator.validate(doc.get());
+        if (!valid) {
+            std::string errorMsg{"Error - document did not pass schema validation"};
+            ThrowException(std::move(errorMsg));
         }
 
         // Get the root element(TrustedDataCollection) of the XML.
@@ -150,14 +148,6 @@ namespace virtru {
         return dataModel;
     }
 
-    /// Destructor
-    TDFXMLReader::~TDFXMLReader() {
-        if (m_schemaValidatorPtr) {
-            delete m_schemaValidatorPtr;
-            m_schemaValidatorPtr = 0;
-        }
-    }
-
     /// Read payload of length starting the index.
     void TDFXMLReader::readPayload(size_t index, size_t length, WriteableBytes &bytes) {
 
@@ -171,9 +161,9 @@ namespace virtru {
     }
 
     /// Establish a validator schema to verify input against
-    bool TDFXMLReader::setValidatorSchema(const char *url) {
-        m_schemaValidatorPtr = new TDFXMLValidator(url);
-        return m_schemaValidatorPtr->isSchemaValid();
+    bool TDFXMLReader::setValidatorSchema(const std::string& url) {
+        m_XmlValidator.setSchema(url);
+        return m_XmlValidator.isSchemaValid();
     }
 
     /// Read encryption information from the xml

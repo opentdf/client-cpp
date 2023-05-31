@@ -38,7 +38,7 @@ namespace virtru {
         TDFXMLReader() = delete;
 
         /// Destructor
-        ~TDFXMLReader();
+        ~TDFXMLReader() override = default;
 
         /// Not supported.
         TDFXMLReader(const TDFXMLReader &) = delete;
@@ -64,7 +64,7 @@ namespace virtru {
         /// Establish a validator schema to verify input against
         /// \param url - URL or file path to schema to use
         /// \return - false if the supplied schema did not load correctly
-        bool setValidatorSchema(const char* url);
+        bool setValidatorSchema(const std::string& url);
 
     private:
         /// Read encryption information from the xml
@@ -93,7 +93,7 @@ namespace virtru {
     private: /// Data
         IInputProvider&         m_inputProvider;
         std::vector<gsl::byte>  m_binaryPayload;
-        TDFXMLValidator*        m_schemaValidatorPtr = 0;
+        TDFXMLValidator         m_XmlValidator;
     };
 }
 

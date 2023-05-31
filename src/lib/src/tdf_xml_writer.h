@@ -37,7 +37,7 @@ namespace virtru {
         TDFXMLWriter() = delete;
 
         /// Destructor
-        ~TDFXMLWriter();
+        ~TDFXMLWriter() override = default;
 
         /// Not supported.
         TDFXMLWriter(const TDFXMLWriter &) = delete;
@@ -64,7 +64,7 @@ namespace virtru {
         /// Establish a validator schema to verify input against
         /// \param url - URL or file path to schema to use
         /// \return - false if the supplied schema did not load correctly
-        bool setValidatorSchema(const char* url);
+        bool setValidatorSchema(const std::string& url);
 
     private:
         /// Add 'tdf:EncryptionInformation' element.
@@ -95,7 +95,7 @@ namespace virtru {
         ManifestDataModel       m_manifestDataModel;
         std::vector<gsl::byte>  m_binaryPayload;
         IOutputProvider&        m_outputProvider;
-        TDFXMLValidator*        m_schemaValidatorPtr = 0;
+        TDFXMLValidator         m_XmlValidatorPtr;
     };
 }
 

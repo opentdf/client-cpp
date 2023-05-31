@@ -1,8 +1,15 @@
+/*
+* Copyright 2023 Virtru Corporation
+*
+* SPDX - License Identifier: BSD-3-Clause-Clear
+*
+ */
 //
 // Created by Patrick Mancuso on 5/30/23.
 //
 
 #include "tdf_xml_validator.h"
+#include <string>
 
 using namespace virtru;
 
@@ -13,14 +20,20 @@ static void schemaParseErrorHandler(void *arg, xmlErrorPtr error)
     *((bool*)arg) = true;
 }
 
-TDFXMLValidator::TDFXMLValidator(const char *schemafile) {
+TDFXMLValidator::TDFXMLValidator() {
+    m_valid_ctxt = 0;
+    m_schemaInitialized = false;
+}
+
+bool TDFXMLValidator::setSchema(const std::string& schemafile) {
     xmlSchemaPtr schema = 0;
     xmlSchemaParserCtxtPtr schema_parser_ctxt = 0;
     m_valid_ctxt = 0;
+    m_schemaInitialized = true;
 
     xmlInitParser();
 
-    if ((schema_parser_ctxt = xmlSchemaNewParserCtxt(schemafile)))
+    if ((schema_parser_ctxt = xmlSchemaNewParserCtxt(schemafile.c_str())))
     {
         schema = xmlSchemaParse(schema_parser_ctxt);
         xmlSchemaFreeParserCtxt(schema_parser_ctxt);
@@ -29,6 +42,7 @@ TDFXMLValidator::TDFXMLValidator(const char *schemafile) {
             m_valid_ctxt = xmlSchemaNewValidCtxt(schema);
         }
     }
+    return isSchemaValid();
 }
 
 TDFXMLValidator::~TDFXMLValidator() {
@@ -43,55 +57,62 @@ bool TDFXMLValidator::isSchemaValid() {
         return false;
 }
 
-bool TDFXMLValidator::validateXML(const char *xmlfile) {
+bool TDFXMLValidator::validate(const std::string &xmlfile) {
     xmlTextReaderPtr reader = 0;
     bool retval = false;
 
-    reader = xmlReaderForFile(xmlfile, 0, 0);
-    retval = validateXML(reader);
+    reader = xmlReaderForFile(xmlfile.c_str(), 0, 0);
+    retval = validate(reader);
     xmlFreeTextReader(reader);
 
     return retval;
 }
 
-bool TDFXMLValidator::validateXML(xmlDoc* doc) {
+bool TDFXMLValidator::validate(xmlDoc* doc) {
     xmlTextReaderPtr reader = 0;
     bool retval = false;
 
     reader = xmlReaderWalker(doc);
-    retval = validateXML(reader);
+    retval = validate(reader);
     xmlFreeTextReader(reader);
 
     return retval;
 }
 
-bool TDFXMLValidator::validateXML(xmlTextReaderPtr reader) {
+bool TDFXMLValidator::validate(xmlTextReaderPtr reader) {
     bool retval = false;
     int has_schema_errors = 0;
     int ret = -1;
 
-    if (m_valid_ctxt) {
-        if (reader) {
-            xmlTextReaderSchemaValidateCtxt(reader, m_valid_ctxt, 0);
-            xmlSchemaSetValidStructuredErrors(m_valid_ctxt, schemaParseErrorHandler, &has_schema_errors);
+    // Default: no setSchema done, no schema loaded, nothing to validate against, return pass for this xml
+    if (m_schemaInitialized == false) {
+        retval = true;
+    } else {
+        // Otherwise:  If a setSchema was attempted, use it
+        if (!m_valid_ctxt) {
+            // The setSchema failed, so return fail result for this xml
+            retval = false;
+        } else {
+            // A setSchema succeeded, use it to validate this xml
+            if (reader) {
+                xmlTextReaderSchemaValidateCtxt(reader, m_valid_ctxt, 0);
+                xmlSchemaSetValidStructuredErrors(m_valid_ctxt, schemaParseErrorHandler, &has_schema_errors);
 
-            ret = xmlTextReaderRead(reader);
-
-            while (ret == 1 && !has_schema_errors) {
                 ret = xmlTextReaderRead(reader);
-            }
 
-            if (ret != 0) {
-                xmlErrorPtr err = xmlGetLastError();
-                fprintf(stdout, "%s: failed to parse in line %d, col %d. Error %d: %s\n", err->file, err->line, err->int2, err->code, err->message);
-                retval = false;
-            } else {
-                retval = true;
+                while (ret == 1 && !has_schema_errors) {
+                    ret = xmlTextReaderRead(reader);
+                }
+
+                if (ret != 0) {
+                    xmlErrorPtr err = xmlGetLastError();
+                    fprintf(stdout, "%s: failed to parse in line %d, col %d. Error %d: %s\n", err->file, err->line, err->int2, err->code, err->message);
+                    retval = false;
+                } else {
+                    retval = true;
+                }
             }
         }
-    } else {
-        // No valid schema context
-        retval = false;
     }
     return retval;
 }

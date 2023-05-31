@@ -145,9 +145,10 @@ BOOST_AUTO_TEST_SUITE(test_xml_reader_writer_suite)
             StreamInputProvider inputProvider{inputStream};
             TDFXMLReader tdfxmlReader{inputProvider};
 
-            TDFXMLValidator validator(schemafile);
+            TDFXMLValidator validator;
+            validator.setSchema(schemafile);
 
-            result = validator.validateXML(xmlfilegood);
+            result = validator.validate(xmlfilegood);
             BOOST_TEST(result == true);
         } catch (std::exception e) {
             LogDebug(e.what());
@@ -165,9 +166,10 @@ BOOST_AUTO_TEST_SUITE(test_xml_reader_writer_suite)
             StreamInputProvider inputProvider{inputStream};
             TDFXMLReader tdfxmlReader{inputProvider};
 
-            TDFXMLValidator validator(schemafile);
+            TDFXMLValidator validator;
+            validator.setSchema(schemafile);
 
-            result = validator.validateXML(xmlfilebad);
+            result = validator.validate(xmlfilebad);
             BOOST_TEST(result == false);
         } catch (std::exception e) {
             LogDebug(e.what());
