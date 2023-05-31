@@ -21,7 +21,6 @@
 #include "tdf_archive_reader.h"
 #include "tdf_xml_validator.h"
 #include "libxml2_deleters.h"
-#include <libxml/xmlreader.h>
 
 namespace virtru {
 
