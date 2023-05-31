@@ -369,8 +369,6 @@ namespace virtru {
                         xmlNodeDump(bufferFreePtr.get(), NULL, (xmlNode *)edhNode, 0, 0);
                         handlingStatement.append(reinterpret_cast<char*>(bufferFreePtr.get()->content));
                         handlingAssertion.setHandlingStatement(handlingStatement);
-
-                        std::cout << "Statement value:" << handlingStatement << std::endl;
                     }
                 }
             }
@@ -381,7 +379,7 @@ namespace virtru {
                 if (xmlStrEqual(attr->name, reinterpret_cast<const xmlChar *>(kScopeAttribute))) {
                     std::string scopeAttribute(reinterpret_cast<const char *>(attr->children->content),
                                                xmlStrlen(attr->children->content));
-                    std::cout << "Scope attribute" << scopeAttribute << std::endl;
+
                     auto scopeAsEnum = magic_enum::enum_cast<Scope>(scopeAttribute);
                     if (scopeAsEnum.has_value()) {
                         handlingAssertion.setScope(scopeAsEnum.value());
@@ -391,7 +389,7 @@ namespace virtru {
                 if (xmlStrEqual(attr->name, reinterpret_cast<const xmlChar *>(kAppliesToStateAttribute))) {
                     std::string appliesToStateAttribute(reinterpret_cast<const char *>(attr->children->content),
                                                         xmlStrlen(attr->children->content));
-                    std::cout << "appliesToState attribute" << appliesToStateAttribute << std::endl;
+
                     auto appliesToStateAsEnum = magic_enum::enum_cast<AppliesToState>(appliesToStateAttribute);
                     if (appliesToStateAsEnum.has_value()) {
                         handlingAssertion.setAppliedState(appliesToStateAsEnum.value());
@@ -403,8 +401,6 @@ namespace virtru {
                     id.append(reinterpret_cast<const char *>(attr->children->content),
                               xmlStrlen(attr->children->content));
                     handlingAssertion.setId(id);
-
-                    std::cout << "idAttribute attribute: " << id << std::endl;
                 }
 
                 attr = attr->next;
@@ -522,7 +518,6 @@ namespace virtru {
                 if (xmlStrEqual(attr->name, reinterpret_cast<const xmlChar *>(kScopeAttribute))) {
                     std::string scopeAttribute(reinterpret_cast<const char *>(attr->children->content),
                                                xmlStrlen(attr->children->content));
-                    std::cout << "Scope attribute" << scopeAttribute << std::endl;
                     auto scopeAsEnum = magic_enum::enum_cast<Scope>(scopeAttribute);
                     if (scopeAsEnum.has_value()) {
                         assertion.setScope(scopeAsEnum.value());
@@ -543,7 +538,6 @@ namespace virtru {
                     std::string idAttribute;
                     idAttribute.append(reinterpret_cast<const char *>(attr->children->content),
                                        xmlStrlen(attr->children->content));
-                    std::cout << "idAttribute attribute: " << idAttribute << std::endl;
                     assertion.setId(idAttribute);
                 }
 

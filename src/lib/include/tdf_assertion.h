@@ -66,28 +66,52 @@ namespace virtru {
         StatementGroup &operator=(StatementGroup &&statementGroup) = default;
 
     public: /// Interface
-
-        /// Set the statement type for the assertion
+        /// Set the statement type for the statement group
         /// \param statementType
         void setStatementType(StatementType statementType) {
             m_type = statementType;
         }
 
-        /// Set the filename for the statement group.
+        /// Return the statement type for the statement group
+        /// \return StatementType
+        StatementType getStatementType() const {
+            return m_type;
+        }
+
+        /// Set the filename for the statement group
         /// \param filename
         void setFilename(std::string filename) {
             m_filename = filename;
         }
-        /// Set the media type for the statement group.
+
+        /// Return the filename for the statement group
+        /// \return filename
+        std::string getFilename() const {
+            return m_filename;
+        }
+
+        /// Set the media type for the statement group
         /// \param mediaType
         void setMediaType(std::string mediaType) {
             m_mediaType = mediaType;
         }
 
-        /// Set the uri for the statement group.
+        /// Return the media type for the statement group
+        /// \return media type
+        std::string getMediaType() const {
+            return m_mediaType;
+        }
+
+        /// Set the uri for the statement group
         /// \param uri
         void setUri(std::string uri) {
             m_uri = uri;
+        }
+
+        /// Return the uri for the statement group
+        /// \return uri
+        std::string getUri() const {
+            return m_uri;
         }
 
         /// Set the value for the statement group.
@@ -96,13 +120,25 @@ namespace virtru {
             m_value = value;
         }
 
-        /// set flag for the isEncrypted flag.
+        /// Return the statement value for the statement group
+        /// \return statement value
+        std::string getValue() const {
+            return m_value;
+        }
+
+        /// set value for the isEncrypted flag for the statement group
         /// \param isEncrypted
         void setIsEncrypted(bool isEncrypted) {
             m_isEncrypted = isEncrypted;
         }
 
-    public:
+        /// Return value of for the isEncrypted flag for the statement group
+        /// \return flag
+        bool getIsEncrypted() const {
+            return m_isEncrypted;
+        }
+
+    private:
         StatementType m_type{StatementType::XMLBase64};
         std::string m_filename;
         std::string m_mediaType;
@@ -140,10 +176,22 @@ namespace virtru {
             m_scope = scope;
         }
 
+        /// Return the scope of the assertion
+        /// \return scope
+        Scope getScope() const {
+            return m_scope;
+        }
+
         /// Set the id for the assertion
         /// \param id
         void setId(std::string id) {
             m_id = id;
+        }
+
+        /// Return the id of the assertion
+        /// \return id
+        std::string getId() const {
+            return m_id;
         }
 
         /// Set the type for the assertion
@@ -152,24 +200,42 @@ namespace virtru {
             m_type = type;
         }
 
-        /// Set the statement group for the assertion.
+        /// Return the type of the assertion
+        /// \return type
+        std::string getType() const {
+            return m_type;
+        }
+
+        /// Set the statement group for the assertion
         /// \param statementGroup
         void setStatementGroup(StatementGroup statementGroup) {
             m_statementGroup = statementGroup;
         }
 
-        /// Set the statement meta fata for the assertion
-        /// \param statementMetaData
-        void setStatementMetaData(const std::vector<std::string>& statementMetaData) {
-            m_statementMetaData = statementMetaData;
+        /// Return the statement group of the assertopn
+        /// \return StatementGroup
+        StatementGroup getStatementGroup() const {
+            return m_statementGroup;
         }
 
-    public:
+        /// Set the statement metadata for the assertion
+        /// \param statementMetaData
+        void setStatementMetadata(std::string statementMetaData) {
+            m_statementMetadata.emplace_back(statementMetaData);
+        }
+
+        /// Return the metadata information of the assertion
+        /// \return
+        std::vector<std::string> getStatementMetadata() const {
+            return m_statementMetadata;
+        }
+
+    private:
         Scope m_scope;
         std::string m_id;
         std::string m_type;
         StatementGroup m_statementGroup{StatementType::Unknow};
-        std::vector<std::string> m_statementMetaData;
+        std::vector<std::string> m_statementMetadata;
     };
 
     class HandlingAssertion {
@@ -201,10 +267,22 @@ namespace virtru {
             m_scope = scope;
         }
 
+        /// Return the scope of the assertion.
+        /// \return scope
+        Scope getScope() const {
+            return m_scope;
+        }
+
         /// Set the applied state for the assertion.
         /// \param appliesToState
         void setAppliedState(AppliesToState appliesToState) {
             m_appliesToState = appliesToState;
+        }
+
+        /// Return the applied state of the assertion.
+        /// \return applied state
+        AppliesToState getAppliedState() const {
+            return m_appliesToState;
         }
 
         /// Set the id for the assertion
@@ -213,15 +291,28 @@ namespace virtru {
             m_id = id;
         }
 
+        /// Return the id of the assertion
+        /// \return id
+        std::string getId() const {
+            return m_id;
+        }
+
         /// Set the handling statement for the assertion
         /// \param statementMetaData
         void setHandlingStatement(std::string handlingStatement) {
             m_handlingStatement = handlingStatement;
         }
 
-    public:
+        /// Return the handling statement of the assertion
+        /// \return handling statement
+        std::string getHandlingStatement() const {
+            return m_handlingStatement;
+        }
+
+    private:
         Scope m_scope;
         AppliesToState m_appliesToState;
+        StatementType m_statementType{StatementType::XMLBase64};
         std::string m_id;
         std::string m_handlingStatement;
     };

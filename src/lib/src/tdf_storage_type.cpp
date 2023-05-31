@@ -52,6 +52,16 @@ namespace virtru {
         m_awsRegionName = awsRegionName;
     }
 
+    /// Add the handling assertion to the TDF
+    void TDFStorageType::setHandlingAssertion(const HandlingAssertion& handlingAssertion) {
+        m_handlingAssertions.push_back(handlingAssertion);
+    }
+
+    /// Add the default assertion to the TDF
+    void TDFStorageType::setDefaultAssertion(const DefaultAssertion& defaultAssertion) {
+        m_defaultAssertions.push_back(defaultAssertion);
+    }
+
     /// Return the unique, canonical descriptor/location this
     /// StorageType is pointing to, so callers can distinguish between instances of TDFStorageType
     ///

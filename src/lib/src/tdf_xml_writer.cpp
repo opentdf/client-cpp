@@ -274,35 +274,35 @@ namespace virtru {
                                                         reinterpret_cast<const xmlChar *>(kHandlingAssertionElement),
                                                         nullptr);
 
-            if (handlingAssertion.m_scope == Scope::unknown) {
+            if (handlingAssertion.getScope() == Scope::unknown) {
                 std::string errorMsg{"Unknow scope attribute for HandlingAssertion"};
                 ThrowException(std::move(errorMsg));
             }
 
-            auto scopeAsStrView = magic_enum::enum_name(handlingAssertion.m_scope);
+            auto scopeAsStrView = magic_enum::enum_name(handlingAssertion.getScope());
             std::string scopeAsStr{scopeAsStrView};
             xmlNewNsProp(handlingAssertionElement,
                          ns,
                          reinterpret_cast<const xmlChar *>(kScopeAttribute),
                          reinterpret_cast<const xmlChar *>(scopeAsStr.c_str()));
 
-            if (handlingAssertion.m_appliesToState == AppliesToState::unknown) {
+            if (handlingAssertion.getAppliedState() == AppliesToState::unknown) {
                 std::string errorMsg{"Unknow appliesToState for HandlingAssertion"};
                 ThrowException(std::move(errorMsg));
             }
 
-            auto appliesToStateAsStrView = magic_enum::enum_name(handlingAssertion.m_appliesToState);
+            auto appliesToStateAsStrView = magic_enum::enum_name(handlingAssertion.getAppliedState());
             std::string appliesToStateAsStr{appliesToStateAsStrView};
             xmlNewNsProp(handlingAssertionElement,
                          ns,
                          reinterpret_cast<const xmlChar *>(kAppliesToStateAttribute),
                          reinterpret_cast<const xmlChar *>(appliesToStateAsStr.c_str()));
 
-            if (!handlingAssertion.m_id.empty()) {
+            if (!handlingAssertion.getId().empty()) {
                 xmlNewNsProp(handlingAssertionElement,
                              ns,
                              reinterpret_cast<const xmlChar *>(kIdAttribute),
-                             reinterpret_cast<const xmlChar *>(handlingAssertion.m_id.c_str()));
+                             reinterpret_cast<const xmlChar *>(handlingAssertion.getId().c_str()));
             }
 
             auto handlingStatementElement = xmlNewChild(handlingAssertionElement, ns,
@@ -310,9 +310,10 @@ namespace virtru {
                                                         nullptr);
 
             xmlNodePtr edhNode = nullptr;
+            auto handlingStatement = handlingAssertion.getHandlingStatement();
             xmlParseInNodeContext(handlingStatementElement,
-                                  handlingAssertion.m_handlingStatement.c_str(),
-                                  handlingAssertion.m_handlingStatement.size(),
+                                  handlingStatement.c_str(),
+                                  handlingStatement.size(),
                                   0,
                                   &edhNode);
             if (edhNode) {
@@ -377,12 +378,12 @@ namespace virtru {
                                                 reinterpret_cast<const xmlChar *>(kAssertionElement),
                                                 nullptr);
 
-            if (defaultAssertion.m_scope == Scope::unknown) {
+            if (defaultAssertion.getScope() == Scope::unknown) {
                 std::string errorMsg{"Unknow scope attribute for HandlingAssertion"};
                 ThrowException(std::move(errorMsg));
             }
 
-            auto scopeAsStrView = magic_enum::enum_name(defaultAssertion.m_scope);
+            auto scopeAsStrView = magic_enum::enum_name(defaultAssertion.getScope());
             std::string scopeAsStr{scopeAsStrView};
             xmlNewNsProp(assertionElement,
                          ns,
@@ -390,22 +391,22 @@ namespace virtru {
                          reinterpret_cast<const xmlChar *>(scopeAsStr.c_str()));
 
 
-            if (!defaultAssertion.m_id.empty()) {
+            if (!defaultAssertion.getId().empty()) {
                 xmlNewNsProp(assertionElement,
                              ns,
                              reinterpret_cast<const xmlChar *>(kIdAttribute),
-                             reinterpret_cast<const xmlChar *>(defaultAssertion.m_id.c_str()));
+                             reinterpret_cast<const xmlChar *>(defaultAssertion.getId().c_str()));
             }
 
-            if (!defaultAssertion.m_type.empty()) {
+            if (!defaultAssertion.getType().empty()) {
                 xmlNewNsProp(assertionElement,
                              ns,
                              reinterpret_cast<const xmlChar *>(kTypeAttribute),
-                             reinterpret_cast<const xmlChar *>(defaultAssertion.m_type.c_str()));
+                             reinterpret_cast<const xmlChar *>(defaultAssertion.getType().c_str()));
             }
 
-            auto statementGroup = defaultAssertion.m_statementGroup;
-            auto statementGroupType = statementGroup.m_type;
+            auto statementGroup = defaultAssertion.getStatementGroup();
+            auto statementGroupType = statementGroup.getStatementType();
             if (statementGroupType == StatementType::Unknow) {
                 std::string errorMsg{"Unknow statement type for assertion"};
                 ThrowException(std::move(errorMsg));
@@ -416,35 +417,35 @@ namespace virtru {
 
             auto statementGroupElement = xmlNewChild(assertionElement, ns,
                                                      reinterpret_cast<const xmlChar *>(statementTypeStr.c_str()),
-                                                     reinterpret_cast<const xmlChar *>(statementGroup.m_value.c_str()));
+                                                     reinterpret_cast<const xmlChar *>(statementGroup.getValue().c_str()));
 
 
-            std::string isEncryptedStr = statementGroup.m_isEncrypted ? "true" : "false";
+            std::string isEncryptedStr = statementGroup.getIsEncrypted() ? "true" : "false";
             xmlNewNsProp(statementGroupElement,
                          ns,
                          reinterpret_cast<const xmlChar *>(kIsEncryptedAttribute),
                          reinterpret_cast<const xmlChar *>(isEncryptedStr.c_str()));
 
 
-            if (!statementGroup.m_filename.empty()) {
+            if (!statementGroup.getFilename().empty()) {
                 xmlNewNsProp(statementGroupElement,
                              ns,
                              reinterpret_cast<const xmlChar *>(kFilenameAttribute),
-                             reinterpret_cast<const xmlChar *>(statementGroup.m_filename.c_str()));
+                             reinterpret_cast<const xmlChar *>(statementGroup.getFilename().c_str()));
             }
 
-            if (!statementGroup.m_mediaType.empty()) {
+            if (!statementGroup.getMediaType().empty()) {
                 xmlNewNsProp(statementGroupElement,
                              ns,
                              reinterpret_cast<const xmlChar *>(kMediaTypeAttribute),
-                             reinterpret_cast<const xmlChar *>(statementGroup.m_mediaType.c_str()));
+                             reinterpret_cast<const xmlChar *>(statementGroup.getMediaType().c_str()));
             }
 
-            if (!statementGroup.m_uri.empty()) {
+            if (!statementGroup.getUri().empty()) {
                 xmlNewNsProp(statementGroupElement,
                              ns,
                              reinterpret_cast<const xmlChar *>(kUriAttribute),
-                             reinterpret_cast<const xmlChar *>(statementGroup.m_uri.c_str()));
+                             reinterpret_cast<const xmlChar *>(statementGroup.getUri().c_str()));
             }
         }
 

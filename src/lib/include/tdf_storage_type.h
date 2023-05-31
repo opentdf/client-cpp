@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "tdf_constants.h"
+#include "tdf_assertion.h"
 
 namespace virtru {
 
@@ -69,6 +70,14 @@ namespace virtru {
         /// \param awsRegionName - Region name for AWS credentials
         void setTDFStorageS3Type(const std::string &S3Url, const std::string& awsAccessKeyId, const std::string& awsSecretAccessKey, const std::string& awsRegionName);
 
+        /// Add the handling assertion to the TDF
+        /// \param handlingAssertion - The handling assertion object
+        void setHandlingAssertion(const HandlingAssertion& handlingAssertion);
+
+        /// Add the default assertion to the TDF
+        /// \param defaultAssertion - The default assertion object
+        void setDefaultAssertion(const DefaultAssertion& defaultAssertion);
+
         /// Return the unique, canonical descriptor/location this
         /// StorageType is pointing to.
         ///
@@ -83,13 +92,15 @@ namespace virtru {
     private:
         friend TDFClient;
         friend NanoTDFClient;
-        std::string            m_filePath;
-        std::string            m_tdfBuffer;
-        StorageType            m_tdfType;
-        std::string            m_awsAccessKeyId;
-        std::string            m_awsSecretAccessKey;
-        std::string            m_awsRegionName;
-        std::string            m_S3Url;
+        std::string                     m_filePath;
+        std::string                     m_tdfBuffer;
+        StorageType                     m_tdfType;
+        std::string                     m_awsAccessKeyId;
+        std::string                     m_awsSecretAccessKey;
+        std::string                     m_awsRegionName;
+        std::string                     m_S3Url;
+        std::vector<HandlingAssertion>  m_handlingAssertions;
+        std::vector<DefaultAssertion>   m_defaultAssertions;
     };
 }
 #endif //VIRTRU_TDF_STORAGETYPE_H

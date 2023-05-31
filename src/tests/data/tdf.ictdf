@@ -142,24 +142,19 @@
     -->
 
 
-
     <tdf:EncryptionInformation>
         <tdf:KeyAccess>
             <tdf:WrappedPDPKey>
-                <EncryptedPolicyObject>eyJpbnRlZ3JpdHlJbmZvcm1hdGlvbiI6eyJlbmNyeXB0ZWRTZWdtZW50U2l6ZURlZmF1bHQiOjEwMDAwMjgsInJvb3RTaWduYXR1cmUiOnsiYWxnIjoiSFMyNTYiLCJzaWciOiJZamxpTXpBeU5qZzROekEwTnpVeVltVXdOelkxWVdFNE1XTmhORFJtTURaalpEVTNPV015WVRNek5qTmxORFl5TlRNNE1EQTRZalF4WVRkbVptRm1PQT09In0sInNlZ21lbnRIYXNoQWxnIjoiR01BQyIsInNlZ21lbnRTaXplRGVmYXVsdCI6MTAwMDAwMCwic2VnbWVudHMiOlt7ImVuY3J5cHRlZFNlZ21lbnRTaXplIjoxNDA4NCwiaGFzaCI6IlptUXlZalkyWkRneFkySXpOR05tWlRJM09ERmhZVGsyWmpKaE5XTmpPREE9Iiwic2VnbWVudFNpemUiOjE0MDU2fV19LCJrZXlBY2Nlc3MiOlt7ImVuY3J5cHRlZE1ldGFkYXRhIjoiT0VPcUpDUzZtWnNtTFdKMzhsaDZFTjJsRFVBOE9hZ0wvT3hRUlE9PSIsInBvbGljeUJpbmRpbmciOiJaR013TkdFeFpqZzBPREZqTkRFelpUazVOamRrWm1JNU1XRmpOMlkxTXpJME1UbGlOak01TW1SbE1UbGhZV00wTmpOak4yVmpZVFZrT1RKbE9EY3dOQT09IiwicHJvdG9jb2wiOiJrYXMiLCJ0eXBlIjoid3JhcHBlZCIsInVybCI6Imh0dHA6Ly9rYXMuZXhhbXBsZS5jb206NDAwMCIsIndyYXBwZWRLZXkiOiJZNHdUYTh0ZEtxU1MzRFVOTUtUSVVRcThUaS9XRnJxMjZEUmVteWJCZ0JjTC9DeVVaOThoRmpEUWd5NGNzQnVzRXF3UTV6RytVQW9SZ2tMa0hpQXc3aE5BYXlBVUNWUnc2YVVZUkY0TFdmY3MyQk05azZkM2JIcXVuMHY1dz09In1dLCJwb2xpY3kiOiJleUoxZFdsa0lqb2lOakV6TXpNME5qWXROR1l3WVMwMFlURXlMVGsxWm1JdFlqWmtPR0prTUdJNFlqSTJJaXdpWW05a2VTSTZleUpoZEhSeWFXSjFkR1Z6SWpwYlhTd2laR2x6YzJWdElqcGJJblZ6WlhKQWRtbHlkSEoxTG1OdmJTSmRmWDA9In0=</EncryptedPolicyObject>
+                <tdf:EncryptedPolicyObject>eyJpbnRlZ3JpdHlJbmZvcm1hdGlvbiI6eyJlbmNyeXB0ZWRTZWdtZW50U2l6ZURlZmF1bHQiOjM0LCJyb290U2lnbmF0dXJlIjp7ImFsZyI6IkhTMjU2Iiwic2lnIjoiWkdVME9ESTJOakF5TXpJeU1XSTFaRGxqTnpFM01qQXdabU00T0RnME9UaGlNalZqWVdZNE5qRTFNamcxTm1ZNU5tWTVNREl6WWpoaU4yUTVOREF4WXc9PSJ9LCJzZWdtZW50SGFzaEFsZyI6IkdNQUMiLCJzZWdtZW50U2l6ZURlZmF1bHQiOjYsInNlZ21lbnRzIjpbeyJlbmNyeXB0ZWRTZWdtZW50U2l6ZSI6MzQsImhhc2giOiJZV0ptTW1RNU5EUXlaak5qTkRNME16TTJNREUwT1RBeFltRm1NREJsTURNPSIsInNlZ21lbnRTaXplIjo2fV19LCJrZXlBY2Nlc3MiOlt7InBvbGljeUJpbmRpbmciOiJORGhqWW1GaU1UTmhNV000WmpKallqTTJNbVV4TjJZM1l6STFNelZtWldJNFkySmhNVEpsTmpOa01USTRNVEZtT0RFM00yWTNaREk0WTJNeU5tRmhZUT09IiwicHJvdG9jb2wiOiJrYXMiLCJ0eXBlIjoid3JhcHBlZCIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NjU0MzIvYXBpL2thcyIsIndyYXBwZWRLZXkiOiJIcXFic1FSQkZrNjBYOGRESk90ZmU0VjJWMFQ1SkpObXJVYjA3dlkzL1pZd0ZtWkV4ckp3TTNndys3cDdPQ3lIaG5NUklDY2pucVhxaGdHbzQ5bzV5RWlhN0R1cUo5eUg4UGpCRlFaak5ZSlJIdi9jejZ2S3ArcXdYZlM4cVRYRW9aNHFYWEppRGdQQk8zQUlhNklQcUh1eUM4VnZoT3JqYnMxOS90cWZNcWpJMFlGcGdLSXVlRlRZMWFWWmtMbXRmU3Vka3VhdjViS3hnaWlrOHhtUGlGR1BlQk1IOVhaN3JuRFk1MHVzQnkvVWxEcW9OT1psRnExTzlDa0cxaGJKaVVPck5td0JHeXlvQVhNOUxoRDRCSnlVMXhCY1NwV1gvVEVpankvTDQ2RFJwSzBDbVEwREN6ZFc5SHI3NFdXK0pDSU9mbUZ5RHIrR3JTZDF5RjJMamc9PSJ9XSwicG9saWN5IjoiZXlKaWIyUjVJanA3SW1SaGRHRkJkSFJ5YVdKMWRHVnpJanBiWFN3aVpHbHpjMlZ0SWpwYlhYMHNJblYxYVdRaU9pSTROVGxpTTJRek9TMWpZbUl3TFRSak5UUXRPRGN3WWkxbVkyWXlOV1l4WVRJNU9EZ2lmUT09In0=</tdf:EncryptedPolicyObject>
             </tdf:WrappedPDPKey>
         </tdf:KeyAccess>
-
-        <tdf:EncryptionMethod tdf:algorithm="AES-GCM">
+        <tdf:EncryptionMethod tdf:algorithm="AES-256-GCM">
             <tdf:KeySize>32</tdf:KeySize>
-            <tdf:IVParams>YW55IGNhcm5hbCBwbGVhcwYW55IGNhcm5hbCBwbGVhcw</tdf:IVParams>
-            <!-- AdditionalAuthenticatedData Optional -->
-            <!-- AuthenticationTag optional, if its not here, its embedded in ciphertext -->
+            <tdf:IVParams>RB0O2y73N8eWXAGr</tdf:IVParams>
         </tdf:EncryptionMethod>
     </tdf:EncryptionInformation>
+    <tdf:Base64BinaryPayload tdf:isEncrypted="true" tdf:mediaType="application/octet-stream">JSyy3DXj3rYjVLMS/ZRQifEsq/LZRC88Q0M2AUkBuvAOAw==</tdf:Base64BinaryPayload>
 
-    <!-- Payload -->
-    <tdf:Base64BinaryPayload tdf:filename="myText.txt" tdf:isEncrypted="true">6bX8330=</tdf:Base64BinaryPayload>
 
 </TrustedDataObject>
 

@@ -19,9 +19,23 @@
 #include "logger.h"
 #include "nlohmann/json.hpp"
 #include "manifest_data_model.h"
+#include "crypto_utils.h"
 #include "tdf_exception.h"
+#include <magic_enum.hpp>
+
+#include <iostream>
 
 namespace virtru {
+
+    using namespace virtru::crypto;
+
+    static constexpr auto kStatementValue = "value";
+    static constexpr auto kStatement = "statement";
+    static constexpr auto kStatementMetadata = "statementMetadata";
+    static constexpr auto kDefaultAssertions = "default";
+    static constexpr auto kHandlingAssertions = "handling";
+    static constexpr auto kAssertions = "assertions";
+    static constexpr auto kXMLBase64Value = "xml-base64";
 
     /// Create a manifest data model from json
     /// \param modelAsJsonStr
@@ -97,6 +111,97 @@ namespace virtru {
 
             model.encryptionInformation.integrityInformation.encryptedSegmentSizeDefault = integrityInformation[kEncryptedSegSizeDefault];
             model.encryptionInformation.policy = encryptionInformation[kPolicy];
+
+            // 'assertions'
+            if (manifest.find(kAssertions) != manifest.end()) {
+                const auto& assertions = manifest[kAssertions];
+
+                // 'default' assertions
+                if (assertions.find(kDefaultAssertions) != assertions.end()) {
+
+                    const auto& defaultAssertions = assertions[kDefaultAssertions];
+                    for (const auto& assertion: defaultAssertions) {
+
+                        DefaultAssertion defaultAssertion{Scope::unknown};
+
+                        std::string scopeValue = assertion[kScopeAttribute];
+                        auto scope = magic_enum::enum_cast<Scope>(scopeValue);
+                        if (scope.has_value()) {
+                            defaultAssertion.setScope(scope.value());
+                        }
+                        defaultAssertion.getId() = assertion[kIdAttribute];
+
+
+                        const auto& statementGroupJson = assertion[kStatement];
+
+                        auto statementGroup = defaultAssertion.getStatementGroup();
+
+                        std::string typeAsStr = statementGroupJson[kTypeAttribute];
+                        auto type = magic_enum::enum_cast<StatementType>(typeAsStr);
+                        if (type.has_value()) {
+                            statementGroup.setStatementType(type.value());
+                        }
+
+                        if (statementGroupJson.find(kFilenameAttribute) != statementGroupJson.end()) {
+                            statementGroup.setFilename(statementGroupJson[kFilenameAttribute]);
+                        }
+
+                        if (statementGroupJson.find(kMediaTypeAttribute) != statementGroupJson.end()) {
+                            statementGroup.setMediaType(statementGroupJson[kMediaTypeAttribute]);
+                        }
+
+                        if (statementGroupJson.find(kUriAttribute) != statementGroupJson.end()) {
+                            statementGroup.setUri(statementGroupJson[kUriAttribute]);
+                        }
+
+                        if (statementGroupJson.find(kStatementValue) != statementGroupJson.end()) {
+                            statementGroup.setValue(statementGroupJson[kStatementValue]);
+                        }
+
+                        if (statementGroupJson.find(kIsEncryptedAttribute) != statementGroupJson.end()) {
+                            statementGroup.setIsEncrypted(statementGroupJson[kIsEncryptedAttribute]);
+                        }
+
+                        defaultAssertion.setStatementGroup(statementGroup);
+
+                        for (const auto& metadata: assertion[kStatementMetadata]) {
+                            defaultAssertion.setStatementMetadata(to_string(metadata));
+                        }
+
+                        model.defaultAssertions.emplace_back(defaultAssertion);
+                    }
+                }
+
+                // 'handling' assertions
+                if (assertions.find(kHandlingAssertions) != assertions.end()) {
+
+                    const auto& handlingAssertions = assertions[kHandlingAssertions];
+                    for (const auto& assertion: handlingAssertions) {
+
+                        HandlingAssertion handlingAssertion{Scope::unknown};
+
+                        std::string scopeValue = assertion[kScopeAttribute];
+                        auto scope = magic_enum::enum_cast<Scope>(scopeValue);
+                        if (scope.has_value()) {
+                            handlingAssertion.setScope(scope.value());
+                        }
+
+                        std::string appliesToStateValue = assertion[kAppliesToStateAttribute];
+                        auto appliesToState = magic_enum::enum_cast<AppliesToState>(appliesToStateValue);
+                        if (appliesToState.has_value()) {
+                            handlingAssertion.setAppliedState(appliesToState.value());
+                        }
+
+                        if (assertion.find(kIdAttribute) != assertion.end()) {
+                            handlingAssertion.setId(assertion[kIdAttribute]);
+                        }
+
+                        const auto& statementGroupJson = assertion[kStatement];
+                        handlingAssertion.setHandlingStatement(statementGroupJson[kStatementValue]);
+                        model.handlingAssertions.emplace_back(handlingAssertion);
+                    }
+                }
+            }
 
             return model;
         }  catch (...) {
@@ -182,6 +287,95 @@ namespace virtru {
 
             manifest[kEncryptionInformation] = encryptionInformationJson;
             manifest[kPayload] = payloadJson;
+
+            // 'assertions'
+            nlohmann::json assertionsJson;
+
+            //  'default' assertions
+            auto defaultAssertionsJsonArray = nlohmann::json::array();
+            for (const auto& assertion: defaultAssertions) {
+                nlohmann::json assertionJson;
+
+                if (assertion.getScope() != Scope::unknown) {
+                    assertionJson[kScopeAttribute] = magic_enum::enum_name(assertion.getScope());
+                }
+
+                if (!assertion.getId().empty()) {
+                    assertionJson[kIdAttribute] = assertion.getId();
+                }
+
+                if (!assertion.getType().empty()) {
+                    assertionJson[kTypeAttribute] = assertion.getType();
+                }
+
+                auto statementGroup = assertion.getStatementGroup();
+                if (statementGroup.getStatementType() != StatementType::Unknow) {
+                    nlohmann::json statementGroupJson;
+
+                    statementGroupJson[kTypeAttribute] =  magic_enum::enum_name(statementGroup.getStatementType());
+
+                    if (!statementGroup.getFilename().empty()) {
+                        statementGroupJson[kFilenameAttribute] =  statementGroup.getFilename();
+                    }
+
+                    if (!statementGroup.getMediaType().empty()) {
+                        statementGroupJson[kMediaTypeAttribute] =  statementGroup.getMediaType();
+                    }
+
+                    if (!statementGroup.getUri().empty()) {
+                        statementGroupJson[kUriAttribute] =  statementGroup.getUri();
+                    }
+
+                    if (!statementGroup.getValue().empty()) {
+                        statementGroupJson[kStatementValue] =  statementGroup.getValue();
+                    }
+
+                    statementGroupJson[kIsEncryptedAttribute] = statementGroup.getIsEncrypted();
+                    assertionJson[kStatement] = statementGroupJson;
+                }
+
+                auto statementMetaDataJsonArray = nlohmann::json::array();
+                for (const auto& metaData: assertion.getStatementMetadata()) {
+                    statementMetaDataJsonArray.emplace_back(metaData);
+                }
+                assertionJson[kStatementMetadata] = statementMetaDataJsonArray;
+                assertionJson[kEncryptionInformationElement] = nlohmann::json::object();
+
+                defaultAssertionsJsonArray.emplace_back(assertionJson);
+            }
+
+            //  'handling' assertions
+            auto handlingAssertionsJsonArray = nlohmann::json::array();
+            for (const auto& assertion: handlingAssertions) {
+                nlohmann::json assertionJson;
+
+                auto scope = assertion.getScope();
+                if (scope != Scope::unknown) {
+                    assertionJson[kScopeAttribute] = magic_enum::enum_name(scope);
+                }
+
+                auto appliedState = assertion.getAppliedState();
+                if (appliedState != AppliesToState::unknown) {
+                    assertionJson[kAppliesToStateAttribute] = magic_enum::enum_name(appliedState);
+                }
+
+                auto id = assertion.getId();
+                if (!id.empty()) {
+                    assertionJson[kIdAttribute] = id;
+                }
+
+                nlohmann::json statementJson;
+                statementJson[kTypeAttribute] = kXMLBase64Value;
+                statementJson[kStatementValue] = base64Encode(assertion.getHandlingStatement());
+
+                assertionJson[kStatement] = statementJson;
+                assertionJson[kEncryptionInformationElement] = nlohmann::json::object();
+                handlingAssertionsJsonArray.emplace_back(assertionJson);
+            }
+
+            assertionsJson[kDefaultAssertions] = defaultAssertionsJsonArray;
+            assertionsJson[kHandlingAssertions] = handlingAssertionsJsonArray;
+            manifest[kAssertions] = assertionsJson;
 
             return to_string(manifest);
         }  catch (...) {
