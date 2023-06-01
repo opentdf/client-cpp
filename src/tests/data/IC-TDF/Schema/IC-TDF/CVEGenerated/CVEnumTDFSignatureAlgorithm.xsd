@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns="urn:us:gov:ic:cvenum:tdf:signaturealgorithm"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            elementFormDefault="qualified"
+            xml:lang="en"
+            targetNamespace="urn:us:gov:ic:cvenum:tdf:signaturealgorithm">
+   <xsd:annotation>
+      <xsd:documentation>
+                    The W3C XML Schema fragment encoding types for CVEnumTDFSignatureAlgorithm Version 2 controlled vocabulary enumerations. This file is generated, so edits should be made to the CVEnumTDFSignatureAlgorithm.xml CVE it is based on, instead of here.
+                </xsd:documentation>
+   </xsd:annotation>
+   <!--*************************************************************-->
+<!--Generated TYPE DEFINITIONS ..................................-->
+<!--*************************************************************-->
+<xsd:simpleType name="CVEnumTDFSignatureAlgorithm">
+      <xsd:annotation>
+         <xsd:documentation>(U) All valid signature algorithms and patterns for use with SignatureValueType
+                         PERMISSIBLE VALUES
+                         
+                         The permissible values for this simple type are defined in the Controlled Value Enumeration:
+                         
+                         CVEnumTDFSignatureAlgorithm.xml
+                         
+                     </xsd:documentation>
+      </xsd:annotation>
+      <xsd:restriction base="xsd:token">
+         <xsd:pattern value="SHA(1|256|384|512)withRSA">
+            <xsd:annotation>
+               <xsd:documentation>Signature algorithm with a Secure Hash Algorithm (SHA-*) and the RSA encryption algorithm as defined in the OSI Interoperability Workshop, using the padding conventions described in  
+   				http://www.rsasecurity.com/rsalabs/pkcs.  The SHA digest length in bits is indicated by the integer immediately following SHA.</xsd:documentation>
+            </xsd:annotation>
+         </xsd:pattern>
+         <xsd:pattern value="SHA(1|256|384|512)withRSAand[A-Z]+[0-9]*">
+            <xsd:annotation>
+               <xsd:documentation>Use of Secure Hash Algorithms with RSA and Mask Functions.  For new signature schemes defined in PKCS1 v 2.0 for which the DigestwithEncryption form is insufficient, DigestwithEncryptionandMaskFunction can be used to form a name.
+   				Here, maskFucntion is a mask generation function such as MGF1. Example: SHA1withRSAandMGF1.
+   			</xsd:documentation>
+            </xsd:annotation>
+         </xsd:pattern>
+         <xsd:pattern value="SHA(1|256|384|512)withECDSA">
+            <xsd:annotation>
+               <xsd:documentation>Signature algorithm with Secure Hash Algorithm (SHA-*) and ECDSA as defined in ANSI X9.62. Note: SHA1withECDSA is sometimes referred to simply as ECDSA, however this is an ambiguous and should not be used. The formal name SHA1withECDSA should be used. </xsd:documentation>
+            </xsd:annotation>
+         </xsd:pattern>
+         <xsd:pattern value="SHA(1|256|384|512)withECDSAand[A-Z]+[0-9]*">
+            <xsd:annotation>
+               <xsd:documentation>Use of Secure Hash Algorithms with ECDSA and Mask Functions.  For new signature schemes defined in PKCS1 v 2.0 for which the DigestwithEncryption form is insufficient, DigestwithEncryptionandMaskFunction can be used to form a name.
+   				Here, maskFucntion is a mask generation function such as MGF1. Example: SHA1withECDSAandMGF1.
+   			</xsd:documentation>
+            </xsd:annotation>
+         </xsd:pattern>
+      </xsd:restriction>
+   </xsd:simpleType>
+</xsd:schema>

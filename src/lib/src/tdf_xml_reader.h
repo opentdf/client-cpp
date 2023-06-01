@@ -19,11 +19,13 @@
 #include "crypto/bytes.h"
 #include "io_provider.h"
 #include "tdf_archive_reader.h"
+#include "tdf_xml_validator.h"
 #include "libxml2_deleters.h"
 
 namespace virtru {
 
     using namespace virtru::crypto;
+
 
     class TDFXMLReader : public ITDFReader {
     public:
@@ -57,6 +59,11 @@ namespace virtru {
         /// Get the size of the payload.
         /// \return std::uint64_t - Size of the payload.
         std::uint64_t getPayloadSize() const override;
+
+        /// Establish a validator schema to verify input against
+        /// \param url - URL or file path to schema to use
+        /// \return - false if the supplied schema did not load correctly
+        bool setValidatorSchema(const std::string& url);
 
     private:
         /// Read encryption information from the xml
@@ -95,6 +102,7 @@ namespace virtru {
     private: /// Data
         IInputProvider&         m_inputProvider;
         std::vector<gsl::byte>  m_binaryPayload;
+        TDFXMLValidator         m_XmlValidator;
     };
 }
 

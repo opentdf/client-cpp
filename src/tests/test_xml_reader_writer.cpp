@@ -10,6 +10,7 @@
 #include "sdk_constants.h"
 #include "tdf_xml_reader.h"
 #include "tdf_xml_writer.h"
+#include "tdf_xml_validator.h"
 #include "stream_io_provider.h"
 #include "file_io_provider.h"
 #include "support/test_utils.h"
@@ -267,6 +268,59 @@ BOOST_AUTO_TEST_SUITE(test_xml_reader_writer_suite)
         actualPayload.append(reinterpret_cast<const char*>(wBytes.data()), wBytes.size());
 
         BOOST_TEST(actualPayload == payload);
+    }
+
+
+    BOOST_AUTO_TEST_CASE(test_tdf_xml_validation) {
+
+        const char *xmlfilegood = "data/good.tdf.ictdf";
+        const char *xmlfilebad = "data/invalid_xml_tdf.tdf";
+
+        const char *schemafile = "data/IC-TDF/Schema/IC-TDF/IC-TDF.xsd";
+
+        bool result;
+
+        BOOST_TEST_MESSAGE("Beginning test of valid XML input");
+        std::cout << "Beginning test of valid XML input" << std::endl;
+        try {
+            std::istringstream inputStream(tdfXML);
+            StreamInputProvider inputProvider{inputStream};
+            TDFXMLReader tdfxmlReader{inputProvider};
+
+            TDFXMLValidator validator;
+            validator.setSchema(schemafile);
+
+            result = validator.validate(xmlfilegood);
+            BOOST_TEST(result == true);
+        } catch (std::exception e) {
+            LogDebug(e.what());
+            std::ostringstream oss;
+            oss << e.what();
+            BOOST_FAIL("Caught exception: " + oss.str());
+        }
+        BOOST_TEST_MESSAGE("End of test of valid XML input");
+        std::cout << "End of test of valid XML input" << std::endl;
+
+        BOOST_TEST_MESSAGE("Beginning test of INvalid XML input");
+        std::cout << "Beginning test of INvalid XML input" << std::endl;
+        try {
+            std::istringstream inputStream(tdfXML);
+            StreamInputProvider inputProvider{inputStream};
+            TDFXMLReader tdfxmlReader{inputProvider};
+
+            TDFXMLValidator validator;
+            validator.setSchema(schemafile);
+
+            result = validator.validate(xmlfilebad);
+            BOOST_TEST(result == false);
+        } catch (std::exception e) {
+            LogDebug(e.what());
+            std::ostringstream oss;
+            oss << e.what();
+            BOOST_FAIL("Caught exception: " + oss.str());
+        }
+        BOOST_TEST_MESSAGE("End of test of INvalid XML input");
+        std::cout << "End of test of INvalid XML input" << std::endl;
     }
 
 BOOST_AUTO_TEST_SUITE_END()

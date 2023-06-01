@@ -15,6 +15,7 @@
 #include "sdk_constants.h"
 #include "tdf_exception.h"
 #include "tdf_xml_writer.h"
+#include "tdf_xml_validator.h"
 
 #include <magic_enum.hpp>
 #include <boost/beast/core/detail/base64.hpp>
@@ -230,9 +231,20 @@ namespace virtru {
 
         xmlDocDumpMemoryEnc(doc.get(), &output, &size, kXMLEncoding);
 
+        bool valid = m_XmlValidatorPtr.validate(doc.get());
+        if (!valid) {
+            std::string errorMsg{"Error - document did not pass schema validation"};
+            ThrowException(std::move(errorMsg));
+        }
 
         auto bytes = gsl::make_span(reinterpret_cast<const gsl::byte *>(output), size);
         m_outputProvider.writeBytes(bytes);
+    }
+
+    /// Establish a validator schema to verify input against
+    bool TDFXMLWriter::setValidatorSchema(const std::string& url) {
+        m_XmlValidatorPtr.setSchema(url);
+        return m_XmlValidatorPtr.isSchemaValid();
     }
 
     /// Add 'tdf:HandlingAssertion' element.

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns="urn:us:gov:ic:cvenum:revrecall:type"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            elementFormDefault="qualified"
+            xml:lang="en"
+            targetNamespace="urn:us:gov:ic:cvenum:revrecall:type">
+   <xsd:annotation>
+      <xsd:documentation>
+                    The W3C XML Schema fragment encoding types for CVEnumRevRecallType Version 2 controlled vocabulary enumerations. This file is generated, so edits should be made to the CVEnumRevRecallType.xml CVE it is based on, instead of here.
+                </xsd:documentation>
+   </xsd:annotation>
+   <!--*************************************************************-->
+<!--Generated TYPE DEFINITIONS ..................................-->
+<!--*************************************************************-->
+<xsd:simpleType name="CVEnumRevRecallType">
+      <xsd:annotation>
+         <xsd:documentation>(U) Types to be associated with a Revision/Recall.
+                         PERMISSIBLE VALUES
+                         
+                         The permissible values for this simple type are defined in the Controlled Value Enumeration:
+                         
+                         CVEnumRevRecallType.xml
+                         
+                     </xsd:documentation>
+      </xsd:annotation>
+      <xsd:restriction base="xsd:token">
+         <xsd:enumeration value="ADMINISTRATIVE_RECALL">
+            <xsd:annotation>
+               <xsd:documentation>Notify recipients that a product has been withdrawn due to
+                significant but non-substantive technical, legal, or policy issues; e.g., compromise
+                of sources and methods, identification of US person, improper
+                classification.</xsd:documentation>
+            </xsd:annotation>
+         </xsd:enumeration>
+         <xsd:enumeration value="ADMINISTRATIVE_REVISION">
+            <xsd:annotation>
+               <xsd:documentation>Notify recipients that a modification has been made that does
+   			       not affect the substance of the original product; e.g., misspellings, typographical
+   			       errors, additional recipients.</xsd:documentation>
+            </xsd:annotation>
+         </xsd:enumeration>
+         <xsd:enumeration value="SUBSTANTIVE_RECALL">
+            <xsd:annotation>
+               <xsd:documentation>Notify recipients that a product has been withdrawn due to
+                significant concerns about the accuracy of the information, the integrity of the
+                source, or the soundness of the analytic judgments.</xsd:documentation>
+            </xsd:annotation>
+         </xsd:enumeration>
+         <xsd:enumeration value="SUBSTANTIVE_REVISION">
+            <xsd:annotation>
+               <xsd:documentation>Notify recipients that a change has been made that does
+                affect the substance of the original product but does not invalidate it; e.g.,
+                dropped words or sentences, inaccurate paragraphs or comments, minor analytic
+                judgments.</xsd:documentation>
+            </xsd:annotation>
+         </xsd:enumeration>
+      </xsd:restriction>
+   </xsd:simpleType>
+</xsd:schema>
