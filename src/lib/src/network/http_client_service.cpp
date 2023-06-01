@@ -180,7 +180,7 @@ namespace virtru :: network {
 
             void on_read_headers (
                     bs :: error_code ec,
-                    std::size_t bytes_transferred
+                    std::size_t /*bytes_transferred*/
             ) {
                 if ( ec )
                     return report ( ec );
@@ -323,7 +323,7 @@ namespace virtru :: network {
 
             void on_read_headers (
                     bs :: error_code ec,
-                    std::size_t bytes_transferred
+                    std::size_t /*bytes_transferred*/
             ) {
                 if ( ec )
                     return report ( ec );

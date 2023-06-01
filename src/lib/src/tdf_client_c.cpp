@@ -542,7 +542,8 @@ DLL_PUBLIC bool TDFIsTDF(TDFClientPtr clientPtr,
 
     if (clientPtr == nullptr ||
         storageTypePtr == nullptr) {
-        return TDF_STATUS_INVALID_PARAMS;
+        // Can only return true/false here, so if the answer isn't yes...has to be no
+        return false;
     }
 
     try {
@@ -550,6 +551,7 @@ DLL_PUBLIC bool TDFIsTDF(TDFClientPtr clientPtr,
 
         virtru::TDFStorageType *storage = static_cast<virtru::TDFStorageType *>(storageTypePtr);
 
+        // Analyze supplied data - if exception is thrown, will return false below
         return client->isTDF(*storage);
     } catch (virtru::Exception &e) {
         LogError(e.what());
@@ -559,7 +561,8 @@ DLL_PUBLIC bool TDFIsTDF(TDFClientPtr clientPtr,
     } catch (...) {
         LogDefaultError();
     }
-    return TDF_STATUS_FAILURE;
+    // Can only return true/false here, so if we caught an exception, answer has to be false
+    return false;
 }
 
 #ifdef __cplusplus
