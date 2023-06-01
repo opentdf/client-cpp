@@ -17,6 +17,7 @@
 #include "tdf_xml_writer.h"
 #include "tdf_xml_validator.h"
 
+#include <magic_enum.hpp>
 #include <boost/beast/core/detail/base64.hpp>
 
 namespace virtru {
@@ -211,6 +212,12 @@ namespace virtru {
         xmlSetNs(rootNode, tdfNs);
         xmlDocSetRootElement(doc.get(), rootNode);
 
+        // Add 'tdf:HandlingAssertion' elements
+        addHandlingAssertionElement(rootNode, tdfNs);
+
+        // Add 'tdf:Assertion' elements
+        addDefaultAssertionElement(rootNode, tdfNs);
+
         // Add 'tdf:EncryptionInformationElement' element
         addEncryptionInformationElement(rootNode, tdfNs);
 
@@ -241,60 +248,219 @@ namespace virtru {
     }
 
     /// Add 'tdf:HandlingAssertion' element.
-    void TDFXMLWriter::addHandlingAssertionElement(xmlTextWriterPtr writer) {
+    void TDFXMLWriter::addHandlingAssertionElement(xmlNodePtr rootNode, xmlNsPtr ns) {
         /*
-         * <tdf:HandlingAssertion tdf:id="policybinding" tdf:scope="PAYL" tdf:appliesToState="encrypted">
-         *    <tdf:Binding>
-         *      <tdf:Signer tdf:issuer="https://kas1.example.com:4000"/>
-         *      <tdf:SignatureValue tdf:signatureAlgorithm="HS256">RXhwZWN0ZWQgU3RyaW5nIFZhbHVl</tdf:SignatureValue>
-		 *    </tdf:Binding>
-         * </tdf:HandlingAssertion>
+         *     <tdf:HandlingAssertion tdf:scope="PAYL" tdf:appliesToState="encrypted">
+         *       <tdf:HandlingStatement>
+         *         <edh:Edh xmlns:edh="urn:us:gov:ic:edh"
+         *           xmlns:usagency="urn:us:gov:ic:usagency"
+         *            xmlns:icid="urn:us:gov:ic:id"
+         *            xmlns:arh="urn:us:gov:ic:arh"
+         *            xmlns:ism="urn:us:gov:ic:ism"
+         *            xmlns:ntk="urn:us:gov:ic:ntk"
+         *            usagency:CESVersion="201609"
+         *            icid:DESVersion="1"
+         *            edh:DESVersion="201609"
+         *            arh:DESVersion="3"
+         *            ism:DESVersion="201609.201707"
+         *            ism:ISMCATCESVersion="201709"
+         *            ntk:DESVersion="201508">
+         *         <icid:Identifier>guide://999990/something</icid:Identifier>
+         *         <edh:DataItemCreateDateTime>2012-05-28T15:06:00Z</edh:DataItemCreateDateTime>
+         *         <edh:ResponsibleEntity edh:role="Custodian">
+         *           <edh:Country>USA</edh:Country>
+         *           <edh:Organization>DNI</edh:Organization>
+         *         </edh:ResponsibleEntity>
+         *        <arh:Security ism:compliesWith="USGov USIC"
+         *                     ism:resourceElement="true"
+         *                     ism:createDate="2012-05-28"
+         *                     ism:classification="U"
+         *                     ism:ownerProducer="USA"/>
+         *        </edh:Edh>
+         *     </tdf:HandlingStatement>
+         *   </tdf:HandlingAssertion>
          */
-        auto rc = xmlTextWriterStartElement(writer, reinterpret_cast<const xmlChar *>(kHandlingAssertionElement));
-        if (rc < 0) {
-            std::string errorMsg{"Error at xmlTextWriterStartElement (tdf:HandlingAssertion)"};
-            ThrowException(std::move(errorMsg));
-        }
+        for (const auto& handlingAssertion: m_manifestDataModel.handlingAssertions) {
 
-        XMLAttributesNamesAndValues xmlAttributesNamesAndValues = {{ kIdElement, "policybinding"},
-                                                                   { kScopeElement, "PAYL"},
-                                                                   {kAppliesToStateElement, "encrypted"}};
-        for (const auto &attribute : xmlAttributesNamesAndValues) {
-            rc = xmlTextWriterWriteAttribute(writer, reinterpret_cast<const xmlChar *>(attribute.first.c_str()),
-                                             reinterpret_cast<const xmlChar *>(attribute.second.c_str()));
-            if (rc < 0) {
-                std::string errorMsg{"Error at xmlTextWriterWriteAttribute - "};
-                errorMsg.append(kHandlingAssertionElement);
+            auto handlingAssertionElement = xmlNewChild(rootNode, ns,
+                                                        reinterpret_cast<const xmlChar *>(kHandlingAssertionElement),
+                                                        nullptr);
+
+            if (handlingAssertion.getScope() == Scope::unknown) {
+                std::string errorMsg{"Unknow scope attribute for HandlingAssertion"};
                 ThrowException(std::move(errorMsg));
+            }
+
+            auto scopeAsStrView = magic_enum::enum_name(handlingAssertion.getScope());
+            std::string scopeAsStr{scopeAsStrView};
+            xmlNewNsProp(handlingAssertionElement,
+                         ns,
+                         reinterpret_cast<const xmlChar *>(kScopeAttribute),
+                         reinterpret_cast<const xmlChar *>(scopeAsStr.c_str()));
+
+            if (handlingAssertion.getAppliedState() == AppliesToState::unknown) {
+                std::string errorMsg{"Unknow appliesToState for HandlingAssertion"};
+                ThrowException(std::move(errorMsg));
+            }
+
+            auto appliesToStateAsStrView = magic_enum::enum_name(handlingAssertion.getAppliedState());
+            std::string appliesToStateAsStr{appliesToStateAsStrView};
+            xmlNewNsProp(handlingAssertionElement,
+                         ns,
+                         reinterpret_cast<const xmlChar *>(kAppliesToStateAttribute),
+                         reinterpret_cast<const xmlChar *>(appliesToStateAsStr.c_str()));
+
+            if (!handlingAssertion.getId().empty()) {
+                xmlNewNsProp(handlingAssertionElement,
+                             ns,
+                             reinterpret_cast<const xmlChar *>(kIdAttribute),
+                             reinterpret_cast<const xmlChar *>(handlingAssertion.getId().c_str()));
+            }
+
+            auto handlingStatementElement = xmlNewChild(handlingAssertionElement, ns,
+                                                        reinterpret_cast<const xmlChar *>(kHandlingStatementElement),
+                                                        nullptr);
+
+            xmlNodePtr edhNode = nullptr;
+            auto handlingStatement = handlingAssertion.getHandlingStatement();
+            xmlParseInNodeContext(handlingStatementElement,
+                                  handlingStatement.c_str(),
+                                  handlingStatement.size(),
+                                  0,
+                                  &edhNode);
+            if (edhNode) {
+                xmlAddChild(handlingStatementElement, edhNode);
+            }
+        }
+    }
+
+
+    /// Add 'tdf:Assertion' element.
+    void TDFXMLWriter::addDefaultAssertionElement(xmlNodePtr rootNode, xmlNsPtr ns) {
+        /*
+         *  <tdf:Assertion tdf:id="assertion1" tdf:scope="TDO">
+         *      <tdf:StringStatement tdf:isEncrypted="false">This is the first
+         *      assertion</tdf:StringStatement>
+         *  </tdf:Assertion>
+         *
+         *  <tdf:Assertion tdf:id="assertion2" tdf:scope="TDO">
+         *    <tdf:Base64BinaryStatement tdf:isEncrypted="false">VGhpcyBpcyBhIGJpbmFyeSBzdGF0ZW1lbnQ=</tdf:Base64BinaryStatement>
+         *  </tdf:Assertion>
+         *
+         *
+         *    <tdf:Assertion tdf:id="assertionId1" tdf:scope="PAYL" tdf:type="binary">
+         *      <tdf:StatementMetadata tdf:appliesToState="encrypted">
+         *         <edh:Edh xmlns:edh="urn:us:gov:ic:edh"
+         *                  xmlns:ism="urn:us:gov:ic:ism"
+         *                  xmlns:usagency="urn:us:gov:ic:usagency"
+         *                  xmlns:icid="urn:us:gov:ic:id"
+         *                  ism:ISMCATCESVersion="201709"
+         *                  usagency:CESVersion="201609"
+         *                  icid:DESVersion="1">
+         *             <icid:Identifier>guide://999990/DIA-CNTRL-NO-1754-1762</icid:Identifier>
+         *             <edh:DataItemCreateDateTime>2006-07-28T00:00:00Z</edh:DataItemCreateDateTime>
+         *             <edh:ResponsibleEntity edh:role="Custodian">
+         *             <edh:Country>USA</edh:Country>
+         *             <edh:Organization>DIA</edh:Organization>
+         *        </edh:ResponsibleEntity>
+         *        <arh:Security xmlns:arh="urn:us:gov:ic:arh"
+         *              ism:classification="U"
+         *              ism:ownerProducer="USA"/>
+         *        </edh:Edh>
+         *      </tdf:StatementMetadata>
+         *    <tdf:EncryptionInformation>
+         *      <tdf:KeyAccess>
+         *        <tdf:AttachedKey>
+         *           <tdf:KeyValue>Jk6Jmdo7FwnbuIk/vHkjxQ==</tdf:KeyValue>
+         *        </tdf:AttachedKey>
+         *      </tdf:KeyAccess>
+         *      <tdf:EncryptionMethod tdf:algorithm="AES">
+         *        <tdf:KeySize>16</tdf:KeySize>
+         *      </tdf:EncryptionMethod>
+         *    </tdf:EncryptionInformation>
+         *    <tdf:Base64BinaryStatement tdf:filename="binVal.xml"
+         *                       tdf:isEncrypted="true"
+         *                        tdf:mediaType="application/octet-stream">VGhpcyBpcyBhIHRlc3Qu</tdf:Base64BinaryStatement>
+         * </tdf:Assertion>
+         */
+        for (const auto& defaultAssertion: m_manifestDataModel.defaultAssertions) {
+
+            auto assertionElement = xmlNewChild(rootNode,
+                                                ns,
+                                                reinterpret_cast<const xmlChar *>(kAssertionElement),
+                                                nullptr);
+
+            if (defaultAssertion.getScope() == Scope::unknown) {
+                std::string errorMsg{"Unknow scope attribute for HandlingAssertion"};
+                ThrowException(std::move(errorMsg));
+            }
+
+            auto scopeAsStrView = magic_enum::enum_name(defaultAssertion.getScope());
+            std::string scopeAsStr{scopeAsStrView};
+            xmlNewNsProp(assertionElement,
+                         ns,
+                         reinterpret_cast<const xmlChar *>(kScopeAttribute),
+                         reinterpret_cast<const xmlChar *>(scopeAsStr.c_str()));
+
+
+            if (!defaultAssertion.getId().empty()) {
+                xmlNewNsProp(assertionElement,
+                             ns,
+                             reinterpret_cast<const xmlChar *>(kIdAttribute),
+                             reinterpret_cast<const xmlChar *>(defaultAssertion.getId().c_str()));
+            }
+
+            if (!defaultAssertion.getType().empty()) {
+                xmlNewNsProp(assertionElement,
+                             ns,
+                             reinterpret_cast<const xmlChar *>(kTypeAttribute),
+                             reinterpret_cast<const xmlChar *>(defaultAssertion.getType().c_str()));
+            }
+
+            auto statementGroup = defaultAssertion.getStatementGroup();
+            auto statementGroupType = statementGroup.getStatementType();
+            if (statementGroupType == StatementType::Unknow) {
+                std::string errorMsg{"Unknow statement type for assertion"};
+                ThrowException(std::move(errorMsg));
+            }
+
+            auto statementTypeAsStrView = magic_enum::enum_name(statementGroupType);
+            std::string statementTypeStr{statementTypeAsStrView};
+
+            auto statementGroupElement = xmlNewChild(assertionElement, ns,
+                                                     reinterpret_cast<const xmlChar *>(statementTypeStr.c_str()),
+                                                     reinterpret_cast<const xmlChar *>(statementGroup.getValue().c_str()));
+
+
+            std::string isEncryptedStr = statementGroup.getIsEncrypted() ? "true" : "false";
+            xmlNewNsProp(statementGroupElement,
+                         ns,
+                         reinterpret_cast<const xmlChar *>(kIsEncryptedAttribute),
+                         reinterpret_cast<const xmlChar *>(isEncryptedStr.c_str()));
+
+
+            if (!statementGroup.getFilename().empty()) {
+                xmlNewNsProp(statementGroupElement,
+                             ns,
+                             reinterpret_cast<const xmlChar *>(kFilenameAttribute),
+                             reinterpret_cast<const xmlChar *>(statementGroup.getFilename().c_str()));
+            }
+
+            if (!statementGroup.getMediaType().empty()) {
+                xmlNewNsProp(statementGroupElement,
+                             ns,
+                             reinterpret_cast<const xmlChar *>(kMediaTypeAttribute),
+                             reinterpret_cast<const xmlChar *>(statementGroup.getMediaType().c_str()));
+            }
+
+            if (!statementGroup.getUri().empty()) {
+                xmlNewNsProp(statementGroupElement,
+                             ns,
+                             reinterpret_cast<const xmlChar *>(kUriAttribute),
+                             reinterpret_cast<const xmlChar *>(statementGroup.getUri().c_str()));
             }
         }
 
-        rc = xmlTextWriterStartElement(writer, reinterpret_cast<const xmlChar *>(kBindingElement));
-        if (rc < 0) {
-            std::string errorMsg{"Error at xmlTextWriterStartElement - tdf:Binding"};
-            ThrowException(std::move(errorMsg));
-        }
-
-        // tdf:Signer element
-        createElement(writer, kSignerElement, {},
-                      {{ kIssuerElement, m_manifestDataModel.encryptionInformation.keyAccessObjects[0].url}});
-
-        // tdf:SignatureValue element
-        createElement(writer, kSignatureValueElement, m_manifestDataModel.encryptionInformation.keyAccessObjects[0].policyBinding,
-                      {{ kSignatureAlgorithmElement, "HS256"}});
-
-
-        rc = xmlTextWriterEndElement(writer);
-        if (rc < 0) {
-            std::string errorMsg{"Error at xmlTextWriterEndElement - - tdf:Binding"};
-            ThrowException(std::move(errorMsg));
-        }
-
-        rc = xmlTextWriterEndElement(writer);
-        if (rc < 0) {
-            std::string errorMsg{"Error at xmlTextWriterEndElement - tdf:HandlingAssertion"};
-            ThrowException(std::move(errorMsg));
-        }
     }
 
     /// Create XML element and xmlTextWriter

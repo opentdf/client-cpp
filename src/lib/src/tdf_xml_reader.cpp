@@ -17,6 +17,7 @@
 #include "crypto/crypto_utils.h"
 #include <boost/beast/core/detail/base64.hpp>
 #include <iostream>
+#include <magic_enum.hpp>
 
 namespace virtru {
 
@@ -59,6 +60,12 @@ namespace virtru {
             ThrowException(std::move(errorMsg));
         }
 
+        // Parse HandlingAssertion
+        readHandlingAssertion(doc.get(), dataModel);
+
+        // Parse default assertions
+        readDefaultAssertion(doc.get(), dataModel);
+
         XMLCharFreePtr xmlCharBase64Payload;
 
         cur = cur->xmlChildrenNode;
@@ -100,15 +107,16 @@ namespace virtru {
                 XMLCharFreePtr mediaTypeFreePtr;
                 xmlChar* mediaTypeAsXmlChar = xmlGetProp(cur,
                                                          reinterpret_cast<const xmlChar *>(kMediaTypeAttribute));
-                if (!mediaTypeAsXmlChar) {
-                    std::string errorMsg{"Error - mediaType attribute is missing from the XML TDF"};
-                    ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
-                }
-                mediaTypeFreePtr.reset(mediaTypeAsXmlChar);
+                if (mediaTypeAsXmlChar) {
+                    mediaTypeFreePtr.reset(mediaTypeAsXmlChar);
 
-                std::string mediaTypeStr(reinterpret_cast<const char*>(mediaTypeFreePtr.get()),
-                                         xmlStrlen(mediaTypeFreePtr.get()));
-                dataModel.payload.mimeType = mediaTypeStr;
+                    std::string mediaTypeStr(reinterpret_cast<const char *>(mediaTypeFreePtr.get()),
+                                             xmlStrlen(mediaTypeFreePtr.get()));
+                    dataModel.payload.mimeType = mediaTypeStr;
+                } else {
+                    LogWarn("mediaType attribute is missing from the XML TDF");
+                }
+
             }
 
             cur = cur->next;
@@ -304,136 +312,305 @@ namespace virtru {
                                                                     dataModel);
     }
 
-    void TDFXMLReader::readLeve2EncryptionInformation(xmlDocPtr doc,
-                                                      xmlNodePtr curNodePtr,
-                                                      ManifestDataModel& dataModel) {
+    /// Read Handling assertions from the xml
+    void TDFXMLReader::readHandlingAssertion(xmlDocPtr doc, ManifestDataModel& dataModel) {
 
-        curNodePtr = curNodePtr->xmlChildrenNode;
-        while (curNodePtr != nullptr) {
+        /*
+         *     <tdf:HandlingAssertion tdf:scope="PAYL" tdf:appliesToState="encrypted">
+         *       <tdf:HandlingStatement>
+         *         <edh:Edh xmlns:edh="urn:us:gov:ic:edh"
+         *           xmlns:usagency="urn:us:gov:ic:usagency"
+         *            xmlns:icid="urn:us:gov:ic:id"
+         *            xmlns:arh="urn:us:gov:ic:arh"
+         *            xmlns:ism="urn:us:gov:ic:ism"
+         *            xmlns:ntk="urn:us:gov:ic:ntk"
+         *            usagency:CESVersion="201609"
+         *            icid:DESVersion="1"
+         *            edh:DESVersion="201609"
+         *            arh:DESVersion="3"
+         *            ism:DESVersion="201609.201707"
+         *            ism:ISMCATCESVersion="201709"
+         *            ntk:DESVersion="201508">
+         *         <icid:Identifier>guide://999990/something</icid:Identifier>
+         *         <edh:DataItemCreateDateTime>2012-05-28T15:06:00Z</edh:DataItemCreateDateTime>
+         *         <edh:ResponsibleEntity edh:role="Custodian">
+         *           <edh:Country>USA</edh:Country>
+         *           <edh:Organization>DNI</edh:Organization>
+         *         </edh:ResponsibleEntity>
+         *        <arh:Security ism:compliesWith="USGov USIC"
+         *                     ism:resourceElement="true"
+         *                     ism:createDate="2012-05-28"
+         *                     ism:classification="U"
+         *                     ism:ownerProducer="USA"/>
+         *        </edh:Edh>
+         *     </tdf:HandlingStatement>
+         *   </tdf:HandlingAssertion>
+         */
 
-            //  <tdf:RemoteStoredKey tdf:protocol="kas" tdf:uri="http://kas.example.com:4000"/>
-            if (xmlStrEqual(curNodePtr->name, reinterpret_cast<const xmlChar *>(kKeyAccessElement))) {
+        xmlChar *handlingAssertionXPath = (xmlChar *) "/*[local-name(.) = 'TrustedDataObject']"
+                                                      "/*[local-name(.) = 'HandlingAssertion']";
 
-                auto remoteStoredKeyNodePtr = curNodePtr->children;
-                if (curNodePtr->type == XML_TEXT_NODE) {
-                    curNodePtr = curNodePtr->next;
-                }
-
-                if (xmlStrEqual(remoteStoredKeyNodePtr->name, reinterpret_cast<const xmlChar *>(kRemoteStoredKeyElement))) {
-
-                    // tdf:protocol attribute
-                    XMLCharFreePtr protocolFreePtr;
-                    xmlChar* protocolAsXmlChar = xmlGetProp(remoteStoredKeyNodePtr,
-                                                            reinterpret_cast<const xmlChar *>(kProtocolElement));
-                    if (!protocolAsXmlChar) {
-                        std::string errorMsg{"Error -tdf:protocol attribute is missing from the XML TDF"};
-                        ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
-                    }
-                    protocolFreePtr.reset(protocolAsXmlChar);
-
-                    std::string protocolStr(reinterpret_cast<const char*>(protocolFreePtr.get()),
-                                                     xmlStrlen(protocolFreePtr.get()));
-                    dataModel.encryptionInformation.keyAccessObjects[0].protocol = protocolStr;
-
-                    // tdf:uri attribute
-                    XMLCharFreePtr uriFreePtr;
-                    xmlChar* uriAsXmlChar = xmlGetProp(remoteStoredKeyNodePtr,
-                                                            reinterpret_cast<const xmlChar *>(kUriElement));
-                    if (!uriAsXmlChar) {
-                        std::string errorMsg{"Error -tdf:uri attribute is missing from the XML TDF"};
-                        ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
-                    }
-                    uriFreePtr.reset(uriAsXmlChar);
-
-                    std::string uriStr(reinterpret_cast<const char*>(uriFreePtr.get()),
-                                            xmlStrlen(uriFreePtr.get()));
-                    dataModel.encryptionInformation.keyAccessObjects[0].url = uriStr;
-                }
-            }
-
-            /*
-             * 	<tdf:EncryptionMethod tdf:algorithm="AES">
-		     *	  <tdf:KeySize>32</tdf:KeySize>
-		     *    <tdf:IVParams>OEOqJCS6mZsmLWJ3</tdf:IVParams>
-		     *    <tdf:AuthenticationTag>B20abww4lLmNOqa43sas</tdf:AuthenticationTag>
-		     *  </tdf:EncryptionMethod>
-             */
-            if (xmlStrEqual(curNodePtr->name, reinterpret_cast<const xmlChar *>(kEncryptionMethodElement))) {
-
-                // tdf:algorithm attribute
-                XMLCharFreePtr algorithmFreePtr;
-                xmlChar* algorithmAsXmlChar = xmlGetProp(curNodePtr,
-                                                        reinterpret_cast<const xmlChar *>(kAlgorithmAttribute));
-                if (!algorithmAsXmlChar) {
-                    std::string errorMsg{"Error - tdf:algorithm attribute is missing from the XML TDF"};
-                    ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
-                }
-                algorithmFreePtr.reset(algorithmAsXmlChar);
-
-                std::string algorithmStr(reinterpret_cast<const char*>(algorithmFreePtr.get()),
-                                        xmlStrlen(algorithmFreePtr.get()));
-                dataModel.encryptionInformation.method.algorithm = algorithmStr;
-
-
-                auto nodePtr = curNodePtr->xmlChildrenNode;
-                while (nodePtr != nullptr) {
-
-                    if (!xmlStrcmp(nodePtr->name, reinterpret_cast<const xmlChar *>(kKeySizeElement))) {
-
-                        XMLCharFreePtr xmlCharFreePtr;
-                        xmlChar* keySize = xmlNodeListGetString(doc, nodePtr->xmlChildrenNode, 1);
-                        if (!keySize) {
-                            std::string errorMsg{"Error - key size  is missing from the XML TDF"};
-                            ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
-                        }
-                        xmlCharFreePtr.reset(keySize);
-
-                        std::string keySizeStr(reinterpret_cast<const char*>(xmlCharFreePtr.get()),
-                                              xmlStrlen(xmlCharFreePtr.get()));
-                        auto keySizeAsInt = std::stoi( keySizeStr);
-                        if (keySizeAsInt != 32) {
-                            std::string errorMsg{"Error -invalid key size in XML TDF"};
-                            ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
-                        }
-                    }
-
-                    if (!xmlStrcmp(nodePtr->name, reinterpret_cast<const xmlChar *>(kIVParamsElement))) {
-
-                        XMLCharFreePtr xmlCharFreePtr;
-                        xmlChar* ivParams = xmlNodeListGetString(doc, nodePtr->xmlChildrenNode, 1);
-                        if (!ivParams) {
-                            std::string errorMsg{"Error - iv params is missing from the XML TDF"};
-                            ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
-                        }
-                        xmlCharFreePtr.reset(ivParams);
-
-                        std::string ivParamsStr(reinterpret_cast<const char*>(xmlCharFreePtr.get()),
-                                               xmlStrlen(xmlCharFreePtr.get()));
-                        dataModel.encryptionInformation.method.iv = ivParamsStr;
-                    }
-
-                    if (!xmlStrcmp(nodePtr->name, reinterpret_cast<const xmlChar *>(kAuthenticationTagElement))) {
-
-                        XMLCharFreePtr xmlCharFreePtr;
-                        xmlChar* authTag = xmlNodeListGetString(doc, nodePtr->xmlChildrenNode, 1);
-                        if (!authTag) {
-                            std::string errorMsg{"Error - authentication tag is missing from the XML TDF"};
-                            ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
-                        }
-                        xmlCharFreePtr.reset(authTag);
-
-                        std::string authTagStr(reinterpret_cast<const char*>(xmlCharFreePtr.get()),
-                                                xmlStrlen(xmlCharFreePtr.get()));
-                    }
-                    nodePtr = nodePtr->next;
-                }
-            }
-
-            curNodePtr = curNodePtr->next;
+        XmlXPathObjectFreePtr result{getNodeset(doc, handlingAssertionXPath)};
+        if (!result) {
+            return;
+//            std::string errorMsg{"Error HandlingAssertion element is missing from the XML TDF"};
+//            ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
         }
 
+        auto totalNodes = result.get()->nodesetval->nodeNr;
+        for (auto index = 0; index < totalNodes; index++) {
+
+            HandlingAssertion handlingAssertion{Scope::unknown};
+            xmlNodePtr handlingAssertionNode = result.get()->nodesetval->nodeTab[index];
+            if (handlingAssertionNode) {
+
+                auto handlingStatementNode = handlingAssertionNode->xmlChildrenNode;
+                if (handlingStatementNode && handlingStatementNode->type == XML_TEXT_NODE) {
+                    handlingStatementNode = handlingStatementNode->next;
+                }
+
+                if (handlingStatementNode) {
+                    auto edhNode = handlingStatementNode->xmlChildrenNode;
+                    if (edhNode && edhNode->type == XML_TEXT_NODE) {
+                        edhNode = edhNode->next;
+                    }
+
+                    // Get edh
+                    if (edhNode && xmlStrEqual(edhNode->name, reinterpret_cast<const xmlChar *>(kEdhElement))) {
+                        std::string handlingStatement;
+                        xmlBufferFreePtr bufferFreePtr {xmlBufferCreate()};
+                        xmlNodeDump(bufferFreePtr.get(), NULL, (xmlNode *)edhNode, 0, 0);
+                        handlingStatement.append(reinterpret_cast<char*>(bufferFreePtr.get()->content));
+                        handlingAssertion.setHandlingStatement(handlingStatement);
+                    }
+                }
+            }
+
+            xmlAttr *attr = result.get()->nodesetval->nodeTab[index]->properties;
+            while (attr) {
+
+                if (xmlStrEqual(attr->name, reinterpret_cast<const xmlChar *>(kScopeAttribute))) {
+                    std::string scopeAttribute(reinterpret_cast<const char *>(attr->children->content),
+                                               xmlStrlen(attr->children->content));
+
+                    auto scopeAsEnum = magic_enum::enum_cast<Scope>(scopeAttribute);
+                    if (scopeAsEnum.has_value()) {
+                        handlingAssertion.setScope(scopeAsEnum.value());
+                    }
+                }
+
+                if (xmlStrEqual(attr->name, reinterpret_cast<const xmlChar *>(kAppliesToStateAttribute))) {
+                    std::string appliesToStateAttribute(reinterpret_cast<const char *>(attr->children->content),
+                                                        xmlStrlen(attr->children->content));
+
+                    auto appliesToStateAsEnum = magic_enum::enum_cast<AppliesToState>(appliesToStateAttribute);
+                    if (appliesToStateAsEnum.has_value()) {
+                        handlingAssertion.setAppliedState(appliesToStateAsEnum.value());
+                    }
+                }
+
+                if (xmlStrEqual(attr->name, reinterpret_cast<const xmlChar *>(kIdAttribute))) {
+                    std::string id;
+                    id.append(reinterpret_cast<const char *>(attr->children->content),
+                              xmlStrlen(attr->children->content));
+                    handlingAssertion.setId(id);
+                }
+
+                attr = attr->next;
+            }
+
+            dataModel.handlingAssertions.emplace_back(handlingAssertion);
+        }
     }
 
+    /// Read default assertions from the xml
+    void TDFXMLReader::readDefaultAssertion(xmlDocPtr doc, ManifestDataModel& dataModel) {
+        /*
+         *  <tdf:Assertion tdf:id="assertion1" tdf:scope="TDO">
+         *      <tdf:StringStatement tdf:isEncrypted="false">This is the first
+         *      assertion</tdf:StringStatement>
+         *  </tdf:Assertion>
+         *
+         *  <tdf:Assertion tdf:id="assertion2" tdf:scope="TDO">
+         *    <tdf:Base64BinaryStatement tdf:isEncrypted="false">VGhpcyBpcyBhIGJpbmFyeSBzdGF0ZW1lbnQ=</tdf:Base64BinaryStatement>
+         *  </tdf:Assertion>
+         *
+         *
+         *    <tdf:Assertion tdf:id="assertionId1" tdf:scope="PAYL" tdf:type="binary">
+         *      <tdf:StatementMetadata tdf:appliesToState="encrypted">
+         *         <edh:Edh xmlns:edh="urn:us:gov:ic:edh"
+         *                  xmlns:ism="urn:us:gov:ic:ism"
+         *                  xmlns:usagency="urn:us:gov:ic:usagency"
+         *                  xmlns:icid="urn:us:gov:ic:id"
+         *                  ism:ISMCATCESVersion="201709"
+         *                  usagency:CESVersion="201609"
+         *                  icid:DESVersion="1">
+         *             <icid:Identifier>guide://999990/DIA-CNTRL-NO-1754-1762</icid:Identifier>
+         *             <edh:DataItemCreateDateTime>2006-07-28T00:00:00Z</edh:DataItemCreateDateTime>
+         *             <edh:ResponsibleEntity edh:role="Custodian">
+         *             <edh:Country>USA</edh:Country>
+         *             <edh:Organization>DIA</edh:Organization>
+         *        </edh:ResponsibleEntity>
+         *        <arh:Security xmlns:arh="urn:us:gov:ic:arh"
+         *              ism:classification="U"
+         *              ism:ownerProducer="USA"/>
+         *        </edh:Edh>
+         *      </tdf:StatementMetadata>
+         *    <tdf:EncryptionInformation>
+         *      <tdf:KeyAccess>
+         *        <tdf:AttachedKey>
+         *           <tdf:KeyValue>Jk6Jmdo7FwnbuIk/vHkjxQ==</tdf:KeyValue>
+         *        </tdf:AttachedKey>
+         *      </tdf:KeyAccess>
+         *      <tdf:EncryptionMethod tdf:algorithm="AES">
+         *        <tdf:KeySize>16</tdf:KeySize>
+         *      </tdf:EncryptionMethod>
+         *    </tdf:EncryptionInformation>
+         *    <tdf:Base64BinaryStatement tdf:filename="binVal.xml"
+         *                       tdf:isEncrypted="true"
+         *                        tdf:mediaType="application/octet-stream">VGhpcyBpcyBhIHRlc3Qu</tdf:Base64BinaryStatement>
+         * </tdf:Assertion>
+         */
+
+        xmlChar *assertionXPath = (xmlChar *) "/*[local-name(.) = 'TrustedDataObject']"
+                                              "/*[local-name(.) = 'Assertion']";
+
+        XmlXPathObjectFreePtr result{getNodeset(doc, assertionXPath)};
+        if (!result) {
+            LogInfo("Assertion element is missing from the XML TDF");
+            return;
+        }
+
+        auto totalNodes = result.get()->nodesetval->nodeNr;
+        for (auto index = 0; index < totalNodes; index++) {
+
+            DefaultAssertion assertion{Scope::unknown};
+            std::string statementValue{};
+            xmlNodePtr assertionNode = result.get()->nodesetval->nodeTab[index];
+
+            if (assertionNode) {
+
+                auto statementNode = assertionNode->xmlChildrenNode;
+                if (statementNode && statementNode->type == XML_TEXT_NODE) {
+                    statementNode = statementNode->next;
+                }
+
+                // Handle StringStatement
+                if (statementNode && xmlStrEqual(statementNode->name, reinterpret_cast<const xmlChar *>(kStringStatementElement))) {
+
+                    StatementGroup statementGroup{StatementType::StringStatement};
+                    readStatementGroup(doc, statementNode, statementGroup);
+
+                    assertion.setStatementGroup(statementGroup);
+
+                } else if (statementNode && xmlStrEqual(statementNode->name, reinterpret_cast<const xmlChar *>(kBase64BinaryStatementElement))) {
+
+                    StatementGroup statementGroup{StatementType::Base64BinaryStatement};
+                    readStatementGroup(doc, statementNode, statementGroup);
+
+                    assertion.setStatementGroup(statementGroup);
+                } else if (statementNode && xmlStrEqual(statementNode->name, reinterpret_cast<const xmlChar *>(kReferenceStatementElement))) {
+
+                    StatementGroup statementGroup{StatementType::ReferenceStatement};
+                    readStatementGroup(doc, statementNode, statementGroup);
+
+                    assertion.setStatementGroup(statementGroup);
+                } else if (statementNode && xmlStrEqual(statementNode->name, reinterpret_cast<const xmlChar *>(kStructuredStatementElement))) {
+
+                    StatementGroup statementGroup{StatementType::StructuredStatement};
+                    readStatementGroup(doc, statementNode, statementGroup);
+
+                    assertion.setStatementGroup(statementGroup);
+                }
+
+            }
+
+            xmlAttr *attr = result.get()->nodesetval->nodeTab[index]->properties;
+            while (attr) {
+
+                if (xmlStrEqual(attr->name, reinterpret_cast<const xmlChar *>(kScopeAttribute))) {
+                    std::string scopeAttribute(reinterpret_cast<const char *>(attr->children->content),
+                                               xmlStrlen(attr->children->content));
+                    auto scopeAsEnum = magic_enum::enum_cast<Scope>(scopeAttribute);
+                    if (scopeAsEnum.has_value()) {
+                        assertion.setScope(scopeAsEnum.value());
+                    }
+                }
+
+//                if (xmlStrEqual(attr->name, reinterpret_cast<const xmlChar *>(kAppliesToStateAttribute))) {
+//                    std::string appliesToStateAttribute(reinterpret_cast<const char *>(attr->children->content),
+//                                                        xmlStrlen(attr->children->content));
+//                    std::cout << "appliesToState attribute" << appliesToStateAttribute << std::endl;
+//                    auto appliesToStateAsEnum = magic_enum::enum_cast<AppliesToState>(appliesToStateAttribute);
+//                    if (appliesToStateAsEnum.has_value()) {
+//                        assertion.setAppliedState(appliesToStateAsEnum.value());
+//                    }
+//                }
+
+                if (xmlStrEqual(attr->name, reinterpret_cast<const xmlChar *>(kIdAttribute))) {
+                    std::string idAttribute;
+                    idAttribute.append(reinterpret_cast<const char *>(attr->children->content),
+                                       xmlStrlen(attr->children->content));
+                    assertion.setId(idAttribute);
+                }
+
+                attr = attr->next;
+            }
+
+            dataModel.defaultAssertions.emplace_back(assertion);
+        }
+    }
+
+    /// Read statement group from the assertion node
+    void TDFXMLReader::readStatementGroup(xmlDocPtr doc, xmlNodePtr node, StatementGroup& statementGroup) {
+
+        XMLCharFreePtr xmlCharStatement;
+        xmlChar* statement = xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
+        if (statement) {
+            xmlCharStatement.reset(statement);
+            std::string statementValue;
+            statementValue.append(reinterpret_cast<const char*>(xmlCharStatement.get()),
+                                  xmlStrlen(xmlCharStatement.get()));
+            statementGroup.setValue(statementValue);
+        }
+
+        xmlAttr *attr = node->properties;
+        while (attr) {
+
+            if (xmlStrEqual(attr->name, reinterpret_cast<const xmlChar *>(kUriAttribute))) {
+                std::string uri(reinterpret_cast<const char*>(attr->children->content),
+                                xmlStrlen(attr->children->content));
+                statementGroup.setUri(uri);
+            }
+
+            if (xmlStrEqual(attr->name, reinterpret_cast<const xmlChar *>(kMediaTypeAttribute))) {
+                std::string mediaType(reinterpret_cast<const char*>(attr->children->content),
+                                      xmlStrlen(attr->children->content));
+                statementGroup.setMediaType(mediaType);
+            }
+
+            if (xmlStrEqual(attr->name, reinterpret_cast<const xmlChar *>(kFilenameAttribute))) {
+                std::string filename(reinterpret_cast<const char*>(attr->children->content),
+                                     xmlStrlen(attr->children->content));
+                statementGroup.setFilename(filename);
+            }
+
+            if (xmlStrEqual(attr->name, reinterpret_cast<const xmlChar *>(kIsEncryptedAttribute))) {
+
+                std::string isEncryptedStr(reinterpret_cast<const char*>(attr->children->content),
+                                           xmlStrlen(attr->children->content));
+                bool isEncryptedAsBool = false;
+                if ((isEncryptedStr.compare("true") == 0)) {
+                    isEncryptedAsBool = true;
+                }
+                statementGroup.setIsEncrypted(isEncryptedAsBool);
+            }
+
+            attr = attr->next;
+        }
+    }
+
+    /// Return the nodes after evaluating the XPath
     xmlXPathObjectPtr TDFXMLReader::getNodeset(xmlDocPtr doc, xmlChar *xpath) {
 
         XMLXPathContextFreePtr context{xmlXPathNewContext(doc)};
@@ -452,5 +629,4 @@ namespace virtru {
 
         return result.release();
     }
-
 }

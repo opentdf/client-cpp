@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="../../Schematron/ARH/ARH_XML.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<?xml-model href="../../Schematron/IC-EDH/IC-EDH_XML.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<?xml-model href="../../Schematron/IC-ID/IC-ID_XML.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<?xml-model href="../../Schematron/ISM/ISM_XML.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<?xml-model href="../../Schematron/NTK/NTK_XML.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<?xml-model href="../../Schematron/IC-TDF/IC-TDF_XML.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+
+        <!-- All classification marks in this example are
+              for illustrative purposes only, there are no
+              actual classified data contained in this example -->
+
+<TrustedDataObject xmlns="urn:us:gov:ic:tdf"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xmlns:tdf="urn:us:gov:ic:tdf"
+                   xsi:schemaLocation="urn:us:gov:ic:tdf ../../Schema/IC-TDF/IC-TDF.xsd"
+                   tdf:version="201412.201707">
+
+    <!-- Assertions -->
+    <!-- Virtru Comments -
+       Unfortunately when payload is encrypted, you need 2 PAYL HandlingAssertions,
+       one for "unencrypted state" and one for "encrypted.  This is because you may
+       want to explicitly say you can handle Secret info as UNCLASSIFIED when
+       encrypted... very useful for transfer to untrusted environments.
+    -->
+
+    <tdf:HandlingAssertion tdf:scope="TDO">
+        <tdf:HandlingStatement>
+            <edh:Edh xmlns:edh="urn:us:gov:ic:edh"
+                     xmlns:usagency="urn:us:gov:ic:usagency"
+                     xmlns:icid="urn:us:gov:ic:id"
+                     xmlns:arh="urn:us:gov:ic:arh"
+                     xmlns:ism="urn:us:gov:ic:ism"
+                     xmlns:ntk="urn:us:gov:ic:ntk"
+                     usagency:CESVersion="201609"
+                     icid:DESVersion="1"
+                     edh:DESVersion="201609"
+                     arh:DESVersion="3"
+                     ism:DESVersion="201609.201707"
+                     ism:ISMCATCESVersion="201709"
+                     ntk:DESVersion="201508">
+                <icid:Identifier>guide://999990/something</icid:Identifier>
+                <edh:DataItemCreateDateTime>2012-05-28T15:06:00Z</edh:DataItemCreateDateTime>
+                <edh:ResponsibleEntity edh:role="Custodian">
+                    <edh:Country>USA</edh:Country>
+                    <edh:Organization>DNI</edh:Organization>
+                </edh:ResponsibleEntity>
+                <arh:Security ism:compliesWith="USGov USIC"
+                              ism:resourceElement="true"
+                              ism:createDate="2012-05-28"
+                              ism:classification="U"
+                              ism:ownerProducer="USA"/>
+            </edh:Edh>
+        </tdf:HandlingStatement>
+    </tdf:HandlingAssertion>
+
+    <tdf:HandlingAssertion tdf:scope="PAYL" tdf:appliesToState="unencrypted">
+        <tdf:HandlingStatement>
+            <edh:Edh xmlns:edh="urn:us:gov:ic:edh"
+                     xmlns:usagency="urn:us:gov:ic:usagency"
+                     xmlns:icid="urn:us:gov:ic:id"
+                     xmlns:arh="urn:us:gov:ic:arh"
+                     xmlns:ism="urn:us:gov:ic:ism"
+                     xmlns:ntk="urn:us:gov:ic:ntk"
+                     usagency:CESVersion="201609"
+                     icid:DESVersion="1"
+                     edh:DESVersion="201609"
+                     arh:DESVersion="3"
+                     ism:DESVersion="201609.201707"
+                     ism:ISMCATCESVersion="201709"
+                     ntk:DESVersion="201508">
+                <icid:Identifier>guide://999990/something</icid:Identifier>
+                <edh:DataItemCreateDateTime>2012-05-28T15:06:00Z</edh:DataItemCreateDateTime>
+                <edh:ResponsibleEntity edh:role="Custodian">
+                    <edh:Country>USA</edh:Country>
+                    <edh:Organization>DNI</edh:Organization>
+                </edh:ResponsibleEntity>
+                <arh:Security ism:compliesWith="USGov USIC"
+                              ism:resourceElement="true"
+                              ism:createDate="2012-05-28"
+                              ism:classification="U"
+                              ism:ownerProducer="USA"/>
+            </edh:Edh>
+        </tdf:HandlingStatement>
+    </tdf:HandlingAssertion>
+
+    <tdf:HandlingAssertion tdf:scope="PAYL" tdf:appliesToState="encrypted">
+        <tdf:HandlingStatement>
+            <edh:Edh xmlns:edh="urn:us:gov:ic:edh"
+                     xmlns:usagency="urn:us:gov:ic:usagency"
+                     xmlns:icid="urn:us:gov:ic:id"
+                     xmlns:arh="urn:us:gov:ic:arh"
+                     xmlns:ism="urn:us:gov:ic:ism"
+                     xmlns:ntk="urn:us:gov:ic:ntk"
+                     usagency:CESVersion="201609"
+                     icid:DESVersion="1"
+                     edh:DESVersion="201609"
+                     arh:DESVersion="3"
+                     ism:DESVersion="201609.201707"
+                     ism:ISMCATCESVersion="201709"
+                     ntk:DESVersion="201508">
+                <icid:Identifier>guide://999990/something</icid:Identifier>
+                <edh:DataItemCreateDateTime>2012-05-28T15:06:00Z</edh:DataItemCreateDateTime>
+                <edh:ResponsibleEntity edh:role="Custodian">
+                    <edh:Country>USA</edh:Country>
+                    <edh:Organization>DNI</edh:Organization>
+                </edh:ResponsibleEntity>
+                <arh:Security ism:compliesWith="USGov USIC"
+                              ism:resourceElement="true"
+                              ism:createDate="2012-05-28"
+                              ism:classification="U"
+                              ism:ownerProducer="USA"/>
+            </edh:Edh>
+        </tdf:HandlingStatement>
+    </tdf:HandlingAssertion>
+
+    <tdf:Assertion tdf:id="assertion1" tdf:scope="TDO">
+        <tdf:StringStatement tdf:isEncrypted="false">This is the first
+            assertion</tdf:StringStatement>
+    </tdf:Assertion>
+    <tdf:Assertion tdf:id="assertion2" tdf:scope="TDO">
+        <tdf:Base64BinaryStatement tdf:isEncrypted="false">VGhpcyBpcyBhIGJpbmFyeSBzdGF0ZW1lbnQ=</tdf:Base64BinaryStatement>
+    </tdf:Assertion>
+    <tdf:Assertion tdf:id="myID3" tdf:scope="TDO">
+        <tdf:ReferenceStatement tdf:isEncrypted="true" tdf:mediaType="application/xml" tdf:uri="https://someurl.com/somereferencestatement.xml"></tdf:ReferenceStatement>
+    </tdf:Assertion>
+    <tdf:Assertion tdf:id="myID4" tdf:scope="PAYL">
+        <tdf:StructuredStatement tdf:isEncrypted="false">somexml</tdf:StructuredStatement>
+    </tdf:Assertion>
+
+    <!-- EncryptionInformation -->
+    <!-- Virtru Comments -
+       If IC-TDF supported a "RemoteWrappedPDPKey" well designed, we'd map all the
+       JSON fields into the structure, which WOULD in theory have a URI and Protocol
+       field like RemoteStoredKey would, as well as wrappedKey without going
+       recursive.  As it stands, IC'TDF cannot fully support this critical mode, so
+       we go far enough to be spec compliant, and expose what is practical, most
+       importantly payload and assertions, but not unsupported Encryption information modes.
+
+       I suggest we only support transform of traditional wrapped TDF3 keys and not
+       remotestored at least for the time being.
+    -->
+
+
+    <tdf:EncryptionInformation>
+        <tdf:KeyAccess>
+            <tdf:WrappedPDPKey>
+                <tdf:EncryptedPolicyObject>eyJpbnRlZ3JpdHlJbmZvcm1hdGlvbiI6eyJlbmNyeXB0ZWRTZWdtZW50U2l6ZURlZmF1bHQiOjM0LCJyb290U2lnbmF0dXJlIjp7ImFsZyI6IkhTMjU2Iiwic2lnIjoiWkdVME9ESTJOakF5TXpJeU1XSTFaRGxqTnpFM01qQXdabU00T0RnME9UaGlNalZqWVdZNE5qRTFNamcxTm1ZNU5tWTVNREl6WWpoaU4yUTVOREF4WXc9PSJ9LCJzZWdtZW50SGFzaEFsZyI6IkdNQUMiLCJzZWdtZW50U2l6ZURlZmF1bHQiOjYsInNlZ21lbnRzIjpbeyJlbmNyeXB0ZWRTZWdtZW50U2l6ZSI6MzQsImhhc2giOiJZV0ptTW1RNU5EUXlaak5qTkRNME16TTJNREUwT1RBeFltRm1NREJsTURNPSIsInNlZ21lbnRTaXplIjo2fV19LCJrZXlBY2Nlc3MiOlt7InBvbGljeUJpbmRpbmciOiJORGhqWW1GaU1UTmhNV000WmpKallqTTJNbVV4TjJZM1l6STFNelZtWldJNFkySmhNVEpsTmpOa01USTRNVEZtT0RFM00yWTNaREk0WTJNeU5tRmhZUT09IiwicHJvdG9jb2wiOiJrYXMiLCJ0eXBlIjoid3JhcHBlZCIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NjU0MzIvYXBpL2thcyIsIndyYXBwZWRLZXkiOiJIcXFic1FSQkZrNjBYOGRESk90ZmU0VjJWMFQ1SkpObXJVYjA3dlkzL1pZd0ZtWkV4ckp3TTNndys3cDdPQ3lIaG5NUklDY2pucVhxaGdHbzQ5bzV5RWlhN0R1cUo5eUg4UGpCRlFaak5ZSlJIdi9jejZ2S3ArcXdYZlM4cVRYRW9aNHFYWEppRGdQQk8zQUlhNklQcUh1eUM4VnZoT3JqYnMxOS90cWZNcWpJMFlGcGdLSXVlRlRZMWFWWmtMbXRmU3Vka3VhdjViS3hnaWlrOHhtUGlGR1BlQk1IOVhaN3JuRFk1MHVzQnkvVWxEcW9OT1psRnExTzlDa0cxaGJKaVVPck5td0JHeXlvQVhNOUxoRDRCSnlVMXhCY1NwV1gvVEVpankvTDQ2RFJwSzBDbVEwREN6ZFc5SHI3NFdXK0pDSU9mbUZ5RHIrR3JTZDF5RjJMamc9PSJ9XSwicG9saWN5IjoiZXlKaWIyUjVJanA3SW1SaGRHRkJkSFJ5YVdKMWRHVnpJanBiWFN3aVpHbHpjMlZ0SWpwYlhYMHNJblYxYVdRaU9pSTROVGxpTTJRek9TMWpZbUl3TFRSak5UUXRPRGN3WWkxbVkyWXlOV1l4WVRJNU9EZ2lmUT09In0=</tdf:EncryptedPolicyObject>
+            </tdf:WrappedPDPKey>
+        </tdf:KeyAccess>
+        <tdf:EncryptionMethod tdf:algorithm="AES-256-GCM">
+            <tdf:KeySize>32</tdf:KeySize>
+            <tdf:IVParams>RB0O2y73N8eWXAGr</tdf:IVParams>
+        </tdf:EncryptionMethod>
+    </tdf:EncryptionInformation>
+    <tdf:Base64BinaryPayload tdf:isEncrypted="true" tdf:mediaType="application/octet-stream">JSyy3DXj3rYjVLMS/ZRQifEsq/LZRC88Q0M2AUkBuvAOAw==</tdf:Base64BinaryPayload>
+
+
+</TrustedDataObject>
+

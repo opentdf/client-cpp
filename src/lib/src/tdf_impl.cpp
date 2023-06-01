@@ -176,6 +176,9 @@ namespace virtru {
         manifestDataModel.payload.mimeType = m_tdfBuilder.m_impl->m_mimeType;
         manifestDataModel.payload.protocol = protocol;
 
+        manifestDataModel.handlingAssertions = m_tdfBuilder.m_impl->m_handlingAssertions;
+        manifestDataModel.defaultAssertions = m_tdfBuilder.m_impl->m_defaultAssertions;
+
         auto ivSize = (m_tdfBuilder.m_impl->m_cipherType == CipherType::Aes256GCM) ? kGcmIvSize : kCbcIvSize;
         auto defaultSegmentSize = m_tdfBuilder.m_impl->m_segmentSize;
 

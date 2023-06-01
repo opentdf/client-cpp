@@ -16,6 +16,7 @@
 #include <string>
 #include <vector>
 #include "sdk_constants.h"
+#include "tdf_assertion.h"
 
 namespace virtru {
     struct SegmentInfoDataModel {
@@ -127,6 +128,8 @@ namespace virtru {
         /// Data
         Payload payload;
         EncryptionInformation encryptionInformation;
+        std::vector<HandlingAssertion> handlingAssertions;
+        std::vector<DefaultAssertion> defaultAssertions;
     };
 }
 
