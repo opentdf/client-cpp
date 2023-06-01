@@ -67,8 +67,14 @@ namespace virtru {
         void addEncryptionInformationElement(xmlNodePtr rootNode, xmlNsPtr ns);
 
         /// Add 'tdf:HandlingAssertion' element.
-        /// \param writer - xml text writer object
-        void addHandlingAssertionElement(xmlTextWriterPtr writer);
+        /// \param rootNode - The root node
+        /// \param ns - The namespace to be applied to all the child elements.
+        void addHandlingAssertionElement(xmlNodePtr rootNode, xmlNsPtr ns);
+
+        /// Add 'tdf:Assertion' element.
+        /// \param rootNode - The root node
+        /// \param ns - The namespace to be applied to all the child elements.
+        void addDefaultAssertionElement(xmlNodePtr rootNode, xmlNsPtr ns);
 
         /// Add 'Base64BinaryPayload' element.
         /// \param rootNode - The root node

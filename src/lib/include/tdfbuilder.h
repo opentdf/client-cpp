@@ -15,6 +15,7 @@
 
 #include "tdf_constants.h"
 #include "network_interface.h"
+#include "tdf_assertion.h"
 
 #include <memory>
 #include <string>
@@ -84,6 +85,16 @@ namespace virtru {
         /// \param user - The value to use instead of what was specified on the constructor.
         /// \return - Return a reference of this instance.
         TDFBuilder& setUser(const std::string& user);
+
+        /// Add the handling assertion to the TDF
+        /// \param handlingAssertion - The handling assertion object
+        /// \return - Return a reference of this instance.
+        TDFBuilder& setHandlingAssertion(const HandlingAssertion& handlingAssertion);
+
+        /// Add the default assertion to the TDF
+        /// \param defaultAssertion - The default assertion object
+        /// \return - Return a reference of this instance.
+        TDFBuilder& setDefaultAssertion(const DefaultAssertion& defaultAssertion);
 
         ///Get the entity object.
         /// \return - Return a reference to the entity object

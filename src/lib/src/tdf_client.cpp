@@ -158,6 +158,15 @@ namespace virtru {
 
         // Create a policy object.
         auto policyObject = createPolicyObject();
+
+        for (const auto& assertion: tdfStorageType.m_handlingAssertions) {
+            m_tdfBuilder->setHandlingAssertion(assertion);
+        }
+
+        for (const auto& assertion: tdfStorageType.m_defaultAssertions) {
+            m_tdfBuilder->setDefaultAssertion(assertion);
+        }
+
         auto tdf = m_tdfBuilder->setPolicyObject(policyObject).build();
 
         if (tdfStorageType.m_tdfType == TDFStorageType::StorageType::File) {
@@ -186,6 +195,14 @@ namespace virtru {
 
         // Create a policy object.
         auto policyObject = createPolicyObject();
+        for (const auto& assertion: tdfStorageType.m_handlingAssertions) {
+            m_tdfBuilder->setHandlingAssertion(assertion);
+        }
+
+        for (const auto& assertion: tdfStorageType.m_defaultAssertions) {
+            m_tdfBuilder->setDefaultAssertion(assertion);
+        }
+
         auto tdf = m_tdfBuilder->setPolicyObject(policyObject).build();
 
         if (tdfStorageType.m_tdfType == TDFStorageType::StorageType::Buffer) {
@@ -240,7 +257,6 @@ namespace virtru {
             LogError(errorMsg);
             ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
         }
-
     }
 
     /// Decrypt the bytes to tdf format.

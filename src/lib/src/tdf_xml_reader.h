@@ -65,11 +65,21 @@ namespace virtru {
         /// \param dataModel - Data model that will updated with encryption information.
         void readEncryptionInformation(xmlDocPtr doc, xmlNodePtr curNodePtr, ManifestDataModel& dataModel);
 
-        /// Read encryption information from the root encryption information xml
+        /// Read Handling assertion from the xml
         /// \param doc - XML document node ptr
-        /// \param curNodePtr - Current node ptr
-        /// \param dataModel - Data model that will updated with encryption information.
-        void readLeve2EncryptionInformation(xmlDocPtr doc, xmlNodePtr curNodePtr, ManifestDataModel& dataModel);
+        /// \param dataModel - Data model that will updated with handling assertion.
+        void readHandlingAssertion(xmlDocPtr doc, ManifestDataModel& dataModel);
+
+        /// Read default assertions from the xml
+        /// \param doc - XML document node ptr
+        /// \param dataModel - Data model that will updated with handling assertion.
+        void readDefaultAssertion(xmlDocPtr doc, ManifestDataModel& dataModel);
+
+        /// Read statement group from the assertion node
+        /// \param doc - XML document node ptr
+        /// \param node = The assertion node
+        /// \param statementGroup - Statement group that will updated with the assertion node.
+        void readStatementGroup(xmlDocPtr doc, xmlNodePtr node, StatementGroup& statementGroup);
 
         /// Parse the encrypted policy object XML
         /// \param policyObjectStr - encrypted policy object as base64 string

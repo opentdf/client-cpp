@@ -474,4 +474,18 @@ namespace virtru {
         return *this;
     }
 
+    /// Add the handling assertion to the TDF
+    TDFBuilder& TDFBuilder::setHandlingAssertion(const HandlingAssertion& handlingAssertion) {
+        m_impl->m_handlingAssertions.push_back(handlingAssertion);
+
+        return *this;
+    }
+
+    /// Add the default assertion to the TDF
+    TDFBuilder& TDFBuilder::setDefaultAssertion(const DefaultAssertion& defaultAssertion) {
+        m_impl->m_defaultAssertions.push_back(defaultAssertion);
+
+        return *this;
+    }
+
 } // namespace virtru
