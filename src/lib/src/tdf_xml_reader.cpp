@@ -13,6 +13,7 @@
 #include "tdf_constants.h"
 #include "sdk_constants.h"
 #include "tdf_xml_reader.h"
+#include "tdf_xml_validator.h"
 #include "crypto/crypto_utils.h"
 #include <boost/beast/core/detail/base64.hpp>
 #include <iostream>
@@ -38,6 +39,12 @@ namespace virtru {
         XMLDocFreePtr doc{xmlParseMemory(reinterpret_cast<const char *>(xmlBuf.data()), xmlBuf.size())};
         if (!doc) {
             std::string errorMsg{"Error - Document not parsed successfully."};
+            ThrowException(std::move(errorMsg));
+        }
+
+        bool valid = m_XmlValidator.validate(doc.get());
+        if (!valid) {
+            std::string errorMsg{"Error - document did not pass schema validation"};
             ThrowException(std::move(errorMsg));
         }
 
@@ -156,6 +163,12 @@ namespace virtru {
     /// Get the size of the payload.
     std::uint64_t TDFXMLReader::getPayloadSize() const {
         return m_binaryPayload.size();
+    }
+
+    /// Establish a validator schema to verify input against
+    bool TDFXMLReader::setValidatorSchema(const std::string& url) {
+        m_XmlValidator.setSchema(url);
+        return m_XmlValidator.isSchemaValid();
     }
 
     /// Read encryption information from the xml

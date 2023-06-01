@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- edited with XMLSpy v2006 rel. 3 U (http://www.altova.com) by usg (CWPS, INC LOGISTICS OFFICE) -->
+
+<xs:schema xmlns:rr="urn:us:gov:ic:revrecall" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:arh="urn:us:gov:ic:arh" xmlns:xhtml="http://www.w3.org/1999/xhtml-StopBrowserRendering"
+    xmlns:ism="urn:us:gov:ic:ism" xmlns:virt="urn:us:gov:ic:virt"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+    xmlns:rraction="urn:us:gov:ic:cvenum:revrecall:action"
+    xmlns:rrtype="urn:us:gov:ic:cvenum:revrecall:type" targetNamespace="urn:us:gov:ic:revrecall"
+    elementFormDefault="qualified" attributeFormDefault="qualified" ism:resourceElement="true"
+    ism:createDate="2012-11-14" ism:classification="U" ism:ownerProducer="USA" version="201412">
+
+    <xs:import namespace="urn:us:gov:ic:ism" schemaLocation="../ISM/IC-ISM.xsd"/>
+    <xs:import namespace="urn:us:gov:ic:arh" schemaLocation="../ARH/IC-ARH.xsd"/>
+    <xs:import namespace="http://www.w3.org/1999/xlink" schemaLocation="../w3/1999/xlink/xlink.xsd"/>
+    <xs:import namespace="urn:us:gov:ic:cvenum:revrecall:action"
+        schemaLocation="./CVEGenerated/CVEnumRevRecallAction.xsd"/>
+    <xs:import namespace="urn:us:gov:ic:cvenum:revrecall:type"
+        schemaLocation="./CVEGenerated/CVEnumRevRecallType.xsd"/>
+
+
+    <xs:annotation>
+        <xs:documentation>
+            <xhtml:h1 ism:ownerProducer="USA" ism:classification="U">Intelligence Community
+                Technical Specification</xhtml:h1>
+            <xhtml:h2 ism:ownerProducer="USA" ism:classification="U">XML Data Encoding Specification
+                for Revision Recall (RevRecall)</xhtml:h2>
+        </xs:documentation>
+        <xs:documentation>
+            <xhtml:h2 ism:ownerProducer="USA" ism:classification="U">Notices</xhtml:h2>
+            <xhtml:p ism:ownerProducer="USA" ism:classification="U">Distribution Notice: 
+           This document has been approved for Public Release and is available for use without restriction.
+       </xhtml:p>
+        </xs:documentation>
+        <xs:documentation>
+            <xhtml:h2 ism:ownerProducer="USA" ism:classification="U">Description</xhtml:h2>
+            <xhtml:p ism:ownerProducer="USA" ism:classification="U">W3C XML Schema for the XML Data
+                Encoding Specification Intelligence Community Metadata Standard for Revision Recall
+                (RevRecall).</xhtml:p>
+        </xs:documentation>
+        <xs:documentation>
+            <xhtml:h2 ism:ownerProducer="USA" ism:classification="U">Introduction</xhtml:h2>
+            <xhtml:p ism:ownerProducer="USA" ism:classification="U">This XML Schema file is one
+                component of the XML Data Encoding Specification (DES). Please see the document
+                titled <xhtml:i>
+                    <xhtml:a href="DES_REFERENCE_REPLACE">XML Data Encoding Specification for
+                        Revision Recall</xhtml:a>
+                </xhtml:i> for a complete description of the encoding as well as list of all
+                components.</xhtml:p>
+            <xhtml:p ism:ownerProducer="USA" ism:classification="U">It is envisioned that this
+                schema or its components, as well as other parts of the DES may be overridden for
+                localized implementations. Therefore, permission to use, copy, modify and distribute
+                this XML Schema and the other parts of the DES for any purpose is hereby granted in
+                perpetuity.</xhtml:p>
+            <xhtml:p ism:ownerProducer="USA" ism:classification="U">Please reference the preceding
+                two paragraphs in all copies or variations. The developers make no representation
+                about the suitability of the schema or DES for any purpose. It is provided "as is"
+                without expressed or implied warranty.</xhtml:p>
+            <xhtml:p ism:ownerProducer="USA" ism:classification="U">If you modify this XML Schema in
+                any way label your schema as a variant of SCHEMA_REPLACE.</xhtml:p>
+            <xhtml:p ism:ownerProducer="USA" ism:classification="U">Please direct all questions, bug
+                reports,or suggestions for changes to the points of contact identified in the
+                document referenced above.</xhtml:p>
+        </xs:documentation>
+        <xs:documentation>
+            <xhtml:h2 ism:ownerProducer="USA" ism:classification="U">Implementation Notes</xhtml:h2>
+            <xhtml:ul>
+                <xhtml:li ism:ownerProducer="USA" ism:classification="U">Refer to the <xhtml:i>
+                    <xhtml:a href="DES_REPLACE">XML Data Encoding Specification for Revision
+                        Recall</xhtml:a>
+                </xhtml:i> (SPEC_REPLACE DES) for additional information</xhtml:li>
+            </xhtml:ul>
+            <xhtml:p ism:ownerProducer="USA" ism:classification="U">The root element for
+                REPLACE_SPEC_ABBR is: <xhtml:ul>
+                    <xhtml:li ism:ownerProducer="USA" ism:classification="U">
+                        <xhtml:a href="HTML_REPLACE">PREFIX:SPEC</xhtml:a>
+                    </xhtml:li>
+                </xhtml:ul></xhtml:p>
+        </xs:documentation>
+        <xs:documentation>
+            <xhtml:h2 ism:ownerProducer="USA" ism:classification="U">Creators</xhtml:h2>
+            <xhtml:p ism:ownerProducer="USA" ism:classification="U">Office of the Director of
+                National Intelligence Intelligence Community Chief Information Officer</xhtml:p>
+        </xs:documentation>
+    </xs:annotation>
+
+    <!--
+	Global Elements
+	-->
+
+    <xs:element name="RevisionRecall">
+        <xs:complexType>
+            <xs:complexContent>
+                <xs:extension base="rr:RevisionRecallType">
+                    <xs:attribute ref="rr:DESVersion" use="required"/>
+                </xs:extension>
+            </xs:complexContent>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:attribute name="DESVersion">
+        <xs:annotation>
+            <xs:documentation xml:lang="en">
+                <xhtml:p ism:ownerProducer="USA" ism:classification="U">The version number of the
+                    DES</xhtml:p>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:simpleType>
+            <xs:restriction base="xs:string">
+                <xs:pattern value="201412(\-?.+)?"/>
+                <xs:maxLength value="30"/>
+            </xs:restriction>
+        </xs:simpleType>
+    </xs:attribute>
+
+
+    <!--
+	Type Definitions
+	-->
+
+    <xs:complexType name="RevisionRecallType" mixed="true">
+        <xs:annotation>
+            <xs:appinfo xml:lang="en"> The memorandum titled Intelligence Community Standards and
+                Procedures for Revised or Recalled Intelligence Products signed by DNI Negroponte on
+                5 August 2005 specified how to indicate, in a textual form, the revision or recall
+                of a previously released document. This element specifies methods for conveying
+                revision and recall indicators and additional data in XML. </xs:appinfo>
+        </xs:annotation>
+        <xs:sequence minOccurs="0">
+            <xs:element ref="arh:Security" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="ProductTitle" type="ism:LongStringWithSecurityType">
+                <xs:annotation>
+                    <xs:documentation>
+                        <xhtml:p ism:classification="U" ism:ownerProducer="USA"> The subject title
+                            of the intelligence product being revised or recalled.</xhtml:p>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="Reason" minOccurs="1" maxOccurs="1"
+                type="ism:LongStringWithSecurityType">
+                <xs:annotation>
+                    <xs:documentation>
+                        <xhtml:p ism:ownerProducer="USA" ism:classification="U">The reason for the
+                            revision or recall being issued.</xhtml:p>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="POC" type="ism:LongStringWithSecurityType">
+                <xs:annotation>
+                    <xs:documentation>
+                        <xhtml:p ism:ownerProducer="USA" ism:classification="U"> The Point of
+                            Contact for the Revision/Recall.</xhtml:p>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="ActionInstruction" type="ism:LongStringWithSecurityType" minOccurs="0"
+                maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>
+                        <xhtml:p ism:ownerProducer="USA" ism:classification="U">Used when the
+                            @action attribute is "MANUAL_INSTRUCTION" to relay the instructions for
+                            a human to perform upon receipt of the revision or recall.</xhtml:p>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="Link" minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation>
+                        <xhtml:p ism:classification="U" ism:ownerProducer="USA"> Link(s) to the
+                            inteligence product or other relevant material.</xhtml:p>
+                    </xs:documentation>
+                </xs:annotation>
+                <xs:complexType>
+                    <xs:attributeGroup ref="xlink:locatorAttrs"/>
+                    <xs:attributeGroup ref="ism:SecurityAttributesGroup"/>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+        <xs:attribute name="id" type="xs:int" use="required">
+            <xs:annotation>
+                <xs:documentation>
+                    <xhtml:p ism:classification="U" ism:ownerProducer="USA"> A sequential integer
+                        for the revision. Higher numbers, referring to later revisions, take
+                        precedence over lower numbers.</xhtml:p>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="type" use="required" type="rrtype:CVEnumRevRecallType">
+            <xs:annotation>
+                <xs:documentation>
+                    <xhtml:p ism:ownerProducer="USA" ism:classification="U">Specifies the type of
+                        the revision or recall.</xhtml:p>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="action" use="required" type="rraction:CVEnumRevRecallAction">
+            <xs:annotation>
+                <xs:documentation>
+                    <xhtml:p ism:ownerProducer="USA" ism:classification="U">Indicates the action to
+                        be performed upon receipt of the revision or recall.</xhtml:p>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="dateTime" type="xs:dateTime">
+            <xs:annotation>
+                <xs:documentation>
+                    <xhtml:p ism:ownerProducer="USA" ism:classification="U">The date the revision or
+                        recall was issued.</xhtml:p>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+
+    <!-- 
+    Change History
+    -->
+    <xs:annotation>
+        <xs:documentation>
+            <xhtml:h2 ism:ownerProducer="USA" ism:classification="U">Formal Change List</xhtml:h2>
+            <xhtml:table ism:ownerProducer="USA" ism:classification="U" id="ChangeHistory">
+                <xhtml:caption>Change History</xhtml:caption>
+                <xhtml:thead>
+                    <xhtml:tr>
+                        <th xmlns="">Version</th>
+                        <xhtml:td>Date</xhtml:td>
+                        <xhtml:td>By</xhtml:td>
+                        <xhtml:td>Description</xhtml:td>
+                    </xhtml:tr>
+                </xhtml:thead>
+                <xhtml:tbody>
+                    <xhtml:tr>
+                        <xhtml:td>2014-DEC</xhtml:td>
+                        <xhtml:td>2014-12-04</xhtml:td>
+                        <xhtml:td>ODNI/OCIO/ICEA</xhtml:td>
+                        <xhtml:td>Enforced DESVersion with a pattern instead of a fixed value to allow extension versions</xhtml:td>
+                    </xhtml:tr>
+                    
+                    <xhtml:tr>
+                        <xhtml:td>2014-DEC</xhtml:td>
+                        <xhtml:td>2014-12-04</xhtml:td>
+                        <xhtml:td>M. Lucas (ODNI/IC CIO/ME/EI&amp;A</xhtml:td>
+                        <xhtml:td>Added ARH Security element to RevisionRecall sequence</xhtml:td>
+                    </xhtml:tr>
+                    <xhtml:tr>
+                        <xhtml:td>1</xhtml:td>
+                        <xhtml:td>2014-03-03</xhtml:td>
+                        <xhtml:td>Hodges (ODNI/IC CIO/ME/EIA)</xhtml:td>
+                        <xhtml:td>Initial release</xhtml:td>
+                    </xhtml:tr>
+                </xhtml:tbody>
+            </xhtml:table>
+        </xs:documentation>
+    </xs:annotation>
+</xs:schema>
