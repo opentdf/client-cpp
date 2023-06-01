@@ -246,8 +246,6 @@ namespace virtru {
 
         if (tdfStorageType.m_tdfType == TDFStorageType::StorageType::File) {
 
-            std::cout << "In file:" << tdfStorageType.m_filePath << std::endl << "outfile:" << outFilepath << std::endl;
-
             // Create input provider
             FileInputProvider inputProvider{tdfStorageType.m_filePath};
 
@@ -259,7 +257,6 @@ namespace virtru {
             LogError(errorMsg);
             ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
         }
-
     }
 
     /// Decrypt the bytes to tdf format.
