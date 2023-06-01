@@ -3,10 +3,6 @@ rmdir /s /q build
 mkdir build
 pushd build
 
-REM TEMP FIXME TODO - clear out conan cache to remove stale data
-conan remove * -f
-REM TEMP FIXME TODO - clear out conan cache to remove stale data
-
 REM Install the prerequisites
 conan install .. --build=missing
 set builderrorlevel=%errorlevel%
