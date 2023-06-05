@@ -286,7 +286,7 @@ namespace virtru {
                                                         reinterpret_cast<const xmlChar *>(kHandlingAssertionElement),
                                                         nullptr);
 
-            if (handlingAssertion.getScope() == Scope::unknown) {
+            if (handlingAssertion.getScope() == Scope::Unknown) {
                 std::string errorMsg{"Unknow scope attribute for HandlingAssertion"};
                 ThrowException(std::move(errorMsg));
             }
@@ -298,12 +298,12 @@ namespace virtru {
                          reinterpret_cast<const xmlChar *>(kScopeAttribute),
                          reinterpret_cast<const xmlChar *>(scopeAsStr.c_str()));
 
-            if (handlingAssertion.getAppliedState() == AppliesToState::unknown) {
+            if (handlingAssertion.getAppliesToState() == AppliesToState::Unknown) {
                 std::string errorMsg{"Unknow appliesToState for HandlingAssertion"};
                 ThrowException(std::move(errorMsg));
             }
 
-            auto appliesToStateAsStrView = magic_enum::enum_name(handlingAssertion.getAppliedState());
+            auto appliesToStateAsStrView = magic_enum::enum_name(handlingAssertion.getAppliesToState());
             std::string appliesToStateAsStr{appliesToStateAsStrView};
             xmlNewNsProp(handlingAssertionElement,
                          ns,
@@ -390,7 +390,7 @@ namespace virtru {
                                                 reinterpret_cast<const xmlChar *>(kAssertionElement),
                                                 nullptr);
 
-            if (defaultAssertion.getScope() == Scope::unknown) {
+            if (defaultAssertion.getScope() == Scope::Unknown) {
                 std::string errorMsg{"Unknow scope attribute for HandlingAssertion"};
                 ThrowException(std::move(errorMsg));
             }

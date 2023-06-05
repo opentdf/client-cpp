@@ -122,7 +122,7 @@ namespace virtru {
                     const auto& defaultAssertions = assertions[kDefaultAssertions];
                     for (const auto& assertion: defaultAssertions) {
 
-                        DefaultAssertion defaultAssertion{Scope::unknown};
+                        DefaultAssertion defaultAssertion{Scope::Unknown};
 
                         std::string scopeValue = assertion[kScopeAttribute];
                         auto scope = magic_enum::enum_cast<Scope>(scopeValue);
@@ -178,7 +178,7 @@ namespace virtru {
                     const auto& handlingAssertions = assertions[kHandlingAssertions];
                     for (const auto& assertion: handlingAssertions) {
 
-                        HandlingAssertion handlingAssertion{Scope::unknown};
+                        HandlingAssertion handlingAssertion{Scope::Unknown};
 
                         std::string scopeValue = assertion[kScopeAttribute];
                         auto scope = magic_enum::enum_cast<Scope>(scopeValue);
@@ -189,7 +189,7 @@ namespace virtru {
                         std::string appliesToStateValue = assertion[kAppliesToStateAttribute];
                         auto appliesToState = magic_enum::enum_cast<AppliesToState>(appliesToStateValue);
                         if (appliesToState.has_value()) {
-                            handlingAssertion.setAppliedState(appliesToState.value());
+                            handlingAssertion.setAppliesToState(appliesToState.value());
                         }
 
                         if (assertion.find(kIdAttribute) != assertion.end()) {
@@ -296,7 +296,7 @@ namespace virtru {
             for (const auto& assertion: defaultAssertions) {
                 nlohmann::json assertionJson;
 
-                if (assertion.getScope() != Scope::unknown) {
+                if (assertion.getScope() != Scope::Unknown) {
                     assertionJson[kScopeAttribute] = magic_enum::enum_name(assertion.getScope());
                 }
 
@@ -350,12 +350,12 @@ namespace virtru {
                 nlohmann::json assertionJson;
 
                 auto scope = assertion.getScope();
-                if (scope != Scope::unknown) {
+                if (scope != Scope::Unknown) {
                     assertionJson[kScopeAttribute] = magic_enum::enum_name(scope);
                 }
 
-                auto appliedState = assertion.getAppliedState();
-                if (appliedState != AppliesToState::unknown) {
+                auto appliedState = assertion.getAppliesToState();
+                if (appliedState != AppliesToState::Unknown) {
                     assertionJson[kAppliesToStateAttribute] = magic_enum::enum_name(appliedState);
                 }
 

@@ -360,7 +360,7 @@ namespace virtru {
         auto totalNodes = result.get()->nodesetval->nodeNr;
         for (auto index = 0; index < totalNodes; index++) {
 
-            HandlingAssertion handlingAssertion{Scope::unknown};
+            HandlingAssertion handlingAssertion{Scope::Unknown};
             xmlNodePtr handlingAssertionNode = result.get()->nodesetval->nodeTab[index];
             if (handlingAssertionNode) {
 
@@ -405,7 +405,7 @@ namespace virtru {
 
                     auto appliesToStateAsEnum = magic_enum::enum_cast<AppliesToState>(appliesToStateAttribute);
                     if (appliesToStateAsEnum.has_value()) {
-                        handlingAssertion.setAppliedState(appliesToStateAsEnum.value());
+                        handlingAssertion.setAppliesToState(appliesToStateAsEnum.value());
                     }
                 }
 
@@ -484,7 +484,7 @@ namespace virtru {
         auto totalNodes = result.get()->nodesetval->nodeNr;
         for (auto index = 0; index < totalNodes; index++) {
 
-            DefaultAssertion assertion{Scope::unknown};
+            DefaultAssertion assertion{Scope::Unknown};
             std::string statementValue{};
             xmlNodePtr assertionNode = result.get()->nodesetval->nodeTab[index];
 

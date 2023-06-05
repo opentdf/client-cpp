@@ -582,7 +582,7 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
             // Add handling assertion
             HandlingAssertion handlingAssertion{Scope::TDO};
             handlingAssertion.setId("assertion1");
-            handlingAssertion.setAppliedState(AppliesToState::unencrypted);
+            handlingAssertion.setAppliesToState(AppliesToState::unencrypted);
             handlingAssertion.setHandlingStatement("            <edh:Edh xmlns:edh=\"urn:us:gov:ic:edh\"\n"
                                                    "                     xmlns:usagency=\"urn:us:gov:ic:usagency\"\n"
                                                    "                     xmlns:icid=\"urn:us:gov:ic:id\"\n"

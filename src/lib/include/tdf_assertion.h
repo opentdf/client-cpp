@@ -25,13 +25,13 @@ namespace virtru {
         TDO,
         PAYL,
         EXPLICIT,
-        unknown
+        Unknown
     };
 
     enum class AppliesToState {
         encrypted,
         unencrypted,
-        unknown
+        Unknown
     };
 
     enum class StatementType {
@@ -126,7 +126,7 @@ namespace virtru {
             return m_value;
         }
 
-        /// set value for the isEncrypted flag for the statement group
+        /// Set value for the isEncrypted flag for the statement group
         /// \param isEncrypted
         void setIsEncrypted(bool isEncrypted) {
             m_isEncrypted = isEncrypted;
@@ -275,13 +275,13 @@ namespace virtru {
 
         /// Set the applied state for the assertion.
         /// \param appliesToState
-        void setAppliedState(AppliesToState appliesToState) {
+        void setAppliesToState(AppliesToState appliesToState) {
             m_appliesToState = appliesToState;
         }
 
         /// Return the applied state of the assertion.
         /// \return applied state
-        AppliesToState getAppliedState() const {
+        AppliesToState getAppliesToState() const {
             return m_appliesToState;
         }
 
@@ -298,7 +298,7 @@ namespace virtru {
         }
 
         /// Set the handling statement for the assertion
-        /// \param statementMetaData
+        /// \param handlingStatement
         void setHandlingStatement(std::string handlingStatement) {
             m_handlingStatement = handlingStatement;
         }
@@ -312,7 +312,6 @@ namespace virtru {
     private:
         Scope m_scope;
         AppliesToState m_appliesToState;
-        StatementType m_statementType{StatementType::XMLBase64};
         std::string m_id;
         std::string m_handlingStatement;
     };
