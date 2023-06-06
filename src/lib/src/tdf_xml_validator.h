@@ -24,7 +24,8 @@ namespace virtru {
         /// destructor
         ~TDFXMLValidator();
 
-        /// Validate input XML against supplied schema
+        /// Validate input XML against supplied schema.  Required for validation.
+        /// NOTE: If no setSchema call is made, no validation is performed by any of the following methods.
         /// \param schema - URL or name of file containing XSD schema
         bool setSchema(const std::string& schema);
 

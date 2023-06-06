@@ -9,26 +9,34 @@
 //
 
 #include "tdf_xml_validator.h"
+#include "tdf_exception.h"
+#include "logger.h"
 #include <string>
+#include <sstream>
 
 using namespace virtru;
 
 // Based on https://stackoverflow.com/questions/54124989/libxml2-get-xsd-validation-errors
+
+// This routine is a callback for the parser, used when there is an error validating the supplied XML against the schema
 static void schemaParseErrorHandler(void *arg, xmlErrorPtr error)
 {
-    fprintf(stderr, "Error at line %d, column %d\n%s", error->line, error->int2, error->message);
+    std::ostringstream errorMsg;
+
+    errorMsg << "Schema validation error " << error->file << "(" << error->line << ") " << error->int2 << " " << error->code << " " << error->message;
+    LogError(errorMsg.str());
     *((bool*)arg) = true;
 }
 
 TDFXMLValidator::TDFXMLValidator() {
-    m_valid_ctxt = 0;
+    m_valid_ctxt = nullptr;
     m_schemaInitialized = false;
 }
 
 bool TDFXMLValidator::setSchema(const std::string& schemafile) {
-    xmlSchemaPtr schema = 0;
-    xmlSchemaParserCtxtPtr schema_parser_ctxt = 0;
-    m_valid_ctxt = 0;
+    xmlSchemaPtr schema = nullptr;
+    xmlSchemaParserCtxtPtr schema_parser_ctxt = nullptr;
+    m_valid_ctxt = nullptr;
     m_schemaInitialized = true;
 
     xmlInitParser();
@@ -82,7 +90,7 @@ bool TDFXMLValidator::validate(xmlDoc* doc) {
 bool TDFXMLValidator::validate(xmlTextReaderPtr reader) {
     bool retval = false;
     int has_schema_errors = 0;
-    int ret = -1;
+    int moreToRead = -1;
 
     // Default: no setSchema done, no schema loaded, nothing to validate against, return pass for this xml
     if (m_schemaInitialized == false) {
@@ -98,15 +106,19 @@ bool TDFXMLValidator::validate(xmlTextReaderPtr reader) {
                 xmlTextReaderSchemaValidateCtxt(reader, m_valid_ctxt, 0);
                 xmlSchemaSetValidStructuredErrors(m_valid_ctxt, schemaParseErrorHandler, &has_schema_errors);
 
-                ret = xmlTextReaderRead(reader);
+                // Returns 1 if more to read, 0 if successfully completed reading, other values indicate errors
+                moreToRead = xmlTextReaderRead(reader);
 
-                while (ret == 1 && !has_schema_errors) {
-                    ret = xmlTextReaderRead(reader);
+                while (moreToRead == 1 && !has_schema_errors) {
+                    moreToRead = xmlTextReaderRead(reader);
                 }
 
-                if (ret != 0) {
-                    xmlErrorPtr err = xmlGetLastError();
-                    fprintf(stdout, "%s: failed to parse in line %d, col %d. Error %d: %s\n", err->file, err->line, err->int2, err->code, err->message);
+                if (moreToRead != 0) {
+                    // There was an error parsing the supplied XML
+                    xmlErrorPtr error = xmlGetLastError();
+                    std::ostringstream errorMsg;
+                    errorMsg << "Schema validation error " << error->file << "(" << error->line << ") " << error->int2 << " " << error->code << " " << error->message;
+                    ThrowException(errorMsg.str(), VIRTRU_TDF_FORMAT_ERROR);
                     retval = false;
                 } else {
                     retval = true;

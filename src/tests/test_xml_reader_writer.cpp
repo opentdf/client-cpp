@@ -313,11 +313,13 @@ BOOST_AUTO_TEST_SUITE(test_xml_reader_writer_suite)
 
             result = validator.validate(xmlfilebad);
             BOOST_TEST(result == false);
+            BOOST_FAIL("Should throw exception on bad input");
         } catch (std::exception e) {
+            // Correct response is to throw an exception on bad input
             LogDebug(e.what());
             std::ostringstream oss;
             oss << e.what();
-            BOOST_FAIL("Caught exception: " + oss.str());
+            std::cout << "Caught exception: " << oss.str() << std::endl;
         }
         BOOST_TEST_MESSAGE("End of test of INvalid XML input");
         std::cout << "End of test of INvalid XML input" << std::endl;
