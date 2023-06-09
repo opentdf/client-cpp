@@ -117,7 +117,7 @@ namespace virtru {
 
         /// Convert the json formatted TDF to xml formatted TDF(ICTDF)
         /// \param tdfFilePath - The zip formatted TDF file path
-        /// \param ictdfFilePath -  The json formatted TDF file path
+        /// \param ictdfFilePath -  The xml formatted TDF file path
         static void convertTDFToICTDF(const std::string& tdfFilePath, const std::string& ictdfFilePath);
 
     private:

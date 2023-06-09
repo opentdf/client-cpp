@@ -307,7 +307,7 @@ namespace virtru {
                 }
 
                 auto statementGroup = assertion.getStatementGroup();
-                if (statementGroup.getStatementType() != StatementType::Unknow) {
+                if (statementGroup.getStatementType() != StatementType::Unknown) {
                     nlohmann::json statementGroupJson;
 
                     statementGroupJson[kTypeAttribute] =  magic_enum::enum_name(statementGroup.getStatementType());

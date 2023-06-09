@@ -287,7 +287,7 @@ namespace virtru {
                                                         nullptr);
 
             if (handlingAssertion.getScope() == Scope::Unknown) {
-                std::string errorMsg{"Unknow scope attribute for HandlingAssertion"};
+                std::string errorMsg{"Unknown scope attribute for HandlingAssertion"};
                 ThrowException(std::move(errorMsg));
             }
 
@@ -299,7 +299,7 @@ namespace virtru {
                          reinterpret_cast<const xmlChar *>(scopeAsStr.c_str()));
 
             if (handlingAssertion.getAppliesToState() == AppliesToState::Unknown) {
-                std::string errorMsg{"Unknow appliesToState for HandlingAssertion"};
+                std::string errorMsg{"Unknown appliesToState for HandlingAssertion"};
                 ThrowException(std::move(errorMsg));
             }
 
@@ -391,7 +391,7 @@ namespace virtru {
                                                 nullptr);
 
             if (defaultAssertion.getScope() == Scope::Unknown) {
-                std::string errorMsg{"Unknow scope attribute for HandlingAssertion"};
+                std::string errorMsg{"Unknown scope attribute for HandlingAssertion"};
                 ThrowException(std::move(errorMsg));
             }
 
@@ -419,8 +419,8 @@ namespace virtru {
 
             auto statementGroup = defaultAssertion.getStatementGroup();
             auto statementGroupType = statementGroup.getStatementType();
-            if (statementGroupType == StatementType::Unknow) {
-                std::string errorMsg{"Unknow statement type for assertion"};
+            if (statementGroupType == StatementType::Unknown) {
+                std::string errorMsg{"Unknown statement type for assertion"};
                 ThrowException(std::move(errorMsg));
             }
 

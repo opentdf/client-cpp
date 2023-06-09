@@ -41,7 +41,7 @@ namespace virtru {
         Base64BinaryStatement,
         XMLBase64,
         String,
-        Unknow
+        Unknown
     };
 
     class StatementGroup {
@@ -234,7 +234,7 @@ namespace virtru {
         Scope m_scope;
         std::string m_id;
         std::string m_type;
-        StatementGroup m_statementGroup{StatementType::Unknow};
+        StatementGroup m_statementGroup{StatementType::Unknown};
         std::vector<std::string> m_statementMetadata;
     };
 
