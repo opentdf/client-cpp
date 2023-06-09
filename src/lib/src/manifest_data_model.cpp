@@ -11,9 +11,7 @@
 //
 
 #include <memory>
-#include <stdint.h>
 #include <boost/algorithm/string.hpp>
-#include <boost/beast/core/detail/base64.hpp>
 #include <boost/interprocess/streams/bufferstream.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 #include "logger.h"

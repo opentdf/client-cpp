@@ -265,7 +265,7 @@ namespace virtru {
             std::string keySizeStr(reinterpret_cast<const char*>(keySize.get()),
                                    xmlStrlen(keySize.get()));
 
-            if (keySizeStr != "32") {
+            if (keySizeStr != kKeySize) {
                 std::string errorMsg{"Error wrong key size in the XML TDF"};
                 ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
             }

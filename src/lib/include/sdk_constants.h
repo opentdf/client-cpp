@@ -211,6 +211,8 @@ namespace virtru {
     static constexpr auto kUriAttribute = "uri";
     static constexpr auto kTextPlainMediaType = "text/plain";
     static constexpr auto kAttributeValueAsTrue = "true";
+    static constexpr auto kKeySize = "32";
+
 
     // OIDC constants
     static constexpr auto kBearerToken = "Bearer";

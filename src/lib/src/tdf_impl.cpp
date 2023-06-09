@@ -391,7 +391,7 @@ namespace virtru {
                 outBufferSpan = WriteableBytes{outBufferSpan.data(), segmentSize};
             }
 
-            // Read form zip reader.
+            // Read from zip reader.
             reader.readPayload(payloadOffset, readBufferSpan.size(), readBufferSpan);
             payloadOffset += readBufferSpan.size();
 

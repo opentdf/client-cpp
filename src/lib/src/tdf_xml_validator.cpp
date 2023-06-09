@@ -34,8 +34,8 @@ TDFXMLValidator::TDFXMLValidator() {
 }
 
 bool TDFXMLValidator::setSchema(const std::string& schemafile) {
-    xmlSchemaPtr schema = nullptr;
-    xmlSchemaParserCtxtPtr schema_parser_ctxt = nullptr;
+    xmlSchemaPtr schema;
+    xmlSchemaParserCtxtPtr schema_parser_ctxt;
     m_valid_ctxt = nullptr;
     m_schemaInitialized = true;
 
@@ -66,7 +66,7 @@ bool TDFXMLValidator::isSchemaValid() {
 }
 
 bool TDFXMLValidator::validate(const std::string &xmlfile) {
-    xmlTextReaderPtr reader = 0;
+    xmlTextReaderPtr reader;
     bool retval = false;
 
     reader = xmlReaderForFile(xmlfile.c_str(), 0, 0);
@@ -77,7 +77,7 @@ bool TDFXMLValidator::validate(const std::string &xmlfile) {
 }
 
 bool TDFXMLValidator::validate(xmlDoc* doc) {
-    xmlTextReaderPtr reader = 0;
+    xmlTextReaderPtr reader;
     bool retval = false;
 
     reader = xmlReaderWalker(doc);
