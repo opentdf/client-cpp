@@ -381,14 +381,15 @@ namespace virtru :: network {
 
         LogTrace("Service::Service");
         // Use default ca's if the consumer of the sdk didn't provide one.
-        auto certAuthority = sdkConsumerCertAuthority;
+        std::string certAuthority(sdkConsumerCertAuthority);
 
         // Load cert authority
         ErrorCode errorCode;
         if (m_schema == "https") {
             m_secure = true;
             if (certAuthority.empty()) {
-                certAuthority = gloablCertAuthority;
+                std::string globalAuthority(globalCertAuthority);
+                certAuthority = globalAuthority;
                 m_sslContext.add_certificate_authority(ba::buffer(certAuthority), errorCode);
             }
             else

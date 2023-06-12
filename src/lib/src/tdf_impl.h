@@ -21,6 +21,7 @@
 
 #include <boost/filesystem.hpp>
 #include "nlohmann/json.hpp"
+#include "manifest_data_model.h"
 
 namespace virtru {
 
@@ -109,6 +110,16 @@ namespace virtru {
         /// \return Return true if data is TDF and false otherwise
         static bool isInputProviderTDF(IInputProvider& inputProvider);
 
+        /// Convert the xml formatted TDF(ICTDF) to the json formatted TDF
+        /// \param ictdfFilePath -  The xml formatted TDF file path
+        /// \param tdfFilePath - The zip formatted TDF file path
+        static void convertICTDFToTDF(const std::string& ictdfFilePath, const std::string& tdfFilePath);
+
+        /// Convert the json formatted TDF to xml formatted TDF(ICTDF)
+        /// \param tdfFilePath - The zip formatted TDF file path
+        /// \param ictdfFilePath -  The xml formatted TDF file path
+        static void convertTDFToICTDF(const std::string& tdfFilePath, const std::string& ictdfFilePath);
+
     private:
         /// Generate a signature of the payload base on integrity algorithm.
         /// \param payload - A payload data
@@ -143,16 +154,16 @@ namespace virtru {
         void buildRewrapV1Payload(nlohmann::json& requestPayload) const;
 
         /// Upsert the key information.
-        /// \param manifest - The manifest of the tdf.
+        /// \param manifestDataModel - Data model contains manifest of the tdf.
         /// \param ignoreKeyAccessType - If true skips the key access type before
         /// syncing.
         // ignoreType if true skips the key access type check when syncing
-        void upsert(nlohmann::json& manifest, bool ignoreKeyAccessType = false) const ;
+        void upsert(ManifestDataModel& manifestDataModel, bool ignoreKeyAccessType = false) const ;
 
         /// Unwrap the key from the manifest.
-        /// \param manifest - Manifest of the encrypted tdf
+        /// \param manifestDataModel - Data model contains manifest of the tdf.
         /// \return - Wrapped key.
-        WrappedKey unwrapKey(nlohmann::json& manifest) const;
+        WrappedKey unwrapKey(ManifestDataModel& manifestDataModel) const;
 
         /// Parse the response and retrieve the wrapped key.
         /// \param unwrapResponse - The response string from '/rewrap'
@@ -191,29 +202,29 @@ namespace virtru {
         /// \return TDF protocol used to encrypt the input stream data
         static Protocol encryptedWithProtocol(IInputProvider& inputProvider);
 
-        /// Retrive the policy uuid(id) from the manifest.
-        /// \param manifestStr - The tdf manifest.
+        /// Retrive the policy uuid(id) from the manifest data model.
+        /// \param manifestDataModel - The manifest data model
         /// \return String - The policy id.
-        std::string getPolicyFromManifest(const std::string& manifestStr) const;
+        std::string getPolicyFromManifest(const ManifestDataModel& manifestDataModel) const;
 
-        /// Return the manifest from the tdf input provider.
+        /// Return the manifest data model from the tdf input provider.
         /// \param inputProvider - Input provider interface for reading data
-        /// \return string - The manifest of the tdf.
-        std::string getManifest(IInputProvider& inputProvider) const;
+        /// \return - Return the manifest data model
+        ManifestDataModel getManifest(IInputProvider& inputProvider) const;
 
-        /// Retrive the policy uuid(id) from the manifest.
-        /// \param manifestStr - The tdf manifest.
+        /// Retrive the policy uuid(id) from the manifest data model.
+        /// \param manifestDataModel - The manifest data model
         /// \return String - The policy id.
-        std::string getPolicyIdFromManifest(const std::string& manifestStr) const;
+        std::string getPolicyIdFromManifest(const ManifestDataModel& manifestDataModel) const;
 
         /// Validate the supported cipher type
-        /// \param manifest - -The tdf manifest.
-        void validateCipherType(const nlohmann::json& manifest) const;
+        /// \param manifestDataModel - Manifest data model.
+        void validateCipherType(const ManifestDataModel& manifestDataModel) const;
 
         /// Validate the root signature.
         /// \param splitKey - split key to validate the signature
-        /// \param manifest -The tdf manifest.
-        void validateRootSignature(SplitKey& splitKey, const nlohmann::json& manifest) const;
+        /// \param manifestDataModel -TManifest data model.
+        void validateRootSignature(SplitKey& splitKey, const ManifestDataModel& manifestDataModel) const;
 
     private: /// Data
 

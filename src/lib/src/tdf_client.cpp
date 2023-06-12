@@ -117,6 +117,8 @@ namespace virtru {
             LogError(errorMsg);
             ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
         }
+
+        return {};
     }
 
     /// Encrypt the data by reading from inputProvider and writing to outputProvider.
@@ -156,6 +158,15 @@ namespace virtru {
 
         // Create a policy object.
         auto policyObject = createPolicyObject();
+
+        for (const auto& assertion: tdfStorageType.m_handlingAssertions) {
+            m_tdfBuilder->setHandlingAssertion(assertion);
+        }
+
+        for (const auto& assertion: tdfStorageType.m_defaultAssertions) {
+            m_tdfBuilder->setDefaultAssertion(assertion);
+        }
+
         auto tdf = m_tdfBuilder->setPolicyObject(policyObject).build();
 
         if (tdfStorageType.m_tdfType == TDFStorageType::StorageType::File) {
@@ -184,6 +195,14 @@ namespace virtru {
 
         // Create a policy object.
         auto policyObject = createPolicyObject();
+        for (const auto& assertion: tdfStorageType.m_handlingAssertions) {
+            m_tdfBuilder->setHandlingAssertion(assertion);
+        }
+
+        for (const auto& assertion: tdfStorageType.m_defaultAssertions) {
+            m_tdfBuilder->setDefaultAssertion(assertion);
+        }
+
         auto tdf = m_tdfBuilder->setPolicyObject(policyObject).build();
 
         if (tdfStorageType.m_tdfType == TDFStorageType::StorageType::Buffer) {
@@ -238,7 +257,6 @@ namespace virtru {
             LogError(errorMsg);
             ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
         }
-
     }
 
     /// Decrypt the bytes to tdf format.
@@ -405,6 +423,8 @@ namespace virtru {
             LogError(errorMsg);
             ThrowException(std::move(errorMsg), VIRTRU_SYSTEM_ERROR);
         }
+
+        return {};
     }
 
     ///Add data attribute
@@ -476,6 +496,24 @@ namespace virtru {
         std::istringstream inputStream(tdfString);
         StreamInputProvider inputProvider{inputStream};
         return TDF::isInputProviderTDF(inputProvider);
+    }
+
+    /// Convert the zip formatted TDF to the xml formatted TDF(ICTDF)
+    void TDFClient::convertICTDFToTDF(const std::string& ictdfFilePath, const std::string& tdfFilePath) {
+
+        LogTrace("TDFClient::convertToTDF");
+
+        Benchmark benchmark("Total tdf conversion file time");
+        TDF::convertICTDFToTDF(ictdfFilePath, tdfFilePath);
+    }
+
+    /// Convert the json formatted TDF to xml formatted TDF(ICTDF)
+    void TDFClient::convertTDFToICTDF(const std::string& tdfFilePath, const std::string& ictdfFilePath) {
+
+        LogTrace("TDFClient::convertTDFToICTDF");
+
+        Benchmark benchmark("Total tdf conversion file time");
+        TDF::convertTDFToICTDF(tdfFilePath, ictdfFilePath);
     }
 
     /// Initialize the TDF builder which is used for creating the TDF instance

@@ -33,6 +33,7 @@
 #include "stream_io_provider.h"
 #include "benchmark.h"
 #include "crypto/gcm_decryption.h"
+#include "tdf_xml_reader.h"
 
 #include <memory>
 #include <stdint.h>
@@ -82,9 +83,7 @@ namespace virtru {
 
             encryptInputProviderToTDFWriter(inputProvider, writer);
         } else if (m_tdfBuilder.m_impl->m_protocol == Protocol::Xml) {
-            TDFXMLWriter writer{outputProvider,
-                                kTDFManifestFileName,
-                                kTDFPayloadFileName};
+            TDFXMLWriter writer{outputProvider};
 
             encryptInputProviderToTDFWriter(inputProvider, writer);
         } else { // HTML
@@ -112,6 +111,16 @@ namespace virtru {
         LogTrace("TDFImpl::encryptInputProviderToTDFWriter");
 
         auto dataSize = inputProvider.getSize();
+
+        // The max file size of 64gb can be encrypted.
+        if (dataSize > kMaxFileSizeSupported) {
+            ThrowException("Current version of Virtru SDKs do not support file size greater than 64 GB.", VIRTRU_TDF_FORMAT_ERROR);
+        }
+
+        // For XML(ICTDF) there will be only one segment and it's the size of the payload.
+        if (m_tdfBuilder.m_impl->m_protocol == Protocol::Xml) {
+            m_tdfBuilder.m_impl->m_segmentSize = dataSize;
+        }
 
         // Check if there is a policy object
         if (m_tdfBuilder.m_impl->m_policyObject.getUuid().empty()) {
@@ -160,21 +169,15 @@ namespace virtru {
         auto integrityAlg = m_tdfBuilder.m_impl->m_integrityAlgorithm;
         auto integrityAlgStr = (integrityAlg == IntegrityAlgorithm::HS256) ? kHmacIntegrityAlgorithm : kGmacIntegrityAlgorithm;
 
-        auto encryptionInformationJson = splitKey.getManifest();
-
-        nlohmann::json payloadTypeObject;
+        auto manifestDataModel = splitKey.getManifest();
 
         auto protocol = (m_tdfBuilder.m_impl->m_protocol == Protocol::Zip) ? kPayloadZipProtcol : kPayloadHtmlProtcol;
-        payloadTypeObject[kPayloadReferenceType] = kPayloadReference;
-        payloadTypeObject[kUrl] = kTDFPayloadFileName;
-        payloadTypeObject[kProtocol] = protocol;
-        payloadTypeObject[kPayloadMimeType] = m_tdfBuilder.m_impl->m_mimeType;
-        payloadTypeObject[kPayloadIsEncrypted] = true;
 
-        nlohmann::json manifest;
+        manifestDataModel.payload.mimeType = m_tdfBuilder.m_impl->m_mimeType;
+        manifestDataModel.payload.protocol = protocol;
 
-        manifest[kPayload] = payloadTypeObject;
-        manifest[kEncryptionInformation] = encryptionInformationJson;
+        manifestDataModel.handlingAssertions = m_tdfBuilder.m_impl->m_handlingAssertions;
+        manifestDataModel.defaultAssertions = m_tdfBuilder.m_impl->m_defaultAssertions;
 
         auto ivSize = (m_tdfBuilder.m_impl->m_cipherType == CipherType::Aes256GCM) ? kGcmIvSize : kCbcIvSize;
         auto defaultSegmentSize = m_tdfBuilder.m_impl->m_segmentSize;
@@ -188,13 +191,12 @@ namespace virtru {
         std::vector<gsl::byte> encryptedBuffer(encryptedBufferSize);
 
         /// upsert
-        upsert(manifest);
+        upsert(manifestDataModel);
 
         ///
         /// Read the file in chucks of 'segmentSize'
         ///
         std::string aggregateHash{};
-        nlohmann::json segmentInfos = nlohmann::json::array();
 
         /// Calculate the actual size of the TDF payload.
         /// Formula totalSegment = quotient + possible one(if the data size is not exactly divisible by segment size)
@@ -244,11 +246,11 @@ namespace virtru {
             // Append the aggregate payload signature.
             aggregateHash.append(payloadSigStr);
 
-            nlohmann::json segmentInfo;
-            segmentInfo[kHash] = base64Encode(payloadSigStr);
-            segmentInfo[kSegmentSize] = readSize;
-            segmentInfo[kEncryptedSegmentSize] = encryptedSize;
-            segmentInfos.emplace_back(segmentInfo);
+            SegmentInfoDataModel segmentInfo;
+            segmentInfo.hash = base64Encode(payloadSigStr);
+            segmentInfo.segmentSize = readSize;
+            segmentInfo.encryptedSegmentSize = encryptedSize;
+            manifestDataModel.encryptionInformation.integrityInformation.segments.emplace_back(segmentInfo);
 
             // write the encrypted data to tdf file.
             writer.appendPayload(writeableBytes);
@@ -261,17 +263,15 @@ namespace virtru {
 
         auto aggregateHashSigStr = getSignature(toBytes(aggregateHash), splitKey, integrityAlg);
 
-        manifest[kEncryptionInformation][kIntegrityInformation][kRootSignature][kRootSignatureSig] = base64Encode(aggregateHashSigStr);
-        manifest[kEncryptionInformation][kIntegrityInformation][kRootSignature][kRootSignatureAlg] = integrityAlgStr;
+        manifestDataModel.encryptionInformation.integrityInformation.rootSignature.signature = base64Encode(aggregateHashSigStr);
+        manifestDataModel.encryptionInformation.integrityInformation.rootSignature.algorithm = integrityAlgStr;
 
-        manifest[kEncryptionInformation][kIntegrityInformation][kSegmentSizeDefault] = defaultSegmentSize;
-        manifest[kEncryptionInformation][kIntegrityInformation][kEncryptedSegSizeDefault] = encryptedBufferSize;
-        manifest[kEncryptionInformation][kIntegrityInformation][kSegmentHashAlg] = segIntegrityAlgStr;
+        manifestDataModel.encryptionInformation.integrityInformation.segmentSizeDefault = defaultSegmentSize;
+        manifestDataModel.encryptionInformation.integrityInformation.encryptedSegmentSizeDefault = encryptedBufferSize;
+        manifestDataModel.encryptionInformation.integrityInformation.segmentHashAlg = segIntegrityAlgStr;
+        manifestDataModel.encryptionInformation.method.isStreamable = true;
 
-        manifest[kEncryptionInformation][kIntegrityInformation][kSegments] = segmentInfos;
-        manifest[kEncryptionInformation][kMethod][kIsStreamable] = true;
-
-        writer.appendManifest(to_string(manifest));
+        writer.appendManifest(manifestDataModel);
         writer.finish();
     }
 
@@ -315,15 +315,13 @@ namespace virtru {
     /// Decrypt data from reader and write to IOutputProvider
     void TDFImpl::decryptTDFReaderToOutputProvider(ITDFReader& reader, IOutputProvider& outputProvider) {
 
-        auto manifestStr = reader.getManifest();
-
         // Parse the manifest
-        auto manifest = nlohmann::json::parse(manifestStr);
+        auto manifestDataModel =  reader.getManifest();
 
         // Validate the cipher type before creating a split key
-        validateCipherType(manifest);
+        validateCipherType(manifestDataModel);
 
-        WrappedKey wrappedKey = unwrapKey(manifest);
+        WrappedKey wrappedKey = unwrapKey(manifestDataModel);
 
         if (!m_tdfBuilder.m_impl->m_kekBase64.empty()) {
             WrappedKey actualWrappedKey;
@@ -358,18 +356,15 @@ namespace virtru {
         splitKey.setWrappedKey(wrappedKey);
 
         // Validate the root signature from the manifest.
-        validateRootSignature(splitKey, manifest);
+        validateRootSignature(splitKey, manifestDataModel);
 
-        auto &integrityInformation = manifest[kEncryptionInformation][kIntegrityInformation];
-        size_t segmentSizeDefault = integrityInformation[kSegmentSizeDefault];
-        size_t defaultEncryptedSegmentSize = integrityInformation[kEncryptedSegSizeDefault];
+        size_t segmentSizeDefault = manifestDataModel.encryptionInformation.integrityInformation.segmentSizeDefault;
+        size_t defaultEncryptedSegmentSize = manifestDataModel.encryptionInformation.integrityInformation.encryptedSegmentSizeDefault;
 
         auto ivSize = (m_tdfBuilder.m_impl->m_cipherType == CipherType::Aes256GCM) ? kGcmIvSize : kCbcIvSize;
         if (segmentSizeDefault != (defaultEncryptedSegmentSize - ((ivSize + kAesBlockSize)))) {
             ThrowException("EncryptedSegmentSizeDefault is missing in tdf", VIRTRU_TDF_FORMAT_ERROR);
         }
-
-        const auto& segmentInfos = manifest[kEncryptionInformation][kIntegrityInformation][kSegments];
 
         ///
         /// Create buffers for reading from file and for performing decryption.
@@ -378,25 +373,25 @@ namespace virtru {
         std::vector<gsl::byte> readBuffer(defaultEncryptedSegmentSize);
         std::vector<gsl::byte> decryptedBuffer(segmentSizeDefault);
 
-        std::string segmentHashAlg = integrityInformation[kSegmentHashAlg];
+        auto segmentHashAlg = manifestDataModel.encryptionInformation.integrityInformation.segmentHashAlg;
         size_t payloadOffset = 0;
-        for (auto &segment : segmentInfos) {
+        for (auto &segment : manifestDataModel.encryptionInformation.integrityInformation.segments) {
 
             // Adjust read buffer size
             auto readBufferSpan = WriteableBytes{readBuffer};
-            if (segment.contains(kEncryptedSegmentSize)) {
-                int encryptedSegmentSize = segment[kEncryptedSegmentSize];
+            if (segment.encryptedSegmentSize > 0) {
+                int encryptedSegmentSize = segment.encryptedSegmentSize;
                 readBufferSpan = WriteableBytes{readBufferSpan.data(), encryptedSegmentSize};
             }
 
             // Adjust decrypt buffer size
             auto outBufferSpan = WriteableBytes{decryptedBuffer};
-            if (segment.contains(kSegmentSize)) {
-                int segmentSize = segment[kSegmentSize];
+            if (segment.segmentSize > 0) {
+                int segmentSize = segment.segmentSize;
                 outBufferSpan = WriteableBytes{outBufferSpan.data(), segmentSize};
             }
 
-            // Read form zip reader.
+            // Read from zip reader.
             reader.readPayload(payloadOffset, readBufferSpan.size(), readBufferSpan);
             payloadOffset += readBufferSpan.size();
 
@@ -404,10 +399,10 @@ namespace virtru {
             splitKey.decrypt(readBufferSpan, outBufferSpan);
 
             auto payloadSigStr = getSignature(readBufferSpan, splitKey, segmentHashAlg);
-            std::string hash = segment[kHash];
+            auto hash = segment.hash;
 
             // Validate the hash.
-            if (hash != base64Encode(payloadSigStr)) {
+            if (m_tdfBuilder.m_impl->m_protocol != Protocol::Xml && hash != base64Encode(payloadSigStr)) {
                 ThrowException("Failed integrity check on segment hash", VIRTRU_CRYPTO_ERROR);
             }
 
@@ -428,15 +423,14 @@ namespace virtru {
         }
 
         TDFArchiveReader reader{&inputProvider, kTDFManifestFileName, kTDFPayloadFileName };
-        auto manifestStr = reader.getManifest();
 
         // Parse the manifest
-        auto manifest = nlohmann::json::parse(manifestStr);
+        auto manifestDataModel = reader.getManifest();
 
         // Validate the cipher type before creating a split key
-        validateCipherType(manifest);
+        validateCipherType(manifestDataModel);
 
-        WrappedKey wrappedKey = unwrapKey(manifest);
+        WrappedKey wrappedKey = unwrapKey(manifestDataModel);
 
         LogDebug("Obtained the wrappedKey from manifest.");
 
@@ -445,11 +439,10 @@ namespace virtru {
         splitKey.setWrappedKey(wrappedKey);
 
         // Validate the root signature from the manifest.
-        validateRootSignature(splitKey, manifest);
+        validateRootSignature(splitKey, manifestDataModel);
 
-        auto &integrityInformation = manifest[kEncryptionInformation][kIntegrityInformation];
-        size_t segmentSizeDefault = integrityInformation[kSegmentSizeDefault];
-        size_t defaultEncryptedSegmentSize = integrityInformation[kEncryptedSegSizeDefault];
+        size_t segmentSizeDefault = manifestDataModel.encryptionInformation.integrityInformation.segmentSizeDefault;
+        size_t defaultEncryptedSegmentSize = manifestDataModel.encryptionInformation.integrityInformation.encryptedSegmentSizeDefault;
 
         auto ivSize = (m_tdfBuilder.m_impl->m_cipherType == CipherType::Aes256GCM) ? kGcmIvSize : kCbcIvSize;
         if (segmentSizeDefault != (defaultEncryptedSegmentSize - ((ivSize + kAesBlockSize)))) {
@@ -457,11 +450,10 @@ namespace virtru {
         }
 
         // Get the segments array and calculate the payload size.
-        const auto& segmentInfos = manifest[kEncryptionInformation][kIntegrityInformation][kSegments];
-        auto segmentArraySize = segmentInfos.size();
+        auto segmentArraySize = manifestDataModel.encryptionInformation.integrityInformation.segments.size();
         size_t encryptedPayloadSize = 0;
-        for (const auto& segment : segmentInfos) {
-            size_t encryptedSegmentSize = segment[kEncryptedSegmentSize];
+        for (const auto& segment : manifestDataModel.encryptionInformation.integrityInformation.segments) {
+            size_t encryptedSegmentSize = segment.encryptedSegmentSize;
             encryptedPayloadSize += encryptedSegmentSize;
         }
 
@@ -487,14 +479,14 @@ namespace virtru {
         ///
         std::vector<gsl::byte> readBuffer(defaultEncryptedSegmentSize);
         std::vector<gsl::byte> decryptedBuffer(segmentSizeDefault);
-        std::string segmentHashAlg = integrityInformation[kSegmentHashAlg];
+        auto segmentHashAlg = manifestDataModel.encryptionInformation.integrityInformation.segmentHashAlg;
 
         size_t payloadOffset = 0;
-        for (size_t index = 0; index < segmentInfos.size(); index++) {
+        for (size_t index = 0; index < manifestDataModel.encryptionInformation.integrityInformation.segments.size(); index++) {
 
-            const auto& segment = segmentInfos[index];
+            const auto& segment = manifestDataModel.encryptionInformation.integrityInformation.segments[index];
 
-            size_t encryptedSegmentSize = segment[kEncryptedSegmentSize];
+            size_t encryptedSegmentSize = segment.encryptedSegmentSize;
             if (segmentOffset > index ) {
                 // Update the payload offset and skip the read.
                 payloadOffset += encryptedSegmentSize;
@@ -503,18 +495,17 @@ namespace virtru {
 
                 // Adjust read buffer size
                 auto readBufferSpan = WriteableBytes{readBuffer};
-                if (segment.contains(kEncryptedSegmentSize)) {
+                if (segment.encryptedSegmentSize > 0) {
                     readBufferSpan = WriteableBytes{readBufferSpan.data(),
                                                     static_cast<std::ptrdiff_t>(encryptedSegmentSize)};
                 }
 
                 // Adjust decrypt buffer size
                 auto outBufferSpan = WriteableBytes{decryptedBuffer};
-                if (segment.contains(kSegmentSize)) {
-                    int segmentSize = segment[kSegmentSize];
+                if (segment.segmentSize > 0) {
+                    auto segmentSize = segment.segmentSize;
                     outBufferSpan = WriteableBytes{outBufferSpan.data(), segmentSize};
                 }
-
 
                 // Read form zip reader.
                 reader.readPayload(payloadOffset, encryptedSegmentSize, readBufferSpan);
@@ -524,7 +515,7 @@ namespace virtru {
                 splitKey.decrypt(readBufferSpan, outBufferSpan);
 
                 auto payloadSigStr = getSignature(readBufferSpan, splitKey, segmentHashAlg);
-                std::string hash = segment[kHash];
+                auto hash = segment.hash;
 
                 // Validate the hash.
                 if (hash != base64Encode(payloadSigStr)) {
@@ -547,6 +538,66 @@ namespace virtru {
         auto bytesToWrite = gsl::make_span(reinterpret_cast<const char *>(bufferForRequiredSegments.data() + startOfPlainText),
                                            length);
         outputProvider.writeBytes(toBytes(bytesToWrite));
+    }
+
+    /// Convert the xml formatted TDF(ICTDF) to the json formatted TDF
+    void TDFImpl::convertICTDFToTDF(const std::string& ictdfFilePath, const std::string& tdfFilePath) {
+        LogTrace("TDFImpl::convertICTDFToTDF");
+
+        FileInputProvider inputProvider{ictdfFilePath};
+        auto protocol = encryptedWithProtocol(inputProvider);
+        if (protocol != Protocol::Xml) {
+            ThrowException("Input file is not ICTDF file", VIRTRU_TDF_FORMAT_ERROR);
+        }
+
+        // Read the manifest and payload from ICTDF
+        TDFXMLReader reader{inputProvider};
+        auto dataModel = reader.getManifest();
+        auto payloadSize = reader.getPayloadSize();
+        std::vector<gsl::byte> payload(payloadSize);
+        auto writeableBytes = toWriteableBytes(payload);
+        reader.readPayload(0, payloadSize, writeableBytes);
+
+        FileOutputProvider fileOutputProvider{tdfFilePath};
+        TDFArchiveWriter writer{&fileOutputProvider,
+                                kTDFManifestFileName,
+                                kTDFPayloadFileName};
+        writer.setPayloadSize(payloadSize);
+        writer.appendPayload(writeableBytes);
+        writer.appendManifest(dataModel);
+        writer.finish();
+    }
+
+    /// Convert the json formatted TDF to xml formatted TDF(ICTDF)
+    void TDFImpl::convertTDFToICTDF(const std::string& tdfFilePath, const std::string& ictdfFilePath) {
+        LogTrace("TDFImpl::convertTDFToICTDF");
+
+        FileInputProvider inputProvider{tdfFilePath};
+        auto protocol = encryptedWithProtocol(inputProvider);
+        if (protocol != Protocol::Zip) {
+            ThrowException("Input file is not json formatted TDF file", VIRTRU_TDF_FORMAT_ERROR);
+        }
+
+        // Read the manifest and payload from TDF
+        TDFArchiveReader reader{&inputProvider, kTDFManifestFileName, kTDFPayloadFileName};
+        auto dataModel = reader.getManifest();
+
+        if (dataModel.encryptionInformation.integrityInformation.segments.size() != 1) {
+            ThrowException("Cannot convert ICTDF to json formatted TDF because there is more than one segment.", VIRTRU_GENERAL_ERROR);
+        }
+
+        auto payloadSize = reader.getPayloadSize();
+        std::vector<gsl::byte> payload(payloadSize);
+        auto writeableBytes = toWriteableBytes(payload);
+        reader.readPayload(0, payloadSize, writeableBytes);
+
+        FileOutputProvider fileOutputProvider{ictdfFilePath};
+
+        TDFXMLWriter writer{fileOutputProvider};
+        writer.appendManifest(dataModel);
+        writer.setPayloadSize(payloadSize);
+        writer.appendPayload(writeableBytes);
+        writer.finish();
     }
 
     bool TDFImpl::isInputProviderTDF(IInputProvider& inputProvider) {
@@ -598,27 +649,25 @@ namespace virtru {
     std::string TDFImpl::getEncryptedMetadata(IInputProvider& inputProvider) {
         LogTrace("TDFImpl::getEncryptedMetadata");
 
-        auto manifestStr = getManifest(inputProvider);
-        auto manifest = nlohmann::json::parse(manifestStr);
-        nlohmann::json keyAccessObjects = nlohmann::json::array();
-        keyAccessObjects = manifest[kEncryptionInformation][kKeyAccess];
-        if (keyAccessObjects.size() != 1) {
+        auto manifestDataModel = getManifest(inputProvider);
+
+        if (manifestDataModel.encryptionInformation.keyAccessObjects.size() != 1) {
             ThrowException("Only supports one key access object - unwrap", VIRTRU_TDF_FORMAT_ERROR);
         }
 
         // First object
-        auto &keyAccess = keyAccessObjects.at(0);
-        if (!keyAccess.contains(kEncryptedMetadata)) {
+        auto keyAccess = manifestDataModel.encryptionInformation.keyAccessObjects.front();
+        if (keyAccess.encryptedMetadata.empty()) {
             LogWarn("There is no metadata in tdf");
             return {};
         }
 
-        std::string encryptedMetadata = keyAccess[kEncryptedMetadata];
-        WrappedKey wrappedKey = unwrapKey(manifest);
+        auto encryptedMetadata = keyAccess.encryptedMetadata;
+        WrappedKey wrappedKey = unwrapKey(manifestDataModel);
 
         // Get the algorithm and key type.
-        std::string algorithm = manifest[kEncryptionInformation][kMethod][kCipherAlgorithm];
-        std::string keyType = manifest[kEncryptionInformation][kEncryptKeyType];
+        std::string algorithm = manifestDataModel.encryptionInformation.method.algorithm;
+        std::string keyType = manifestDataModel.encryptionInformation.keyAccessType;
 
         CipherType chiperType = CipherType::Aes265CBC;
         if (boost::iequals(algorithm, kCipherAlgorithmGCM)) {
@@ -653,8 +702,8 @@ namespace virtru {
 
         LogTrace("TDFImpl::getPolicy");
 
-        auto manifestStr = getManifest(inputProvider);
-        return getPolicyFromManifest(manifestStr);
+        auto manifestDataModel = getManifest(inputProvider);
+        return getPolicyFromManifest(manifestDataModel);
     }
 
     /// Return the policy uuid from the input provider.
@@ -662,8 +711,8 @@ namespace virtru {
 
         LogTrace("TDFImpl::getPolicyUUID");
 
-        std::string manifestStr = getManifest(inputProvider);
-        return getPolicyIdFromManifest(manifestStr);
+        auto manifestDataModel = getManifest(inputProvider);
+        return getPolicyIdFromManifest(manifestDataModel);
     }
 
     /// Sync the tdf file, with symmetric wrapped key and Policy Object.
@@ -671,7 +720,7 @@ namespace virtru {
 
         LogTrace("TDFImpl::sync");
 
-        std::string manifestStr;
+        ManifestDataModel manifestDataModel;
 
         FileInputProvider inputProvider{encryptedTdfFilepath};
         auto protocol = encryptedWithProtocol(inputProvider);
@@ -687,48 +736,30 @@ namespace virtru {
             TDFArchiveReader reader{&inputProvider,
                                     kTDFManifestFileName,
                                     kTDFPayloadFileName};
-            manifestStr = reader.getManifest();
-        } else {
+            manifestDataModel = reader.getManifest();
+        } else if (protocol == Protocol::Xml) {
+            TDFXMLReader reader{inputProvider};
+            manifestDataModel = reader.getManifest();
+        } else { // html format
 
-            if (protocol == Protocol::Xml) {
-                ThrowException("XML TDF not supported", VIRTRU_TDF_FORMAT_ERROR);
-            }
-
+            std::string manifestStr;
             auto tdfData = getTDFZipData(encryptedTdfFilepath, true);
             manifestStr.append(tdfData.begin(), tdfData.end());
+
+            manifestDataModel = ManifestDataModel::CreateModelFromJson(manifestStr);
         }
 
-        auto manifest = nlohmann::json::parse(manifestStr);
-
-        if (!manifest.contains(kEncryptionInformation)) {
-            std::string errorMsg{"'encryptionInformation' not found in the manifest of tdf -"};
-            errorMsg.append(encryptedTdfFilepath);
-            ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
-        }
-
-        auto &encryptionInformation = manifest[kEncryptionInformation];
-
-        if (!encryptionInformation.contains(kKeyAccess)) {
-            std::string errorMsg{"'keyAccess' not found in the manifest of tdf -"};
-            errorMsg.append(encryptedTdfFilepath);
-            ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
-        }
-
-        nlohmann::json keyAccessObjects = nlohmann::json::array();
-        keyAccessObjects = encryptionInformation[kKeyAccess];
-        if (keyAccessObjects.size() != 1) {
+        if (manifestDataModel.encryptionInformation.keyAccessObjects.size() != 1) {
             ThrowException("Only supports one key access object.", VIRTRU_TDF_FORMAT_ERROR);
         }
 
         // First object
-        auto &keyAccess = keyAccessObjects.at(0);
-        std::string encryptedKeyType = keyAccess[kEncryptKeyType];
-
+        auto encryptedKeyType = manifestDataModel.encryptionInformation.keyAccessObjects[0].keyType;
         if (!boost::iequals(encryptedKeyType, kKeyAccessWrapped)) {
             LogWarn("Sync should be performed only on 'wrapped' encrypted key type.");
         }
 
-        upsert(manifest, true);
+        upsert(manifestDataModel, true);
     }
 
     /// Generate a signature of the payload base on integrity algorithm.
@@ -817,7 +848,7 @@ namespace virtru {
     }
 
     /// Upsert the key information.
-    void TDFImpl::upsert(nlohmann::json &manifest, bool ignoreKeyAccessType) const {
+    void TDFImpl::upsert(ManifestDataModel& manifestDataModel, bool ignoreKeyAccessType) const {
 
         LogTrace("TDFImpl::upsert");
 
@@ -831,16 +862,24 @@ namespace virtru {
         nlohmann::json requestBody;
         std::string upsertUrl;
 
-        auto &keyAccessObjects = manifest[kEncryptionInformation][kKeyAccess];
-        if (keyAccessObjects.size() != 1) {
+        if (manifestDataModel.encryptionInformation.keyAccessObjects.size() != 1) {
             ThrowException("Only supports one key access object - upsert", VIRTRU_TDF_FORMAT_ERROR);
         }
 
-        // First object
-        auto &keyAccess = keyAccessObjects.at(0);
+        // First key access object
+        nlohmann::json keyAccessJson;
+        keyAccessJson[kKeyAccessType] = manifestDataModel.encryptionInformation.keyAccessObjects[0].keyType;
+        keyAccessJson[kUrl] = manifestDataModel.encryptionInformation.keyAccessObjects[0].url;
+        keyAccessJson[kProtocol] = manifestDataModel.encryptionInformation.keyAccessObjects[0].protocol;
+        keyAccessJson[kWrappedKey] = manifestDataModel.encryptionInformation.keyAccessObjects[0].wrappedKey;
+        keyAccessJson[kPolicyBinding] = manifestDataModel.encryptionInformation.keyAccessObjects[0].policyBinding;
+
+        if (!manifestDataModel.encryptionInformation.keyAccessObjects[0].encryptedMetadata.empty()) {
+            keyAccessJson[kEncryptedMetadata] = manifestDataModel.encryptionInformation.keyAccessObjects[0].encryptedMetadata;
+        }
 
         // Request body
-        requestBody[kKeyAccess] = keyAccess;
+        requestBody[kKeyAccess] = keyAccessJson;
 
         // 'Policy' should hold the base64 encoded policy object.
         LogDebug("Policy object: " + m_tdfBuilder.m_impl->m_policyObject.toJsonString());
@@ -889,13 +928,12 @@ namespace virtru {
         }
 
         // Remove the 'encryptedMetadata' and  'wrappedkey' from manifest.
-        auto encryptedMetaData = keyAccess.contains(kEncryptedMetadata);
-        if (encryptedMetaData) {
-            keyAccess.erase(kEncryptedMetadata);
+        if (!manifestDataModel.encryptionInformation.keyAccessObjects[0].encryptedMetadata.empty()) {
+            manifestDataModel.encryptionInformation.keyAccessObjects[0].encryptedMetadata = std::string();
         }
 
-        keyAccess.erase(kWrappedKey);
-        keyAccess.erase(kPolicyBinding);
+        manifestDataModel.encryptionInformation.keyAccessObjects[0].wrappedKey = std::string();
+        manifestDataModel.encryptionInformation.keyAccessObjects[0].policyBinding = std::string();
     }
 
     std::string TDFImpl::buildRewrapV2Payload(nlohmann::json &requestBody) const {
@@ -946,28 +984,42 @@ namespace virtru {
     }
 
     /// Unwrap the key from the manifest.
-    WrappedKey TDFImpl::unwrapKey(nlohmann::json &manifest) const {
+    WrappedKey TDFImpl::unwrapKey(ManifestDataModel& manifestDataModel) const {
 
         Benchmark benchmark("Unwrap");
         LogTrace("TDFImpl::unwrapKey");
 
-        nlohmann::json keyAccessObjects = nlohmann::json::array();
-        keyAccessObjects = manifest[kEncryptionInformation][kKeyAccess];
-        if (keyAccessObjects.size() != 1) {
+        if (manifestDataModel.encryptionInformation.keyAccessObjects.size() != 1) {
             ThrowException("Only supports one key access object - unwrap", VIRTRU_TDF_FORMAT_ERROR);
         }
 
-        // First object
-        auto &keyAccess = keyAccessObjects.at(0);
-        auto keyAccessObject = KeyAccessObject::createKeyAccessObjectFromJson(to_string(keyAccess));
-        auto kasUrlFromTDF = keyAccessObject.getKasUrl();
+        // First key access object
+        nlohmann::json keyAccessJson;
+        keyAccessJson[kKeyAccessType] = manifestDataModel.encryptionInformation.keyAccessObjects[0].keyType;
+        keyAccessJson[kUrl] = manifestDataModel.encryptionInformation.keyAccessObjects[0].url;
+        keyAccessJson[kProtocol] = manifestDataModel.encryptionInformation.keyAccessObjects[0].protocol;
+
+        if (!manifestDataModel.encryptionInformation.keyAccessObjects[0].wrappedKey.empty()) {
+            keyAccessJson[kWrappedKey] = manifestDataModel.encryptionInformation.keyAccessObjects[0].wrappedKey;
+        }
+
+        if (!manifestDataModel.encryptionInformation.keyAccessObjects[0].policyBinding.empty()) {
+            keyAccessJson[kPolicyBinding] = manifestDataModel.encryptionInformation.keyAccessObjects[0].policyBinding;
+        }
+
+        if (!manifestDataModel.encryptionInformation.keyAccessObjects[0].encryptedMetadata.empty()) {
+            keyAccessJson[kEncryptedMetadata] = manifestDataModel.encryptionInformation.keyAccessObjects[0].encryptedMetadata;
+        }
+
+        // Kas url
+        auto kasUrlFromTDF = manifestDataModel.encryptionInformation.keyAccessObjects[0].url;
 
         // Request body
         nlohmann::json requestBody;
         std::string rewrapUrl;
-        requestBody[kKeyAccess] = keyAccess;
+        requestBody[kKeyAccess] = keyAccessJson;
 
-        auto &policy = manifest[kEncryptionInformation][kPolicy];
+        auto policy = manifestDataModel.encryptionInformation.policy;
         requestBody[kPolicy] = policy;
 
         std::string requestBodyStr;
@@ -1276,23 +1328,23 @@ namespace virtru {
         return protocol;
     }
 
-    /// Return the manifest from the tdf input provider.
-    std::string TDFImpl::getManifest(IInputProvider& inputProvider) const {
+    /// Return the manifest data model from the tdf input provider.
+    ManifestDataModel TDFImpl::getManifest(IInputProvider& inputProvider) const {
         LogTrace("TDFImpl::getManifest from tdf stream");
 
-        std::string manifestStr;
+        ManifestDataModel dataModel;
 
         auto protocol = encryptedWithProtocol(inputProvider);
         if (protocol == Protocol::Zip) {
             TDFArchiveReader reader{&inputProvider,
                                     kTDFManifestFileName,
                                     kTDFPayloadFileName};
-            manifestStr = reader.getManifest();
-        } else { // html format
+            dataModel = reader.getManifest();
 
-            if (protocol == Protocol::Xml) {
-                ThrowException("XML TDF not supported", VIRTRU_TDF_FORMAT_ERROR);
-            }
+        } else if (protocol == Protocol::Xml) {
+            TDFXMLReader reader{inputProvider};
+            dataModel = reader.getManifest();
+        } else { // html format
 
             auto dataSize = inputProvider.getSize();
             auto buffer = std::make_unique<std::uint8_t[]>(dataSize);
@@ -1305,39 +1357,28 @@ namespace virtru {
             auto bytes = gsl::make_span(buffer.get(), dataSize);
             auto manifestData = getTDFZipData(toBytes(bytes), true);
 
+            std::string manifestStr;
             manifestStr.append(manifestData.begin(), manifestData.end());
+
+            dataModel = ManifestDataModel::CreateModelFromJson(manifestStr);
         }
 
-        return manifestStr;
+        return dataModel;
     }
 
     /// Retrive the policy from the manifest.
-    std::string TDFImpl::getPolicyFromManifest(const std::string &manifestStr) const {
+    std::string TDFImpl::getPolicyFromManifest(const ManifestDataModel& manifestDataModel) const {
         LogTrace("TDFImpl::getPolicyFromManifest");
 
-        auto manifest = nlohmann::json::parse(manifestStr);
-
-        if (!manifest.contains(kEncryptionInformation)) {
-            std::string errorMsg{"'encryptionInformation' not found in the manifest of tdf."};
-            ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
-        }
-
-        auto &encryptionInformation = manifest[kEncryptionInformation];
-
-        if (!encryptionInformation.contains(kPolicy)) {
-            std::string errorMsg{"'policy' not found in the manifest of tdf."};
-            ThrowException(std::move(errorMsg), VIRTRU_TDF_FORMAT_ERROR);
-        }
-
         // Get policy
-        std::string base64Policy = encryptionInformation[kPolicy];
+        std::string base64Policy = manifestDataModel.encryptionInformation.policy;
         auto policyStr = base64Decode(base64Policy);
         return policyStr;
     }
 
     /// Retrive the policy uuid(id) from the manifest.
-    std::string TDFImpl::getPolicyIdFromManifest(const std::string &manifestStr) const {
-        auto policyStr = getPolicyFromManifest(manifestStr);
+    std::string TDFImpl::getPolicyIdFromManifest(const ManifestDataModel& manifestDataModel) const {
+        auto policyStr = getPolicyFromManifest(manifestDataModel);
         auto policy = nlohmann::json::parse(policyStr);
 
         if (!policy.contains(kUid)) {
@@ -1349,10 +1390,11 @@ namespace virtru {
     }
 
     /// Validate the supported cipher type
-    void TDFImpl::validateCipherType(const nlohmann::json& manifest) const {
+    void TDFImpl::validateCipherType(const ManifestDataModel& manifestDataModel) const {
         // Get the algorithm and key type.
-        std::string algorithm = manifest[kEncryptionInformation][kMethod][kCipherAlgorithm];
-        std::string keyType = manifest[kEncryptionInformation][kEncryptKeyType];
+
+        auto algorithm = manifestDataModel.encryptionInformation.method.algorithm;
+        auto keyType = manifestDataModel.encryptionInformation.keyAccessType;
 
         if (!boost::iequals(algorithm, kCipherAlgorithmGCM)) {
             ThrowException("Only AES GCM cipher algorithm is supported for tdf operations.", VIRTRU_CRYPTO_ERROR);
@@ -1364,17 +1406,16 @@ namespace virtru {
     }
 
     /// Validate the root signature.
-    void TDFImpl::validateRootSignature(SplitKey& splitKey, const nlohmann::json& manifest) const {
+    void TDFImpl::validateRootSignature(SplitKey& splitKey, const ManifestDataModel& manifestDataModel) const {
 
-        auto &rootSignature = manifest[kEncryptionInformation][kIntegrityInformation][kRootSignature];
-        std::string rootSignatureAlg = rootSignature[kRootSignatureAlg];
-        std::string rootSignatureSig = rootSignature[kRootSignatureSig];
+        auto rootSignatureAlg = manifestDataModel.encryptionInformation.integrityInformation.rootSignature.algorithm;
+        auto rootSignatureSig = manifestDataModel.encryptionInformation.integrityInformation.rootSignature.signature;
+
+        std::string aggregateHash;
 
         // Get the hashes from the segments and combine.
-        std::string aggregateHash;
-        const auto&  segmentInfos= manifest[kEncryptionInformation][kIntegrityInformation][kSegments];
-        for (const auto& segment : segmentInfos) {
-            std::string hash = segment[kHash];
+        for (auto segment: manifestDataModel.encryptionInformation.integrityInformation.segments) {
+            std::string hash = segment.hash;
             aggregateHash.append(base64Decode(hash));
         }
 
@@ -1385,18 +1426,6 @@ namespace virtru {
         }
 
         LogDebug("RootSignatureSig is validated.");
-
-        auto &integrityInformation = manifest[kEncryptionInformation][kIntegrityInformation];
-
-        // Check for default segment size.
-        if (!integrityInformation.contains(kSegmentSizeDefault)) {
-            ThrowException("SegmentSizeDefault is missing in tdf", VIRTRU_TDF_FORMAT_ERROR);
-        }
-
-        // Check for default encrypted segment size.
-        if (!integrityInformation.contains(kEncryptedSegSizeDefault)) {
-            ThrowException("EncryptedSegmentSizeDefault is missing in tdf", VIRTRU_TDF_FORMAT_ERROR);
-        }
     }
 
 } // namespace virtru

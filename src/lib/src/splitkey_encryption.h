@@ -16,6 +16,7 @@
 #include "encryption_strategy.h"
 #include "tdf_constants.h"
 #include "crypto/crypto_utils.h"
+#include "manifest_data_model.h"
 
 #include <memory>
 
@@ -46,8 +47,8 @@ namespace virtru {
         void addKeyAccess(std::unique_ptr<KeyAccess> keyAccess) override;
 
         /// Generate and return manifest.
-        /// \return - The manifest representation of json object.
-        nlohmann::json getManifest() override;
+        /// \return - The manifest representation of data model.
+        ManifestDataModel getManifest() override;
 
         /// Encrypt the data using the cipher.
         /// \param data - A buffer which contains data to be encrypted

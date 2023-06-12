@@ -21,6 +21,7 @@
 #include "bytes.h"
 #include "tdf_exception.h"
 #include "sdk_constants.h"
+#include "manifest_data_model.h"
 
 #include "nlohmann/json.hpp"
 #include <boost/test/included/unit_test.hpp>
@@ -110,12 +111,10 @@ BOOST_AUTO_TEST_SUITE(test_splitkey_encryption_suite)
                                                                                   policyObject, metaData)};
         BOOST_CHECK_THROW(splitKey.addKeyAccess(std::move(keyAccess)), Exception);
 
-        std::string manifest = to_string(splitKey.getManifest());
-        std::cout << "Manifest:" << manifest << std::endl;
+        auto manifestDataModel = splitKey.getManifest();
+        auto keyAccessDataModel = manifestDataModel.encryptionInformation.keyAccessObjects.front();
 
-        nlohmann::json manifestJson = nlohmann::json::parse(manifest);
-        auto keyAccessObject = KeyAccessObject::createKeyAccessObjectFromJson(to_string(manifestJson[kKeyAccess][0]));
-
+        auto keyAccessObject = KeyAccessObject::createKeyAccessObjectFromDataModel(keyAccessDataModel);
         std::cout << "WrappedKey:" << keyAccessObject.getWrappedKey() << std::endl;
         auto decodedWrappedKey = base64Decode(keyAccessObject.getWrappedKey());
 

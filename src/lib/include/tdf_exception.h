@@ -34,7 +34,7 @@ namespace virtru {
 
     class Exception : public std::runtime_error {
     public:
-        explicit Exception(const std::string &what, int code = VIRTRU_GENERAL_ERROR) :
+        explicit Exception(std::string what, int code = VIRTRU_GENERAL_ERROR) :
                 std::runtime_error{"[Error code: "s + std::to_string(code) + "] " + what},
                 m_code{code} {}
 

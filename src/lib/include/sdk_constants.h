@@ -166,15 +166,53 @@ namespace virtru {
                                                      "dissemination list. This will allow any entity with a "
                                                      "valid Entity Object to access this TDF.";
 
-    // XML TDF elements
+    // ICTDF XML elements
+    static constexpr auto kTrustedDataCollectionElement = "TrustedDataCollection";
     static constexpr auto kTrustedDataObjectElement = "TrustedDataObject";
     static constexpr auto kEncryptionInformationElement = "EncryptionInformation";
+    static constexpr auto kHandlingAssertionElement = "HandlingAssertion";
+    static constexpr auto kEdhElement = "Edh";
+    static constexpr auto kStringStatementElement = "StringStatement";
+    static constexpr auto kBase64BinaryStatementElement = "Base64BinaryStatement";
+    static constexpr auto kReferenceStatementElement = "ReferenceStatement";
+    static constexpr auto kStructuredStatementElement = "StructuredStatement";
+    static constexpr auto kAssertionElement = "Assertion";
+    static constexpr auto kScopeAttribute = "scope";
+    static constexpr auto kAppliesToStateAttribute = "appliesToState";
+    static constexpr auto kIdAttribute = "id";
+    static constexpr auto kTypeAttribute = "type";
+    static constexpr auto kHandlingStatementElement = "HandlingStatement";
+    static constexpr auto kKeyAccessElement = "KeyAccess";
+    static constexpr auto kWrappedPDPKeyElement = "WrappedPDPKey";
+    static constexpr auto kKeyValueElement = "KeyValue";
+    static constexpr auto kKeySizeElement = "KeySize";
+    static constexpr auto kIVParamsElement = "IVParams";
+    static constexpr auto kAuthenticationTagElement = "AuthenticationTag";
+    static constexpr auto kAlgorithmAttribute = "algorithm";
+    static constexpr auto kRemoteStoredKeyElement = "RemoteStoredKey";
+    static constexpr auto kProtocolElement = "protocol";
+    static constexpr auto kUriElement = "uri";
+    static constexpr auto kEncryptionMethodElement = "EncryptionMethod";
+    static constexpr auto kEncryptedPolicyObjectElement = "EncryptedPolicyObject";
+    static constexpr auto kEncryptedPolicyObject = "EncryptedPolicyObject";
+    static constexpr auto kIdElement = "id";
+    static constexpr auto kScopeElement = "scope";
+    static constexpr auto kAppliesToStateElement = "appliesToState";
+    static constexpr auto kBindingElement = "Binding";
+    static constexpr auto kSignerElement = "Signer";
+    static constexpr auto kIssuerElement = "issuer";
+    static constexpr auto kSignatureValueElement = "SignatureValue";
+    static constexpr auto kSignatureAlgorithmElement = "signatureAlgorithm";
     static constexpr auto kBase64BinaryPayloadElement = "Base64BinaryPayload";
+    static constexpr auto kTDFReferenceValuePayload = "ReferenceValuePayload";
     static constexpr auto kMediaTypeAttribute = "mediaType";
     static constexpr auto kFilenameAttribute = "filename";
     static constexpr auto kIsEncryptedAttribute = "isEncrypted";
+    static constexpr auto kUriAttribute = "uri";
     static constexpr auto kTextPlainMediaType = "text/plain";
     static constexpr auto kAttributeValueAsTrue = "true";
+    static constexpr auto kKeySize = "32";
+
 
     // OIDC constants
     static constexpr auto kBearerToken = "Bearer";

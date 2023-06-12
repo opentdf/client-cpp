@@ -13,6 +13,7 @@
 #define VIRTRU_TDF_WRITER_H
 
 #include "crypto/bytes.h"
+#include "manifest_data_model.h"
 
 namespace virtru {
 
@@ -27,13 +28,11 @@ namespace virtru {
         /// \param payloadSize
         virtual void setPayloadSize(int64_t payloadSize) = 0;
 
-        /// Append the manifest contents to the archive.
-        /// \param manifest - Contents of the manifest file.
-        /// NOTE: Manifest should be always be added at the end after writing the payload for TDF.
-        /// NOTE: Manifest should be always be added before writing the payload for TDF2.
-        virtual void appendManifest(std::string&& manifest) = 0;
+        /// Append the manifest contents to the output source.
+        /// \param manifestDataModel - Data model containing the manifest data.
+        virtual void appendManifest(ManifestDataModel manifestDataModel) = 0;
 
-        /// Append the manifest contents to the archive.
+        /// Append the payload contents to the output source.
         /// \param payload - encrypted payload.
         virtual void appendPayload(Bytes payload) = 0;
 

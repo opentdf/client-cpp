@@ -203,6 +203,17 @@ void testNanoTDFOperations(TDFClientBase* client1, NanoTDFClient* client2) {
     }
 }
 
+void twoFilesAreSame(const std::string& filename1, const std::string& filename2) {
+    std::ifstream ifs1(filename1);
+    std::ifstream ifs2(filename2);
+
+    std::istream_iterator<char> b1(ifs1), e1;
+    std::istream_iterator<char> b2(ifs2), e2;
+
+    BOOST_CHECK_EQUAL_COLLECTIONS(b1, e1, b2, e2);
+}
+
+
 BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
 
     using namespace virtru;
@@ -546,6 +557,91 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
 
             // Test tdf with user creds
             testTDFOperations(oidcClientTDF.get());
+
+            // create a sample file
+            std::string testFile("testing-ictdf-tdf.txt");
+            std::string ictdfTestFile("testing-xml.tdf");
+
+            {
+                std::ofstream outStream{testFile.c_str(), std::ios_base::out | std::ios_base::binary};
+                if (!outStream) {
+                    BOOST_FAIL("Failed to open file for writing sample data.");
+                }
+
+                auto sampleText = "Virtru";
+
+                // Write to a file
+                outStream.write(sampleText, std::strlen(sampleText));
+            }
+
+            auto ictdfClient = std::make_unique<TDFClient>(clientCreds, KAS_URL);
+            ictdfClient->setXMLFormat();
+            TDFStorageType plainTextFile;
+            plainTextFile.setTDFStorageFileType(testFile);
+
+            // Add handling assertion
+            HandlingAssertion handlingAssertion{Scope::TDO};
+            handlingAssertion.setId("assertion1");
+            handlingAssertion.setAppliesToState(AppliesToState::unencrypted);
+            handlingAssertion.setHandlingStatement("            <edh:Edh xmlns:edh=\"urn:us:gov:ic:edh\"\n"
+                                                   "                     xmlns:usagency=\"urn:us:gov:ic:usagency\"\n"
+                                                   "                     xmlns:icid=\"urn:us:gov:ic:id\"\n"
+                                                   "                     xmlns:arh=\"urn:us:gov:ic:arh\"\n"
+                                                   "                     xmlns:ism=\"urn:us:gov:ic:ism\"\n"
+                                                   "                     xmlns:ntk=\"urn:us:gov:ic:ntk\"\n"
+                                                   "                     usagency:CESVersion=\"201609\"\n"
+                                                   "                     icid:DESVersion=\"1\"\n"
+                                                   "                     edh:DESVersion=\"201609\"\n"
+                                                   "                     arh:DESVersion=\"3\"\n"
+                                                   "                     ism:DESVersion=\"201609.201707\"\n"
+                                                   "                     ism:ISMCATCESVersion=\"201709\"\n"
+                                                   "                     ntk:DESVersion=\"201508\">\n"
+                                                   "                <icid:Identifier>guide://999990/something</icid:Identifier>\n"
+                                                   "                <edh:DataItemCreateDateTime>2012-05-28T15:06:00Z</edh:DataItemCreateDateTime>\n"
+                                                   "                <edh:ResponsibleEntity edh:role=\"Custodian\">\n"
+                                                   "                    <edh:Country>USA</edh:Country>\n"
+                                                   "                    <edh:Organization>DNI</edh:Organization>\n"
+                                                   "                </edh:ResponsibleEntity>\n"
+                                                   "                <arh:Security ism:compliesWith=\"USGov USIC\"\n"
+                                                   "                              ism:resourceElement=\"true\"\n"
+                                                   "                              ism:createDate=\"2012-05-28\"\n"
+                                                   "                              ism:classification=\"U\"\n"
+                                                   "                              ism:ownerProducer=\"USA\"/>\n"
+                                                   "            </edh:Edh>");
+            plainTextFile.setHandlingAssertion(handlingAssertion);
+            ictdfClient->encryptFile(plainTextFile, ictdfTestFile);
+
+            TDFClient::convertICTDFToTDF(ictdfTestFile, "testing-json.tdf");
+
+            {
+                auto jsonTDFClient = std::make_unique<TDFClient>(clientCreds, KAS_URL);
+                TDFStorageType jsonTDFFile;
+                jsonTDFFile.setTDFStorageFileType(testFile);
+
+                // Add default assertion
+                DefaultAssertion defaultAssertions{Scope::TDO};
+                defaultAssertions.setId("assertion2");
+                StatementGroup statementGroup{StatementType::Base64BinaryStatement};
+                statementGroup.setIsEncrypted(true);
+                statementGroup.setValue("VGhpcyBpcyBhIGJpbmFyeSBzdGF0ZW1lbnQ=");
+                defaultAssertions.setStatementGroup(statementGroup);
+                jsonTDFFile.setDefaultAssertion(defaultAssertions);
+
+                jsonTDFClient->encryptFile(jsonTDFFile, "testing-json-2.tdf");
+
+                jsonTDFFile.setTDFStorageFileType("testing-json-2.tdf");
+                jsonTDFClient->decryptFile(jsonTDFFile, "testing-ictdf-tdf-2.txt");
+
+                twoFilesAreSame("testing-ictdf-tdf-2.txt", testFile);
+
+                TDFClient::convertTDFToICTDF("testing-json.tdf", "testing-xml.tdf");
+            }
+
+            auto jsonTDFClient = std::make_unique<TDFClient>(clientCreds, KAS_URL);
+            TDFStorageType xmlTDFFile;
+            xmlTDFFile.setTDFStorageFileType("testing-xml.tdf");
+            jsonTDFClient->decryptFile(xmlTDFFile, "testing-ictdf-tdf-3.txt");
+            twoFilesAreSame("testing-ictdf-tdf-3.txt", testFile);
 #endif
 
         }

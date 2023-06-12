@@ -96,7 +96,7 @@ namespace virtru {
         EAD_AES_256_HMAC_SHA_256 = 0x06
     };
 
-    // Total unique IVs(2^24 -1) used for encrypting the nano tdf payloads
+    // Total unique IVs(2^23 -1) used for encrypting the nano tdf payloads
     // IV starts from 1 since the 0 IV is reserved for policy encryption
     const uint32_t kNTDFMaxKeyIterations           = 8388606;
 

@@ -57,13 +57,11 @@ namespace virtru {
         /// \param payloadSize
         void setPayloadSize(int64_t payloadSize) override;
 
-        /// Append the manifest contents to the archive.
-        /// \param manifest - Contents of the manifest file.
-        /// NOTE: Manifest should be always be added at the end after writing the payload for TDF.
-        /// NOTE: Manifest should be always be added before writing the payload for TDF2.
-        void appendManifest(std::string&& manifest) override;
+        /// Append the manifest contents to the HTML output source.
+        /// \param manifestDataModel - Data model containing the manifest data.
+        void appendManifest(ManifestDataModel manifestDataModel) override;
 
-        /// Append the manifest contents to the archive.
+        /// Append the payload contents to the HTML output source.
         /// \param payload - encrypted payload.
         void appendPayload(Bytes payload) override;
 

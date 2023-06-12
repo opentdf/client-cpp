@@ -121,6 +121,8 @@ namespace virtru {
         PolicyObject m_policyObject;
         std::vector<KeyAccessObject> m_keyAccessObjects;
         std::vector<std::string> m_htmlTemplateTokens;
+        std::vector<HandlingAssertion> m_handlingAssertions;
+        std::vector<DefaultAssertion> m_defaultAssertions;
         EntityObject m_entityObject;
         KeyType m_keyType {KeyType::split};
         KeyAccessType m_keyAccessType {KeyAccessType::Remote};

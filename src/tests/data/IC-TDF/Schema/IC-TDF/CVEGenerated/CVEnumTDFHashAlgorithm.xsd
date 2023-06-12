@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns="urn:us:gov:ic:cvenum:tdf:hashalgorithm"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            elementFormDefault="qualified"
+            xml:lang="en"
+            targetNamespace="urn:us:gov:ic:cvenum:tdf:hashalgorithm">
+   <xsd:annotation>
+      <xsd:documentation>
+                    The W3C XML Schema fragment encoding types for CVEnumTDFHashAlgorithm Version 2 controlled vocabulary enumerations. This file is generated, so edits should be made to the CVEnumTDFHashAlgorithm.xml CVE it is based on, instead of here.
+                </xsd:documentation>
+   </xsd:annotation>
+   <!--*************************************************************-->
+<!--Generated TYPE DEFINITIONS ..................................-->
+<!--*************************************************************-->
+<xsd:simpleType name="CVEnumTDFHashAlgorithm">
+      <xsd:annotation>
+         <xsd:documentation>(U) All valid algorithms and patterns for hash algorithm for use with BindingValueType
+                         PERMISSIBLE VALUES
+                         
+                         The permissible values for this simple type are defined in the Controlled Value Enumeration:
+                         
+                         CVEnumTDFHashAlgorithm.xml
+                         
+                     </xsd:documentation>
+      </xsd:annotation>
+      <xsd:restriction base="xsd:token">
+         <xsd:enumeration value="SHA1">
+            <xsd:annotation>
+               <xsd:documentation>Secure Hash Algorithm (SHA) with a a 160 bit message digest. SHA-1 is the most widely used of the existing SHA hash functions, and is employed in several widely used applications and protocols
+			</xsd:documentation>
+            </xsd:annotation>
+         </xsd:enumeration>
+         <xsd:enumeration value="SHA256">
+            <xsd:annotation>
+               <xsd:documentation>Secure Hash Algorithm (SHA) with a a 256 bit message digest. 
+   		    </xsd:documentation>
+            </xsd:annotation>
+         </xsd:enumeration>
+         <xsd:enumeration value="SHA384">
+            <xsd:annotation>
+               <xsd:documentation>Secure Hash Algorithm (SHA) with a a 384 bit message digest. 
+   	        </xsd:documentation>
+            </xsd:annotation>
+         </xsd:enumeration>
+         <xsd:enumeration value="SHA512">
+            <xsd:annotation>
+               <xsd:documentation>Secure Hash Algorithm (SHA) with a a 512 bit message digest.
+   	        </xsd:documentation>
+            </xsd:annotation>
+         </xsd:enumeration>
+      </xsd:restriction>
+   </xsd:simpleType>
+</xsd:schema>

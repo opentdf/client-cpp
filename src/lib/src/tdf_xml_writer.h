@@ -13,24 +13,25 @@
 
 #include <string>
 #include <vector>
+#include <unordered_map>
 #include "tdf_writer.h"
 #include "tdf_constants.h"
 #include "crypto/bytes.h"
 #include "io_provider.h"
 #include "libxml2_deleters.h"
 #include "tdf_archive_writer.h"
+#include "tdf_xml_validator.h"
 
 namespace virtru {
 
     using namespace virtru::crypto;
+    using XMLAttributesNamesAndValues = std::unordered_map<std::string, std::string>;
 
     class TDFXMLWriter : public ITDFWriter {
     public:
         /// Constructor
-        /// \param manifestFilename - A manifest file name to be used in the TDF file (manifest.xml - TDF2,
-        ///                           manifest.json - TDF).
-        /// \param payloadFileName - A payload file name to be used in the TDF file
-        TDFXMLWriter(IOutputProvider& outputProvider, std::string manifestFilename, std::string payloadFileName);
+        /// \param outputProvider - The ictdf data will write to the output provider.
+        TDFXMLWriter(IOutputProvider& outputProvider);
 
         /// Delete default constructor
         TDFXMLWriter() = delete;
@@ -49,31 +50,58 @@ namespace virtru {
         /// \param payloadSize
         void setPayloadSize(int64_t payloadSize) override;
 
-        /// Append the manifest contents to the archive.
-        /// \param manifest - Contents of the manifest file.
-        /// NOTE: Manifest should be always be added at the end after writing the payload for TDF.
-        /// NOTE: Manifest should be always be added before writing the payload for TDF2.
-        void appendManifest(std::string&& manifest) override;
+        /// Append the manifest contents to the XML output source.
+        /// \param manifestDataModel - Data model containing the manifest data.
+        void appendManifest(ManifestDataModel manifestDataModel) override;
 
-        /// Append the manifest contents to the archive.
+        /// Append the payload contents to the XML output source.
         /// \param payload - encrypted payload.
         void appendPayload(Bytes payload) override;
 
         /// Finalize archive entry.
         void finish() override;
 
+        /// Establish a validator schema to verify input against
+        /// \param url - URL or file path to schema to use
+        /// \return - false if the supplied schema did not load correctly
+        bool setValidatorSchema(const std::string& url);
+
     private:
-        /// Create XML TDF buffer
-        /// \return The xmlBuffer containing the TDF
-        /// NOTE: Caller is responsible for deleting the buffer
-        xmlBufferPtr createTDFXML();
+        /// Add 'tdf:EncryptionInformation' element.
+        /// \param rootNode - The root node
+        /// \param ns - The namespace to be applied to all the child elements.
+        void addEncryptionInformationElement(xmlNodePtr rootNode, xmlNsPtr ns);
+
+        /// Add 'tdf:HandlingAssertion' element.
+        /// \param rootNode - The root node
+        /// \param ns - The namespace to be applied to all the child elements.
+        void addHandlingAssertionElement(xmlNodePtr rootNode, xmlNsPtr ns);
+
+        /// Add 'tdf:Assertion' element.
+        /// \param rootNode - The root node
+        /// \param ns - The namespace to be applied to all the child elements.
+        void addDefaultAssertionElement(xmlNodePtr rootNode, xmlNsPtr ns);
+
+        /// Add 'Base64BinaryPayload' element.
+        /// \param rootNode - The root node
+        /// \param ns - The namespace to be applied to all the child elements.
+        void addPayloadElement(xmlNodePtr rootNode, xmlNsPtr ns);
+
+        /// Create XML element and xmlTextWriter
+        /// \param writer - xml text writer object
+        /// \param elementName - Element name
+        /// \param elementValue - Element value
+        /// \param attrubutesNameAndValues  - Dictionary of attributes names and values
+        void createElement(xmlTextWriterPtr writer,
+                           const std::string& elementName,
+                           const std::string& elementValue,
+                           XMLAttributesNamesAndValues xmlAttributesNamesAndValues);
 
     private: /// Data
-        std::string             m_manifestFilename;
-        std::string             m_payloadFileName;
-        std::string             m_manifest;
+        ManifestDataModel       m_manifestDataModel;
         std::vector<gsl::byte>  m_binaryPayload;
         IOutputProvider&        m_outputProvider;
+        TDFXMLValidator         m_XmlValidatorPtr;
     };
 }
 

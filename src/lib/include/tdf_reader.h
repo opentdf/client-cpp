@@ -12,6 +12,7 @@
 #ifndef VIRTRU_TDF_READER_H
 #define VIRTRU_TDF_READER_H
 
+#include "manifest_data_model.h"
 #include "crypto/bytes.h"
 
 namespace virtru {
@@ -23,9 +24,9 @@ namespace virtru {
         /// Destructor
         virtual ~ITDFReader() = default;
 
-        /// Get the manifest content.
-        /// \return - Return the manifest as string.
-        virtual const std::string& getManifest() = 0;
+        /// Get the manifest data model.
+        /// \return - Return the manifest data model
+        virtual ManifestDataModel getManifest() = 0;
 
         /// Read payload of length starting the index.
         /// \param index - index within data where read is to begin

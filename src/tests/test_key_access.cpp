@@ -78,7 +78,10 @@ BOOST_AUTO_TEST_SUITE(test_key_access_suite)
         BOOST_TEST(keyAccessObject.getKasUrl() == kasUrl);
         BOOST_TEST(keyAccessObject.getKeyAccessTypeAsStr() == kKeyAccessWrapped);
         BOOST_TEST(keyAccessObject.getProtocolAsStr() == kKasProtocol);
-        BOOST_TEST_MESSAGE(keyAccessObject.toJsonString(true));
+        auto keyAccessDataModel = keyAccessObject.getDataModel();
+        BOOST_TEST(keyAccessDataModel.url == kasUrl);
+        BOOST_TEST(keyAccessDataModel.keyType == kKeyAccessWrapped);
+        BOOST_TEST(keyAccessDataModel.protocol == kKasProtocol);
     }
 
     BOOST_AUTO_TEST_CASE(test_remote_key_access_basic) {
@@ -99,7 +102,10 @@ BOOST_AUTO_TEST_SUITE(test_key_access_suite)
         BOOST_TEST(keyAccessObject.getKasUrl() == kasUrl);
         BOOST_TEST(keyAccessObject.getKeyAccessTypeAsStr() == kKeyAccessRemote);
         BOOST_TEST(keyAccessObject.getProtocolAsStr() == kKasProtocol);
-        BOOST_TEST_MESSAGE(keyAccessObject.toJsonString(true));
+        auto keyAccessDataModel = keyAccessObject.getDataModel();
+        BOOST_TEST(keyAccessDataModel.url == kasUrl);
+        BOOST_TEST(keyAccessDataModel.keyType == kKeyAccessRemote);
+        BOOST_TEST(keyAccessDataModel.protocol == kKasProtocol);
     }
 
 BOOST_AUTO_TEST_SUITE_END()

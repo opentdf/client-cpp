@@ -15,6 +15,7 @@
 
 #include <string>
 #include "tdf_constants.h"
+#include "manifest_data_model.h"
 
 namespace virtru {
 
@@ -97,10 +98,9 @@ namespace virtru {
         /// \return - Return Base64 encoding string of the meta data.
         std::string getEncryptedMetadata() const;
 
-        /// Return a json string representation of the key access object
-        /// \param prettyPrint - If set to true, formats the json string.
-        /// \return - The json string representation of this key access object.
-        std::string toJsonString(bool prettyPrint = false) const;
+        /// Return a data model representation of the key access object
+        /// \return - The data model representation of this key access object.
+        KeyAccessDataModel getDataModel() const;
 
         /// Destructor
         ~KeyAccessObject();
@@ -119,10 +119,10 @@ namespace virtru {
 
     public: /// static
 
-        /// Constructs KeyAccessObject by parsing 'keyAccessObjectStr' json string. On error
+        /// Constructs KeyAccessObject by parsing key access data model. On error
         /// throw an virtru::Exception
-        /// \param keyAccessObjectStr  - Json string
-        static KeyAccessObject createKeyAccessObjectFromJson(const std::string& keyAccessObjectJsonStr);
+        /// \param keyAccessDataModel  - Key access data model object
+        static KeyAccessObject createKeyAccessObjectFromDataModel(const KeyAccessDataModel& keyAccessDataModel);
 
     private: /// Data
         KeyAccessType m_keyAccessType;

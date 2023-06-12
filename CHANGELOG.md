@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+1.4.0
+ - PLAT-2507 - Add validation against schema for IC-TDF
+ - PLAT-2401 - Support IC-TDF format
+
 1.3.11
  - PLAT-2015 - More compiler warning cleanup
  - PLAT-2460 - Bug - fix TDFIsTDF C API function so it returns only true/false values

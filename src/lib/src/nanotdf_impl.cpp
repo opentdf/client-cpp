@@ -559,7 +559,7 @@ namespace virtru {
             // Sync the policy to server and add the url as policy body.
             ThrowException("Remote policy is not supported.", VIRTRU_NANO_TDF_FORMAT_ERROR);
         } else {
-            ThrowException("Unknow nano tdf policy.", VIRTRU_NANO_TDF_FORMAT_ERROR);
+            ThrowException("Unknown nano tdf policy.", VIRTRU_NANO_TDF_FORMAT_ERROR);
         }
 
         if (m_tdfBuilder.m_impl->m_useECDSABinding) {
