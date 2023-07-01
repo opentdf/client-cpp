@@ -7,6 +7,8 @@
 
 #define BOOST_TEST_MODULE test_asym_encoding_suite
 
+#define NOMINMAX
+#include <limits>
 #include "asym_encryption.h"
 #include "bytes.h"
 #include "crypto_utils.h"
@@ -282,26 +284,60 @@ const auto rsa4096PrivateKey =
 BOOST_AUTO_TEST_SUITE_END()
 
 std::string decryptMessage(const std::string& privateKey, const std::string& ciphertextBase64) {
-    
+    using namespace virtru;
     using namespace virtru::crypto;
-    
-    BIO_free_ptr privateKeyBuffer { BIO_new_mem_buf(privateKey.data(), privateKey.size()) };
-    RSA_free_ptr rsaPrivateKey { PEM_read_bio_RSAPrivateKey(privateKeyBuffer.get(), nullptr, nullptr, nullptr) };
-
     auto ciphertext = base64Decode(ciphertextBase64);
+    auto encryptedData = toBytes(ciphertext);
 
-    const auto rsaSize = RSA_size(rsaPrivateKey.get());
-    std::string output(rsaSize, '\0');
-    const auto plaintextLen = RSA_private_decrypt(ciphertext.size(),
-                                                  reinterpret_cast<unsigned char*>(ciphertext.data()),
-                                                  reinterpret_cast<unsigned char*>(output.data()),
-                                                  rsaPrivateKey.get(),
-                                                  RSA_PKCS1_OAEP_PADDING);
+    EVP_PKEY_free_ptr privateKeyPtr;
+    BIO_free_ptr privateKeyBuffer { BIO_new_mem_buf(privateKey.data(), privateKey.size()) };
 
-    if (-1 == plaintextLen) {
+    if (!privateKeyBuffer) {
+        ThrowOpensslException("Failed to allocate memory for private key.");
+    }
+
+    // Store the private key into RSA struct
+    privateKeyPtr.reset(PEM_read_bio_PrivateKey(privateKeyBuffer.get(), nullptr, nullptr, nullptr));
+    if (!privateKeyPtr) {
+        ThrowOpensslException("Failed to create a private key.");
+    }
+
+    if (encryptedData.size() > std::numeric_limits<int>::max()) {
+        ThrowException("Asymmetric decoding input buffer is too big");
+    }
+
+    size_t decryptBufSize{};
+    EVP_PKEY_CTX_free_ptr evpPkeyCtxPtr { EVP_PKEY_CTX_new(privateKeyPtr.get(), NULL)};
+    if (!evpPkeyCtxPtr) {
+        ThrowOpensslException("Failed to create EVP_PKEY_CTX.");
+    }
+
+    auto ret = EVP_PKEY_decrypt_init(evpPkeyCtxPtr.get());
+    if (ret != 1) {
+        ThrowOpensslException("Failed to initialize decryption process.");
+    }
+
+    ret = EVP_PKEY_CTX_set_rsa_padding(evpPkeyCtxPtr.get(), RSA_PKCS1_OAEP_PADDING);
+    if (!evpPkeyCtxPtr) {
+        ThrowOpensslException("Failed to create EVP_PKEY_CTX.");
+    }
+
+    if (EVP_PKEY_decrypt(evpPkeyCtxPtr.get(), nullptr, &decryptBufSize, toUchar(encryptedData.data()),
+                         static_cast<int>(encryptedData.size())) <= 0) {
+        ThrowOpensslException("Failed to calaculate the length of decrypt buffer EVP_PKEY_decrypt.");
+    }
+
+    std::vector<char> decryptedData(decryptBufSize);
+    ret = EVP_PKEY_decrypt(evpPkeyCtxPtr.get(),
+                           reinterpret_cast<std::uint8_t *>(decryptedData.data()),
+                           &decryptBufSize,
+                           toUchar(encryptedData.data()),
+                           static_cast<int>(encryptedData.size()));
+    if (-1 == ret) {
         ThrowOpensslException("Decryption failed using asymmetric decoding.");
     }
-    
-    output.resize(plaintextLen);
-    return output;
+    decryptedData.resize(decryptBufSize);
+
+    std::string plainText(decryptedData.begin(), decryptedData.end());
+    return plainText;
 }

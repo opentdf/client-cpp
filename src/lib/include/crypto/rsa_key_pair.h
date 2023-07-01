@@ -43,10 +43,10 @@ namespace virtru::crypto {
         RsaKeyPair & operator=(RsaKeyPair &&) = delete;
 
     private:
-        explicit RsaKeyPair(RSA_free_ptr rsa);
+        explicit RsaKeyPair(EVP_PKEY_free_ptr rsa);
 
         // Data
-        RSA_free_ptr m_rsa;
+        EVP_PKEY_free_ptr m_rsa;
     };
 }  // namespace virtru::crypto
 

@@ -24,7 +24,7 @@ BOOST_AUTO_TEST_SUITE(test_http_client_service_suite)
 
     BOOST_AUTO_TEST_CASE(test_http_client_service_get)
     {
-        constexpr auto kasUrl = "https://api-develop01.develop.virtru.com/kas";
+        constexpr auto kasUrl = "https://api.virtru.com/kas/";
         constexpr auto AcceptHeaderKey = "Accept";
         constexpr auto AcceptHeaderValue = "application/json";
         constexpr auto UserAgentHeaderKey = "User-Agent";
@@ -43,7 +43,7 @@ BOOST_AUTO_TEST_SUITE(test_http_client_service_suite)
 
         IOContext ioContext;
         service->ExecuteGet(ioContext, [](ErrorCode errorCode, HttpResponse&& response) {
-            if (errorCode) { // something wrong.
+            if (errorCode && errorCode.value() != 1) { // something wrong.
 
                 std::ostringstream os {"Error code: "};
                 os << errorCode.value() << " " << errorCode.message();

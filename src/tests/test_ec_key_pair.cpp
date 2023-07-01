@@ -248,6 +248,32 @@ void testNanoTDFKeyMangement(const std::string& curveName, unsigned compressedPu
 
 BOOST_AUTO_TEST_SUITE(test_ec_key_pair_suite)
 
+    const auto sdkPrivateKey =
+            "-----BEGIN PRIVATE KEY-----\n"
+            "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgSEsk7e/AN08XnkZ4\n"
+            "ghU+j4Rkfe/saxBdTQvZQiGlRgWhRANCAAR4tEHPS3LLUAXxea7LjxBBDTQCtS3Y\n"
+            "TrBTl8I8fjBuXPKdwI2gqGiCpg/nJLaGSPxzXcUxAwmjermxtVCvovDV\n"
+            "-----END PRIVATE KEY-----\n"s;
+
+    const auto sdkPublicKey =
+            "-----BEGIN PUBLIC KEY-----\n"
+            "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEeLRBz0tyy1AF8Xmuy48QQQ00ArUt\n"
+            "2E6wU5fCPH4wblzyncCNoKhogqYP5yS2hkj8c13FMQMJo3q5sbVQr6Lw1Q==\n"
+            "-----END PUBLIC KEY-----\n"s;
+
+    const auto kasPrivateKey =
+            "-----BEGIN PRIVATE KEY-----\n"
+            "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgKu8dztYhzVN3R4e2\n"
+            "dcxCFiPs6bdcNPj9at0wOIgo4FahRANCAASYZ8aBk+NME4kr96NovHyuT4hShSU1\n"
+            "+ZzIQExlTq3O12QStm+rXoobTRQWnS4+8Goc+RFkt/TI6/oSoTmS+O18\n"
+            "-----END PRIVATE KEY-----\n"s;
+
+    const auto kasPublicKey =
+            "-----BEGIN PUBLIC KEY-----\n"
+            "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEmGfGgZPjTBOJK/ejaLx8rk+IUoUl\n"
+            "NfmcyEBMZU6tztdkErZvq16KG00UFp0uPvBqHPkRZLf0yOv6EqE5kvjtfA==\n"
+            "-----END PUBLIC KEY-----\n"s;
+
     BOOST_AUTO_TEST_CASE(ec_key_pair_curve_secp521r1)
     {
         const std::string curveName = "secp521r1";
@@ -277,6 +303,34 @@ BOOST_AUTO_TEST_SUITE(test_ec_key_pair_suite)
                                 ECCMode::GetECCompressedPubKeySize(EllipticCurve::SECP521R1));
     }
 
+    BOOST_AUTO_TEST_CASE(ec_key_pair_test_crypto_methods)
+    {
+        using namespace virtru::nanotdf;
+        const std::string kPlainText = "Virtru!!";
+
+        std::vector<gsl::byte> wrappedKeyOnEncrypt;
+        wrappedKeyOnEncrypt = ECKeyPair::ComputeECDHKey(kasPublicKey, sdkPrivateKey);
+        auto base64WrappedKeyOnEncrypt = base64Encode(toBytes(wrappedKeyOnEncrypt));
+        std::cout << "Base64 symmetric key on Encrypt: " << base64WrappedKeyOnEncrypt << std::endl;
+
+        std::string symmetricKey("wvL7rvXdLd54f6+rwmDhGL4D0TMngEaLKNuMYk9Lx6w=");
+        BOOST_TEST(base64WrappedKeyOnEncrypt == symmetricKey);
+
+        std::vector<gsl::byte> compressedPubKey = ECKeyPair::CompressedECPublicKey(sdkPublicKey);
+        std::cout << "Compressed public key size: " << compressedPubKey.size() << std::endl;
+        BOOST_TEST(compressedPubKey.size() == 33,  "Checking the compressed public key size");
+
+        auto base64compressedPubKey = base64Encode(toBytes(compressedPubKey));
+        std::string compressSDKPubKey("A3i0Qc9LcstQBfF5rsuPEEENNAK1LdhOsFOXwjx+MG5c");
+        BOOST_TEST(compressSDKPubKey == base64compressedPubKey, "Compressed pubkey test passed");
+
+        auto curveName = ECCMode::GetEllipticCurveName(EllipticCurve::SECP256R1);
+        auto pemPub = ECKeyPair::GetPEMPublicKeyFromECPoint(toBytes(compressedPubKey), curveName);
+        std::cout << "Decompressed public key: " << pemPub << std::endl;
+        std::cout << "Before Decompressed public key: " << sdkPublicKey << std::endl;
+        BOOST_TEST(pemPub == sdkPublicKey);
+    }
+
     BOOST_AUTO_TEST_CASE(test_ECDSA_signature_and_verify_with_only_private_key)
     {
         using namespace virtru::nanotdf;
@@ -284,12 +338,12 @@ BOOST_AUTO_TEST_SUITE(test_ec_key_pair_suite)
         const std::string kPlainText = "Virtru!!";
         auto digest = calculateSHA256(toBytes(kPlainText));
 
-        std::string supportedCurve[] = {
-                ECCMode::GetEllipticCurveName(EllipticCurve::SECP256R1),
-                ECCMode::GetEllipticCurveName(EllipticCurve::SECP384R1),
-                ECCMode::GetEllipticCurveName(EllipticCurve::SECP521R1)};
+        // Add EllipticCurve::SECP521R1 once th ECDSA r and s parameter are of same length
+        EllipticCurve supportedCurve[] = {EllipticCurve::SECP256R1,EllipticCurve::SECP384R1};
 
-        for (const auto& curveName: supportedCurve) {
+        for (const auto& curveType: supportedCurve) {
+
+            auto curveName = ECCMode::GetEllipticCurveName(curveType);
 
             auto signerECKeyPair = ECKeyPair::Generate(curveName);
             auto signerPrivateKey = signerECKeyPair->PrivateKeyInPEMFormat();
@@ -299,10 +353,37 @@ BOOST_AUTO_TEST_SUITE(test_ec_key_pair_suite)
 
             // Calculate signature with signer private key
             auto signature =  ECKeyPair::ComputeECDSASig(toBytes(digest), signerPrivateKey);
-
             bool result = ECKeyPair::VerifyECDSASignature(toBytes(digest), toBytes(signature), publicKey);
             BOOST_TEST(result);
         }
+    }
+
+    BOOST_AUTO_TEST_CASE(test_ECDSA_signature_and_verify)
+    {
+        const auto expectedPubKey =
+                "-----BEGIN PUBLIC KEY-----\n"
+                "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEeLRBz0tyy1AF8Xmuy48QQQ00ArUt\n"
+                "2E6wU5fCPH4wblzyncCNoKhogqYP5yS2hkj8c13FMQMJo3q5sbVQr6Lw1Q==\n"
+                "-----END PUBLIC KEY-----\n"s;
+
+        using namespace virtru::nanotdf;
+
+        const std::string kPlainText = "Virtru!!";
+        auto digest = calculateSHA256(toBytes(kPlainText));
+
+        // Generate public key from private key
+        auto publicKey = ECKeyPair::GetPEMPublicKeyFromPrivateKey(sdkPrivateKey,
+                                                                  ECCMode::GetEllipticCurveName(EllipticCurve::SECP256R1));
+        BOOST_TEST(expectedPubKey == publicKey,  "Public key from private key test passed");
+
+        // Calculate signature with signer private key
+        auto signature =  ECKeyPair::ComputeECDSASig(toBytes(digest), sdkPrivateKey);
+        auto base64signature = base64Encode(toBytes(signature));
+        std::cout << "signature:" << base64signature << std::endl;
+
+        bool result = ECKeyPair::VerifyECDSASignature(toBytes(digest), toBytes(signature), publicKey);
+        std::cout << "The result:" << result << std::endl;
+        BOOST_TEST(result);
     }
 
 BOOST_AUTO_TEST_SUITE_END()

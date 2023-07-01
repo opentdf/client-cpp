@@ -7,7 +7,7 @@
 
 #define BOOST_TEST_MODULE test_asym_decoding_suite
 
-#include "crypto/asym_decryption.cpp"
+#include "asym_decryption.cpp"
 #include "bytes.h"
 #include "crypto_utils.h"
 #include "openssl_deleters.h"
@@ -179,6 +179,7 @@ BOOST_AUTO_TEST_SUITE(test_asym_decoding_suite)
         BOOST_TEST(plainTextMessage != decryptedMessage); // should fail
 
         // wrongKey
+        const auto cipherText2 = vc::base64Decode(base64Ciphertext);
         BOOST_CHECK_THROW(vc::AsymDecryption::create(rsa2048PublicKey), virtru::crypto::CryptoException);
     }
 
@@ -205,20 +206,45 @@ std::string encryptMessage(const std::string& publicKey, const std::string& plai
     using namespace virtru::crypto;
     
     BIO_free_ptr publicKeyBuffer { BIO_new_mem_buf(publicKey.data(), publicKey.size()) };
-    RSA_free_ptr rsaPublicKey {PEM_read_bio_RSA_PUBKEY(publicKeyBuffer.get(), nullptr, nullptr, nullptr) };
-    size_t rsaSize = RSA_size(rsaPublicKey.get());
-    std::vector<gsl::byte> encryptedData(rsaSize);
-    
-    auto outSize = RSA_public_encrypt(plainText.size(),
-                                      reinterpret_cast<const unsigned char*>(plainText.data()),
-                                      toUchar(encryptedData.data()),
-                                      rsaPublicKey.get(),
-                                      RSA_PKCS1_OAEP_PADDING);
-    
-    if (-1 == outSize) {
-        BOOST_FAIL("encryptMessage failed");
+    EVP_PKEY_free_ptr rsaPublicKey {PEM_read_bio_PUBKEY(publicKeyBuffer.get(), nullptr, nullptr, nullptr) };
+    size_t rsaSize = EVP_PKEY_bits(rsaPublicKey.get());
+
+    EVP_PKEY_CTX_free_ptr evpPkeyCtxPtr { EVP_PKEY_CTX_new(rsaPublicKey.get(), NULL)};
+    if (!evpPkeyCtxPtr) {
+        ThrowOpensslException("Failed to create EVP_PKEY_CTX.");
     }
-    
+
+    auto ret = EVP_PKEY_encrypt_init(evpPkeyCtxPtr.get());
+    if (ret != 1) {
+        ThrowOpensslException("Failed to initialize decryption process.");
+    }
+
+    auto padding = RSA_PKCS1_OAEP_PADDING;
+    ret = EVP_PKEY_CTX_set_rsa_padding(evpPkeyCtxPtr.get(), static_cast<int>(padding));
+    if (!evpPkeyCtxPtr) {
+        ThrowOpensslException("Failed to create EVP_PKEY_CTX.");
+    }
+
+    size_t outSize{};
+    if (EVP_PKEY_encrypt(evpPkeyCtxPtr.get(),
+                         nullptr,
+                         &outSize,
+                         reinterpret_cast<const unsigned char *>(plainText.data()),
+                         static_cast<int>(plainText.size())) <= 0) {
+        ThrowOpensslException("Failed to calculate the length of encrypt buffer.");
+
+    }
+
+    std::vector<gsl::byte> encryptedData(outSize);
+    ret = EVP_PKEY_encrypt(evpPkeyCtxPtr.get(),
+                           toUchar(encryptedData.data()),
+                           &outSize,
+                           reinterpret_cast<const unsigned char *>(plainText.data()),
+                           static_cast<int>(plainText.size()));
+    if (-1 == ret) {
+        ThrowOpensslException("Encryption failed using asymmetric encoding.");
+    }
+
     return base64Encode(toBytes(encryptedData));
     
 }

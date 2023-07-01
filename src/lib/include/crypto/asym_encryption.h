@@ -69,10 +69,10 @@ namespace virtru::crypto {
 
     private:
         /// Constructor
-        explicit AsymEncryption(RSA_free_ptr publicKey, size_t keySize);
+        explicit AsymEncryption(EVP_PKEY_free_ptr publicKey, size_t keySize);
 
         // Data
-        RSA_free_ptr m_publicKey;
+        EVP_PKEY_free_ptr m_publicKey;
         size_t m_rsaSize;
         Padding m_padding {Padding::kRsaPkcs1OaepPadding};
     };

@@ -107,7 +107,7 @@ namespace virtru::crypto {
         /// Retrieve EC_KEY from pem formatted public key.
         /// \param publicKeyInPEM - pem formatted key.
         /// \return EC_free_ptr unique ptr to EC_KEY instance.
-        static EC_free_ptr getECPublicKey(const std::string& publicKey);
+        static EVP_PKEY_free_ptr getECPublicKey(const std::string& publicKey);
 
     private:
         /// Constructor

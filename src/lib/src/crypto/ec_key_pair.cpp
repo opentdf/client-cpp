@@ -10,11 +10,15 @@
 //  Created by Sujan Reddy on 2020/04/20.
 //
 
+/*
+ * Migration guide to openssl - https://www.openssl.org/docs/man3.0/man7/migration_guide.html
+ */
 
 #include "ec_key_pair.h"
 #include "crypto_utils.h"
 #include "tdf_exception.h"
 
+#include <iostream>
 #include <boost/algorithm/string.hpp>
 #include <type_traits>
 #include <openssl/rand.h>
@@ -22,6 +26,7 @@
 #include <openssl/pem.h>
 #include <openssl/ec.h>
 #include <openssl/kdf.h>
+#include <openssl/core_names.h>
 
 namespace virtru::crypto {
 
@@ -35,24 +40,8 @@ namespace virtru::crypto {
     /// Creates an instance of EC(Elliptic Curve) Key and will generate a new key pair every time it is called.
     std::unique_ptr<ECKeyPair> ECKeyPair::Generate(const std::string& curveName) {
 
-        auto eccgrp = OBJ_txt2nid(curveName.data());
-        if (eccgrp == NID_undef) {
-            ThrowOpensslException("Unknown curve name.");
-        }
-
-        EC_free_ptr ec{EC_KEY_new_by_curve_name(eccgrp)};
-
-        // Create the public/private EC key pair here
-        if (1 != EC_KEY_generate_key(ec.get())) {
-            ThrowOpensslException("Failed ECKeyPair generation.");
-        }
-
-        if (1 != EC_KEY_check_key(ec.get())) {
-            ThrowOpensslException("Failed EC sanity check.");
-        }
-
-        EVP_PKEY_free_ptr evppkeyPtr { EVP_PKEY_new()};
-        if (1 != EVP_PKEY_assign_EC_KEY(evppkeyPtr.get(), ec.release())) {
+        EVP_PKEY_free_ptr evppkeyPtr { EVP_EC_gen(curveName.data())};
+        if (!evppkeyPtr) {
             ThrowOpensslException("Error assigning EC key to EVP_PKEY structure.");
         }
 
@@ -103,29 +92,41 @@ namespace virtru::crypto {
 
     /// Return the curve name.
     std::string ECKeyPair::CurveName() const {
-        auto ec = EVP_PKEY_get0_EC_KEY(m_pkey.get());
-        auto ecGroup =  EC_KEY_get0_group(ec);
-
-        auto curveName = OBJ_nid2sn(EC_GROUP_get_curve_name(ecGroup));
-        if (curveName == nullptr) {
-            ThrowOpensslException("Failed to get the curve name from ec key.");
+        // Info-https://www.openssl.org/docs/manmaster/man7/EVP_PKEY-EC.html
+        size_t len{};
+        auto result =  EVP_PKEY_get_utf8_string_param(m_pkey.get(),
+                                                      OSSL_PKEY_PARAM_GROUP_NAME,
+                                                       nullptr,
+                                                       0,
+                                                       &len);
+        if(!result){
+            ThrowOpensslException("Failed to get the length of curve name from ec key.");
         }
 
-        return curveName;
+
+        std::string curveName(len+1, '0');
+        result =  EVP_PKEY_get_utf8_string_param(m_pkey.get(),
+                                                 OSSL_PKEY_PARAM_GROUP_NAME,
+                                                 curveName.data(),
+                                                 curveName.size(),
+                                                 &len);
+        if(!result){
+            ThrowOpensslException("Failed to get the curve name from ec key.");
+        };
+
+        curveName.resize(len);
+        std::string curve(curveName);
+        return curve;
     }
 
     /// Generate a public key given the private key and it's curve.
     std::string ECKeyPair::GetPEMPublicKeyFromPrivateKey(const std::string& privateKeyInPEM,
                                                      const std::string& curveName) {
 
-        // Create a group give the curve name.
-        auto eccgrp = OBJ_txt2nid(curveName.data());
-        if (eccgrp == NID_undef) {
+        auto curveNid = OBJ_txt2nid(curveName.data());
+        if (curveNid == NID_undef) {
             ThrowOpensslException("Unknown curve name.");
         }
-
-        EC_free_ptr ec{EC_KEY_new_by_curve_name(eccgrp)};
-        auto group = EC_KEY_get0_group(ec.get());
 
         /// Extract private key as big number from the pem formatted private key
         BIO_free_ptr preBio{BIO_new(BIO_s_mem())};
@@ -133,61 +134,57 @@ namespace virtru::crypto {
             ThrowOpensslException("Failed to load private key.");
         }
 
-        EC_free_ptr ecPre {PEM_read_bio_ECPrivateKey(preBio.get(), nullptr, nullptr, nullptr)};
+        EVP_PKEY_free_ptr ecPre {PEM_read_bio_PrivateKey(preBio.get(), nullptr, nullptr, nullptr)};
         if (!ecPre) {
             ThrowOpensslException("Failed to read ec private key from pem format");
         }
 
-        if (1 != EC_KEY_check_key(ecPre.get())) {
-            ThrowOpensslException("Failed the sanity check for ec private key");
+        EVP_PKEY_CTX_free_ptr evpPkeyCtxPtr { EVP_PKEY_CTX_new(ecPre.get(), nullptr)};
+        if (!evpPkeyCtxPtr) {
+            ThrowOpensslException("Failed to create EVP_PKEY_CTX.");
         }
 
-        auto bigNum = EC_KEY_get0_private_key(ecPre.get());
-        if (!bigNum) {
-            ThrowOpensslException("Failed get a BIGNUM from ec private key.");
+        if (1 != EVP_PKEY_private_check(evpPkeyCtxPtr.get())) {
+            ThrowOpensslException("Failed ec key(private) sanity check.");
         }
 
-        // Set the private key to ec key        ;
-        if (1 != EC_KEY_set_private_key(ec.get(), bigNum)) {
-            ThrowOpensslException("Failed to set the private key to ec key");
+        BIGNUM* bnPriv = nullptr;
+        auto result = EVP_PKEY_get_bn_param(ecPre.get(), OSSL_PKEY_PARAM_PRIV_KEY, &bnPriv);
+        if (!result) {
+            ThrowOpensslException("Failed to read ec bn using EVP_PKEY_get_bn_param.");
+        }
+        BIGNUM_free_ptr bnPrivPtr{bnPriv};
+
+        EC_GROUP_free_ptr ecGroupFreePtr{EC_GROUP_new_by_curve_name(curveNid)};
+        if (!ecGroupFreePtr) {
+            ThrowOpensslException("Failed to create a group from EC curve.");
         }
 
         // Create a ECPoint and generate a public key.
-        ECPoint_free_ptr pubKey{EC_POINT_new(group)};
-        if (!EC_POINT_mul(group, pubKey.get(), bigNum, nullptr, nullptr, nullptr)) {
+        ECPoint_free_ptr pubKey{EC_POINT_new(ecGroupFreePtr.get())};
+        if (!EC_POINT_mul(ecGroupFreePtr.get(), pubKey.get(), bnPrivPtr.get(), nullptr, nullptr, nullptr)) {
             ThrowOpensslException("Failed to generate ec public key from EC_POINT_mul");
         }
 
-        // Set the public key to ec key        ;
-        if (1 !=  EC_KEY_set_public_key(ec.get(), pubKey.get())) {
-            ThrowOpensslException("Failed to set the public key to ec key");
+        // Get the BIGNUM
+        std::uint8_t* pubAsBigNum = nullptr;
+        size_t bnLength = EC_POINT_point2buf(ecGroupFreePtr.get(),
+                                            pubKey.get(),
+                                             POINT_CONVERSION_COMPRESSED,
+                                            &pubAsBigNum,
+                                            nullptr);
+        if (!bnLength) {
+            ThrowOpensslException("Error obtaining the BIGNUM from EC_POINT.");
         }
 
-
-        EVP_PKEY_free_ptr evppkeyPtr { EVP_PKEY_new()};
-        if (1 != EVP_PKEY_assign_EC_KEY(evppkeyPtr.get(), ec.release())) {
-            ThrowOpensslException("Error assigning EC key to EVP_PKEY structure.");
-        }
-
-        BIO_free_ptr bio{BIO_new(BIO_s_mem())};
-        if (1 != PEM_write_bio_PUBKEY(bio.get(), evppkeyPtr.get())) {
-            ThrowOpensslException("Error writing EC public key data in PEM format.");
-        }
-
-        // Read the public key from the buffer and put it in the string
-        std::string publicKeyPem(BIO_pending(bio.get()), '\0');
-        auto readResult = BIO_read(bio.get(), publicKeyPem.data(), static_cast<int>(publicKeyPem.size()));
-        if (readResult <= 0) {
-            ThrowOpensslException("Failed to read public key data.");
-        }
-
-        return publicKeyPem;
+        Openssl_buf_free_ptr opensslBufFreePtr{pubAsBigNum};
+        auto bytes = gsl::make_span(pubAsBigNum, bnLength);
+        return GetPEMPublicKeyFromECPoint(toBytes(bytes), curveName);
     }
 
     std::string ECKeyPair::GetPEMPublicKeyFromX509Cert(const std::string& pemKeyInX509) {
 
         if (boost::contains(pemKeyInX509, kX509CertTag)) {
-            EC_free_ptr ecPub;
 
             BIO_free_ptr pubBio{BIO_new(BIO_s_mem())};
             if ((size_t)BIO_write(pubBio.get(), pemKeyInX509.data(), pemKeyInX509.size()) != pemKeyInX509.size()) {
@@ -227,6 +224,7 @@ namespace virtru::crypto {
     std::vector<gsl::byte> ECKeyPair::ComputeECDHKey(const std::string& publicKeyInPEM,
             const std::string& privateKeyInPEM) {
 
+        // https://www.openssl.org/docs/man3.0/man7/EVP_KEYEXCH-ECDH.html
         if (publicKeyInPEM.empty() || privateKeyInPEM.empty()) {
             ThrowException("Invalid data to calculate the share secret.");
         }
@@ -234,7 +232,10 @@ namespace virtru::crypto {
         ///
         /// Extract public key
         ///
-        EC_free_ptr ecPub = getECPublicKey(publicKeyInPEM);
+        EVP_PKEY_free_ptr ecPub = getECPublicKey(publicKeyInPEM);
+        if (!ecPub) {
+            ThrowOpensslException("Error generating EC key from public key.");
+        }
 
         ///
         /// Extract private key
@@ -244,24 +245,53 @@ namespace virtru::crypto {
             ThrowOpensslException("Failed to load private key.");
         }
 
-        EC_free_ptr ecPre {PEM_read_bio_ECPrivateKey(preBio.get(), nullptr, nullptr, nullptr)};
+        EVP_PKEY_free_ptr ecPre {PEM_read_bio_PrivateKey(preBio.get(), nullptr, nullptr, nullptr)};
         if (!ecPre) {
             ThrowOpensslException("Failed to ec key from private key");
         }
 
-        if (1 != EC_KEY_check_key(ecPre.get())) {
-            ThrowOpensslException("Failed ec key(private) sanity check.");
+        EVP_PKEY_CTX_free_ptr evpPrekeyCtxPtr { EVP_PKEY_CTX_new(ecPre.get(), nullptr)};
+        if (!evpPrekeyCtxPtr) {
+            ThrowOpensslException("Failed to create EVP_PKEY_CTX.");
         }
 
-        /// Calculate shared secret length.
-        std::vector<gsl::byte> symmetricKey;
-        auto secretLen = EC_GROUP_get_degree(EC_KEY_get0_group(ecPre.get()));
-        secretLen = (secretLen + 7) / 8;
-        symmetricKey.resize(secretLen);
+        if (1 != EVP_PKEY_private_check(evpPrekeyCtxPtr.get())) {
+            ThrowOpensslException("Failed the sanity check for ec private key");
+        }
 
-        auto pubkey  = EC_KEY_get0_public_key(ecPub.get());
-        if (ECDH_compute_key(symmetricKey.data(), symmetricKey.size(), pubkey, ecPre.get(), nullptr) == -1) {
-            ThrowOpensslException("Failed to compute ECDH key.");
+        auto result = EVP_PKEY_derive_init(evpPrekeyCtxPtr.get());
+        if(!result){
+            ThrowOpensslException("Failed to initialize the ECDH derive function.");
+        }
+
+        // NOTE: If the padding is required we need to enable this code.
+        // OSSL_PARAM params[2];
+        // unsigned int pad = 1;
+        // params[0] = OSSL_PARAM_construct_uint(OSSL_EXCHANGE_PARAM_PAD, &pad);
+        // params[1] = OSSL_PARAM_construct_end();
+        // EVP_PKEY_CTX_set_params(evpPrekeyCtxPtr.get(), params);
+
+        result = EVP_PKEY_derive_set_peer(evpPrekeyCtxPtr.get(), ecPub.get());
+        if(!result){
+            ThrowOpensslException("Failed to initialize the peer for calculating the ECDH.");
+        }
+
+        std::vector<gsl::byte> symmetricKey;
+
+        /* Get the size by passing NULL as the buffer */
+        size_t secret_len{};
+        result = EVP_PKEY_derive(evpPrekeyCtxPtr.get(), NULL, &secret_len);
+        if(!result){
+            ThrowOpensslException("Failed to calculate the length of ECDH signature.");
+        }
+
+        symmetricKey.resize(secret_len);
+
+        result = EVP_PKEY_derive(evpPrekeyCtxPtr.get(),
+                                 reinterpret_cast<std::uint8_t*>(symmetricKey.data()),
+                                 &secret_len);
+        if(!result){
+            ThrowOpensslException("Failed to calculate the ECDH.");
         }
 
         return symmetricKey;
@@ -270,77 +300,105 @@ namespace virtru::crypto {
     /// Return the compressed EC point for the public key.
     std::vector<gsl::byte> ECKeyPair::CompressedECPublicKey(const std::string& publicKeyInPEM) {
 
+        // Info-https://www.openssl.org/docs/manmaster/man7/EVP_PKEY-EC.html
+        // https://github.com/openssl/openssl/blob/1751356267f64d5db8824cf4ff5b3496e15972da/test/evp_pkey_provided_test.c
+
         ///
         /// Extract public key
         ///
-        BIO_free_ptr pubBio{BIO_new(BIO_s_mem())};
-        if ((size_t)BIO_write(pubBio.get(), publicKeyInPEM.data(), publicKeyInPEM.size()) != publicKeyInPEM.size()) {
-            ThrowOpensslException("Failed to load public key.");
-        }
-
-        EC_free_ptr ecPub {PEM_read_bio_EC_PUBKEY(pubBio.get(), nullptr, nullptr, nullptr)};
+        EVP_PKEY_free_ptr ecPub = getECPublicKey(publicKeyInPEM);
         if (!ecPub) {
-            ThrowOpensslException("Failed to ec key from public key");
+            ThrowOpensslException("Error generating EC key from public key.");
         }
 
-        if (1 != EC_KEY_check_key(ecPub.get())) {
-            ThrowOpensslException("Failed ec key(public) sanity check.");
+        OSSL_PARAM params[2];
+        params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT,
+                                                     OSSL_PKEY_EC_POINT_CONVERSION_FORMAT_COMPRESSED,
+                                                      sizeof(OSSL_PKEY_EC_POINT_CONVERSION_FORMAT_COMPRESSED));
+        params[1] = OSSL_PARAM_construct_end();
+        auto result = EVP_PKEY_set_params(ecPub.get(), params);
+        if(!result){
+            ThrowOpensslException("Failed to get the length of ECPOINT from ec key.");
         }
 
-        auto pubkey  = EC_KEY_get0_public_key(ecPub.get());
-        auto group = EC_KEY_get0_group(ecPub.get());
-        if (!pubkey || !group) {
-            ThrowOpensslException("Failed to get ec publickey/group.");
+        size_t len{};
+        result =  EVP_PKEY_get_octet_string_param(ecPub.get(),
+                                                       OSSL_PKEY_PARAM_PUB_KEY,
+                                                       nullptr,
+                                                       0,
+                                                       &len);
+        if(!result){
+            ThrowOpensslException("Failed to get the length of ECPOINT from ec key.");
         }
 
-        /// Get the EC_POINT in compressed form.
-        std::vector<gsl::byte> point;
-        auto len = EC_POINT_point2oct(group, pubkey,POINT_CONVERSION_COMPRESSED, nullptr, 0, nullptr);
-        if (len == 0) {
-            ThrowOpensslException("Failed to get ec point.");
+
+        std::vector<gsl::byte> ecpoint(len);
+        result =  EVP_PKEY_get_octet_string_param(ecPub.get(),
+                                                  OSSL_PKEY_PARAM_PUB_KEY,
+                                                  reinterpret_cast<std::uint8_t*>(ecpoint.data()),
+                                                  ecpoint.size(),
+                                                  &len);
+        if(!result){
+            ThrowOpensslException("Failed to get the curve name from ec key.");
         }
 
-        point.resize(len);
-        if(EC_POINT_point2oct(group, pubkey, POINT_CONVERSION_COMPRESSED,
-                              reinterpret_cast<std::uint8_t*>(point.data()), len, nullptr) != len) {
-            ThrowOpensslException("Failed to get ec point.");
-        }
-
-        return point;
+        return  ecpoint;
     }
 
     /// Return Public key in PEM format from compressed EC Point.
     std::string ECKeyPair::GetPEMPublicKeyFromECPoint(Bytes compressedECPoint, const std::string& curveName) {
 
-        auto eccgrp = OBJ_txt2nid(curveName.data());
-        if (eccgrp == NID_undef) {
-            ThrowOpensslException("Unknown curve name.");
+        // Create a OSSL_PARAM_BLD structure to create EC key with public key
+        OSSL_PARAM_BLD_free_ptr paramBldFreePtr {OSSL_PARAM_BLD_new()};
+        if (!paramBldFreePtr){
+            ThrowOpensslException("Error creating OSSL_PARAM_BLD structure.");
         }
 
-        EC_free_ptr ec{EC_KEY_new_by_curve_name(eccgrp)};
-        auto group = EC_KEY_get0_group(ec.get());
-
-        ECPoint_free_ptr ecPointFreePtr{EC_POINT_new(group)};
-
-        auto retValue = EC_POINT_oct2point(group, ecPointFreePtr.get(),
-                                      reinterpret_cast<const uint8_t *>(compressedECPoint.data()),
-                                      compressedECPoint.size(), nullptr);
-        if (retValue != 1) {
-            ThrowOpensslException("Failed to get ec point from compressed point.");
+        auto result = OSSL_PARAM_BLD_push_utf8_string(paramBldFreePtr.get(),
+                                                      OSSL_PKEY_PARAM_GROUP_NAME,
+                                                      curveName.c_str(),
+                                                      curveName.size());
+        if(!result) {
+            ThrowOpensslException("Error building OSSL_PARAM_BLD structure.");
         }
 
-        retValue = EC_KEY_set_public_key(ec.get(), ecPointFreePtr.get());
-        if (retValue != 1) {
-            ThrowOpensslException("Failed to set public key.");
+
+        result = OSSL_PARAM_BLD_push_octet_string(paramBldFreePtr.get(),
+                                                  OSSL_PKEY_PARAM_PUB_KEY,
+                                                  compressedECPoint.data(),
+                                                  compressedECPoint.size());
+        if(!result) {
+            ThrowOpensslException("Error building OSSL_PARAM_BLD structure.");
         }
 
-        EVP_PKEY_free_ptr evppkeyPtr { EVP_PKEY_new()};
-        if (1 != EVP_PKEY_assign_EC_KEY(evppkeyPtr.get(), ec.release())) {
-            ThrowOpensslException("Error assigning EC key to EVP_PKEY structure.");
+        OSSL_PARAM_free_ptr osslParamFreePtr {OSSL_PARAM_BLD_to_param(paramBldFreePtr.get())};
+        if (!osslParamFreePtr) {
+            ThrowOpensslException("Error creating OSSL_PARAM structure.");
         }
 
+        EVP_PKEY_CTX_free_ptr evpPkeyCtxPtr {EVP_PKEY_CTX_new_from_name(nullptr, "EC", nullptr)};
+        if (!evpPkeyCtxPtr) {
+            ThrowOpensslException("Failed to create EVP_PKEY_CTX.");
+        }
+
+        result = EVP_PKEY_fromdata_init(evpPkeyCtxPtr.get());
+        if(!result) {
+            ThrowOpensslException("Error initializing EVP_PKEY from OSSL_PARAM.");
+        }
+
+        EVP_PKEY* evpPubkey = nullptr;
+        result = EVP_PKEY_fromdata(evpPkeyCtxPtr.get(),
+                                   &evpPubkey,
+                                   EVP_PKEY_PUBLIC_KEY,
+                                   osslParamFreePtr.get());
+        if(!result) {
+            ThrowOpensslException("Error building EVP_PKEY from OSSL_PARAM.");
+        }
+
+        EVP_PKEY_free_ptr ecPub{evpPubkey};
         BIO_free_ptr bio{BIO_new(BIO_s_mem())};
-        if (1 != PEM_write_bio_PUBKEY(bio.get(), evppkeyPtr.get())) {
+
+        if (1 != PEM_write_bio_PUBKEY(bio.get(), ecPub.get())) {
             ThrowOpensslException("Error writing EC public key data in PEM format.");
         }
 
@@ -410,44 +468,76 @@ namespace virtru::crypto {
             ThrowOpensslException("Failed to load private key.");
         }
 
-        EC_free_ptr ecKey {PEM_read_bio_ECPrivateKey(preBio.get(), nullptr, nullptr, nullptr)};
+        EVP_PKEY_free_ptr ecKey {PEM_read_bio_PrivateKey(preBio.get(), nullptr, nullptr, nullptr)};
         if (!ecKey) {
             ThrowOpensslException("Failed to read ec private key from pem format");
         }
 
-        if (1 != EC_KEY_check_key(ecKey.get())) {
+        EVP_PKEY_CTX_free_ptr evpPkeyCtxPtr { EVP_PKEY_CTX_new(ecKey.get(), nullptr)};
+        if (!evpPkeyCtxPtr) {
+            ThrowOpensslException("Failed to create EVP_PKEY_CTX.");
+        }
+
+        if (1 != EVP_PKEY_private_check(evpPkeyCtxPtr.get())) {
             ThrowOpensslException("Failed the sanity check for ec private key");
         }
 
-        ECDSASig_free_ptr ecdsaSigFreePtr(ECDSA_do_sign(reinterpret_cast<const uint8_t*>(digest.data()),
-                                                        digest.size(), ecKey.get()));
-
-        if (!ecdsaSigFreePtr) {
-            ThrowOpensslException("Error generating the signature ECDSA_do_sign()");
+        EVP_MD_CTX_free_ptr mdCtxFreePtr { EVP_MD_CTX_new()};
+        if (!mdCtxFreePtr) {
+            ThrowOpensslException("Failed to create EVP_MD_CTX.");
         }
 
-        // Calculate the size of the signature.
-        auto group = EC_KEY_get0_group(ecKey.get());
-        auto order = EC_GROUP_get0_order(group);
-        auto bigNumLen = BN_num_bytes(order);
-        auto sigLength = bigNumLen * 2;
-        std::vector<gsl::byte> signature(sigLength);
+        size_t sigLength = EVP_PKEY_get_size(ecKey.get());
+        std::vector<std::uint8_t> signature(sigLength);
+
+        auto result = EVP_DigestSignInit_ex(mdCtxFreePtr.get(),
+                                            nullptr,
+                                            "SHA2-256", nullptr, nullptr,
+                                            ecKey.get(), nullptr);
+        if (!result)  {
+            ThrowOpensslException("Error initializing signing context, EVP_DigestSignInit_ex.");
+        }
+
+
+        result = EVP_DigestSign(mdCtxFreePtr.get(),
+                                signature.data(),
+                                &sigLength,
+                                reinterpret_cast<const uint8_t*>(digest.data()),
+                                digest.size());
+        if (!result) {
+            ThrowOpensslException("Error generating the signature EVP_DigestSign.");;
+        }
+
+        signature.resize(sigLength);
+
+        const unsigned char *sigPtr = signature.data();
+        ECDSASig_free_ptr ecdsaSigFreePtr{d2i_ECDSA_SIG(nullptr,
+                                                        &sigPtr,
+                                                        sigLength)};
+        if (!ecdsaSigFreePtr) {
+            ThrowOpensslException("Error decodes a DER encoded ECDSA signature, d2i_ECDSA_SIG");
+        }
+
+        auto rLength = BN_num_bytes(ECDSA_SIG_get0_r(ecdsaSigFreePtr.get()));
+        auto sLength = BN_num_bytes(ECDSA_SIG_get0_s(ecdsaSigFreePtr.get()));
+
+        std::vector<gsl::byte> compressedSig(rLength + sLength);
 
         // Add 'r' to signature
-        auto result =  BN_bn2binpad(ECDSA_SIG_get0_r(ecdsaSigFreePtr.get()),
-                                    reinterpret_cast<uint8_t*>(signature.data()),  bigNumLen);
+        result =  BN_bn2binpad(ECDSA_SIG_get0_r(ecdsaSigFreePtr.get()),
+                               reinterpret_cast<uint8_t*>(compressedSig.data()),  rLength);
         if (!result) {
             ThrowOpensslException("Error converting BIGNUM to big endian - BN_bn2bin_padded()");
         }
 
         // Add 's' to signature
         result =  BN_bn2binpad(ECDSA_SIG_get0_s(ecdsaSigFreePtr.get()),
-                               reinterpret_cast<uint8_t*>(signature.data() + bigNumLen), bigNumLen);
+                               reinterpret_cast<uint8_t*>(compressedSig.data() + rLength), sLength);
         if (!result) {
             ThrowOpensslException("Error converting BIGNUM to big endian - BN_bn2bin_padded()");
         }
 
-        return signature;
+        return compressedSig;
     }
 
     /// Verify the signature for the digest for the key-pair of the curve.
@@ -460,7 +550,10 @@ namespace virtru::crypto {
         ///
         /// Extract public key
         ///
-        EC_free_ptr ecPub = getECPublicKey(publicKeyInPEM);
+        EVP_PKEY_free_ptr ecPub = getECPublicKey(publicKeyInPEM);
+        if (!ecPub) {
+            ThrowOpensslException("Failed to create EVP_PKEY from public pem.");
+        }
 
         ECDSASig_free_ptr ecdsaSigFreePtr(ECDSA_SIG_new());
         if (!ecdsaSigFreePtr) {
@@ -470,10 +563,11 @@ namespace virtru::crypto {
         BIGNUM_free_ptr rBigNum(BN_new());
         BIGNUM_free_ptr sBigNum(BN_new());
 
-        auto sizeOfRAndS = (signature.size() / 2);
+        auto rLength = (signature.size() / 2);
+        auto sLength = signature.size() - rLength;
 
-        if (!BN_bin2bn(reinterpret_cast<const uint8_t*>(signature.data()), sizeOfRAndS, rBigNum.get()) ||
-            !BN_bin2bn(reinterpret_cast<const uint8_t*>(signature.data()+sizeOfRAndS), sizeOfRAndS, sBigNum.get())) {
+        if (!BN_bin2bn(reinterpret_cast<const uint8_t*>(signature.data()), rLength, rBigNum.get()) ||
+            !BN_bin2bn(reinterpret_cast<const uint8_t*>(signature.data()+rLength), sLength, sBigNum.get())) {
             ThrowOpensslException("Error converting from big endian - BN_bin2bn()");
         }
 
@@ -482,24 +576,58 @@ namespace virtru::crypto {
             ThrowOpensslException("Error constructing ECDSA_SIG");
         }
 
-        result = ECDSA_do_verify(reinterpret_cast<const uint8_t*>(digest.data()), digest.size(),
-                                 ecdsaSigFreePtr.get(), ecPub.get());
+        auto sigLength = i2d_ECDSA_SIG(ecdsaSigFreePtr.get(), nullptr);
+        if (sigLength < 0){
+            ThrowOpensslException("Failed to calculate the length of ECDSA signature.");
+        }
+
+        std::vector<std::uint8_t> uncompressedSig(sigLength);
+        unsigned char * sigPtr = uncompressedSig.data();
+        sigLength = i2d_ECDSA_SIG(ecdsaSigFreePtr.get(), &sigPtr);
+        if (sigLength < 0){
+            ThrowOpensslException("Failed to calculate the length of ECDSA signature.");
+        }
+
+        // Rest the size.
+        uncompressedSig.resize(sigLength);
+
+        EVP_MD_CTX_free_ptr mdCtxFreePtr { EVP_MD_CTX_new()};
+        if (!mdCtxFreePtr) {
+            ThrowOpensslException("Failed to create EVP_MD_CTX.");
+        }
+
+        result = EVP_DigestVerifyInit_ex(mdCtxFreePtr.get(),
+                                         nullptr,
+                                         "SHA2-256",
+                                         nullptr,
+                                         nullptr,
+                                         ecPub.get(),
+                                         nullptr);
+        if (!result)  {
+            ThrowOpensslException("Error initializing signing context, EVP_DigestVerifyInit_ex.");
+        }
+
+        result = EVP_DigestVerify(mdCtxFreePtr.get(),
+                                 reinterpret_cast<const uint8_t*>(uncompressedSig.data()),
+                                  sigLength,
+                                 reinterpret_cast<const uint8_t*>(digest.data()),
+                                 digest.size());
 
         return (result == 1);
     }
 
     /// Retrieve EC_KEY from pem formatted public key.
-    EC_free_ptr ECKeyPair::getECPublicKey(const std::string& publicKey){
+    EVP_PKEY_free_ptr ECKeyPair::getECPublicKey(const std::string& publicKey){
 
         BIO_free_ptr pubBio{BIO_new(BIO_s_mem())};
         if ((size_t)BIO_write(pubBio.get(), publicKey.data(), publicKey.size()) != publicKey.size()) {
             ThrowOpensslException("Failed to load public key.");
         }
 
-        EC_free_ptr ecPub;
+        EVP_PKEY_free_ptr ecPub;
         if (boost::contains(publicKey, kX509CertTag)) {
 
-            X509_free_ptr x509Ptr{ PEM_read_bio_X509(pubBio.get(), NULL, NULL, NULL) };
+            X509_free_ptr x509Ptr{ PEM_read_bio_X509(pubBio.get(), nullptr, nullptr, nullptr) };
             if (!x509Ptr) {
                 ThrowOpensslException("Failed to create X509 cert struct.");
             }
@@ -509,18 +637,23 @@ namespace virtru::crypto {
                 ThrowOpensslException("Failed to create EVP_PKEY.");
             }
 
-            ecPub.reset(EVP_PKEY_get1_EC_KEY(evppkeyPtr.get()));
+            ecPub.reset(evppkeyPtr.get());
             if (!ecPub) {
                 ThrowOpensslException("Failed to ec key from public key");
             }
         } else {
-            ecPub.reset(PEM_read_bio_EC_PUBKEY(pubBio.get(), nullptr, nullptr, nullptr));
+            ecPub.reset(PEM_read_bio_PUBKEY(pubBio.get(), nullptr, nullptr, nullptr));
             if (!ecPub) {
                 ThrowOpensslException("Failed to ec key from public key");
             }
         }
 
-        if (1 != EC_KEY_check_key(ecPub.get())) {
+        EVP_PKEY_CTX_free_ptr evpPkeyCtxPtr { EVP_PKEY_CTX_new(ecPub.get(), nullptr)};
+        if (!evpPkeyCtxPtr) {
+            ThrowOpensslException("Failed to create EVP_PKEY_CTX.");
+        }
+
+        if (1 != EVP_PKEY_public_check(evpPkeyCtxPtr.get())) {
             ThrowOpensslException("Failed ec key(public) sanity check.");
         }
 

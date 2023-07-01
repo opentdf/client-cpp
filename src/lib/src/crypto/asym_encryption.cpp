@@ -14,6 +14,7 @@
 #include <openssl/bio.h>
 #include <boost/scope_exit.hpp>
 #include <boost/algorithm/string.hpp>
+#include <iostream>
 
 #include <openssl/err.h>
 #include <openssl/x509.h>
@@ -27,12 +28,12 @@ namespace virtru::crypto {
     constexpr auto kX509CertTag = "BEGIN CERTIFICATE";
 
     /// Constructor
-    AsymEncryption::AsymEncryption(RSA_free_ptr publicKey, size_t keySize)
+    AsymEncryption::AsymEncryption(EVP_PKEY_free_ptr publicKey, size_t keySize)
     : m_publicKey(std::move(publicKey)), m_rsaSize {keySize} { }
 
     /// Creates an instance of AsymEncryption.
     std::unique_ptr<AsymEncryption> AsymEncryption::create(const std::string& publicKey) {
-        RSA_free_ptr publicKeyPtr;
+        EVP_PKEY_free_ptr publicKeyPtr;
         BIO_free_ptr publicKeyBuffer { BIO_new_mem_buf(publicKey.data(), publicKey.size()) };
 
         if (!publicKeyBuffer) {
@@ -41,29 +42,27 @@ namespace virtru::crypto {
 
         if (boost::contains(publicKey, kX509CertTag)) {
 
-            X509_free_ptr x509Ptr{ PEM_read_bio_X509(publicKeyBuffer.get(), NULL, NULL, NULL) };
+            X509_free_ptr x509Ptr{ PEM_read_bio_X509(publicKeyBuffer.get(),
+                                                     nullptr,
+                                                     nullptr,
+                                                     nullptr) };
             if (!x509Ptr) {
                 ThrowOpensslException("Failed to create X509 cert struct.");
             }
             
-            EVP_PKEY_free_ptr evppkeyPtr { X509_get_pubkey(x509Ptr.get()) };
-            if (!evppkeyPtr) {
-                ThrowOpensslException("Failed to create EVP_PKEY.");
-            }
-
-            // Store the public key into RSA struct
-            publicKeyPtr.reset(EVP_PKEY_get1_RSA(evppkeyPtr.get()));
+            // Store the public key into EVP_PKEY
+            publicKeyPtr.reset(X509_get_pubkey(x509Ptr.get()));
             
         } else {
             // Store the public key into RSA struct
-            publicKeyPtr.reset(PEM_read_bio_RSA_PUBKEY(publicKeyBuffer.get(), nullptr, nullptr, nullptr));
+            publicKeyPtr.reset(PEM_read_bio_PUBKEY(publicKeyBuffer.get(), nullptr, nullptr, nullptr));
         }
 
         if (!publicKeyPtr) {
             ThrowOpensslException("Failed to create a public key.");
         }
 
-        size_t keySize = RSA_size(publicKeyPtr.get());
+        size_t keySize = EVP_PKEY_bits(publicKeyPtr.get());
         return std::unique_ptr<AsymEncryption>(new AsymEncryption(std::move(publicKeyPtr), keySize));
     }
 
@@ -74,9 +73,10 @@ namespace virtru::crypto {
             ThrowException("Asymmetric encoding input buffer is too big");
         }
 
-        auto size = 0;
+        size_t size = 0;
         BOOST_SCOPE_EXIT(&size, &encryptedData) {
-            encryptedData = encryptedData.first(std::max(0, size));
+            size_t min = 0;
+            encryptedData = encryptedData.first(std::max(min, size));
         }
         BOOST_SCOPE_EXIT_END
 
@@ -94,12 +94,27 @@ namespace virtru::crypto {
             ThrowException("Input buffer is too big for provided key.");
         }
 
-        size = RSA_public_encrypt(static_cast<int>(data.size()),
-                                  toUchar(data.data()),
-                                  toUchar(encryptedData.data()),
-                                  m_publicKey.get(),
-                                  static_cast<int>(m_padding));
-        if (-1 == size) {
+        EVP_PKEY_CTX_free_ptr evpPkeyCtxPtr { EVP_PKEY_CTX_new(m_publicKey.get(), NULL)};
+        if (!evpPkeyCtxPtr) {
+            ThrowOpensslException("Failed to create EVP_PKEY_CTX.");
+        }
+
+        auto ret = EVP_PKEY_encrypt_init(evpPkeyCtxPtr.get());
+        if (ret != 1) {
+            ThrowOpensslException("Failed to initialize decryption process.");
+        }
+
+        ret = EVP_PKEY_CTX_set_rsa_padding(evpPkeyCtxPtr.get(), static_cast<int>(m_padding));
+        if (!evpPkeyCtxPtr) {
+            ThrowOpensslException("Failed to create EVP_PKEY_CTX.");
+        }
+
+        ret = EVP_PKEY_encrypt(evpPkeyCtxPtr.get(),
+                               toUchar(encryptedData.data()),
+                               &size,
+                               toUchar(data.data()),
+                               static_cast<int>(data.size()));
+        if (-1 == ret) {
             ThrowOpensslException("Encryption failed using asymmetric encoding.");
         }
     }
@@ -114,7 +129,7 @@ namespace virtru::crypto {
     std::string AsymEncryption::pemFormat() const {
         BIO_free_ptr bio{BIO_new(BIO_s_mem())};
 
-        if (1 != PEM_write_bio_RSA_PUBKEY(bio.get(), m_publicKey.get())) {
+        if (1 != PEM_write_bio_PUBKEY(bio.get(), m_publicKey.get())) {
             ThrowOpensslException("Failed to retrieve public key data.");
         }
 
