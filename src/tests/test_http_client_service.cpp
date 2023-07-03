@@ -28,7 +28,7 @@ BOOST_AUTO_TEST_SUITE(test_http_client_service_suite)
         constexpr auto AcceptHeaderKey = "Accept";
         constexpr auto AcceptHeaderValue = "application/json";
         constexpr auto UserAgentHeaderKey = "User-Agent";
-        constexpr auto UserAgentValuePostFix = virtru::Utils::getUserAgentValuePostFix();
+        auto UserAgentValuePostFix = virtru::Utils::getUserAgentValuePostFix();
 
         auto service = Service::Create(kasUrl);
         service->AddHeader(AcceptHeaderKey, AcceptHeaderValue);
