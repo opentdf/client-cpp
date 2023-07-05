@@ -85,7 +85,7 @@ namespace virtru::nanotdf {
 
         std::uint8_t bindingBytesSize = kNanoTDFGMACLength;
         if(m_hasECDSABinding) { // ECDSA - The size of binding depends on the curve.
-            bindingBytesSize = ECCMode::GetECKeySize(eccMode.getEllipticCurveType()) * 2;
+            bindingBytesSize = ECCMode::GetECDSASignatureStructSize(eccMode.getEllipticCurveType());
         }
 
         m_binding.resize(bindingBytesSize);

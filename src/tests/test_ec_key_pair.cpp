@@ -21,6 +21,13 @@
 using namespace virtru;
 using namespace virtru::crypto;
 
+void setLogging()
+{
+    Logger::getInstance().enableConsoleLogging();
+    Logger::getInstance().setLogLevel(virtru::LogLevel::Trace);
+}
+#define TESTLOOPS 50
+
 void testNanoTDFKeyMangement(const std::string& curveName, unsigned compressedPubKeySize) {
     constexpr auto KIvSize = 3;
     constexpr auto KAuthTagSize = 8;
@@ -276,31 +283,40 @@ BOOST_AUTO_TEST_SUITE(test_ec_key_pair_suite)
 
     BOOST_AUTO_TEST_CASE(ec_key_pair_curve_secp521r1)
     {
-        const std::string curveName = "secp521r1";
-        auto eckeyPair = ECKeyPair::Generate(curveName);
-        auto privateKey = eckeyPair->PrivateKeyInPEMFormat();
-        auto publicKey = eckeyPair->PublicKeyInPEMFormat();
+        for (int i=0; i<TESTLOOPS; i++) {
 
-        std::cout << "Private key: " << privateKey <<'\n';
-        std::cout << "Public key: " << publicKey <<'\n';
+            setLogging();
 
-        unsigned int secp521KeySize = 521;
-        BOOST_TEST(eckeyPair->KeySize() == secp521KeySize, "Checking EC key length - key size 521 bits");
-        BOOST_TEST(eckeyPair->CurveName() == curveName,  "Checking the curve name - secp521r1");
+            const std::string curveName = "secp521r1";
+            auto eckeyPair = ECKeyPair::Generate(curveName);
+            auto privateKey = eckeyPair->PrivateKeyInPEMFormat();
+            auto publicKey = eckeyPair->PublicKeyInPEMFormat();
+
+            std::cout << "Private key: " << privateKey << '\n';
+            std::cout << "Public key: " << publicKey << '\n';
+
+            unsigned int secp521KeySize = 521;
+            BOOST_TEST(eckeyPair->KeySize() == secp521KeySize, "Checking EC key length - key size 521 bits");
+            BOOST_TEST(eckeyPair->CurveName() == curveName, "Checking the curve name - secp521r1");
+        }
     }
 
     BOOST_AUTO_TEST_CASE(ec_key_pair_test_nano_tdf_crypto)
     {
         using namespace virtru::nanotdf;
 
-        testNanoTDFKeyMangement(ECCMode::GetEllipticCurveName(EllipticCurve::SECP256R1),
-                                ECCMode::GetECCompressedPubKeySize(EllipticCurve::SECP256R1));
+        for (int i=0; i<TESTLOOPS; i++) {
+            setLogging();
 
-        testNanoTDFKeyMangement(ECCMode::GetEllipticCurveName(EllipticCurve::SECP384R1),
-                                ECCMode::GetECCompressedPubKeySize(EllipticCurve::SECP384R1));
+            testNanoTDFKeyMangement(ECCMode::GetEllipticCurveName(EllipticCurve::SECP256R1),
+                                    ECCMode::GetECCompressedPubKeySize(EllipticCurve::SECP256R1));
 
-        testNanoTDFKeyMangement(ECCMode::GetEllipticCurveName(EllipticCurve::SECP521R1),
-                                ECCMode::GetECCompressedPubKeySize(EllipticCurve::SECP521R1));
+            testNanoTDFKeyMangement(ECCMode::GetEllipticCurveName(EllipticCurve::SECP384R1),
+                                    ECCMode::GetECCompressedPubKeySize(EllipticCurve::SECP384R1));
+
+            testNanoTDFKeyMangement(ECCMode::GetEllipticCurveName(EllipticCurve::SECP521R1),
+                                    ECCMode::GetECCompressedPubKeySize(EllipticCurve::SECP521R1));
+        }
     }
 
     BOOST_AUTO_TEST_CASE(ec_key_pair_test_crypto_methods)

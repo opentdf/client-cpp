@@ -417,7 +417,7 @@ namespace virtru {
 #endif
 
             // Get the signature from tdf.
-            auto signatureSize = ECCMode::GetECKeySize(curveType) * 2;
+            auto signatureSize = ECCMode::GetECDSASignatureStructSize(curveType);
             m_signature.resize(signatureSize);
             std::memcpy(m_signature.data(), encryptedData.data(), signatureSize);
 

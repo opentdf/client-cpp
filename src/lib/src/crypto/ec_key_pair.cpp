@@ -456,7 +456,7 @@ namespace virtru::crypto {
         return key;
     }
 
-    /// Compute ECSDSA signature for the digest for the key-pair of the curve.
+    /// Compute ECDSA signature for the digest for the key-pair of the curve.
     std::vector<gsl::byte> ECKeyPair::ComputeECDSASig(Bytes digest, const std::string& privateKeyInPEM) {
 
         if (privateKeyInPEM.empty()) {
@@ -518,26 +518,32 @@ namespace virtru::crypto {
             ThrowOpensslException("Error decodes a DER encoded ECDSA signature, d2i_ECDSA_SIG");
         }
 
+        auto keySize = getKeySizeForPkey(ecKey.get());
+
         auto rLength = BN_num_bytes(ECDSA_SIG_get0_r(ecdsaSigFreePtr.get()));
         auto sLength = BN_num_bytes(ECDSA_SIG_get0_s(ecdsaSigFreePtr.get()));
 
-        std::vector<gsl::byte> compressedSig(rLength + sLength);
+        ECSDASignature ecsdaSignature;
+        ecsdaSignature.rLength = rLength;
+        ecsdaSignature.sLength = sLength;
+        ecsdaSignature.rValue.resize(keySize);
+        ecsdaSignature.sValue.resize(keySize);
 
         // Add 'r' to signature
         result =  BN_bn2binpad(ECDSA_SIG_get0_r(ecdsaSigFreePtr.get()),
-                               reinterpret_cast<uint8_t*>(compressedSig.data()),  rLength);
+                               reinterpret_cast<uint8_t*>(ecsdaSignature.rValue.data()),  ecsdaSignature.rLength);
         if (!result) {
             ThrowOpensslException("Error converting BIGNUM to big endian - BN_bn2bin_padded()");
         }
 
         // Add 's' to signature
         result =  BN_bn2binpad(ECDSA_SIG_get0_s(ecdsaSigFreePtr.get()),
-                               reinterpret_cast<uint8_t*>(compressedSig.data() + rLength), sLength);
+                               reinterpret_cast<uint8_t*>(ecsdaSignature.sValue.data()), ecsdaSignature.sLength);
         if (!result) {
             ThrowOpensslException("Error converting BIGNUM to big endian - BN_bn2bin_padded()");
         }
 
-        return compressedSig;
+        return ECKeyPair::ecdsaSignatureAsBytes(ecsdaSignature);
     }
 
     /// Verify the signature for the digest for the key-pair of the curve.
@@ -560,14 +566,18 @@ namespace virtru::crypto {
             ThrowOpensslException("Error creating ECDSA_SIG");
         }
 
+        auto keySize = getKeySizeForPkey(ecPub.get());
+
         BIGNUM_free_ptr rBigNum(BN_new());
         BIGNUM_free_ptr sBigNum(BN_new());
 
-        auto rLength = (signature.size() / 2);
-        auto sLength = signature.size() - rLength;
+        auto sigAsStruct = ecdsaSignatureAsStruct(signature, keySize);
 
-        if (!BN_bin2bn(reinterpret_cast<const uint8_t*>(signature.data()), rLength, rBigNum.get()) ||
-            !BN_bin2bn(reinterpret_cast<const uint8_t*>(signature.data()+rLength), sLength, sBigNum.get())) {
+        auto rLength = sigAsStruct.rLength;
+        auto sLength = sigAsStruct.sLength;
+
+        if (!BN_bin2bn(reinterpret_cast<const uint8_t*>(sigAsStruct.rValue.data()), rLength, rBigNum.get()) ||
+            !BN_bin2bn(reinterpret_cast<const uint8_t*>(sigAsStruct.sValue.data()), sLength, sBigNum.get())) {
             ThrowOpensslException("Error converting from big endian - BN_bin2bn()");
         }
 
@@ -660,6 +670,97 @@ namespace virtru::crypto {
         return ecPub;
     }
 
+    /// Return ECDSA signature as byte array
+    /// The format - <rLength><rvalue><sLength><svalue>
+    std::vector<gsl::byte> ECKeyPair::ecdsaSignatureAsBytes(ECSDASignature signature) {
+        std::vector<std::byte> sigBuffer(sizeof(signature.rLength) + sizeof(signature.sLength) + signature.rValue.size() + signature.sValue.size());
+
+        auto sigAsBytes = toWriteableBytes(sigBuffer);
+
+        // Copy value of rLength
+        auto index = 0;
+        std::memcpy(sigAsBytes.data() + index, &signature.rLength, sizeof(signature.rLength));
+
+        // Copy the contents of rValue
+        index += sizeof(signature.rLength);
+        std::memcpy(sigAsBytes.data() + index, signature.rValue.data(), signature.rValue.size());
+
+        // Copy value of sLength
+        index += signature.rValue.size();
+        std::memcpy(sigAsBytes.data() + index, &signature.sLength, sizeof(signature.sLength));
+
+        // Copy value of sValue
+        index += sizeof(signature.sLength);
+        std::memcpy(sigAsBytes.data() + index, signature.sValue.data(), signature.sValue.size());
+
+        return sigBuffer;
+    }
+
+    /// Return ECDSA signature as struct from bytes array
+    ECSDASignature ECKeyPair::ecdsaSignatureAsStruct(Bytes signatureBytes, std::uint8_t keySize) {
+        ECSDASignature signature;
+
+        // Copy value of rLength to signature struct
+        auto index = 0;
+        std::memcpy(&signature.rLength, signatureBytes.data() + index, sizeof(signature.rLength));
+
+        // Copy the contents of rValue to signature struct
+        index += sizeof(signature.rLength);
+        signature.rValue.resize(keySize);
+        std::memcpy(signature.rValue.data(), signatureBytes.data() + index, signature.rLength);
+
+        // Copy value of sLength to signature struct
+        index += keySize;
+        std::memcpy(&signature.sLength, signatureBytes.data() + index, sizeof(signature.sLength));
+
+        // Copy value of sValue
+        index += sizeof(signature.sLength);
+        signature.sValue.resize(keySize);
+        std::memcpy(signature.sValue.data(), signatureBytes.data() + index, signature.sLength);
+
+        return signature;
+    }
+
+    /// Return the key size given the EC Key
+    /// \param pKey - EC Key
+    /// \return Size of the EC key
+    std::uint8_t ECKeyPair::getKeySizeForPkey(EVP_PKEY* pKey) {
+        size_t len{};
+        auto result =  EVP_PKEY_get_utf8_string_param(pKey,
+                                                      OSSL_PKEY_PARAM_GROUP_NAME,
+                                                      nullptr,
+                                                      0,
+                                                      &len);
+        if(!result){
+            ThrowOpensslException("Failed to get the length of curve name from ec key.");
+        }
+
+
+        std::string curveName(len+1, '0');
+        result =  EVP_PKEY_get_utf8_string_param(pKey,
+                                                 OSSL_PKEY_PARAM_GROUP_NAME,
+                                                 curveName.data(),
+                                                 curveName.size(),
+                                                 &len);
+        if(!result){
+            ThrowOpensslException("Failed to get the curve name from ec key.");
+        };
+
+        curveName.resize(len);
+        std::string curve(curveName);
+
+        if (boost::iequals(curveName, "secp256r1") || boost::iequals(curveName, "prime256v1")) {
+            return 32;
+        } else if (boost::iequals(curveName, "secp384r1")) {
+            return 48;
+        } else if (boost::iequals(curveName, "secp521r1")) {
+            return 66;
+        } else {
+            ThrowException("Unsupported ECC algorithm.", VIRTRU_CRYPTO_ERROR);
+        }
+
+        return 0;
+    }
 
 
 }  // namespace virtru::crypto

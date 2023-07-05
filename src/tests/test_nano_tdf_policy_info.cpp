@@ -259,7 +259,7 @@ BOOST_AUTO_TEST_SUITE(test_nano_tdf_policy_info)
         BOOST_TEST(actualDigest == sha256Digest);
 
         auto signature = ECKeyPair::ComputeECDSASig(toBytes(digest), sdkPrivateKey);
-        BOOST_TEST(signature.size() == ECCMode::GetECKeySize(mode.getEllipticCurveType())*2);
+        BOOST_TEST(signature.size() == ECCMode::GetECDSASignatureStructSize(mode.getEllipticCurveType()));
 
         PolicyInfo encryptedPolicy;
         encryptedPolicy.setEmbeddedEncryptedTextPolicy(toBytes(encryptedPayLoad));

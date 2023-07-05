@@ -10,6 +10,8 @@
 //  Created by Sujan Reddy on 2020/05/29
 //
 
+#include <boost/algorithm/string.hpp>
+
 #include "tdf_exception.h"
 #include "ecc_mode.h"
 
@@ -126,6 +128,31 @@ namespace virtru::nanotdf {
             default:
                 ThrowException("Unsupported ECC algorithm.", VIRTRU_CRYPTO_ERROR);
                 break;
+        }
+    }
+
+    /// Return the size of ECDSA signature struct size
+    /// The size is:
+    ///     1 byte - storing length of r value
+    ///     Buffer of key size to store r value
+    ///     1 byte - storing length of s value
+    ///     Buffer of key size to store s value
+    std::uint8_t ECCMode::GetECDSASignatureStructSize(EllipticCurve curve) {
+        auto keySize = GetECKeySize(curve);
+        return (1 + keySize + 1 + keySize);
+    }
+
+    /// Return the size of key of the given curve name.
+    std::uint8_t ECCMode::GetECKeySize(const std::string curveName) {
+
+        if (boost::iequals(curveName, "secp256r1") || boost::iequals(curveName, "prime256v1")) {
+            return 32;
+        } else if (boost::iequals(curveName, "secp384r1")) {
+            return 48;
+        } else if (boost::iequals(curveName, "secp521r1")) {
+            return 66;
+        } else {
+            ThrowException("Unsupported ECC algorithm.", VIRTRU_CRYPTO_ERROR);
         }
     }
 

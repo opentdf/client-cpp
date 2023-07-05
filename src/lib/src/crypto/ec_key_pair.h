@@ -21,6 +21,13 @@
 
 namespace virtru::crypto {
 
+    struct ECSDASignature {
+        uint8_t rLength;
+        std::vector<std::byte>  rValue;
+        uint8_t sLength;
+        std::vector<std::byte>  sValue;
+    };
+
     // Generate a key pair and provides an interface for returning the keys in PEM format.
     class ECKeyPair {
     public: /// Interface
@@ -86,7 +93,7 @@ namespace virtru::crypto {
         /// \return Key - The generated key, same length as key.
         static std::vector<gsl::byte> calculateHKDF(Bytes salt, Bytes secret);
 
-        /// Compute ECSDSA signature for the digest for the private key.
+        /// Compute ECDSA signature for the digest for the private key.
         /// NOTE: The signature contains (r concat s) stored in in big endian
         /// format. The r and s from ecdsa_sig_st
         /// \param digest - The digest for which the signature to be computed.
@@ -102,6 +109,23 @@ namespace virtru::crypto {
         /// \param publicKeyInPEM - The public key in PEM format.
         /// \return True if the signature is valid.
         static bool VerifyECDSASignature(Bytes digest, Bytes signature, const std::string& publicKeyInPEM);
+
+        /// Return ECDSA signature as byte array
+        /// \param signature - The ECSDASignature
+        /// \return Byte array
+        /// The format - <rLength><rvalue><sLength><sValue>
+        static std::vector<std::byte> ecdsaSignatureAsBytes(ECSDASignature signature);
+
+        /// Return ECDSA signature as struct from bytes array
+        /// \param signatureBytes - ECSDA Signature as bytes array with format - <rLength><rvalue><sLength><sValue>
+        /// \param keySize  - Key size
+        /// \return ECSDASignature
+        static ECSDASignature ecdsaSignatureAsStruct(Bytes signatureBytes, std::uint8_t keySize);
+
+        /// Return the key size given the EC Key
+        /// \param pKey - EC Key
+        /// \return Size of the EC key
+        static std::uint8_t getKeySizeForPkey(EVP_PKEY* pKey);
 
     private:
         /// Retrieve EC_KEY from pem formatted public key.
