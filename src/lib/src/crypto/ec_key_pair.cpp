@@ -32,6 +32,10 @@ namespace virtru::crypto {
 
     /// Constants
     constexpr auto kX509CertTag = "BEGIN CERTIFICATE";
+    constexpr auto SECP256R1_CURVE = "secp256r1";
+    constexpr auto PRIME256V1_CURVE = "prime256v1";
+    constexpr auto SECP384R1_CURVE = "secp384r1";
+    constexpr auto SECP521R1_CURVE = "secp521r1";
 
     /// Constructor
     ECKeyPair::ECKeyPair(EVP_PKEY_free_ptr pkey)
@@ -749,11 +753,12 @@ namespace virtru::crypto {
         curveName.resize(len);
         std::string curve(curveName);
 
-        if (boost::iequals(curveName, "secp256r1") || boost::iequals(curveName, "prime256v1")) {
+        if (boost::iequals(curveName, SECP256R1_CURVE) ||
+            boost::iequals(curveName, PRIME256V1_CURVE)) {
             return 32;
-        } else if (boost::iequals(curveName, "secp384r1")) {
+        } else if (boost::iequals(curveName, SECP384R1_CURVE)) {
             return 48;
-        } else if (boost::iequals(curveName, "secp521r1")) {
+        } else if (boost::iequals(curveName, SECP521R1_CURVE)) {
             return 66;
         } else {
             ThrowException("Unsupported ECC algorithm.", VIRTRU_CRYPTO_ERROR);

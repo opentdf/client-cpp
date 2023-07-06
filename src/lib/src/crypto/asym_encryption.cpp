@@ -100,12 +100,12 @@ namespace virtru::crypto {
         }
 
         auto ret = EVP_PKEY_encrypt_init(evpPkeyCtxPtr.get());
-        if (ret != 1) {
+        if (ret <= 0) {
             ThrowOpensslException("Failed to initialize decryption process.");
         }
 
         ret = EVP_PKEY_CTX_set_rsa_padding(evpPkeyCtxPtr.get(), static_cast<int>(m_padding));
-        if (!evpPkeyCtxPtr) {
+        if (ret <= 0) {
             ThrowOpensslException("Failed to create EVP_PKEY_CTX.");
         }
 
@@ -114,7 +114,7 @@ namespace virtru::crypto {
                                &size,
                                toUchar(data.data()),
                                static_cast<int>(data.size()));
-        if (-1 == ret) {
+        if (ret <= 0) {
             ThrowOpensslException("Encryption failed using asymmetric encoding.");
         }
     }

@@ -318,7 +318,7 @@ std::string decryptMessage(const std::string& privateKey, const std::string& cip
     }
 
     ret = EVP_PKEY_CTX_set_rsa_padding(evpPkeyCtxPtr.get(), RSA_PKCS1_OAEP_PADDING);
-    if (!evpPkeyCtxPtr) {
+    if (ret <= 0) {
         ThrowOpensslException("Failed to create EVP_PKEY_CTX.");
     }
 
@@ -333,7 +333,7 @@ std::string decryptMessage(const std::string& privateKey, const std::string& cip
                            &decryptBufSize,
                            toUchar(encryptedData.data()),
                            static_cast<int>(encryptedData.size()));
-    if (-1 == ret) {
+    if (ret <= 0) {
         ThrowOpensslException("Decryption failed using asymmetric decoding.");
     }
     decryptedData.resize(decryptBufSize);
