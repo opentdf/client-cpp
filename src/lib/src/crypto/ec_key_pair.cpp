@@ -18,7 +18,6 @@
 #include "crypto_utils.h"
 #include "tdf_exception.h"
 
-#include <iostream>
 #include <boost/algorithm/string.hpp>
 #include <type_traits>
 #include <openssl/rand.h>
