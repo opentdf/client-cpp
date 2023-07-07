@@ -35,6 +35,7 @@ namespace virtru::crypto {
     constexpr auto PRIME256V1_CURVE = "prime256v1";
     constexpr auto SECP384R1_CURVE = "secp384r1";
     constexpr auto SECP521R1_CURVE = "secp521r1";
+    constexpr auto SHA2_256 = "SHA2-256";
 
     /// Constructor
     ECKeyPair::ECKeyPair(EVP_PKEY_free_ptr pkey)
@@ -73,7 +74,7 @@ namespace virtru::crypto {
     std::string ECKeyPair::PrivateKeyInPEMFormat() const {
         BIO_free_ptr bio{BIO_new(BIO_s_mem())};
 
-        if (1 != PEM_write_bio_PrivateKey(bio.get(), m_pkey.get(), nullptr,
+        if (!PEM_write_bio_PrivateKey(bio.get(), m_pkey.get(), nullptr,
                 nullptr, 0, 0, nullptr)) {
             ThrowOpensslException("Error writing EC private key data in PEM format.");
         }
@@ -263,7 +264,7 @@ namespace virtru::crypto {
         }
 
         auto result = EVP_PKEY_derive_init(evpPrekeyCtxPtr.get());
-        if(!result){
+        if(result <= 0){
             ThrowOpensslException("Failed to initialize the ECDH derive function.");
         }
 
@@ -275,7 +276,7 @@ namespace virtru::crypto {
         // EVP_PKEY_CTX_set_params(evpPrekeyCtxPtr.get(), params);
 
         result = EVP_PKEY_derive_set_peer(evpPrekeyCtxPtr.get(), ecPub.get());
-        if(!result){
+        if(result <= 0){
             ThrowOpensslException("Failed to initialize the peer for calculating the ECDH.");
         }
 
@@ -284,7 +285,7 @@ namespace virtru::crypto {
         /* Get the size by passing NULL as the buffer */
         size_t secret_len{};
         result = EVP_PKEY_derive(evpPrekeyCtxPtr.get(), NULL, &secret_len);
-        if(!result){
+        if(result <= 0){
             ThrowOpensslException("Failed to calculate the length of ECDH signature.");
         }
 
@@ -293,7 +294,7 @@ namespace virtru::crypto {
         result = EVP_PKEY_derive(evpPrekeyCtxPtr.get(),
                                  reinterpret_cast<std::uint8_t*>(symmetricKey.data()),
                                  &secret_len);
-        if(!result){
+        if(result <= 0){
             ThrowOpensslException("Failed to calculate the ECDH.");
         }
 
@@ -385,7 +386,7 @@ namespace virtru::crypto {
         }
 
         result = EVP_PKEY_fromdata_init(evpPkeyCtxPtr.get());
-        if(!result) {
+        if(result <= 0) {
             ThrowOpensslException("Error initializing EVP_PKEY from OSSL_PARAM.");
         }
 
@@ -394,7 +395,7 @@ namespace virtru::crypto {
                                    &evpPubkey,
                                    EVP_PKEY_PUBLIC_KEY,
                                    osslParamFreePtr.get());
-        if(!result) {
+        if(result <= 0) {
             ThrowOpensslException("Error building EVP_PKEY from OSSL_PARAM.");
         }
 
@@ -495,7 +496,7 @@ namespace virtru::crypto {
 
         auto result = EVP_DigestSignInit_ex(mdCtxFreePtr.get(),
                                             nullptr,
-                                            "SHA2-256", nullptr, nullptr,
+                                            SHA2_256, nullptr, nullptr,
                                             ecKey.get(), nullptr);
         if (!result)  {
             ThrowOpensslException("Error initializing signing context, EVP_DigestSignInit_ex.");
@@ -535,14 +536,14 @@ namespace virtru::crypto {
         // Add 'r' to signature
         result =  BN_bn2binpad(ECDSA_SIG_get0_r(ecdsaSigFreePtr.get()),
                                reinterpret_cast<uint8_t*>(ecsdaSignature.rValue.data()),  ecsdaSignature.rLength);
-        if (!result) {
+        if (result == -1) {
             ThrowOpensslException("Error converting BIGNUM to big endian - BN_bn2bin_padded()");
         }
 
         // Add 's' to signature
         result =  BN_bn2binpad(ECDSA_SIG_get0_s(ecdsaSigFreePtr.get()),
                                reinterpret_cast<uint8_t*>(ecsdaSignature.sValue.data()), ecsdaSignature.sLength);
-        if (!result) {
+        if (result == -1) {
             ThrowOpensslException("Error converting BIGNUM to big endian - BN_bn2bin_padded()");
         }
 
@@ -611,7 +612,7 @@ namespace virtru::crypto {
 
         result = EVP_DigestVerifyInit_ex(mdCtxFreePtr.get(),
                                          nullptr,
-                                         "SHA2-256",
+                                         SHA2_256,
                                          nullptr,
                                          nullptr,
                                          ecPub.get(),
@@ -632,36 +633,36 @@ namespace virtru::crypto {
     /// Retrieve EC_KEY from pem formatted public key.
     EVP_PKEY_free_ptr ECKeyPair::getECPublicKey(const std::string& publicKey){
 
-        BIO_free_ptr pubBio{BIO_new(BIO_s_mem())};
-        if ((size_t)BIO_write(pubBio.get(), publicKey.data(), publicKey.size()) != publicKey.size()) {
-            ThrowOpensslException("Failed to load public key.");
+        EVP_PKEY_free_ptr publicKeyPtr;
+        BIO_free_ptr publicKeyBuffer { BIO_new_mem_buf(publicKey.data(), publicKey.size()) };
+
+        if (!publicKeyBuffer) {
+            ThrowOpensslException("Failed to allocate memory for public key.");
         }
 
-        EVP_PKEY_free_ptr ecPub;
         if (boost::contains(publicKey, kX509CertTag)) {
 
-            X509_free_ptr x509Ptr{ PEM_read_bio_X509(pubBio.get(), nullptr, nullptr, nullptr) };
+            X509_free_ptr x509Ptr{ PEM_read_bio_X509(publicKeyBuffer.get(),
+                                                     nullptr,
+                                                     nullptr,
+                                                     nullptr) };
             if (!x509Ptr) {
                 ThrowOpensslException("Failed to create X509 cert struct.");
             }
 
-            EVP_PKEY_free_ptr evppkeyPtr { X509_get_pubkey(x509Ptr.get()) };
-            if (!evppkeyPtr) {
-                ThrowOpensslException("Failed to create EVP_PKEY.");
-            }
+            // Store the public key into EVP_PKEY
+            publicKeyPtr.reset(X509_get_pubkey(x509Ptr.get()));
 
-            ecPub.reset(evppkeyPtr.get());
-            if (!ecPub) {
-                ThrowOpensslException("Failed to ec key from public key");
-            }
         } else {
-            ecPub.reset(PEM_read_bio_PUBKEY(pubBio.get(), nullptr, nullptr, nullptr));
-            if (!ecPub) {
-                ThrowOpensslException("Failed to ec key from public key");
-            }
+            // Store the public key into RSA struct
+            publicKeyPtr.reset(PEM_read_bio_PUBKEY(publicKeyBuffer.get(), nullptr, nullptr, nullptr));
         }
 
-        EVP_PKEY_CTX_free_ptr evpPkeyCtxPtr { EVP_PKEY_CTX_new(ecPub.get(), nullptr)};
+        if (!publicKeyPtr) {
+            ThrowOpensslException("Failed to create a public key.");
+        }
+
+        EVP_PKEY_CTX_free_ptr evpPkeyCtxPtr { EVP_PKEY_CTX_new(publicKeyPtr.get(), nullptr)};
         if (!evpPkeyCtxPtr) {
             ThrowOpensslException("Failed to create EVP_PKEY_CTX.");
         }
@@ -670,7 +671,7 @@ namespace virtru::crypto {
             ThrowOpensslException("Failed ec key(public) sanity check.");
         }
 
-        return ecPub;
+        return publicKeyPtr;
     }
 
     /// Return ECDSA signature as byte array
@@ -702,6 +703,11 @@ namespace virtru::crypto {
     /// Return ECDSA signature as struct from bytes array
     ECSDASignature ECKeyPair::ecdsaSignatureAsStruct(Bytes signatureBytes, std::uint8_t keySize) {
         ECSDASignature signature;
+
+        // NOTE: The extra 2 bytes is for holding the length 'r' and 's' length
+        if (signatureBytes.size() != (2 * keySize) + 2) {
+            ThrowException("Invalid signature buffer size");
+        }
 
         // Copy value of rLength to signature struct
         auto index = 0;
