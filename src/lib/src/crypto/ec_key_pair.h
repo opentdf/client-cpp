@@ -127,6 +127,11 @@ namespace virtru::crypto {
         /// \return Size of the EC key
         static std::uint8_t getKeySizeForPkey(EVP_PKEY* pKey);
 
+        /// Return the size of key of the given curve.
+        /// \param curve - The curve value.
+        /// \return The size of key of the given curve.
+        static std::uint8_t getECKeySize(const std::string curveName);
+
     private:
         /// Retrieve EC_KEY from pem formatted public key.
         /// \param publicKeyInPEM - pem formatted key.

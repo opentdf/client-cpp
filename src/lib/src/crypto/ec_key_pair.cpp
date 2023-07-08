@@ -730,6 +730,22 @@ namespace virtru::crypto {
         return signature;
     }
 
+    /// Return the size of key of the given curve.
+    std::uint8_t ECKeyPair::getECKeySize(const std::string curveName) {
+        if (boost::iequals(curveName, SECP256R1_CURVE) ||
+            boost::iequals(curveName, PRIME256V1_CURVE)) {
+            return 32;
+        } else if (boost::iequals(curveName, SECP384R1_CURVE)) {
+            return 48;
+        } else if (boost::iequals(curveName, SECP521R1_CURVE)) {
+            return 66;
+        } else {
+            ThrowException("Unsupported ECC algorithm.", VIRTRU_CRYPTO_ERROR);
+        }
+
+        return 0;
+    }
+
     /// Return the key size given the EC Key
     /// \param pKey - EC Key
     /// \return Size of the EC key
@@ -758,18 +774,7 @@ namespace virtru::crypto {
         curveName.resize(len);
         std::string curve(curveName);
 
-        if (boost::iequals(curveName, SECP256R1_CURVE) ||
-            boost::iequals(curveName, PRIME256V1_CURVE)) {
-            return 32;
-        } else if (boost::iequals(curveName, SECP384R1_CURVE)) {
-            return 48;
-        } else if (boost::iequals(curveName, SECP521R1_CURVE)) {
-            return 66;
-        } else {
-            ThrowException("Unsupported ECC algorithm.", VIRTRU_CRYPTO_ERROR);
-        }
-
-        return 0;
+        return getECKeySize(curveName);
     }
 
 

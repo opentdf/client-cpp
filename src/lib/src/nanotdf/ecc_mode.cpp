@@ -14,8 +14,11 @@
 
 #include "tdf_exception.h"
 #include "ecc_mode.h"
+#include "crypto/ec_key_pair.h"
 
 namespace virtru::nanotdf {
+
+    using namespace virtru::crypto;
 
     /// Constructor for empty object.
     ECCMode::ECCMode() {
@@ -116,6 +119,7 @@ namespace virtru::nanotdf {
 
     /// Return the size of key of the given curve.
     std::uint8_t ECCMode::GetECKeySize(EllipticCurve curve) {
+
         switch (curve) {
             case EllipticCurve::SECP256K1:
                 ThrowException("SDK doesn't support 'secp256k1' curve", VIRTRU_CRYPTO_ERROR);
@@ -144,16 +148,7 @@ namespace virtru::nanotdf {
 
     /// Return the size of key of the given curve name.
     std::uint8_t ECCMode::GetECKeySize(const std::string curveName) {
-
-        if (boost::iequals(curveName, "secp256r1") || boost::iequals(curveName, "prime256v1")) {
-            return 32;
-        } else if (boost::iequals(curveName, "secp384r1")) {
-            return 48;
-        } else if (boost::iequals(curveName, "secp521r1")) {
-            return 66;
-        } else {
-            ThrowException("Unsupported ECC algorithm.", VIRTRU_CRYPTO_ERROR);
-        }
+        return ECKeyPair::getECKeySize(curveName);
     }
 
     /// Return the compressed size of public key of the given curve.
