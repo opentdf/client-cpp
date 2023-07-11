@@ -18,6 +18,10 @@ find_package("jwt-cpp")
 include_directories(
 ${OpenSSL_INCLUDE_DIRS}
 ${Boost_INCLUDE_DIRS}
+${Microsoft.GSL_INCLUDE_DIRS}
+${Libxml2_INCLUDE_DIRS}
+${nlohmann_json_INCLUDE_DIRS}
+${jwt-cpp_INCLUDE_DIRS}
 )
 
 add_subdirectory(src)
