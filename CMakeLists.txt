@@ -14,14 +14,9 @@ find_package("Microsoft.GSL")
 find_package("LibXml2")
 find_package("nlohmann_json")
 find_package("jwt-cpp")
+find_package("magic-enum")
 
 include_directories(
-${OpenSSL_INCLUDE_DIRS}
-${Boost_INCLUDE_DIRS}
-${Microsoft.GSL_INCLUDE_DIRS}
-${Libxml2_INCLUDE_DIRS}
-${nlohmann_json_INCLUDE_DIRS}
-${jwt-cpp_INCLUDE_DIRS}
 ${CMAKE_INCLUDE_PATH}
 )
 
