@@ -15,5 +15,10 @@ find_package("LibXml2")
 find_package("nlohmann_json")
 find_package("jwt-cpp")
 
+include_directories(
+${OpenSSL_INCLUDE_DIRS}
+${Boost_INCLUDE_DIRS}
+)
+
 add_subdirectory(src)
 
