@@ -43,13 +43,6 @@ set (TDF_CPP_SDK_SOURCE_DIR ${PROJECT_SOURCE_DIR})
 include(${PROJECT_SOURCE_DIR}/CMakeSources.txt)
 set(SOURCE_FILES ${TDF_CPP_SDK_SOURCE_FILES})
 
-find_package("OpenSSL")
-find_package("Boost")
-find_package("Microsoft.GSL")
-find_package("LibXml2")
-find_package("nlohmann_json")
-find_package("jwt-cpp")
-
 include_directories(
     ${PROJECT_SOURCE_DIR}/include
     ${PROJECT_SOURCE_DIR}/include/crypto
@@ -89,7 +82,6 @@ link_libraries(
 # generate the static library from the library sources
 add_library(${PROJECT_NAME}static STATIC ${SOURCE_FILES})
 set_target_properties(${PROJECT_NAME}static PROPERTIES OUTPUT_NAME ${PROJECT_NAME}${TDF_STATIC_LIB_SUFFIX})
-target_include_directories(${PROJECT_NAME}static PUBLIC include)
 
 set(TDF_LIB_DIR ${CMAKE_BINARY_DIR}/lib)
 message(STATUS "Lib output dir: ${TDF_LIB_DIR}")
@@ -173,7 +165,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 else()
   add_library(${PROJECT_NAME}shared SHARED ${SOURCE_FILES})
   set_target_properties(${PROJECT_NAME}shared PROPERTIES OUTPUT_NAME ${PROJECT_NAME})
-  target_include_directories(${PROJECT_NAME}shared PUBLIC include)
   get_target_property(TDF_SHARED_LIB_NAME ${PROJECT_NAME}shared OUTPUT_NAME)
   if(DEFINED ENV{VBUILD_ADD_RPI_FLAGS})
     if($ENV{VBUILD_ADD_RPI_FLAGS} MATCHES "true")
