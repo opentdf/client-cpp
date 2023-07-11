@@ -18,7 +18,9 @@ find_package("LibXml2")
 find_package("nlohmann_json")
 find_package("jwt-cpp")
 
-include_directories(${CONAN_INCLUDE_DIRS})
+target_include_directories(opentdf-client PUBLIC include)
+
+#include_directories(${CONAN_INCLUDE_DIRS})
 
 add_subdirectory(src)
 
