@@ -43,6 +43,13 @@ set (TDF_CPP_SDK_SOURCE_DIR ${PROJECT_SOURCE_DIR})
 include(${PROJECT_SOURCE_DIR}/CMakeSources.txt)
 set(SOURCE_FILES ${TDF_CPP_SDK_SOURCE_FILES})
 
+find_package("OpenSSL")
+find_package("Boost")
+find_package("Microsoft.GSL")
+find_package("LibXml2")
+find_package("nlohmann_json")
+find_package("jwt-cpp")
+
 include_directories(
     ${PROJECT_SOURCE_DIR}/include
     ${PROJECT_SOURCE_DIR}/include/crypto
