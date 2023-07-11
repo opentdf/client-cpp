@@ -22,6 +22,7 @@ ${Microsoft.GSL_INCLUDE_DIRS}
 ${Libxml2_INCLUDE_DIRS}
 ${nlohmann_json_INCLUDE_DIRS}
 ${jwt-cpp_INCLUDE_DIRS}
+${CMAKE_INCLUDE_PATH}
 )
 
 add_subdirectory(src)
