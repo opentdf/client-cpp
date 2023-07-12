@@ -20,8 +20,14 @@ include_directories(
 ${CMAKE_INCLUDE_PATH}
 )
 
-link_directories(
-${CMAKE_LINK_PATH}
+link_libraries(
+OpenSSL::OpenSSL
+Boost::Boost
+Microsoft.GSL::Microsoft.GSL
+LibXml2::LibXml2
+nlohmann_json::nlohmann_json
+jwt-cpp::jwt-cpp
+magic-enum::magic-enum
 )
 
 add_subdirectory(src)
