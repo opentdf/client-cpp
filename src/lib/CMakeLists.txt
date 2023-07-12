@@ -99,65 +99,65 @@ set(TDF_COMBINED_LIB_FULL_PATH ${TDF_LIB_DIR}/${TDF_COMBINED_LIB_FILENAME})
 message(STATUS "Combined full path: ${TDF_COMBINED_LIB_FULL_PATH}")
 
 #TODO: Also need to handle iOS and Android(arm64).
-if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-
-    FOREACH (LDIR ${CONAN_LIB_DIRS})
-        set(V_COMBINED_LIB_DIRS ${V_COMBINED_LIB_DIRS} -L${LDIR})
-    ENDFOREACH(LDIR)
-
-    FOREACH (LNAME ${CONAN_LIBS})
-        set(V_COMBINED_LIB_NAMES ${V_COMBINED_LIB_NAMES} -l${LNAME})
-    ENDFOREACH(LNAME)
-
-    add_custom_command(TARGET ${PROJECT_NAME}static POST_BUILD
-            COMMAND libtool -static -o ${TDF_COMBINED_LIB_FULL_PATH} ${TDF_STATIC_LIB_FULL_PATH} ${V_COMBINED_LIB_DIRS} ${V_COMBINED_LIB_NAMES}
-
-            COMMENT "Combining libs and creating ${TDF_COMBINED_LIB_FILENAME}...")
-
-elseif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-
-    # TODO: Eventually replace ar command with libtool
-    # Create a mri file for ar
-    set(MRI_FILE  ${CMAKE_CURRENT_BINARY_DIR}/tdf.mri)
-
-    file(WRITE ${MRI_FILE} "create  ${TDF_COMBINED_LIB_FULL_PATH}\n")
-    file(APPEND ${MRI_FILE} "addlib ${TDF_STATIC_LIB_FULL_PATH}\n")
-    file(APPEND ${MRI_FILE} "addlib ${CONAN_LIB_DIRS_BOOST}/libboost_regex.a\n")
-    file(APPEND ${MRI_FILE} "addlib ${CONAN_LIB_DIRS_BOOST}/libboost_iostreams.a\n")
-    file(APPEND ${MRI_FILE} "addlib ${CONAN_LIB_DIRS_OPENSSL}/libcrypto.a\n")
-    file(APPEND ${MRI_FILE} "addlib ${CONAN_LIB_DIRS_OPENSSL}/libssl.a\n")
-    file(APPEND ${MRI_FILE} "addlib ${CONAN_LIB_DIRS_LIBXML2}/libxml2.a\n")
-    file(APPEND ${MRI_FILE} "addlib ${CONAN_LIB_DIRS_ZLIB}/libz.a\n")
-    file(APPEND ${MRI_FILE} "addlib ${CONAN_LIB_DIRS_LIBICONV}/libiconv.a\n")
-    file(APPEND ${MRI_FILE} "save\n")
-    file(APPEND ${MRI_FILE} "end\n")
-
-    message(STATUS "mri file ${MRI_FILE}")
-    add_custom_command(TARGET ${PROJECT_NAME}static POST_BUILD
-            COMMAND  ar -M < ${MRI_FILE}
-            COMMENT "Combining libs and creating ${TDF_COMBINED_LIB_FILENAME}...")
-
-elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    FOREACH (LDIR ${CONAN_LIB_DIRS})
-        set(V_COMBINED_LIB_DIRS ${V_COMBINED_LIB_DIRS} /LIBPATH:${LDIR})
-    ENDFOREACH(LDIR)
-    message(STATUS "combined lib dirs: ${V_COMBINED_LIB_DIRS}")
-
-    FOREACH (LNAME ${CONAN_LIBS})
-        set(V_COMBINED_LIB_NAMES ${V_COMBINED_LIB_NAMES} "${LNAME}.lib")
-    ENDFOREACH(LNAME)
-    message(STATUS "combined lib names: ${V_COMBINED_LIB_NAMES}")
-
-    add_custom_command(TARGET ${PROJECT_NAME}static POST_BUILD
-      COMMAND if exist ${TDF_LIB_DIR}/$<CONFIG>/${TDF_STATIC_LIB_FILENAME} (
-        lib -out:${TDF_LIB_DIR}/$<CONFIG>/${TDF_COMBINED_LIB_FILENAME} ${TDF_LIB_DIR}/$<CONFIG>/${TDF_STATIC_LIB_FILENAME} ${V_COMBINED_LIB_DIRS} ${V_COMBINED_LIB_NAMES}
-      ) else (
-        lib -out:${TDF_LIB_DIR}/${TDF_COMBINED_LIB_FILENAME} ${TDF_LIB_DIR}/${TDF_STATIC_LIB_FILENAME} ${V_COMBINED_LIB_DIRS} ${V_COMBINED_LIB_NAMES}
-      )
-    )
-else()
-    message(STATUS "${CMAKE_SYSTEM_NAME} - unknown system FIXME........")
-endif()
+#if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+#
+#    FOREACH (LDIR ${CONAN_LIB_DIRS})
+#        set(V_COMBINED_LIB_DIRS ${V_COMBINED_LIB_DIRS} -L${LDIR})
+#    ENDFOREACH(LDIR)
+#
+#    FOREACH (LNAME ${CONAN_LIBS})
+#        set(V_COMBINED_LIB_NAMES ${V_COMBINED_LIB_NAMES} -l${LNAME})
+#    ENDFOREACH(LNAME)
+#
+#    add_custom_command(TARGET ${PROJECT_NAME}static POST_BUILD
+#            COMMAND libtool -static -o ${TDF_COMBINED_LIB_FULL_PATH} ${TDF_STATIC_LIB_FULL_PATH} ${V_COMBINED_LIB_DIRS} ${V_COMBINED_LIB_NAMES}
+#
+#            COMMENT "Combining libs and creating ${TDF_COMBINED_LIB_FILENAME}...")
+#
+#elseif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+#
+#    # TODO: Eventually replace ar command with libtool
+#    # Create a mri file for ar
+#    set(MRI_FILE  ${CMAKE_CURRENT_BINARY_DIR}/tdf.mri)
+#
+#    file(WRITE ${MRI_FILE} "create  ${TDF_COMBINED_LIB_FULL_PATH}\n")
+#    file(APPEND ${MRI_FILE} "addlib ${TDF_STATIC_LIB_FULL_PATH}\n")
+#    file(APPEND ${MRI_FILE} "addlib ${CONAN_LIB_DIRS_BOOST}/libboost_regex.a\n")
+#    file(APPEND ${MRI_FILE} "addlib ${CONAN_LIB_DIRS_BOOST}/libboost_iostreams.a\n")
+#    file(APPEND ${MRI_FILE} "addlib ${CONAN_LIB_DIRS_OPENSSL}/libcrypto.a\n")
+#    file(APPEND ${MRI_FILE} "addlib ${CONAN_LIB_DIRS_OPENSSL}/libssl.a\n")
+#    file(APPEND ${MRI_FILE} "addlib ${CONAN_LIB_DIRS_LIBXML2}/libxml2.a\n")
+#    file(APPEND ${MRI_FILE} "addlib ${CONAN_LIB_DIRS_ZLIB}/libz.a\n")
+#    file(APPEND ${MRI_FILE} "addlib ${CONAN_LIB_DIRS_LIBICONV}/libiconv.a\n")
+#    file(APPEND ${MRI_FILE} "save\n")
+#    file(APPEND ${MRI_FILE} "end\n")
+#
+#    message(STATUS "mri file ${MRI_FILE}")
+#    add_custom_command(TARGET ${PROJECT_NAME}static POST_BUILD
+#            COMMAND  ar -M < ${MRI_FILE}
+#            COMMENT "Combining libs and creating ${TDF_COMBINED_LIB_FILENAME}...")
+#
+#elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+#    FOREACH (LDIR ${CONAN_LIB_DIRS})
+#        set(V_COMBINED_LIB_DIRS ${V_COMBINED_LIB_DIRS} /LIBPATH:${LDIR})
+#    ENDFOREACH(LDIR)
+#    message(STATUS "combined lib dirs: ${V_COMBINED_LIB_DIRS}")
+#
+#    FOREACH (LNAME ${CONAN_LIBS})
+#        set(V_COMBINED_LIB_NAMES ${V_COMBINED_LIB_NAMES} "${LNAME}.lib")
+#    ENDFOREACH(LNAME)
+#    message(STATUS "combined lib names: ${V_COMBINED_LIB_NAMES}")
+#
+#    add_custom_command(TARGET ${PROJECT_NAME}static POST_BUILD
+#      COMMAND if exist ${TDF_LIB_DIR}/$<CONFIG>/${TDF_STATIC_LIB_FILENAME} (
+#        lib -out:${TDF_LIB_DIR}/$<CONFIG>/${TDF_COMBINED_LIB_FILENAME} ${TDF_LIB_DIR}/$<CONFIG>/${TDF_STATIC_LIB_FILENAME} ${V_COMBINED_LIB_DIRS} ${V_COMBINED_LIB_NAMES}
+#      ) else (
+#        lib -out:${TDF_LIB_DIR}/${TDF_COMBINED_LIB_FILENAME} ${TDF_LIB_DIR}/${TDF_STATIC_LIB_FILENAME} ${V_COMBINED_LIB_DIRS} ${V_COMBINED_LIB_NAMES}
+#      )
+#    )
+#else()
+#    message(STATUS "${CMAKE_SYSTEM_NAME} - unknown system FIXME........")
+#endif()
 
 # generate the shared library from the library sources
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
