@@ -20,5 +20,9 @@ include_directories(
 ${CMAKE_INCLUDE_PATH}
 )
 
+link_directories(
+${CMAKE_LINK_PATH}
+)
+
 add_subdirectory(src)
 
