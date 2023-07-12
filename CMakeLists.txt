@@ -16,12 +16,23 @@ find_package("nlohmann_json")
 find_package("jwt-cpp")
 find_package("magic-enum")
 
-include_directories(
-${CMAKE_INCLUDE_PATH}
+link_libraries(
+ openssl::openssl
+ boost::boost
+ Microsoft.GSL::GSL
+ LibXml2::LibXml2
+ nlohmann_json::nlohmann_json
+ jwt-cpp::jwt-cpp
 )
 
-link_libraries(
-${CMAKE_LIBRARY_PATH}
+#BZip2::BZip2
+#ZLIB::ZLIB
+#libbacktrace::libbacktrace
+#Iconv::Iconv
+#picojson::picojson
+
+include_directories(
+${CMAKE_INCLUDE_PATH}
 )
 
 add_subdirectory(src)
