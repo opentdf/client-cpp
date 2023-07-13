@@ -23,13 +23,8 @@ link_libraries(
  LibXml2::LibXml2
  nlohmann_json::nlohmann_json
  jwt-cpp::jwt-cpp
+ magic-enum::magic-enum
 )
-
-#BZip2::BZip2
-#ZLIB::ZLIB
-#libbacktrace::libbacktrace
-#Iconv::Iconv
-#picojson::picojson
 
 include_directories(
 ${CMAKE_INCLUDE_PATH}
