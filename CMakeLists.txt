@@ -14,7 +14,7 @@ find_package("Microsoft.GSL")
 find_package("LibXml2")
 find_package("nlohmann_json")
 find_package("jwt-cpp")
-find_package("magic-enum")
+find_package("magic_enum")
 
 link_libraries(
  openssl::openssl
@@ -23,7 +23,6 @@ link_libraries(
  LibXml2::LibXml2
  nlohmann_json::nlohmann_json
  jwt-cpp::jwt-cpp
- magic-enum::magic-enum
 )
 
 include_directories(
