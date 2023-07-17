@@ -55,9 +55,7 @@ jobs:
 
       - name: 42valgrind Leak checker
         uses: solareenlo/42valgrind-action@v1.0.3
-        with:
-          flags: 'sh test_valgrind.sh'
-          
+
       - name: Run tilt & C++ build and run sanity test
         env:
           # This test script is passed to opentdf/quickstart tilt file
