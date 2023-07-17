@@ -542,7 +542,7 @@ namespace virtru {
 
     /// Convert the xml formatted TDF(ICTDF) to the json formatted TDF
     void TDFImpl::convertICTDFToTDF(const std::string& ictdfFilePath, const std::string& tdfFilePath) {
-        LogTrace("TDFImpl::convertICTDFToTDF");
+        LogTrace("TDFImpl::convertXmlToJson");
 
         FileInputProvider inputProvider{ictdfFilePath};
         auto protocol = encryptedWithProtocol(inputProvider);
@@ -570,7 +570,7 @@ namespace virtru {
 
     /// Convert the json formatted TDF to xml formatted TDF(ICTDF)
     void TDFImpl::convertTDFToICTDF(const std::string& tdfFilePath, const std::string& ictdfFilePath) {
-        LogTrace("TDFImpl::convertTDFToICTDF");
+        LogTrace("TDFImpl::convertJsonToXml");
 
         FileInputProvider inputProvider{tdfFilePath};
         auto protocol = encryptedWithProtocol(inputProvider);

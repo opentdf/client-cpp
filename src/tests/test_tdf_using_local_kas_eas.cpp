@@ -611,7 +611,7 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
             plainTextFile.setHandlingAssertion(handlingAssertion);
             ictdfClient->encryptFile(plainTextFile, ictdfTestFile);
 
-            TDFClient::convertICTDFToTDF(ictdfTestFile, "testing-json.tdf");
+            TDFClient::convertXmlToJson(ictdfTestFile, "testing-json.tdf");
 
             {
                 auto jsonTDFClient = std::make_unique<TDFClient>(clientCreds, KAS_URL);
@@ -634,7 +634,7 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
 
                 twoFilesAreSame("testing-ictdf-tdf-2.txt", testFile);
 
-                TDFClient::convertTDFToICTDF("testing-json.tdf", "testing-xml.tdf");
+                TDFClient::convertJsonToXml("testing-json.tdf", "testing-xml.tdf");
             }
 
             auto jsonTDFClient = std::make_unique<TDFClient>(clientCreds, KAS_URL);

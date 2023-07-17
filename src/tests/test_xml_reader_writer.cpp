@@ -185,7 +185,7 @@ BOOST_AUTO_TEST_SUITE(test_xml_reader_writer_suite)
         inPathXML.append("/data/tdf.ictdf");
 #endif
 
-        TDFClient::convertICTDFToTDF(inPathXML, "converted_tdf.tdf");
+        TDFClient::convertXmlToJson(inPathXML, "converted_tdf.tdf");
 
         FileInputProvider fileInputProvider{inPathXML};
         TDFXMLReader tdfXMLReader{fileInputProvider};
