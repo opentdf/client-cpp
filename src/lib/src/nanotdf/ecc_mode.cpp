@@ -10,10 +10,15 @@
 //  Created by Sujan Reddy on 2020/05/29
 //
 
+#include <boost/algorithm/string.hpp>
+
 #include "tdf_exception.h"
 #include "ecc_mode.h"
+#include "crypto/ec_key_pair.h"
 
 namespace virtru::nanotdf {
+
+    using namespace virtru::crypto;
 
     /// Constructor for empty object.
     ECCMode::ECCMode() {
@@ -114,6 +119,7 @@ namespace virtru::nanotdf {
 
     /// Return the size of key of the given curve.
     std::uint8_t ECCMode::GetECKeySize(EllipticCurve curve) {
+
         switch (curve) {
             case EllipticCurve::SECP256K1:
                 ThrowException("SDK doesn't support 'secp256k1' curve", VIRTRU_CRYPTO_ERROR);
@@ -127,6 +133,22 @@ namespace virtru::nanotdf {
                 ThrowException("Unsupported ECC algorithm.", VIRTRU_CRYPTO_ERROR);
                 break;
         }
+    }
+
+    /// Return the size of ECDSA signature struct size
+    /// The size is:
+    ///     1 byte - storing length of r value
+    ///     Buffer of key size to store r value
+    ///     1 byte - storing length of s value
+    ///     Buffer of key size to store s value
+    std::uint8_t ECCMode::GetECDSASignatureStructSize(EllipticCurve curve) {
+        auto keySize = GetECKeySize(curve);
+        return (1 + keySize + 1 + keySize);
+    }
+
+    /// Return the size of key of the given curve name.
+    std::uint8_t ECCMode::GetECKeySize(const std::string curveName) {
+        return ECKeyPair::getECKeySize(curveName);
     }
 
     /// Return the compressed size of public key of the given curve.

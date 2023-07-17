@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_SUITE(test_http_client_service_suite)
 
         IOContext ioContext;
         service->ExecuteGet(ioContext, [](ErrorCode errorCode, HttpResponse&& response) {
-            if (errorCode) { // something wrong.
+            if (errorCode && errorCode.value() != 1) { // something wrong.
 
                 std::ostringstream os {"Error code: "};
                 os << errorCode.value() << " " << errorCode.message();

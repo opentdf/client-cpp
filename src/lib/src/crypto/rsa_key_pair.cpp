@@ -22,12 +22,12 @@
 
 namespace virtru::crypto {
 
-    RsaKeyPair::RsaKeyPair(RSA_free_ptr rsa) : m_rsa(std::move(rsa)) {}
+    RsaKeyPair::RsaKeyPair(EVP_PKEY_free_ptr rsa) : m_rsa(std::move(rsa)) {}
 
     std::string RsaKeyPair::PublicKeyInPEMFormat() const {
         BIO_free_ptr bio{BIO_new(BIO_s_mem())};
 
-        if (1 != PEM_write_bio_RSA_PUBKEY(bio.get(), m_rsa.get())) {
+        if (1 != PEM_write_bio_PUBKEY(bio.get(), m_rsa.get())) {
             ThrowOpensslException("Failed to retrieve public key data.");
         }
 
@@ -44,7 +44,7 @@ namespace virtru::crypto {
     std::string RsaKeyPair::PrivateKeyInPEMFormat() const {
         BIO_free_ptr bio{BIO_new(BIO_s_mem())};
 
-        if (1 != PEM_write_bio_RSAPrivateKey(bio.get(), m_rsa.get(), nullptr, nullptr, 0, nullptr, nullptr)) {
+        if (1 != PEM_write_bio_PrivateKey(bio.get(), m_rsa.get(), nullptr, nullptr, 0, nullptr, nullptr)) {
             ThrowOpensslException("Failed to retrieve private key data.");
         }
 
@@ -59,16 +59,8 @@ namespace virtru::crypto {
     }
 
     std::unique_ptr<RsaKeyPair> RsaKeyPair::Generate(unsigned keySize) {
-
-        RSA_free_ptr rsa{RSA_new()};
-        BIGNUM_free_ptr bne{BN_new()};
-
-        // TODO: use Logger
-        if (1 != BN_set_word(bne.get(), RSA_F4)) {
-            ThrowOpensslException("Failed exponent generation.");
-        }
-
-        if (1 != RSA_generate_key_ex(rsa.get(), static_cast<int>(keySize), bne.get(), nullptr)) {
+        EVP_PKEY_free_ptr rsa { EVP_RSA_gen(keySize)};
+        if (!rsa) {
             ThrowOpensslException("Failed RsaKeyPair generation.");
         }
 

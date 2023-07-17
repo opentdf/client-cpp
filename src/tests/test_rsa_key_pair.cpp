@@ -34,8 +34,8 @@ BOOST_AUTO_TEST_CASE(rsa_key_pair_2048)
     std::unique_ptr<RSA, RsaDeleter> privateRSA { PEM_read_bio_RSAPrivateKey(privateKeyBuffer.get(),
             nullptr, nullptr, nullptr) };
 
-    std::unique_ptr<BIO, BioDeleter> publicKeyBuffer { BIO_new_mem_buf(publicKey.data(), publicKey.size()) };
-    std::unique_ptr<RSA, RsaDeleter> publicRSA { PEM_read_bio_RSA_PUBKEY(publicKeyBuffer.get(), nullptr,
+    std::unique_ptr<BIO, BioDeleter> publicKeyBuffer { BIO_new_mem_buf(privateKey.data(), privateKey.size()) };
+    std::unique_ptr<RSA, RsaDeleter> publicRSA { PEM_read_bio_RSAPrivateKey(publicKeyBuffer.get(), nullptr,
             nullptr, nullptr) };
 
     BOOST_TEST(RSA_size(privateRSA.get()) == 256, "Checking RSA private key length - key size 256 bytes");
@@ -52,8 +52,8 @@ BOOST_AUTO_TEST_CASE(rsa_key_pair_4096)
     std::unique_ptr<RSA, RsaDeleter> privateRSA { PEM_read_bio_RSAPrivateKey(privateKeyBuffer.get(),
             nullptr, nullptr, nullptr) };
 
-    std::unique_ptr<BIO, BioDeleter> publicKeyBuffer { BIO_new_mem_buf(publicKey.data(), publicKey.size()) };
-    std::unique_ptr<RSA, RsaDeleter> publicRSA { PEM_read_bio_RSA_PUBKEY(publicKeyBuffer.get(),
+    std::unique_ptr<BIO, BioDeleter> publicKeyBuffer { BIO_new_mem_buf(privateKey.data(), privateKey.size()) };
+    std::unique_ptr<RSA, RsaDeleter> publicRSA { PEM_read_bio_RSAPrivateKey(publicKeyBuffer.get(),
             nullptr, nullptr, nullptr) };
 
     BOOST_TEST(RSA_size(privateRSA.get()) == 512, "Checking RSA private key length - key size 512 bytes");

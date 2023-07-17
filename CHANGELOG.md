@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+1.5.0
+ - PLAT-1589 - Update the C++ SDK crypto use openssl 3.1.1
+
 1.4.0
  - PLAT-2507 - Add validation against schema for IC-TDF
  - PLAT-2401 - Support IC-TDF format

@@ -105,6 +105,22 @@ namespace virtru::nanotdf {
         /// \return The size of key of the given curve.
         static std::uint8_t GetECKeySize(EllipticCurve curve);
 
+        /// Return the size of ECDSA signature struct size
+        /// The size is:
+        ///     1 byte - storing length of r value
+        ///     Buffer of key size to store r value
+        ///     1 byte - storing length of s value
+        ///     Buffer of key size to store s value
+        ///
+        /// \param curve
+        /// \return The size of ecdsa signature for give curve
+        static std::uint8_t GetECDSASignatureStructSize(EllipticCurve curve);
+
+        /// Return the size of key of the given curve name.
+        /// \param curve - The curve name.
+        /// \return The size of key of the given curve.
+        static std::uint8_t GetECKeySize(const std::string curveName);
+
         /// Return the compressed size of public key of the given curve.
         /// \param curve - The curve value.
         /// \return The compressed size of public key of the given curve.

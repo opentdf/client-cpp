@@ -19,7 +19,7 @@ class TDFLibConan(ConanFile):
             del self.options.fPIC
         
     def requirements(self):
-        self.requires("openssl/1.1.1q")
+        self.requires("openssl/3.1.1")
         self.requires("boost/1.81.0")
         self.requires("ms-gsl/2.1.0")
         self.requires("libxml2/2.9.10")

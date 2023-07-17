@@ -28,6 +28,13 @@ using namespace virtru;
 using namespace virtru::crypto;
 using namespace virtru::nanotdf;
 
+void setLogging()
+{
+    Logger::getInstance().enableConsoleLogging();
+    Logger::getInstance().setLogLevel(virtru::LogLevel::Trace);
+}
+#define TESTLOOPS 50
+
 void testHeader(std::string& kasUrl, ECCMode& eccMode, SymmetricAndPayloadConfig payloadConfig) {
 
     static constexpr auto kGmacPayloadLength = 8;
@@ -331,33 +338,38 @@ jm8jeB4u2MJfBjDzgD3EHSHlJKE3fb7m/T3Lko9tyPP6S1c7Nt6oXn6FHw==
 
     BOOST_AUTO_TEST_CASE(test_nano_tdf_header_encrypted_text_policy_with_ecdsa) {
 
-        {
-            std::string kasUrl{"https://api.exampl.com/kas"};
-            ECCMode eccMode{gsl::byte{0x80}}; // ecdsa binding and 'secp256r1'
-            SymmetricAndPayloadConfig payloadConfig{gsl::byte{0x1}}; // no signature and AES_256_GCM_96_TAG
-            testHeader(kasUrl, eccMode, payloadConfig);
+        setLogging();
+        for (int i=0; i< TESTLOOPS; i++) {
+            {
+                std::string kasUrl{"https://api.exampl.com/kas"};
+                ECCMode eccMode{gsl::byte{0x80}}; // ecdsa binding and 'secp256r1'
+                SymmetricAndPayloadConfig payloadConfig{gsl::byte{0x1}}; // no signature and AES_256_GCM_96_TAG
+                testHeader(kasUrl, eccMode, payloadConfig);
+            }
+
+            {
+                std::string kasUrl{"https://api.example.com/kas"};
+                ECCMode eccMode{gsl::byte{0x0}}; // non ecdsa binding and 'secp256r1'
+                SymmetricAndPayloadConfig payloadConfig{gsl::byte{0x0}}; // no signature and AES_256_GCM_64_TAG
+                testHeader(kasUrl, eccMode, payloadConfig);
+            }
+
+            {
+                std::string kasUrl{"http://localhost:4000/kas"};
+                ECCMode eccMode{gsl::byte{0x81}}; // ecdsa binding and 'secp384r1'
+                SymmetricAndPayloadConfig payloadConfig{gsl::byte{0x5}}; // no signature and AES_256_GCM_128_TAG
+                testHeader(kasUrl, eccMode, payloadConfig);
+            }
+
+            {
+                std::string kasUrl{"https://local.virtru.com/kas"};
+                ECCMode eccMode{gsl::byte{0x82}}; // ecdsa binding and 'secp521r1'
+                SymmetricAndPayloadConfig payloadConfig{gsl::byte{0x2}}; // no signature and AES_256_GCM_104_TAG
+                testHeader(kasUrl, eccMode, payloadConfig);
+            }
         }
 
-        {
-            std::string kasUrl{"https://api.example.com/kas"};
-            ECCMode eccMode{gsl::byte{0x0}}; // non ecdsa binding and 'secp256r1'
-            SymmetricAndPayloadConfig payloadConfig{gsl::byte{0x0}}; // no signature and AES_256_GCM_64_TAG
-            testHeader(kasUrl, eccMode, payloadConfig);
-        }
 
-        {
-            std::string kasUrl{"http://localhost:4000/kas"};
-            ECCMode eccMode{gsl::byte{0x81}}; // ecdsa binding and 'secp384r1'
-            SymmetricAndPayloadConfig payloadConfig{gsl::byte{0x5}}; // no signature and AES_256_GCM_128_TAG
-            testHeader(kasUrl, eccMode, payloadConfig);
-        }
-
-        {
-            std::string kasUrl{"https://local.virtru.com/kas"};
-            ECCMode eccMode{gsl::byte{0x82}}; // ecdsa binding and 'secp521r1'
-            SymmetricAndPayloadConfig payloadConfig{gsl::byte{0x2}}; // no signature and AES_256_GCM_104_TAG
-            testHeader(kasUrl, eccMode, payloadConfig);
-        }
 
     }
 
