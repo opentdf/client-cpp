@@ -280,7 +280,11 @@ namespace virtru {
          *     </tdf:HandlingStatement>
          *   </tdf:HandlingAssertion>
          */
-        for (const auto& handlingAssertion: m_manifestDataModel.handlingAssertions) {
+        for (const auto& handlingAssertion: m_manifestDataModel.assertions) {
+
+            if (handlingAssertion.getAssertionType() != AssertionType::Handling) {
+                continue;
+            }
 
             auto handlingAssertionElement = xmlNewChild(rootNode, ns,
                                                         reinterpret_cast<const xmlChar *>(kHandlingAssertionElement),
@@ -322,10 +326,15 @@ namespace virtru {
                                                         nullptr);
 
             xmlNodePtr edhNode = nullptr;
-            auto handlingStatement = handlingAssertion.getHandlingStatement();
+            auto handlingStatementGroup = handlingAssertion.getStatementGroup();
+            if (handlingStatementGroup.getStatementType() != StatementType::HandlingStatement) {
+                std::string errorMsg{"Unknown statement group for HandlingAssertion"};
+                ThrowException(std::move(errorMsg));
+            }
+            auto handlingStatementValue = handlingStatementGroup.getValue();
             xmlParseInNodeContext(handlingStatementElement,
-                                  handlingStatement.c_str(),
-                                  handlingStatement.size(),
+                                  handlingStatementValue.c_str(),
+                                  handlingStatementValue.size(),
                                   0,
                                   &edhNode);
             if (edhNode) {
@@ -383,7 +392,11 @@ namespace virtru {
          *                        tdf:mediaType="application/octet-stream">VGhpcyBpcyBhIHRlc3Qu</tdf:Base64BinaryStatement>
          * </tdf:Assertion>
          */
-        for (const auto& defaultAssertion: m_manifestDataModel.defaultAssertions) {
+        for (const auto& defaultAssertion: m_manifestDataModel.assertions) {
+
+            if (defaultAssertion.getAssertionType() != AssertionType::Base) {
+                continue;
+            }
 
             auto assertionElement = xmlNewChild(rootNode,
                                                 ns,

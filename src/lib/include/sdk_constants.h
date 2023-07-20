@@ -181,6 +181,7 @@ namespace virtru {
     static constexpr auto kAppliesToStateAttribute = "appliesToState";
     static constexpr auto kIdAttribute = "id";
     static constexpr auto kTypeAttribute = "type";
+    static constexpr auto kAssertionType = "type";
     static constexpr auto kHandlingStatementElement = "HandlingStatement";
     static constexpr auto kKeyAccessElement = "KeyAccess";
     static constexpr auto kWrappedPDPKeyElement = "WrappedPDPKey";

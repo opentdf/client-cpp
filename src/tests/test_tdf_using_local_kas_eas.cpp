@@ -35,6 +35,7 @@
 #define GetCurrentDir getcwd
 #endif
 
+#define TEST_OIDC 1
 #if RUN_BACKEND_TESTS
     #define TEST_OIDC 1
 #else
@@ -580,10 +581,12 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
             plainTextFile.setTDFStorageFileType(testFile);
 
             // Add handling assertion
-            HandlingAssertion handlingAssertion{Scope::TDO};
+            Assertion handlingAssertion{AssertionType::Handling, Scope::TDO};
             handlingAssertion.setId("assertion1");
             handlingAssertion.setAppliesToState(AppliesToState::unencrypted);
-            handlingAssertion.setHandlingStatement("            <edh:Edh xmlns:edh=\"urn:us:gov:ic:edh\"\n"
+
+            StatementGroup statementGroup{StatementType::HandlingStatement};
+            statementGroup.setValue("            <edh:Edh xmlns:edh=\"urn:us:gov:ic:edh\"\n"
                                                    "                     xmlns:usagency=\"urn:us:gov:ic:usagency\"\n"
                                                    "                     xmlns:icid=\"urn:us:gov:ic:id\"\n"
                                                    "                     xmlns:arh=\"urn:us:gov:ic:arh\"\n"
@@ -608,7 +611,8 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
                                                    "                              ism:classification=\"U\"\n"
                                                    "                              ism:ownerProducer=\"USA\"/>\n"
                                                    "            </edh:Edh>");
-            plainTextFile.setHandlingAssertion(handlingAssertion);
+            handlingAssertion.setStatementGroup(statementGroup);
+            plainTextFile.setAssertion(handlingAssertion);
             ictdfClient->encryptFile(plainTextFile, ictdfTestFile);
 
             TDFClient::convertXmlToJson(ictdfTestFile, "testing-json.tdf");
@@ -619,13 +623,13 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
                 jsonTDFFile.setTDFStorageFileType(testFile);
 
                 // Add default assertion
-                DefaultAssertion defaultAssertions{Scope::TDO};
+                Assertion defaultAssertions{AssertionType::Base, Scope::TDO};
                 defaultAssertions.setId("assertion2");
                 StatementGroup statementGroup{StatementType::Base64BinaryStatement};
                 statementGroup.setIsEncrypted(true);
                 statementGroup.setValue("VGhpcyBpcyBhIGJpbmFyeSBzdGF0ZW1lbnQ=");
                 defaultAssertions.setStatementGroup(statementGroup);
-                jsonTDFFile.setDefaultAssertion(defaultAssertions);
+                jsonTDFFile.setAssertion(defaultAssertions);
 
                 jsonTDFClient->encryptFile(jsonTDFFile, "testing-json-2.tdf");
 

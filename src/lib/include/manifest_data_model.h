@@ -128,8 +128,7 @@ namespace virtru {
         /// Data
         Payload payload;
         EncryptionInformation encryptionInformation;
-        std::vector<HandlingAssertion> handlingAssertions;
-        std::vector<DefaultAssertion> defaultAssertions;
+        std::vector<Assertion> assertions;
     };
 }
 

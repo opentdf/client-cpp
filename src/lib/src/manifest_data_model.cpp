@@ -34,6 +34,7 @@ namespace virtru {
     static constexpr auto kHandlingAssertions = "handling";
     static constexpr auto kAssertions = "assertions";
     static constexpr auto kXMLBase64Value = "xml-base64";
+    static constexpr auto kHandlingStatement = "HandlingStatement";
 
     /// Create a manifest data model from json
     /// \param modelAsJsonStr
@@ -114,13 +115,14 @@ namespace virtru {
             if (manifest.find(kAssertions) != manifest.end()) {
                 const auto& assertions = manifest[kAssertions];
 
-                // 'default' assertions
-                if (assertions.find(kDefaultAssertions) != assertions.end()) {
+                for (const auto& assertion: assertions) {
 
-                    const auto& defaultAssertions = assertions[kDefaultAssertions];
-                    for (const auto& assertion: defaultAssertions) {
+                    std::string assertionType = assertion[kAssertionType];
 
-                        DefaultAssertion defaultAssertion{Scope::Unknown};
+                    // 'default' assertions
+                    if (boost::iequals(assertionType, magic_enum::enum_name(AssertionType::Base))) {
+
+                        Assertion defaultAssertion{AssertionType::Base, Scope::Unknown};
 
                         std::string scopeValue = assertion[kScopeAttribute];
                         auto scope = magic_enum::enum_cast<Scope>(scopeValue);
@@ -166,17 +168,12 @@ namespace virtru {
                             defaultAssertion.setStatementMetadata(to_string(metadata));
                         }
 
-                        model.defaultAssertions.emplace_back(defaultAssertion);
-                    }
-                }
+                        model.assertions.emplace_back(defaultAssertion);
 
-                // 'handling' assertions
-                if (assertions.find(kHandlingAssertions) != assertions.end()) {
 
-                    const auto& handlingAssertions = assertions[kHandlingAssertions];
-                    for (const auto& assertion: handlingAssertions) {
+                    } else if (boost::iequals(assertionType, magic_enum::enum_name(AssertionType::Handling))) { // 'handling' assertions
 
-                        HandlingAssertion handlingAssertion{Scope::Unknown};
+                        Assertion handlingAssertion{AssertionType::Handling, Scope::Unknown};
 
                         std::string scopeValue = assertion[kScopeAttribute];
                         auto scope = magic_enum::enum_cast<Scope>(scopeValue);
@@ -195,8 +192,22 @@ namespace virtru {
                         }
 
                         const auto& statementGroupJson = assertion[kStatement];
-                        handlingAssertion.setHandlingStatement(statementGroupJson[kStatementValue]);
-                        model.handlingAssertions.emplace_back(handlingAssertion);
+
+                        auto statementGroup = handlingAssertion.getStatementGroup();
+                        std::string typeAsStr = statementGroupJson[kTypeAttribute];
+
+                        auto type = magic_enum::enum_cast<StatementType>(typeAsStr);
+                        if (type.has_value()) {
+                            statementGroup.setStatementType(type.value());
+                        }
+
+                        if (statementGroupJson.find(kStatementValue) != statementGroupJson.end()) {
+                            statementGroup.setValue(statementGroupJson[kStatementValue]);
+                        }
+
+                        handlingAssertion.setStatementGroup(statementGroup);
+                        model.assertions.emplace_back(handlingAssertion);
+
                     }
                 }
             }
@@ -286,94 +297,99 @@ namespace virtru {
             manifest[kEncryptionInformation] = encryptionInformationJson;
             manifest[kPayload] = payloadJson;
 
-            // 'assertions'
-            nlohmann::json assertionsJson;
+            //  assertions array
+            auto assertionsJsonArray = nlohmann::json::array();
+            for (const auto& assertion: assertions) {
 
-            //  'default' assertions
-            auto defaultAssertionsJsonArray = nlohmann::json::array();
-            for (const auto& assertion: defaultAssertions) {
-                nlohmann::json assertionJson;
+                if (assertion.getAssertionType() == AssertionType::Base) {
 
-                if (assertion.getScope() != Scope::Unknown) {
-                    assertionJson[kScopeAttribute] = magic_enum::enum_name(assertion.getScope());
-                }
+                    nlohmann::json assertionJson;
 
-                if (!assertion.getId().empty()) {
-                    assertionJson[kIdAttribute] = assertion.getId();
-                }
+                    assertionJson[kAssertionType] =  magic_enum::enum_name(AssertionType::Base);
 
-                if (!assertion.getType().empty()) {
-                    assertionJson[kTypeAttribute] = assertion.getType();
-                }
-
-                auto statementGroup = assertion.getStatementGroup();
-                if (statementGroup.getStatementType() != StatementType::Unknown) {
-                    nlohmann::json statementGroupJson;
-
-                    statementGroupJson[kTypeAttribute] =  magic_enum::enum_name(statementGroup.getStatementType());
-
-                    if (!statementGroup.getFilename().empty()) {
-                        statementGroupJson[kFilenameAttribute] =  statementGroup.getFilename();
+                    if (assertion.getScope() != Scope::Unknown) {
+                        assertionJson[kScopeAttribute] = magic_enum::enum_name(assertion.getScope());
                     }
 
-                    if (!statementGroup.getMediaType().empty()) {
-                        statementGroupJson[kMediaTypeAttribute] =  statementGroup.getMediaType();
+                    if (!assertion.getId().empty()) {
+                        assertionJson[kIdAttribute] = assertion.getId();
                     }
 
-                    if (!statementGroup.getUri().empty()) {
-                        statementGroupJson[kUriAttribute] =  statementGroup.getUri();
+                    if (!assertion.getType().empty()) {
+                        assertionJson[kTypeAttribute] = assertion.getType();
                     }
 
-                    if (!statementGroup.getValue().empty()) {
-                        statementGroupJson[kStatementValue] =  statementGroup.getValue();
+                    auto statementGroup = assertion.getStatementGroup();
+                    if (statementGroup.getStatementType() != StatementType::Unknown) {
+                        nlohmann::json statementGroupJson;
+
+                        statementGroupJson[kTypeAttribute] =  magic_enum::enum_name(statementGroup.getStatementType());
+
+                        if (!statementGroup.getFilename().empty()) {
+                            statementGroupJson[kFilenameAttribute] =  statementGroup.getFilename();
+                        }
+
+                        if (!statementGroup.getMediaType().empty()) {
+                            statementGroupJson[kMediaTypeAttribute] =  statementGroup.getMediaType();
+                        }
+
+                        if (!statementGroup.getUri().empty()) {
+                            statementGroupJson[kUriAttribute] =  statementGroup.getUri();
+                        }
+
+                        if (!statementGroup.getValue().empty()) {
+                            statementGroupJson[kStatementValue] =  statementGroup.getValue();
+                        }
+
+                        statementGroupJson[kIsEncryptedAttribute] = statementGroup.getIsEncrypted();
+                        assertionJson[kStatement] = statementGroupJson;
                     }
 
-                    statementGroupJson[kIsEncryptedAttribute] = statementGroup.getIsEncrypted();
-                    assertionJson[kStatement] = statementGroupJson;
+                    auto statementMetaDataJsonArray = nlohmann::json::array();
+                    for (const auto& metaData: assertion.getStatementMetadata()) {
+                        statementMetaDataJsonArray.emplace_back(metaData);
+                    }
+                    assertionJson[kStatementMetadata] = statementMetaDataJsonArray;
+                    assertionJson[kEncryptionInformationElement] = nlohmann::json::object();
+
+                    assertionsJsonArray.emplace_back(assertionJson);
+                } else if (assertion.getAssertionType() == AssertionType::Handling) {
+
+                    nlohmann::json assertionJson;
+
+                    assertionJson[kAssertionType] =  magic_enum::enum_name(AssertionType::Handling);
+
+                    auto scope = assertion.getScope();
+                    if (scope != Scope::Unknown) {
+                        assertionJson[kScopeAttribute] = magic_enum::enum_name(scope);
+                    }
+
+                    auto appliedState = assertion.getAppliesToState();
+                    if (appliedState != AppliesToState::Unknown) {
+                        assertionJson[kAppliesToStateAttribute] = magic_enum::enum_name(appliedState);
+                    }
+
+                    auto id = assertion.getId();
+                    if (!id.empty()) {
+                        assertionJson[kIdAttribute] = id;
+                    }
+
+                    auto statementGroup = assertion.getStatementGroup();
+                    if (statementGroup.getStatementType() != StatementType::Unknown) {
+                        nlohmann::json statementGroupJson;
+
+                        statementGroupJson[kTypeAttribute] =  magic_enum::enum_name(statementGroup.getStatementType());
+                        statementGroupJson[kStatementValue] = base64Encode(statementGroup.getValue());
+
+                        assertionJson[kStatement] = statementGroupJson;
+                    }
+
+                    assertionJson[kEncryptionInformationElement] = nlohmann::json::object();
+                    assertionsJsonArray.emplace_back(assertionJson);
                 }
-
-                auto statementMetaDataJsonArray = nlohmann::json::array();
-                for (const auto& metaData: assertion.getStatementMetadata()) {
-                    statementMetaDataJsonArray.emplace_back(metaData);
-                }
-                assertionJson[kStatementMetadata] = statementMetaDataJsonArray;
-                assertionJson[kEncryptionInformationElement] = nlohmann::json::object();
-
-                defaultAssertionsJsonArray.emplace_back(assertionJson);
             }
 
-            //  'handling' assertions
-            auto handlingAssertionsJsonArray = nlohmann::json::array();
-            for (const auto& assertion: handlingAssertions) {
-                nlohmann::json assertionJson;
-
-                auto scope = assertion.getScope();
-                if (scope != Scope::Unknown) {
-                    assertionJson[kScopeAttribute] = magic_enum::enum_name(scope);
-                }
-
-                auto appliedState = assertion.getAppliesToState();
-                if (appliedState != AppliesToState::Unknown) {
-                    assertionJson[kAppliesToStateAttribute] = magic_enum::enum_name(appliedState);
-                }
-
-                auto id = assertion.getId();
-                if (!id.empty()) {
-                    assertionJson[kIdAttribute] = id;
-                }
-
-                nlohmann::json statementJson;
-                statementJson[kTypeAttribute] = kXMLBase64Value;
-                statementJson[kStatementValue] = base64Encode(assertion.getHandlingStatement());
-
-                assertionJson[kStatement] = statementJson;
-                assertionJson[kEncryptionInformationElement] = nlohmann::json::object();
-                handlingAssertionsJsonArray.emplace_back(assertionJson);
-            }
-
-            assertionsJson[kDefaultAssertions] = defaultAssertionsJsonArray;
-            assertionsJson[kHandlingAssertions] = handlingAssertionsJsonArray;
-            manifest[kAssertions] = assertionsJson;
+            manifest[kAssertions] = assertionsJsonArray;
 
             return to_string(manifest);
         }  catch (...) {

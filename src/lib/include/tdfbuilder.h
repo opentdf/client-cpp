@@ -86,15 +86,10 @@ namespace virtru {
         /// \return - Return a reference of this instance.
         TDFBuilder& setUser(const std::string& user);
 
-        /// Add the handling assertion to the TDF
-        /// \param handlingAssertion - The handling assertion object
+        /// Add the assertion to the TDF instance.
+        /// \param assertion - The assertion object
         /// \return - Return a reference of this instance.
-        TDFBuilder& setHandlingAssertion(const HandlingAssertion& handlingAssertion);
-
-        /// Add the default assertion to the TDF
-        /// \param defaultAssertion - The default assertion object
-        /// \return - Return a reference of this instance.
-        TDFBuilder& setDefaultAssertion(const DefaultAssertion& defaultAssertion);
+        TDFBuilder& setAssertion(const Assertion& assertion);
 
         ///Get the entity object.
         /// \return - Return a reference to the entity object

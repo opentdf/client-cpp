@@ -159,12 +159,8 @@ namespace virtru {
         // Create a policy object.
         auto policyObject = createPolicyObject();
 
-        for (const auto& assertion: tdfStorageType.m_handlingAssertions) {
-            m_tdfBuilder->setHandlingAssertion(assertion);
-        }
-
-        for (const auto& assertion: tdfStorageType.m_defaultAssertions) {
-            m_tdfBuilder->setDefaultAssertion(assertion);
+        for (const auto& assertion: tdfStorageType.m_assertions) {
+            m_tdfBuilder->setAssertion(assertion);
         }
 
         auto tdf = m_tdfBuilder->setPolicyObject(policyObject).build();
@@ -195,12 +191,8 @@ namespace virtru {
 
         // Create a policy object.
         auto policyObject = createPolicyObject();
-        for (const auto& assertion: tdfStorageType.m_handlingAssertions) {
-            m_tdfBuilder->setHandlingAssertion(assertion);
-        }
-
-        for (const auto& assertion: tdfStorageType.m_defaultAssertions) {
-            m_tdfBuilder->setDefaultAssertion(assertion);
+        for (const auto& assertion: tdfStorageType.m_assertions) {
+            m_tdfBuilder->setAssertion(assertion);
         }
 
         auto tdf = m_tdfBuilder->setPolicyObject(policyObject).build();
