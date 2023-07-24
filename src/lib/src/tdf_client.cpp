@@ -159,12 +159,8 @@ namespace virtru {
         // Create a policy object.
         auto policyObject = createPolicyObject();
 
-        for (const auto& assertion: tdfStorageType.m_handlingAssertions) {
-            m_tdfBuilder->setHandlingAssertion(assertion);
-        }
-
-        for (const auto& assertion: tdfStorageType.m_defaultAssertions) {
-            m_tdfBuilder->setDefaultAssertion(assertion);
+        for (const auto& assertion: tdfStorageType.m_assertions) {
+            m_tdfBuilder->setAssertion(assertion);
         }
 
         auto tdf = m_tdfBuilder->setPolicyObject(policyObject).build();
@@ -195,12 +191,8 @@ namespace virtru {
 
         // Create a policy object.
         auto policyObject = createPolicyObject();
-        for (const auto& assertion: tdfStorageType.m_handlingAssertions) {
-            m_tdfBuilder->setHandlingAssertion(assertion);
-        }
-
-        for (const auto& assertion: tdfStorageType.m_defaultAssertions) {
-            m_tdfBuilder->setDefaultAssertion(assertion);
+        for (const auto& assertion: tdfStorageType.m_assertions) {
+            m_tdfBuilder->setAssertion(assertion);
         }
 
         auto tdf = m_tdfBuilder->setPolicyObject(policyObject).build();
@@ -498,22 +490,22 @@ namespace virtru {
         return TDF::isInputProviderTDF(inputProvider);
     }
 
-    /// Convert the zip formatted TDF to the xml formatted TDF(ICTDF)
-    void TDFClient::convertICTDFToTDF(const std::string& ictdfFilePath, const std::string& tdfFilePath) {
+    /// Convert the xml formatted TDF to the json formatted TDF
+    void TDFClient::convertXmlToJson(const std::string& ictdfFilePath, const std::string& tdfFilePath) {
 
         LogTrace("TDFClient::convertToTDF");
 
         Benchmark benchmark("Total tdf conversion file time");
-        TDF::convertICTDFToTDF(ictdfFilePath, tdfFilePath);
+        TDF::convertXmlToJson(ictdfFilePath, tdfFilePath);
     }
 
     /// Convert the json formatted TDF to xml formatted TDF(ICTDF)
-    void TDFClient::convertTDFToICTDF(const std::string& tdfFilePath, const std::string& ictdfFilePath) {
+    void TDFClient::convertJsonToXml(const std::string& tdfFilePath, const std::string& ictdfFilePath) {
 
-        LogTrace("TDFClient::convertTDFToICTDF");
+        LogTrace("TDFClient::convertJsonToXml");
 
         Benchmark benchmark("Total tdf conversion file time");
-        TDF::convertTDFToICTDF(tdfFilePath, ictdfFilePath);
+        TDF::convertJsonToXml(tdfFilePath, ictdfFilePath);
     }
 
     /// Initialize the TDF builder which is used for creating the TDF instance

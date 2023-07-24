@@ -52,14 +52,10 @@ namespace virtru {
         m_awsRegionName = awsRegionName;
     }
 
-    /// Add the handling assertion to the TDF
-    void TDFStorageType::setHandlingAssertion(const HandlingAssertion& handlingAssertion) {
-        m_handlingAssertions.push_back(handlingAssertion);
-    }
-
-    /// Add the default assertion to the TDF
-    void TDFStorageType::setDefaultAssertion(const DefaultAssertion& defaultAssertion) {
-        m_defaultAssertions.push_back(defaultAssertion);
+    /// Add the assertion to the TDF
+    /// \param assertion - The assertion object
+    void TDFStorageType::setAssertion(const Assertion& assertion) {
+        m_assertions.push_back(assertion);
     }
 
     /// Return the unique, canonical descriptor/location this

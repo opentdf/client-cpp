@@ -40,6 +40,7 @@ namespace virtru {
         StringStatement,
         Base64BinaryStatement,
         XMLBase64,
+        HandlingStatement,
         String,
         Unknown
     };
@@ -147,29 +148,36 @@ namespace virtru {
         bool m_isEncrypted{false};
     };
 
-    class DefaultAssertion {
+    class Assertion {
     public:
         /// Constructor
         /// \param scope
-        DefaultAssertion(Scope scope)
-            : m_scope{scope} {}
+        Assertion(AssertionType type, Scope scope)
+        : m_assertionType{type}, m_scope{scope} {}
 
         /// Destructor
-        ~DefaultAssertion() = default;
+        ~Assertion() = default;
 
         /// Assignment operator
-        DefaultAssertion &operator=(const DefaultAssertion &assertion) = default;
+        Assertion &operator=(const Assertion &assertion) = default;
 
         /// Copy constructor
-        DefaultAssertion(const DefaultAssertion &assertion) = default;
+        Assertion(const Assertion &assertion) = default;
 
         /// Move copy constructor
-        DefaultAssertion(DefaultAssertion &&assertion) = default;
+        Assertion(Assertion &&assertion) = default;
 
         /// Move assignment operator
-        DefaultAssertion &operator=(DefaultAssertion &&assertion) = default;
+        Assertion &operator=(Assertion &&assertion) = default;
 
     public: /// Interface
+
+        /// Return the assertion type
+        /// \return assertion type
+        AssertionType getAssertionType() const {
+            return m_assertionType;
+        }
+
         /// Set the scope for the assertion
         /// \param scope
         void setScope(Scope scope) {
@@ -206,6 +214,18 @@ namespace virtru {
             return m_type;
         }
 
+        /// Set the applied state for the assertion.
+        /// \param appliesToState
+        void setAppliesToState(AppliesToState appliesToState) {
+            m_appliesToState = appliesToState;
+        }
+
+        /// Return the applied state of the assertion.
+        /// \return applied state
+        AppliesToState getAppliesToState() const {
+            return m_appliesToState;
+        }
+
         /// Set the statement group for the assertion
         /// \param statementGroup
         void setStatementGroup(StatementGroup statementGroup) {
@@ -231,89 +251,13 @@ namespace virtru {
         }
 
     private:
+        AssertionType m_assertionType;
         Scope m_scope;
+        AppliesToState m_appliesToState;
         std::string m_id;
         std::string m_type;
         StatementGroup m_statementGroup{StatementType::Unknown};
         std::vector<std::string> m_statementMetadata;
-    };
-
-    class HandlingAssertion {
-    public:
-        /// Constructor
-        /// \param scope
-        HandlingAssertion(Scope scope)
-        : m_scope{scope} {}
-
-        /// Destructor
-        ~HandlingAssertion() = default;
-
-        /// Assignment operator
-        HandlingAssertion &operator=(const HandlingAssertion &assertion) = default;
-
-        /// Copy constructor
-        HandlingAssertion(const HandlingAssertion &assertion) = default;
-
-        /// Move copy constructor
-        HandlingAssertion(HandlingAssertion &&assertion) = default;
-
-        /// Move assignment operator
-        HandlingAssertion &operator=(HandlingAssertion &&assertion) = default;
-
-    public: /// Interface
-        /// Set the scope for the assertions.
-        /// \param scope
-        void setScope(Scope scope) {
-            m_scope = scope;
-        }
-
-        /// Return the scope of the assertion.
-        /// \return scope
-        Scope getScope() const {
-            return m_scope;
-        }
-
-        /// Set the applied state for the assertion.
-        /// \param appliesToState
-        void setAppliesToState(AppliesToState appliesToState) {
-            m_appliesToState = appliesToState;
-        }
-
-        /// Return the applied state of the assertion.
-        /// \return applied state
-        AppliesToState getAppliesToState() const {
-            return m_appliesToState;
-        }
-
-        /// Set the id for the assertion
-        /// \param id
-        void setId(std::string id) {
-            m_id = id;
-        }
-
-        /// Return the id of the assertion
-        /// \return id
-        std::string getId() const {
-            return m_id;
-        }
-
-        /// Set the handling statement for the assertion
-        /// \param handlingStatement
-        void setHandlingStatement(std::string handlingStatement) {
-            m_handlingStatement = handlingStatement;
-        }
-
-        /// Return the handling statement of the assertion
-        /// \return handling statement
-        std::string getHandlingStatement() const {
-            return m_handlingStatement;
-        }
-
-    private:
-        Scope m_scope;
-        AppliesToState m_appliesToState;
-        std::string m_id;
-        std::string m_handlingStatement;
     };
 }
 #endif // VIRTRU_TDF_ASSERTION_H

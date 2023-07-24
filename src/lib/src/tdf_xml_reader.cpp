@@ -360,7 +360,7 @@ namespace virtru {
         auto totalNodes = result.get()->nodesetval->nodeNr;
         for (auto index = 0; index < totalNodes; index++) {
 
-            HandlingAssertion handlingAssertion{Scope::Unknown};
+            Assertion handlingAssertion{AssertionType::Handling, Scope::Unknown};
             xmlNodePtr handlingAssertionNode = result.get()->nodesetval->nodeTab[index];
             if (handlingAssertionNode) {
 
@@ -381,7 +381,10 @@ namespace virtru {
                         xmlBufferFreePtr bufferFreePtr {xmlBufferCreate()};
                         xmlNodeDump(bufferFreePtr.get(), NULL, (xmlNode *)edhNode, 0, 0);
                         handlingStatement.append(reinterpret_cast<char*>(bufferFreePtr.get()->content));
-                        handlingAssertion.setHandlingStatement(handlingStatement);
+
+                        StatementGroup handlingStatementGroup{StatementType::HandlingStatement};
+                        handlingStatementGroup.setValue(handlingStatement);
+                        handlingAssertion.setStatementGroup(handlingStatementGroup);
                     }
                 }
             }
@@ -419,7 +422,7 @@ namespace virtru {
                 attr = attr->next;
             }
 
-            dataModel.handlingAssertions.emplace_back(handlingAssertion);
+            dataModel.assertions.emplace_back(handlingAssertion);
         }
     }
 
@@ -484,7 +487,7 @@ namespace virtru {
         auto totalNodes = result.get()->nodesetval->nodeNr;
         for (auto index = 0; index < totalNodes; index++) {
 
-            DefaultAssertion assertion{Scope::Unknown};
+            Assertion assertion{AssertionType::Base, Scope::Unknown};
             std::string statementValue{};
             xmlNodePtr assertionNode = result.get()->nodesetval->nodeTab[index];
 
@@ -557,7 +560,7 @@ namespace virtru {
                 attr = attr->next;
             }
 
-            dataModel.defaultAssertions.emplace_back(assertion);
+            dataModel.assertions.emplace_back(assertion);
         }
     }
 
