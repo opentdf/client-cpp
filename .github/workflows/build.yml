@@ -68,6 +68,9 @@ jobs:
           pwd
           tilt ci
 
+      - name: Generate a code coverage report
+        uses: threeal/gcovr-action@latest
+
       - name: Get Version
         run: |
           VER=$(cat VERSION)
