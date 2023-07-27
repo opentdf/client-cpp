@@ -19,6 +19,8 @@ else
     exit -1;
 fi
 
+gcovr
+
 # package the library.
 if make install; then
     echo "Packaging ${TDF_LIB_OUTPUT} passed"
