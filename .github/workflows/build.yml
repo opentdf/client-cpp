@@ -63,6 +63,7 @@ jobs:
           TEST_SCRIPT: ../../build-and-run-sanity-test.sh
         run: |-
           pwd
+          ls
           ../src/build-all.sh
 
       - name: Generate a code coverage report
