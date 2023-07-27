@@ -19,14 +19,17 @@ else
     exit -1;
 fi
 
-gcovr
-
 # package the library.
 if make install; then
     echo "Packaging ${TDF_LIB_OUTPUT} passed"
 else
     echo "Error: Packaging ${TDF_LIB_OUTPUT} failed. Fix it!!"
     exit -1;
+fi
+
+# Linux build options
+if [[ $OSTYPE == "linux-gnu" ]]; then
+    gcovr -r .
 fi
 
 # prepare artifact content in dist directory
