@@ -3,6 +3,12 @@
 export VBUILD_UNIT_TESTS="true"
 # Run the backend test
 #export VRUN_BACKEND_TESTS="true"
+
+# Code coverage only on linux
+if [[ $OSTYPE == "linux-gnu" ]]; then
+    export VBUILD_CODE_COVERAGE="true"
+fi
+
 TDF_LIB_OUTPUT="tdf-lib-cpp"
 
 rm -rf build
@@ -27,9 +33,12 @@ else
     exit -1;
 fi
 
-# Linux build options
-if [[ $OSTYPE == "linux-gnu" ]]; then
-    gcovr -r .
+if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
+    echo "Running code coverage..."
+	lcov --capture --directory . --output-file coverage.info
+    genhtml coverage.info --output-directory code-coverage
+	html2text  -width 200 code-coverage/index.html
+	tar -zcvf code-coverage.tar.gz code-coverage
 fi
 
 # prepare artifact content in dist directory

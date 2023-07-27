@@ -62,11 +62,7 @@ jobs:
           # This test script is passed to opentdf/quickstart tilt file
           TEST_SCRIPT: ../../build-and-run-sanity-test.sh
         run: |-
-          kubectl version
-          pwd
-          cd opentdf/quickstart
-          pwd
-          tilt ci
+          ../../src/build-all.sh
 
       - name: Generate a code coverage report
         uses: threeal/gcovr-action@latest
