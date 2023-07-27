@@ -62,7 +62,8 @@ jobs:
           # This test script is passed to opentdf/quickstart tilt file
           TEST_SCRIPT: ../../build-and-run-sanity-test.sh
         run: |-
-          ../../src/build-all.sh
+          pwd
+          ../src/build-all.sh
 
       - name: Generate a code coverage report
         uses: threeal/gcovr-action@latest
