@@ -211,12 +211,13 @@ struct tm *virtru_gmtime(const time_t *timer )
         }
 
         if (auto sp = std::move(Logger::getInstance().m_callback)) {
+            const time_t timestamp = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
             sp->TDFSDKLog({ LogLevel::Trace,
                             traceMessage,
                             fileName,
                             "",
                             lineNumber,
-                            duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count()});
+                            timestamp});
 
         } else {
 #if ENABLE_BOOST_LOG_FRAMEWORK
@@ -244,12 +245,13 @@ struct tm *virtru_gmtime(const time_t *timer )
         }
 
         if (auto sp = std::move(Logger::getInstance().m_callback)) {
+            const time_t timestamp = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
             sp->TDFSDKLog({ LogLevel::Debug,
                             debugMessage,
                             fileName,
                             "",
                             lineNumber,
-                            duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count()});
+                            timestamp});
 
         } else {
 
@@ -278,12 +280,13 @@ struct tm *virtru_gmtime(const time_t *timer )
         }
 
         if (auto sp = std::move(Logger::getInstance().m_callback)) {
+            const time_t timestamp = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
             sp->TDFSDKLog({ LogLevel::Info,
                             infoMessage,
                             fileName,
                             "",
                             lineNumber,
-                            duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count()});
+                            timestamp});
 
         } else {
 #if ENABLE_BOOST_LOG_FRAMEWORK
@@ -311,12 +314,13 @@ struct tm *virtru_gmtime(const time_t *timer )
         }
 
         if (auto sp = std::move(Logger::getInstance().m_callback)) {
+            const time_t timestamp = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
             sp->TDFSDKLog({ LogLevel::Warn,
                             warningMessage,
                             fileName,
                             "",
                             lineNumber,
-                            duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count()});
+                            timestamp});
 
         } else {
 #if ENABLE_BOOST_LOG_FRAMEWORK
@@ -345,12 +349,13 @@ struct tm *virtru_gmtime(const time_t *timer )
         }
 
         if (auto sp = std::move(Logger::getInstance().m_callback)) {
+            const time_t timestamp = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
             sp->TDFSDKLog({ LogLevel::Error,
                             errorMessage,
                             fileName,
                             "",
                             lineNumber,
-                            duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count()});
+                            timestamp});
 
         } else {
 #if ENABLE_BOOST_LOG_FRAMEWORK
@@ -378,12 +383,13 @@ struct tm *virtru_gmtime(const time_t *timer )
         }
 
         if (auto sp = std::move(Logger::getInstance().m_callback)) {
+            const time_t timestamp = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
             sp->TDFSDKLog({ LogLevel::Fatal,
                             fatalMessage,
                             fileName,
                             "",
                             lineNumber,
-                            duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count()});
+                            timestamp});
 
         } else {
 #if ENABLE_BOOST_LOG_FRAMEWORK
@@ -419,12 +425,13 @@ struct tm *virtru_gmtime(const time_t *timer )
         }
 
         if (auto sp = std::move(Logger::getInstance().m_callback)) {
+            const time_t timestamp = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
             sp->TDFSDKLog({ LogLevel::Info,
                             benchmarkMessage,
                             "",
                             "",
                             0,
-                            duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count()});
+                            timestamp});
 
         } else {
 #if ENABLE_BOOST_LOG_FRAMEWORK
