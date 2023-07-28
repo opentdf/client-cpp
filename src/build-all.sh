@@ -17,6 +17,11 @@ cd build
 conan install .. --build=missing
 conan build .. --build-folder .
 
+# Generate initial coverage information
+if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
+    lcov -b . -c -i -d . -o .coverage.wtest.base
+fi
+
 # run unit tests
 if make test; then
     echo "All unit-test passed"
@@ -24,6 +29,38 @@ else
     echo "Error: Unit test failed. Fix it!!"
     #exit -1;
 fi
+
+if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
+
+    # Generate coverage based on executed tests
+    lcov -b . -c -d . -o .coverage.wtest.run
+ 
+    # Merge coverage tracefiles
+    lcov -a .coverage.wtest.base -a .coverage.wtest.run  -o .coverage.total
+ 
+    # Step 7: Filtering, extracting project files
+    lcov -e .coverage.total "`pwd`/*" -o .coverage.total.filtered
+ 
+    # Step 8: Filtering, removing test-files and main.cpp
+    lcov -r .coverage.total.filtered "`pwd`/*/Test*.*" -o .coverage.total.filtered
+ 
+    # Extra:  Replace /build/ with /src/ to unify directories
+    sed 's/\/build\//\/src\//g' .coverage.total.filtered > .coverage.total
+ 
+    # Extra: Clear up previous data, create code-coverage folder
+    if [[ -d ./code-coverage/ ]] ; then
+        rm -rf ./code-coverage/*
+    else
+        mkdir code-coverage
+    fi
+ 
+    # Step 9: Generate webpage
+    genhtml -o ./code-coverage/ .coverage.total
+
+    tar -zcvf code-coverage.tar.gz code-coverage
+    cp  code-coverage.tar.gz ../../
+fi
+
 
 # package the library.
 if make install; then
@@ -33,17 +70,6 @@ else
     #exit -1;
 fi
 
-if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
-    echo "Running code coverage..."
-    pwd
-	lcov --capture --directory . --output-file coverage.info
-    genhtml coverage.info --output-directory code-coverage
-	html2text  -width 200 code-coverage/index.html
-	tar -zcvf code-coverage.tar.gz code-coverage
-    cp  code-coverage.tar.gz ../../
-    echo "Finished coverage."
-    ls
-fi
 
 # prepare artifact content in dist directory
 echo "preparing artifact-1"
