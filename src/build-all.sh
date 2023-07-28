@@ -36,7 +36,7 @@ fi
 if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     echo "Running code coverage..."
     pwd
-	lcov --capture --directory . --output-file coverage.info --no-external
+	lcov --capture --directory ./lib --output-file coverage.info --no-external
     genhtml coverage.info --output-directory code-coverage
 	html2text  -width 200 code-coverage/index.html
 	tar -zcvf code-coverage.tar.gz code-coverage
