@@ -40,7 +40,7 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     genhtml coverage.info --output-directory code-coverage
 	html2text  -width 200 code-coverage/index.html
 	tar -zcvf code-coverage.tar.gz code-coverage
-    cp  code-coverage.tar.gz ../
+    cp  code-coverage.tar.gz ../../
     echo "Finished coverage."
     ls
 fi
