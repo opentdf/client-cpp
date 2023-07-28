@@ -41,14 +41,20 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
 	html2text  -width 200 code-coverage/index.html
 	tar -zcvf code-coverage.tar.gz code-coverage
     cp  code-coverage.tar.gz ../
+    echo "Finished coverage."
+    ls
 fi
 
 # prepare artifact content in dist directory
+echo "preparing artifact-1"
 cd ..
 rm -rf ../dist
+echo "preparing artifact-2"
 mkdir ../dist
 cp -r build/package/* ../dist
 cp ../VERSION ../dist
+echo "preparing artifact-3"
 cp ../README.md ../dist
 cp ../LICENSE ../dist
 cp -r ../examples ../dist
+echo "preparing artifact-4"

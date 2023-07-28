@@ -67,14 +67,13 @@ jobs:
           cd src && ./build-all.sh
           echo "pwd"
           pwd
-
-      - name: Generate a code coverage report
-        uses: threeal/gcovr-action@latest
-        with:
-          excludes: |
-            src/lib/src/tdf_client_c.cpp
-            src/lib/src/tdf_html_writer.h
-            src/lib/src/tdf_html_writer.cpp
+      # - name: Generate a code coverage report
+      #   uses: threeal/gcovr-action@latest
+      #   with:
+      #     exclude: |
+      #       src/lib/src/tdf_client_c.cpp
+      #       src/lib/src/tdf_html_writer.h
+      #       src/lib/src/tdf_html_writer.cpp
 
       - name: Get Version
         run: |
@@ -100,7 +99,7 @@ jobs:
           name: code-coverage
           path: |
             code-coverage.tar.gz
-
+            
       - run: echo "🍏 This job's status is ${{ job.status }}."
 
   run-build-windows:
