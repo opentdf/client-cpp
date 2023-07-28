@@ -64,7 +64,7 @@ jobs:
         run: |-
           pwd
           ls
-          cd ../../src && ./build-all.sh
+          cd src && ./build-all.sh
 
       - name: Generate a code coverage report
         uses: threeal/gcovr-action@latest
