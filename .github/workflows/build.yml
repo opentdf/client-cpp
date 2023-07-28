@@ -65,6 +65,8 @@ jobs:
           pwd
           ls
           cd src && ./build-all.sh
+          echo "pwd"
+          pwd
 
       - name: Generate a code coverage report
         uses: threeal/gcovr-action@latest
@@ -91,6 +93,14 @@ jobs:
           name: opentdf-client-cpp-lin-${{ env.V_VERSION }}-${{ env.V_TIMESTAMP }}
           path: |
             dist/*
+
+      - name: Save artifacts
+        uses: actions/upload-artifact@v3
+        if: (github.event_name != 'pull_request') && (github.event_name != 'schedule')
+        with:
+          name: code-coverage
+          path: |
+            code-coverage.tar.gz
 
       - run: echo "🍏 This job's status is ${{ job.status }}."
 
