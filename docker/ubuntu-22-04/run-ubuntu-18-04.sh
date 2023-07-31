@@ -14,11 +14,12 @@ DOCKER_IMAGE=ubuntu-22.04:${TAG_VERSION}
 # some debug logs
 echo "Running the linux build for ${DOCKER_IMAGE}..."
 echo "Current dir - ${CURRENT_DIR}..."
+pwd
 
 # check if docker image exists if not build one
 if [[ "$(docker images -q ${DOCKER_IMAGE} 2> /dev/null)" == "" ]]; then
 	echo "Info: building docker image  ${DOCKER_IMAGE}..."
-	docker build -t ${DOCKER_IMAGE} ./ubuntu-22-04/src/.
+	docker build -t ${DOCKER_IMAGE} ./docker/ubuntu-22-04/src/.
 else
 	echo "Info: Reusing existing docker image ${DOCKER_IMAGE}..."
 fi
@@ -31,5 +32,6 @@ docker run --rm -ti \
 	-v ~/.ssh:/root/.ssh \
 	-w /app \
 	-e PATH=/root/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/go/bin \
+	-e VBUILD_CODE_COVERAGE="true" \
 	${DOCKER_IMAGE} \
 	/bin/bash

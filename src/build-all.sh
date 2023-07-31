@@ -4,11 +4,6 @@ export VBUILD_UNIT_TESTS="true"
 # Run the backend test
 #export VRUN_BACKEND_TESTS="true"
 
-# Code coverage only on linux
-if [[ $OSTYPE == "linux-gnu" ]]; then
-    export VBUILD_CODE_COVERAGE="true"
-fi
-
 TDF_LIB_OUTPUT="tdf-lib-cpp"
 
 rm -rf build
