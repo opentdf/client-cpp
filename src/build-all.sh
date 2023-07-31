@@ -40,8 +40,8 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
  
     # Remove third-party libary
     lcov -r .coverage.total  "/usr/include/*" -o .coverage.total.step1
-    lcov -r .coverage.total.step1 "boost*" -o .coverage.total.step2
-    lcov -r .coverage.total.step2 "/root/.conan/*" -o .coverage.total.final
+    lcov -r .coverage.total.step1 "boost/*" -o .coverage.total.step2
+    lcov -r .coverage.total.step2 ".conan/data/*" -o .coverage.total.final
  
     # Extra: Clear up previous data, create code-coverage folder
     if [[ -d ./code-coverage/ ]] ; then
