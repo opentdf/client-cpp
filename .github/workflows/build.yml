@@ -61,12 +61,13 @@ jobs:
         env:
           # This test script is passed to opentdf/quickstart tilt file
           TEST_SCRIPT: ../../build-and-run-sanity-test.sh
+          VBUILD_CODE_COVERAGE: true
         run: |-
+          kubectl version
           pwd
-          ls
-          cd src && ./build-all.sh
-          echo "pwd"
+          cd opentdf/quickstart
           pwd
+          tilt ci
 
       - name: Get Version
         run: |
