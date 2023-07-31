@@ -38,14 +38,10 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     # Merge coverage tracefiles
     lcov -a .coverage.wtest.base -a .coverage.wtest.run  -o .coverage.total
  
-    # Step 7: Filtering, extracting project files
-    lcov -e .coverage.total "`pwd`/*" -o .coverage.total.filtered
- 
-    # Step 8: Filtering, removing test-files and main.cpp
-    lcov -r .coverage.total.filtered "`pwd`/*/Test*.*" -o .coverage.total.filtered
- 
-    # Extra:  Replace /build/ with /src/ to unify directories
-    sed 's/\/build\//\/src\//g' .coverage.total.filtered > .coverage.total
+    # Remove third-party libary
+    lcov -r .coverage.total  "/usr/include/*" -o .coverage.total.step1
+    lcov -r .coverage.total.step1 "boost*" -o .coverage.total.step2
+    lcov -r .coverage.total.step2 "/root/.conan/*" -o .coverage.total.final
  
     # Extra: Clear up previous data, create code-coverage folder
     if [[ -d ./code-coverage/ ]] ; then
@@ -54,13 +50,12 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
         mkdir code-coverage
     fi
  
-    # Step 9: Generate webpage
-    genhtml -o ./code-coverage/ .coverage.total
+    # Generate webpage
+    genhtml -o ./code-coverage/ .coverage.total.final
 
     tar -zcvf code-coverage.tar.gz code-coverage
     cp  code-coverage.tar.gz ../../
 fi
-
 
 # package the library.
 if make install; then
