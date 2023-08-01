@@ -96,112 +96,112 @@ jobs:
             
       - run: echo "🍏 This job's status is ${{ job.status }}."
 
-    run-build-windows:
-      runs-on: windows-2019
-      needs: run-build-ubuntu
-      env:
-        VBUILDRELEASE: Release
-        VBUILDDEBUG: Debug
-        VBUILDMODE: Release
-      steps:
-        - run: echo "🎉 The job was automatically triggered by a %github.event_name% event."
-        - run: echo "🐧 This job is now running on a %runner.os% server hosted by GitHub!"
-        - run: echo "🔎 The name of your branch is %github.ref% and your repository is %github.repository%."
+  run-build-windows:
+    runs-on: windows-2019
+    needs: run-build-ubuntu
+    env:
+      VBUILDRELEASE: Release
+      VBUILDDEBUG: Debug
+      VBUILDMODE: Release
+    steps:
+      - run: echo "🎉 The job was automatically triggered by a %github.event_name% event."
+      - run: echo "🐧 This job is now running on a %runner.os% server hosted by GitHub!"
+      - run: echo "🔎 The name of your branch is %github.ref% and your repository is %github.repository%."
     
-        - name: Check out repository code
-          uses: actions/checkout@v3
-        - run: echo "💡 The %github.repository% repository has been cloned to the runner."
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - run: echo "💡 The %github.repository% repository has been cloned to the runner."
     
-        - name: Install Conan
-          run: pip3 install conan==${{ env.CONAN_VER }} --force
+      - name: Install Conan
+        run: pip3 install conan==${{ env.CONAN_VER }} --force
     
-        - name: Setup MSBuild
-          uses: microsoft/setup-msbuild@v1
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v1
     
-        - name: Run build
-          run: |
-            cd ${{ github.workspace }}
-            cd src
-            .\build-all.bat
-            cd build
-            msbuild RUN_TESTS.vcxproj /p:Configuration=Release
+      - name: Run build
+        run: |
+          cd ${{ github.workspace }}
+          cd src
+          .\build-all.bat
+          cd build
+          msbuild RUN_TESTS.vcxproj /p:Configuration=Release
     
-        # The windows-specific GITHUB_ENV set is not documented, and it's different than unix flavors.  Must use '$env:GITHUB_ENV'
-        # Ref: https://stackoverflow.com/questions/61858388/how-do-i-set-an-enviroment-variable-in-github-action-on-a-windows-server
-        - name: Get Version
-          run: |
-            chcp 65001 #set code page to utf-8
-            $V_VER = Get-Content .\VERSION
-            echo "V_VERSION=$V_VER" >> $env:GITHUB_ENV
+      # The windows-specific GITHUB_ENV set is not documented, and it's different than unix flavors.  Must use '$env:GITHUB_ENV'
+      # Ref: https://stackoverflow.com/questions/61858388/how-do-i-set-an-enviroment-variable-in-github-action-on-a-windows-server
+      - name: Get Version
+        run: |
+          chcp 65001 #set code page to utf-8
+          $V_VER = Get-Content .\VERSION
+          echo "V_VERSION=$V_VER" >> $env:GITHUB_ENV
     
-        - name: Get Timestamp
-          run : |
-            $V_TSTAMP = Get-Date((Get-Date).toUniversalTime()) -Format "yyyyMMddHHmmss"
-            echo "V_TIMESTAMP=$V_TSTAMP" >> $env:GITHUB_ENV
+      - name: Get Timestamp
+        run : |
+          $V_TSTAMP = Get-Date((Get-Date).toUniversalTime()) -Format "yyyyMMddHHmmss"
+          echo "V_TIMESTAMP=$V_TSTAMP" >> $env:GITHUB_ENV
     
-        - name: Save artifacts
-          uses: actions/upload-artifact@v3
-          if: (github.event_name != 'pull_request') && (github.event_name != 'schedule')
-          with:
-            name: opentdf-client-cpp-win-${{ env.V_VERSION }}-${{ env.V_TIMESTAMP }}
-            path: |
-              dist/*
+      - name: Save artifacts
+        uses: actions/upload-artifact@v3
+        if: (github.event_name != 'pull_request') && (github.event_name != 'schedule')
+        with:
+          name: opentdf-client-cpp-win-${{ env.V_VERSION }}-${{ env.V_TIMESTAMP }}
+          path: |
+            dist/*
 
-        - run: echo "🍏 This job's status is %job.status%."
+      - run: echo "🍏 This job's status is %job.status%."
         
-    run-build-mac:
-      runs-on: macos-11
-      needs: run-build-ubuntu
-      steps:
-        - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
-        - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
-        - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+  run-build-mac:
+    runs-on: macos-11
+    needs: run-build-ubuntu
+    steps:
+      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
+      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
+      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
     
-        - name: Check out repository code
-          uses: actions/checkout@v3
-        - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
     
-        - name: Set up Python
-          uses: actions/setup-python@v4
-          with:
-              python-version: 3.11
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+            python-version: 3.11
     
-        - name: Install Conan
-          run: pip3 install conan==${{ env.CONAN_VER }} --force
+      - name: Install Conan
+        run: pip3 install conan==${{ env.CONAN_VER }} --force
     
-        - name: Run build
-          run: |
-            cd ${{ github.workspace }}
-            cd src
-            ./build-all.sh
+      - name: Run build
+        run: |
+          cd ${{ github.workspace }}
+          cd src
+          ./build-all.sh
     
-        - name: Get Version
-          run: |
-            VER=$(cat VERSION)
-            echo "V_VERSION=$VER" >> $GITHUB_ENV
+      - name: Get Version
+        run: |
+          VER=$(cat VERSION)
+          echo "V_VERSION=$VER" >> $GITHUB_ENV
     
-        - name: Get Timestamp
-          run : |
-            TSTAMP=$(date +'%Y%m%d%H%M%S')
-            echo "V_TIMESTAMP=$TSTAMP" >> $GITHUB_ENV
+      - name: Get Timestamp
+        run : |
+          TSTAMP=$(date +'%Y%m%d%H%M%S')
+          echo "V_TIMESTAMP=$TSTAMP" >> $GITHUB_ENV
     
-        - name: Save artifacts
-          uses: actions/upload-artifact@v3
-          if: (github.event_name != 'pull_request') && (github.event_name != 'schedule')
-          with:
-            name: opentdf-client-cpp-mac-${{ env.V_VERSION }}-${{ env.V_TIMESTAMP }}
-            path: |
-              dist/*
+      - name: Save artifacts
+        uses: actions/upload-artifact@v3
+        if: (github.event_name != 'pull_request') && (github.event_name != 'schedule')
+        with:
+          name: opentdf-client-cpp-mac-${{ env.V_VERSION }}-${{ env.V_TIMESTAMP }}
+          path: |
+            dist/*
     
-        - run: echo "🍏 This job's status is ${{ job.status }}."
+      - run: echo "🍏 This job's status is ${{ job.status }}."
     
-      ci:
-        needs:
-          - run-build-mac
-          - run-build-ubuntu
-          - run-build-windows
-        if: always()
-        runs-on: ubuntu-latest
-        steps:
-          - run: exit 1
-            if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
+  ci:
+    needs:
+      - run-build-mac
+      - run-build-ubuntu
+      - run-build-windows
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - run: exit 1
+        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
