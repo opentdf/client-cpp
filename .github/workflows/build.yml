@@ -26,7 +26,7 @@ jobs:
 
       - name: Install valgrind and code coverage
         run: |
-          sudo apt-get -y install lcov html2text
+          sudo apt-get -y install lcov==1.14-2 html2text==1.3.2a-25
 
       - name: Install Conan
         run: pip3 install conan==${{ env.CONAN_VER }} --force
