@@ -22,7 +22,7 @@ if make test; then
     echo "All unit-test passed"
 else
     echo "Error: Unit test failed. Fix it!!"
-    #exit -1;
+    exit -1;
 fi
 
 if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
@@ -57,20 +57,16 @@ if make install; then
     echo "Packaging ${TDF_LIB_OUTPUT} passed"
 else
     echo "Error: Packaging ${TDF_LIB_OUTPUT} failed. Fix it!!"
-    #exit -1;
+    exit -1;
 fi
 
 
 # prepare artifact content in dist directory
-echo "preparing artifact-1"
 cd ..
 rm -rf ../dist
-echo "preparing artifact-2"
 mkdir ../dist
 cp -r build/package/* ../dist
 cp ../VERSION ../dist
-echo "preparing artifact-3"
 cp ../README.md ../dist
 cp ../LICENSE ../dist
 cp -r ../examples ../dist
-echo "preparing artifact-4"
