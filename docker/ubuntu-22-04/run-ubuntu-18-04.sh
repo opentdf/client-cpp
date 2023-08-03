@@ -4,7 +4,7 @@
 set -ex
 
 # some constants
-TAG_VERSION=1.0.32
+TAG_VERSION=1.0.33
 CURRENT_DIR=$(pwd)
 DOCKER_IMAGE=ubuntu-22.04:${TAG_VERSION}
 
@@ -32,6 +32,5 @@ docker run --rm -ti \
 	-v ~/.ssh:/root/.ssh \
 	-w /app \
 	-e PATH=/root/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/go/bin \
-	-e VBUILD_CODE_COVERAGE="true" \
 	${DOCKER_IMAGE} \
 	/bin/bash
