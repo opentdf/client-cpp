@@ -153,7 +153,8 @@ namespace virtru {
         /// Constructor
         /// \param scope
         Assertion(AssertionType type, Scope scope)
-        : m_assertionType{type}, m_scope{scope} {}
+        : m_assertionType{type}, m_scope{scope} {
+        }
 
         /// Destructor
         ~Assertion() = default;
@@ -253,7 +254,7 @@ namespace virtru {
     private:
         AssertionType m_assertionType;
         Scope m_scope;
-        AppliesToState m_appliesToState;
+        AppliesToState m_appliesToState{AppliesToState::Unknown};
         std::string m_id;
         std::string m_type;
         StatementGroup m_statementGroup{StatementType::Unknown};
