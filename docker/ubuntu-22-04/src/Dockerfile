@@ -40,7 +40,7 @@ ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64/
 RUN export JAVA_HOME
 
 # install conan
-RUN pip3 install --no-cache-dir conan==1.57.0
+RUN pip3 install --no-cache-dir conan==1.59.0
 RUN pip3 install --no-cache-dir virtualenv==20.4.6
 
 # install golang
