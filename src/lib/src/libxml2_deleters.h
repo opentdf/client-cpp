@@ -20,6 +20,9 @@
 #include <libxml/xmlsave.h>
 #include <libxml/parser.h>
 #include <libxml/xmlwriter.h>
+#include <libxml/tree.h>
+#include <libxml/xmlschemas.h>
+#include <libxml/xmlreader.h>
 
 namespace virtru {
 
@@ -49,6 +52,18 @@ namespace virtru {
 
     struct XmlXPathObjectDeleter { void operator()(xmlXPathObject* xmlPath) { xmlXPathFreeObject(xmlPath); } };
     using XmlXPathObjectFreePtr = std::unique_ptr<xmlXPathObject, XmlXPathObjectDeleter>;
+
+    struct XmlSchemaDeleter { void operator()(xmlSchema* schema) {::xmlSchemaFree(schema);} };
+    using XmlSchemaFreePtr = std::unique_ptr<xmlSchema, XmlSchemaDeleter>;
+
+    struct XmlSchemaValidCtxtDeleter { void operator()(xmlSchemaValidCtxt* ctxt) {::xmlSchemaFreeValidCtxt(ctxt);} };
+    using XmlSchemaValidCtxtFreePtr = std::unique_ptr<xmlSchemaValidCtxt, XmlSchemaValidCtxtDeleter>;
+
+    struct XmlSchemaParserCtxtDeleter { void operator()(xmlSchemaParserCtxt* ctxt) {::xmlSchemaFreeParserCtxt(ctxt);} };
+    using XmlSchemaParserCtxtFreePtr = std::unique_ptr<xmlSchemaParserCtxt, XmlSchemaParserCtxtDeleter>;
+
+    struct XmlTextReaderDeleter { void operator()(xmlTextReader* reader) {::xmlFreeTextReader(reader);} };
+    using XmlTextReaderFreePtr = std::unique_ptr<xmlTextReader, XmlTextReaderDeleter>;
 
 }  // namespace virtru
 
