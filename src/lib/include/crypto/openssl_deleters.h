@@ -13,6 +13,7 @@
 #ifndef VIRTRU_OPENSSL_DELETERS_H
 #define VIRTRU_OPENSSL_DELETERS_H
 
+#include <cstdint>
 #include <memory>
 #include <openssl/rsa.h>
 #include <openssl/evp.h>

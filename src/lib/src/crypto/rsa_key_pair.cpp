@@ -19,7 +19,6 @@
 #include <openssl/rand.h>
 #include <openssl/bio.h>
 #include <openssl/pem.h>
-#include <stdint.h>
 
 namespace virtru::crypto {
 
