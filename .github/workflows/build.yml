@@ -70,6 +70,18 @@ jobs:
           tilt ci
           pwd
           ls -al
+          cd ..
+          pwd
+          ls -al
+          cd ..
+          pwd
+          ls -al
+          cd examples
+          pwd
+          ls -al
+          cd build
+          pwd
+          ls -al
 
       - name: Get Version
         run: |
