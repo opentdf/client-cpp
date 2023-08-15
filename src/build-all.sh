@@ -39,14 +39,19 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     lcov -r .coverage.total.step2 "/home/runner/.conan/data/*" -o .coverage.total.final
  
     # Extra: Clear up previous data, create code-coverage folder
-    if [[ -d ./code-coverage/ ]] ; then
-        rm -rf ./code-coverage/*
-    else
-        mkdir code-coverage
-    fi
+#    if [[ -d ./code-coverage/ ]] ; then
+#        rm -rf ./code-coverage/*
+#    else
+#        mkdir code-coverage
+#    fi
  
     # Generate webpage
     genhtml -o ./code-coverage/ .coverage.total.final
+    echo ".coverage.total.final:"
+    echo "$(cat .coverage.total.final)"
+    .coverage.total.final
+    ls -al
+    echo "End"
 
     tar -zcvf code-coverage.tar.gz code-coverage
     cp  code-coverage.tar.gz ../../
