@@ -29,6 +29,9 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
 
     # Generate coverage based on executed tests
     lcov -b . -c -d . -o .coverage.wtest.run
+    echo "I am here for coverage"
+    pwd
+    ls -al
  
     # Merge coverage tracefiles
     lcov -a .coverage.wtest.base -a .coverage.wtest.run  -o .coverage.total
@@ -49,9 +52,8 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     genhtml -o ./code-coverage/ .coverage.total.final
     echo ".coverage.total.final:"
     echo "$(cat .coverage.total.final)"
-    .coverage.total.final
     ls -al
-    echo "End"
+    echo "End of the folder"
 
     tar -zcvf code-coverage.tar.gz code-coverage
     cp  code-coverage.tar.gz ../../

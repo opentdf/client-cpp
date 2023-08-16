@@ -76,9 +76,6 @@ jobs:
           cd ..
           pwd
           ls -al
-          tar -xf code-coverage.tar.gz
-          ls -al
-          cd code-coverage
           cd examples
           pwd
           ls -al
