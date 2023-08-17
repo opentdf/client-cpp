@@ -52,8 +52,11 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     genhtml -o ./code-coverage/ .coverage.total.final
     echo ".coverage.total.final:"
     echo "$(cat .coverage.total.final)"
+    pwd
     ls -al
     echo "End of the folder"
+    cd code-coverage
+    ls -al
 
     tar -zcvf code-coverage.tar.gz code-coverage
     cp  code-coverage.tar.gz ../../
