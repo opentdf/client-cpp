@@ -33,10 +33,14 @@ jobs:
           pwd
           cd src
           build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} ./build-all.sh
+          cp -r build_wrapper_output_directory /home/runner/work/client-cpp/client-cpp
           echo "Current directory:"
           pwd
           ls -al
-          echo "Switched directory:"
+          cd ..
+          echo "Root directory:"
+          pwd
+          ls -al
           cd build_wrapper_output_directory
           ls -al
       - name: Run sonar-scanner
