@@ -50,6 +50,7 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
  
     # Generate webpage
     genhtml -o ./code-coverage/ .coverage.total.final
+
     echo ".coverage.total.final:"
     echo "$(cat .coverage.total.final)"
     echo "Pwd:"
