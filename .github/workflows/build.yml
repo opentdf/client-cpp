@@ -23,6 +23,8 @@ jobs:
           fetch-depth: 0
       - name: Install sonar-scanner and build-wrapper
         uses: sonarsource/sonarcloud-github-c-cpp@v2
+      - name: Install Conan
+        run: pip3 install conan==${{ env.CONAN_VER }} --force
       - name: Run build-wrapper
         run: |
           # here goes your compilation wrapped with build-wrapper; See https://docs.sonarcloud.io/advanced-setup/languages/c-c-objective-c/#analysis-steps-using-build-wrapper for more information
