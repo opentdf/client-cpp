@@ -30,19 +30,11 @@ jobs:
         run: |
           # here goes your compilation wrapped with build-wrapper; See https://docs.sonarcloud.io/advanced-setup/languages/c-c-objective-c/#analysis-steps-using-build-wrapper for more information
           cd ${{ github.workspace }}
-          echo "Root:"
-          pwd
           cd src
           build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} ./build-all.sh
           cp -r build_wrapper_output_directory /home/runner/work/client-cpp/client-cpp
-          echo "Current directory:"
-          pwd
-          ls -al
-          cd ..
-          echo "Root directory:"
-          pwd
-          ls -al
-          cd build_wrapper_output_directory
+          cd /home/runner/work/client-cpp/client-cpp/src/build
+          pwd 
           ls -al
       - name: Run sonar-scanner
         env:
@@ -106,9 +98,6 @@ jobs:
           cd opentdf/quickstart
           pwd
           tilt ci
-          cd ../../src/build
-          pwd
-          ls -al
 
       - name: Get Version
         run: |
