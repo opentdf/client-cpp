@@ -26,11 +26,12 @@ jobs:
       - name: Install Conan
         run: pip3 install conan==${{ env.CONAN_VER }} --force
       - name: Run build-wrapper
-        working-directory: ./src
         run: |
           # here goes your compilation wrapped with build-wrapper; See https://docs.sonarcloud.io/advanced-setup/languages/c-c-objective-c/#analysis-steps-using-build-wrapper for more information
           # build-preparation steps
-          build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} src/build-all.sh
+          cd ${{ github.workspace }}
+          cd src
+          build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} ./build-all.sh
       - name: Run sonar-scanner
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
