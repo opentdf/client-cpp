@@ -31,6 +31,12 @@ jobs:
           cd ${{ github.workspace }}
           cd src
           build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} ./build-all.sh
+          echo "Current directory:"
+          ls -al
+          find -name "build-wrapper-dump.json"
+          echo "Switched directory:"
+          cd ../build_wrapper_output_directory
+          ls -al
       - name: Run sonar-scanner
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
