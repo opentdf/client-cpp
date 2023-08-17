@@ -28,7 +28,6 @@ jobs:
       - name: Run build-wrapper
         run: |
           # here goes your compilation wrapped with build-wrapper; See https://docs.sonarcloud.io/advanced-setup/languages/c-c-objective-c/#analysis-steps-using-build-wrapper for more information
-          # build-preparation steps
           cd ${{ github.workspace }}
           cd src
           build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} ./build-all.sh
@@ -94,18 +93,7 @@ jobs:
           cd opentdf/quickstart
           pwd
           tilt ci
-          pwd
-          ls -al
-          cd ..
-          pwd
-          ls -al
-          cd ..
-          pwd
-          ls -al
-          cd examples
-          pwd
-          ls -al
-          cd build
+          cd ../../src/build
           pwd
           ls -al
 
