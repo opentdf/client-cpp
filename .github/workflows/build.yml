@@ -29,13 +29,15 @@ jobs:
         run: |
           # here goes your compilation wrapped with build-wrapper; See https://docs.sonarcloud.io/advanced-setup/languages/c-c-objective-c/#analysis-steps-using-build-wrapper for more information
           cd ${{ github.workspace }}
+          echo "Root:"
+          pwd
           cd src
           build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} ./build-all.sh
           echo "Current directory:"
+          pwd
           ls -al
-          find -name "build-wrapper-dump.json"
           echo "Switched directory:"
-          cd ../build_wrapper_output_directory
+          cd build_wrapper_output_directory
           ls -al
       - name: Run sonar-scanner
         env:
