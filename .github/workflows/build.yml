@@ -10,6 +10,7 @@ on:
 env:
   VBUILD_UNIT_TESTS: true
   CONAN_VER: 1.57.0
+  BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory # Directory where build-wrapper output will be placed
 jobs:
 
 #  sonarcloud:
