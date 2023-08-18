@@ -32,6 +32,13 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     echo "I am here for coverage"
     pwd
     ls -al
+    echo "find gcno files:"
+    find -name ".gcno"
+    echo "find gcda files:"
+    find -name ".gcda"
+    echo "find gcov"
+    find -name ".gcov"
+
  
     # Merge coverage tracefiles
     lcov -a .coverage.wtest.base -a .coverage.wtest.run  -o .coverage.total
