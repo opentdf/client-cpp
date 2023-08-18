@@ -33,11 +33,11 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     pwd
     ls -al
     echo "find gcno files:"
-    find -name ".gcno"
+    find -name "*.gcno"
     echo "find gcda files:"
-    find -name ".gcda"
+    find -type f -name "*.gcda"
     echo "find gcov"
-    find -name ".gcov"
+    find -type f -name "*.gcov"
 
  
     # Merge coverage tracefiles
