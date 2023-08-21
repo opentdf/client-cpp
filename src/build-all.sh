@@ -14,7 +14,7 @@ conan build .. --build-folder .
 
 # Generate initial coverage information
 if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
-    lcov -b . -c -i -d . -o .coverage.wtest.base
+    lcov -b . -c -i -d . -o coverage_wtest_base.info
 fi
 
 # run unit tests
@@ -28,7 +28,7 @@ fi
 if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
 
     # Generate coverage based on executed tests
-    lcov -b . -c -d . -o .coverage.wtest.run
+    lcov -b . -c -d . -o coverage_wtest_run.info
     echo "I am here for coverage"
     pwd
     ls -al
@@ -41,19 +41,14 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
 
  
     # Merge coverage tracefiles
-    lcov -a .coverage.wtest.base -a .coverage.wtest.run  -o .coverage.total
+    lcov -a coverage_wtest_base.info -a coverage_wtest_run.info  -o coverage_total.info
  
     # Remove third-party library
-    lcov -r .coverage.total  "/usr/include/*" -o .coverage.total.step1
-    lcov -r .coverage.total.step1 "boost/*" -o .coverage.total.step2
-    lcov -r .coverage.total.step2 "/home/runner/.conan/data/*" -o .coverage.total.final
+    lcov -r coverage_total.info  "/usr/include/*" -o coverage_total_step1.info
+    lcov -r coverage_total_step1.info "boost/*" -o coverage_total_step2.info
+    lcov -r coverage_total_step2 "/home/runner/.conan/data/*" -o coverage_total_final.info
 
-    gcovr --sonarqube > "coverageForBuild.xml"
-
-    echo "Echo gcovrForBuild:"
-    echo "${cat coverageForBuild.xml}"
-    pwd
-    ls -al
+    gcovr > "coverageForBuild.xml"
  
     # Extra: Clear up previous data, create code-coverage folder
 #    if [[ -d ./code-coverage/ ]] ; then
@@ -63,7 +58,7 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
 #    fi
  
     # Generate webpage
-    genhtml -o ./code-coverage/ .coverage.total.final
+    genhtml -o ./code-coverage/ coverage_total_final.info
 
     tar -zcvf code-coverage.tar.gz code-coverage
     cp  code-coverage.tar.gz ../../
