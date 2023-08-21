@@ -51,11 +51,11 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     gcovr > "coverageForBuild.xml"
  
     # Extra: Clear up previous data, create code-coverage folder
-#    if [[ -d ./code-coverage/ ]] ; then
-#        rm -rf ./code-coverage/*
-#    else
-#        mkdir code-coverage
-#    fi
+    if [[ -d ./code-coverage/ ]] ; then
+        rm -rf ./code-coverage/*
+    else
+        mkdir code-coverage
+    fi
  
     # Generate webpage
     genhtml -o ./code-coverage/ coverage_total_final.info
