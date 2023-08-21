@@ -119,13 +119,18 @@ jobs:
           cp -r build_wrapper_output_directory /home/runner/work/client-cpp/client-cpp
       - name: Collect coverage into one XML report
         run: |
+          cd ./lib/CMakeFiles/opentdfstatic.dir/src
           gcovr --sonarqube > coverage.xml
           echo "$(cat coverage.xml)"
+          cp coverage.xml /home/runner/work/client-cpp/client-cpp/coverage-copied.xml
+          cd /home/runner/work/client-cpp/client-cpp
+          pwd
+          ls -al
       - name: Run sonar-scanner
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: sonar-scanner --define sonar.cfamily.build-wrapper-output="${{ env.BUILD_WRAPPER_OUT_DIR }}" --define sonar.coverageReportPaths=coverage.xml
+        run: sonar-scanner --define sonar.cfamily.build-wrapper-output="${{ env.BUILD_WRAPPER_OUT_DIR }}" --define sonar.coverageReportPaths=coverage-copied.xml
 
       - name: Get Version
         run: |
