@@ -120,11 +120,7 @@ jobs:
       - name: Collect coverage into one XML report
         run: |
           gcovr --sonarqube > coverage.xml
-          echo "Gcovr:"
-          pwd
-          ls -al
-          echo "Copying:"
-          cp coverage.xml /home/runner/work/client-cpp/client-cpp
+          echo "$(cat coverage.xml)"
       - name: Run sonar-scanner
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
