@@ -43,7 +43,7 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     # Merge coverage tracefiles
     lcov -a .coverage.wtest.base -a .coverage.wtest.run  -o .coverage.total
  
-    # Remove third-party libary
+    # Remove third-party library
     lcov -r .coverage.total  "/usr/include/*" -o .coverage.total.step1
     lcov -r .coverage.total.step1 "boost/*" -o .coverage.total.step2
     lcov -r .coverage.total.step2 "/home/runner/.conan/data/*" -o .coverage.total.final
