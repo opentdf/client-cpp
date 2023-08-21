@@ -47,7 +47,9 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     lcov -r .coverage.total  "/usr/include/*" -o .coverage.total.step1
     lcov -r .coverage.total.step1 "boost/*" -o .coverage.total.step2
     lcov -r .coverage.total.step2 "/home/runner/.conan/data/*" -o .coverage.total.final
-    echo "Try to convert Sujans file"
+    echo "Echo final file"
+    echo "${cat .coverage.total.final}"
+    echo "Try to convert Sujans file to xml"
     cp .coverage.total.final coverage-total-final.xml
     pwd
     ls -al
