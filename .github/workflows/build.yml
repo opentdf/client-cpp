@@ -111,6 +111,8 @@ jobs:
           gcovr > coverage.xml
           echo "Echo gcovr version:"
           echo "$(cat coverage.xml)"
+          echo "Echo gcovrWithinBuild:"
+          echo "$(cat coverageForBuild.xml)"
           pwd
           ls -al
       - name: Install sonar-scanner and build-wrapper
