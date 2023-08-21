@@ -47,20 +47,20 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     lcov -r .coverage.total  "/usr/include/*" -o .coverage.total.step1
     lcov -r .coverage.total.step1 "boost/*" -o .coverage.total.step2
     lcov -r .coverage.total.step2 "/home/runner/.conan/data/*" -o .coverage.total.final
-    echo "Echo final file"
-    echo "${cat .coverage.total.final}"
-    echo "Try to convert Sujans file to xml"
-    cp .coverage.total.final coverage-total-final.xml
+
+    gcovr --sonarqube > "coverageForBuild.xml"
+
+    echo "Echo gcovrForBuild:"
+    echo "${cat coverageForBuild.xml}"
     pwd
     ls -al
-    echo "${cat coverage-total-final.xml}"
  
     # Extra: Clear up previous data, create code-coverage folder
-    if [[ -d ./code-coverage/ ]] ; then
-        rm -rf ./code-coverage/*
-    else
-        mkdir code-coverage
-    fi
+#    if [[ -d ./code-coverage/ ]] ; then
+#        rm -rf ./code-coverage/*
+#    else
+#        mkdir code-coverage
+#    fi
  
     # Generate webpage
     genhtml -o ./code-coverage/ .coverage.total.final

@@ -104,12 +104,15 @@ jobs:
           cd opentdf/quickstart
           pwd
           tilt ci
-          cd /home/runner/work/client-cpp/client-cpp/src/build
-          pwd 
-          ls -al
-          echo "Final version:"
-          echo "$(cat .coverage.total.final)"
 
+      - name: Collect coverage into one XML report
+        run: |
+          cd src/build
+          gcovr > coverage.xml
+          echo "Echo gcovr version:"
+          echo "$(cat coverage.xml)"
+          pwd
+          ls -al
       - name: Install sonar-scanner and build-wrapper
         uses: sonarsource/sonarcloud-github-c-cpp@v2
       - name: Run build-wrapper
@@ -119,13 +122,6 @@ jobs:
           cd src
           build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} ./build-all.sh
           cp -r build_wrapper_output_directory /home/runner/work/client-cpp/client-cpp
-      - name: Collect coverage into one XML report
-        run: |
-          find -name "*.gcda" | gcovr --sonarqube > coverage.xml
-          echo "Echo gcovr version:"
-          echo "$(cat coverage.xml)"
-          pwd
-          ls -al
       - name: Run sonar-scanner
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
