@@ -119,7 +119,7 @@ jobs:
           cp -r build_wrapper_output_directory /home/runner/work/client-cpp/client-cpp
       - name: Collect coverage into one XML report
         run: |
-          cd ./lib/CMakeFiles/opentdfstatic.dir/src
+          cd /home/runner/work/client-cpp/client-cpp/src/build/lib/CMakeFiles/opentdfstatic.dir/src
           gcovr --sonarqube > coverage.xml
           echo "$(cat coverage.xml)"
           cp coverage.xml /home/runner/work/client-cpp/client-cpp/coverage-copied.xml
