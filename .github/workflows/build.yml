@@ -107,6 +107,8 @@ jobs:
           cd /home/runner/work/client-cpp/client-cpp/src/build
           pwd 
           ls -al
+          echo "Final version:"
+          echo "$(cat .coverage.total.final)"
 
       - name: Install sonar-scanner and build-wrapper
         uses: sonarsource/sonarcloud-github-c-cpp@v2
@@ -119,11 +121,9 @@ jobs:
           cp -r build_wrapper_output_directory /home/runner/work/client-cpp/client-cpp
       - name: Collect coverage into one XML report
         run: |
-          cd /home/runner/work/client-cpp/client-cpp/src/build/lib/CMakeFiles/opentdfstatic.dir/src
-          gcovr --sonarqube > coverage.xml
+          find -name "*.gcda" | gcovr --sonarqube > coverage.xml
+          echo "Echo gcovr version:"
           echo "$(cat coverage.xml)"
-          cp coverage.xml /home/runner/work/client-cpp/client-cpp/coverage-copied.xml
-          cd /home/runner/work/client-cpp/client-cpp
           pwd
           ls -al
       - name: Run sonar-scanner
