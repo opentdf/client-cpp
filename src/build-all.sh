@@ -52,6 +52,7 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     lcov -r coverage_total_step1.info "boost/*" -o coverage_total_step2.info
     lcov -r coverage_total_step2.info "/home/runner/.conan/data/*" -o coverage_total_final.info
 
+    cd ..
     LOCATION=your_gcov_folder_name
     mkdir $LOCATION
     find -name '*.cpp' -exec cp -t $LOCATION {} +
