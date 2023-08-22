@@ -47,6 +47,7 @@ if("$ENV{VBUILD_CODE_COVERAGE}" STREQUAL "true")
 endif()
 
 link_directories(
+    ${SDKLIBDIR}
     ${CONAN_LIB_DIRS}
     )
 
