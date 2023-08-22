@@ -67,8 +67,11 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     echo "${cat asym_decryption.cpp.gcda}"
     echo "${cat asym_decryption.cpp.gcno}"
 
-    gcovr > "coverageForBuild.xml"
- 
+    gcovr --sonarqube > "coverageForBuild.xml"
+    pwd
+    ls -la
+    echo "${cat coverageForBuild.xml}"
+
     # Extra: Clear up previous data, create code-coverage folder
     if [[ -d ./code-coverage/ ]] ; then
         rm -rf ./code-coverage/*
