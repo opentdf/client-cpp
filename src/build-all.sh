@@ -55,11 +55,12 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     cd ..
     LOCATION=your_gcov_folder_name
     mkdir $LOCATION
+    chmod -R 777 /home/runner/work/client-cpp/client-cpp/src/your_gcov_folder_name
     sudo find -name '*.cpp' -exec cp -f -t $LOCATION {} +
-    sudo find -name '*.cpp' -exec mv -f -t $LOCATION {} +
     sudo find -name '*.gcno' -exec cp -f -t $LOCATION {} +
     sudo find -name '*.gcda' -exec cp -f -t $LOCATION {} +
     cd $LOCATION
+    chmod -R 777 /home/runner/work/client-cpp/client-cpp/src/your_gcov_folder_name
     sudo find -name '*.cpp' -exec gcov -bf {} \;
     pwd
     ls -la
