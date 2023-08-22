@@ -46,7 +46,7 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     # Remove third-party library
     lcov -r coverage_total.info  "/usr/include/*" -o coverage_total_step1.info
     lcov -r coverage_total_step1.info "boost/*" -o coverage_total_step2.info
-    lcov -r coverage_total_step2 "/home/runner/.conan/data/*" -o coverage_total_final.info
+    lcov -r coverage_total_step2.info "/home/runner/.conan/data/*" -o coverage_total_final.info
 
     gcovr > "coverageForBuild.xml"
  
