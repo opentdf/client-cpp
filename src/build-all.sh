@@ -52,6 +52,15 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     lcov -r coverage_total_step1.info "boost/*" -o coverage_total_step2.info
     lcov -r coverage_total_step2.info "/home/runner/.conan/data/*" -o coverage_total_final.info
 
+    mkdir folder_with_gcov_files
+    find -name '*.cpp' | -exec cp -t folder_with_gcov_files
+    find -name '*.gcno' | -exec cp -t folder_with_gcov_files {}
+    find -name '*.gcno' | -exec cp -t folder_with_gcov_files
+    pwd
+    ls -la
+    cd folder_with_gcov_files
+    find -name '*.cpp' | -exec gcov -bf {} \
+
     gcovr > "coverageForBuild.xml"
  
     # Extra: Clear up previous data, create code-coverage folder
