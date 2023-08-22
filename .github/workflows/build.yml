@@ -105,14 +105,12 @@ jobs:
           pwd
           tilt ci
 
-      - name: Collect coverage into one XML report
+      - name: Collect coverage into one XML report using gcovr
         run: |
-          cd src/build
+          cd src
           gcovr > coverage.xml
           echo "Echo gcovr version:"
           echo "$(cat coverage.xml)"
-          echo "Echo gcovrWithinBuild:"
-          echo "$(cat coverageForBuild.xml)"
           pwd
           ls -al
           

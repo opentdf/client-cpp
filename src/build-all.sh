@@ -56,23 +56,20 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     LOCATION=your_gcov_folder_name
     mkdir $LOCATION
     chmod -R 777 /home/runner/work/client-cpp/client-cpp/src/your_gcov_folder_name
-    sudo find -name '*.cpp' -exec cp -f -t $LOCATION {} +
-    sudo find -name '*.gcno' -exec cp -f -t $LOCATION {} +
-    sudo find -name '*.gcda' -exec cp -f -t $LOCATION {} +
+    find -name '*.cpp' -exec cp -f -t $LOCATION {} +
+    find -name '*.gcno' -exec cp -f -t $LOCATION {} +
+    find -name '*.gcda' -exec cp -f -t $LOCATION {} +
     cd $LOCATION
-    chmod -R 777 /home/runner/work/client-cpp/client-cpp/src/your_gcov_folder_name
+    sudo chmod -R 777 /home/runner/work/client-cpp/client-cpp/src/your_gcov_folder_name
     sudo find -name '*.cpp' -exec gcov -bf {} \;
     pwd
     ls -la
     echo "find gcov3"
     find -type f -name "*.gcov"
-    echo "${cat asym_decryption.cpp.gcda}"
-    echo "${cat asym_decryption.cpp.gcno}"
 
     gcovr --sonarqube > "coverageForBuild.xml"
     pwd
     ls -la
-    echo "${cat coverageForBuild.xml}"
 
     # Extra: Clear up previous data, create code-coverage folder
     if [[ -d ./code-coverage/ ]] ; then
