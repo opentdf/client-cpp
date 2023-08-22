@@ -46,6 +46,8 @@ if("$ENV{VBUILD_CODE_COVERAGE}" STREQUAL "true")
     set(OTHERLIBS ${OTHERLIBS} gcov)
 endif()
 
+find_package(opentdf-client CONFIG REQUIRED)
+
 link_directories(
     ${SDKLIBDIR}
     ${CONAN_LIB_DIRS}
@@ -62,5 +64,5 @@ include_directories(
     ${SDKINCDIR}
     )
 
+target_link_libraries(${PROJECT_NAME} opentdf-client::opentdf-client)
 add_executable(tdf_sample main.cpp)
-    
