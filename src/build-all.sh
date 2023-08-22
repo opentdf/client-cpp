@@ -55,9 +55,10 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     cd ..
     LOCATION=your_gcov_folder_name
     mkdir $LOCATION
-    find -name '*.cpp' -exec cp -f -t $LOCATION {} +
-    find -name '*.gcno' -exec cp -f -t $LOCATION {} +
-    find -name '*.gcda' -exec cp -f -t $LOCATION {} +
+    sudo find -name '*.cpp' -exec cp -f -t $LOCATION {} +
+    sudo find -name '*.cpp' -exec mv -f -t $LOCATION {} +
+    sudo find -name '*.gcno' -exec cp -f -t $LOCATION {} +
+    sudo find -name '*.gcda' -exec cp -f -t $LOCATION {} +
     cd $LOCATION
     sudo find -name '*.cpp' -exec gcov -bf {} \;
     pwd
