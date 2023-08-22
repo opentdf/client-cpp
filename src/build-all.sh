@@ -28,7 +28,7 @@ fi
 if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
 
     # Generate coverage based on executed tests
-    lcov -b . -c -d . -o coverage_wtest_run.info
+    lcov -b . -c -d . -o .coverage.wtest.run
     echo "I am here for coverage"
     pwd
     ls -al
@@ -39,18 +39,14 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     echo "find gcov"
     find -type f -name "*.gcov"
     pwd
-    gcov src/tdf_client.cpp
-    ls -al
-    echo "find gcov2"
-    find -type f -name "*.gcov"
 
     # Merge coverage tracefiles
-    lcov -a coverage_wtest_base.info -a coverage_wtest_run.info  -o coverage_total.info
+    lcov -a .coverage.wtest.base -a .coverage.wtest.run  -o .coverage.total
  
     # Remove third-party library
-    lcov -r coverage_total.info  "/usr/include/*" -o coverage_total_step1.info
-    lcov -r coverage_total_step1.info "boost/*" -o coverage_total_step2.info
-    lcov -r coverage_total_step2.info "/home/runner/.conan/data/*" -o coverage_total_final.info
+    lcov -r .coverage.total  "/usr/include/*" -o .coverage.total.step1
+    lcov -r .coverage.total.step1 "boost/*" -o .coverage.total.step2
+    lcov -r .coverage.total.step2 "/home/runner/.conan/data/*" -o .coverage.total.final
 
     cd ..
     LOCATION=your_gcov_folder_name
@@ -59,15 +55,14 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     find -name '*.cpp' -exec cp -f -t $LOCATION {} +
     find -name '*.gcno' -exec cp -f -t $LOCATION {} +
     find -name '*.gcda' -exec cp -f -t $LOCATION {} +
-    cd $LOCATION
     sudo chmod -R 777 /home/runner/work/client-cpp/client-cpp/src/your_gcov_folder_name
+    cd $LOCATION
     sudo find -name '*.cpp' -exec gcov -bf {} \;
-    pwd
     ls -la
     echo "find gcov3"
     find -type f -name "*.gcov"
 
-    gcovr --sonarqube > "coverageForBuild.xml"
+    gcovr --sonarqube > coverageForBuild.xml
     pwd
     ls -la
 
@@ -79,7 +74,7 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     fi
  
     # Generate webpage
-    genhtml -o ./code-coverage/ coverage_total_final.info
+    genhtml -o ./code-coverage/ .coverage.total.final
 
     tar -zcvf code-coverage.tar.gz code-coverage
     cp  code-coverage.tar.gz ../../
