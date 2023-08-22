@@ -47,12 +47,14 @@ if("$ENV{VBUILD_CODE_COVERAGE}" STREQUAL "true")
 endif()
 
 link_directories(
-    ${SDKLIBDIR}
+    ${CONAN_LIB_DIRS}
     )
 
 link_libraries(
-    opentdf_static_combined
+    opentdf_static
     ${OTHERLIBS}
+    ${CONAN_LIBS}
+    ${CONAN_SYSTEM_LIBS}
     )
     
 include_directories(
