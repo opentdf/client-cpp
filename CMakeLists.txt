@@ -8,17 +8,26 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 # https://clangd.llvm.org/installation.html#project-setup
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-#include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-#conan_basic_setup()
-
 find_package("OpenSSL")
 find_package("Boost")
 find_package("Microsoft.GSL")
 find_package("LibXml2")
 find_package("nlohmann_json")
 find_package("jwt-cpp")
+find_package("magic_enum")
 
-include_directories(${CONAN_INCLUDE_DIRS})
+link_libraries(
+ openssl::openssl
+ boost::boost
+ Microsoft.GSL::GSL
+ LibXml2::LibXml2
+ nlohmann_json::nlohmann_json
+ jwt-cpp::jwt-cpp
+)
+
+include_directories(
+${CMAKE_INCLUDE_PATH}
+)
 
 add_subdirectory(src)
 

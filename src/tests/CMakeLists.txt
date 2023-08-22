@@ -69,11 +69,14 @@ include_directories(
 # set link info
 link_directories(
     ${PROJECT_SOURCE_DIR}/../build/lib
+    ${CONAN_LIB_DIRS}
     )
 
 link_libraries(
-    opentdf_static_combined
+    opentdf_static
     ${OTHERLIBS}
+    ${CONAN_LIBS}
+    ${CONAN_SYSTEM_LIBS}
     )
 
 # Collect all the files from the test dir
