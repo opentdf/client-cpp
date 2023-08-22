@@ -38,8 +38,12 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     find -type f -name "*.gcda"
     echo "find gcov"
     find -type f -name "*.gcov"
+    pwd
+    gcov src/tdf_client.cpp
+    ls -al
+    echo "find gcov2"
+    find -type f -name "*.gcov"
 
- 
     # Merge coverage tracefiles
     lcov -a coverage_wtest_base.info -a coverage_wtest_run.info  -o coverage_total.info
  
