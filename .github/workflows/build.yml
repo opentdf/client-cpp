@@ -119,6 +119,10 @@ jobs:
         uses: sonarsource/sonarcloud-github-c-cpp@v2
       - name: Run build-wrapper
         run: |
+          echo "echo gcda file"
+          echo "$(cat /home/runner/work/client-cpp/client-cpp/src/your_gcov_folder_name/asym_decryption.cpp.gcda)"
+          echo "echo gcovr5"
+          echo "$(cat /home/runner/work/client-cpp/client-cpp/src/your_gcov_folder_name/coverageForBuild.xml)"
           # here goes your compilation wrapped with build-wrapper; See https://docs.sonarcloud.io/advanced-setup/languages/c-c-objective-c/#analysis-steps-using-build-wrapper for more information
           cd ${{ github.workspace }}
           cd src
