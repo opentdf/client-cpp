@@ -55,13 +55,17 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     cd ..
     LOCATION=your_gcov_folder_name
     mkdir $LOCATION
-    find -name '*.cpp' -exec cp -t $LOCATION {} +
-    find -name '*.gcno' -exec cp -t $LOCATION {} +
-    find -name '*.gcda' -exec cp -t $LOCATION {} +
+    find -name '*.cpp' -exec cp -f -t $LOCATION {} +
+    find -name '*.gcno' -exec cp -f -t $LOCATION {} +
+    find -name '*.gcda' -exec cp -f -t $LOCATION {} +
     cd $LOCATION
-    find -name '*.cpp' -exec gcov -bf {} \;
+    sudo find -name '*.cpp' -exec gcov -bf {} \;
     pwd
     ls -la
+    echo "find gcov3"
+    find -type f -name "*.gcov"
+    echo "${cat asym_decryption.cpp.gcda}"
+    echo "${cat asym_decryption.cpp.gcno}"
 
     gcovr > "coverageForBuild.xml"
  
