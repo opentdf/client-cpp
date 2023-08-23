@@ -111,15 +111,13 @@ jobs:
           
           gcovr > coverageGcovr.xml
           gcovr --sonarqube > coverageGcovrSonar.xml
-          gcovr --sonarqube /home/runner/work/client-cpp/client-cpp/src/folder_with_gcov_files > coverageGcovrSonarFromCopiedFolder.xml
+
           echo "Echo gcovr txt version:"
           echo "$(cat coverageGcovr.xml)"
           
           echo "Echo gcovr xml version:"
           echo "$(cat coverageGcovrSonar.xml)"
           
-          echo "Echo gcovr xml version from gcovfolder:"
-          echo "$(cat coverageGcovrSonarFromCopiedFolder.xml)"
           pwd
           ls -al 
 

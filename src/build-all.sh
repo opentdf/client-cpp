@@ -14,7 +14,7 @@ conan build .. --build-folder .
 
 # Generate initial coverage information
 if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
-    lcov -b . -c -i -d . -o coverage_wtest_base.info
+    lcov -b . -c -i -d . -o .coverage.wtest.base
 fi
 
 # run unit tests
@@ -50,6 +50,10 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
 
     # Extra: Clear up previous data, create code-coverage folder
     if [[ -d ./code-coverage/ ]] ; then
+        cd code-coverage
+        echo "Look into coverage files:"
+        ls -al
+        cd ..
         rm -rf ./code-coverage/*
     else
         mkdir code-coverage
