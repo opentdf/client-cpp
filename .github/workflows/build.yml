@@ -58,7 +58,7 @@ jobs:
           python-version: 3.8
       - name: install gcovr 5.0
         run: |
-          pip install gcovr==5.0 # 5.1 is not supported
+          pip install gcovr # ==5.0, 5.1 is not supported
 
       - name: Install valgrind and code coverage
         run: |
@@ -108,7 +108,7 @@ jobs:
       - name: Collect coverage into one XML report using gcovr
         run: |
           cd src
-          gcovr --sonarcloud coverageGCOVR.xml
+          gcovr --sonarqube coverageGCOVR.xml
           echo "Echo gcovr version:"
           echo "$(cat coverageGCOVR.xml)"
           pwd
@@ -116,6 +116,7 @@ jobs:
 
       - name: Install sonar-scanner and build-wrapper
         uses: sonarsource/sonarcloud-github-c-cpp@v2
+
       - name: Run build-wrapper
         run: |
           # remove folder with gcov files to avoid unnecessary growth of Duplicated Code
@@ -124,6 +125,7 @@ jobs:
           cd src
           build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} ./build-all.sh
           cp -r build_wrapper_output_directory /home/runner/work/client-cpp/client-cpp
+
       - name: Run sonar-scanner
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -48,20 +48,6 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     lcov -r .coverage.total.step1 "boost/*" -o .coverage.total.step2
     lcov -r .coverage.total.step2 "/home/runner/.conan/data/*" -o .coverage.total.final
 
-    cd ..
-    LOCATION=folder_with_gcov_files
-    mkdir $LOCATION
-    chmod -R 777 /home/runner/work/client-cpp/client-cpp/src/your_gcov_folder_name
-    find -name '*.cpp' -exec cp -f -t $LOCATION {} +
-    find -name '*.gcno' -exec cp -f -t $LOCATION {} +
-    find -name '*.gcda' -exec cp -f -t $LOCATION {} +
-    sudo chmod -R 777 /home/runner/work/client-cpp/client-cpp/src/folder_with_gcov_files
-    cd $LOCATION
-    sudo find -name '*.cpp' -exec gcov -bf {} \;
-    ls -la
-    echo "find gcov3"
-    find -type f -name "*.gcov"
-
     # Extra: Clear up previous data, create code-coverage folder
     if [[ -d ./code-coverage/ ]] ; then
         rm -rf ./code-coverage/*
@@ -74,6 +60,21 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
 
     tar -zcvf code-coverage.tar.gz code-coverage
     cp  code-coverage.tar.gz ../../
+
+    # collect intermediate coverage files to run gcov/gcovr for getting Sonar-compatible coverage files
+    cd ..
+    LOCATION=folder_with_gcov_files
+    mkdir $LOCATION
+    chmod -R 777 /home/runner/work/client-cpp/client-cpp/src/your_gcov_folder_name
+    find -name '*.cpp' -exec cp -f -t $LOCATION {} +
+    find -name '*.gcno' -exec cp -f -t $LOCATION {} +
+    find -name '*.gcda' -exec cp -f -t $LOCATION {} +
+    sudo chmod -R 644 /home/runner/work/client-cpp/client-cpp/src/folder_with_gcov_files
+    cd $LOCATION
+    sudo find -name '*.cpp' -exec gcov -bf {} \;
+    ls -la
+    echo "find gcov3"
+    find -type f -name "*.gcov"
 fi
 
 # package the library.
@@ -94,3 +95,5 @@ cp ../VERSION ../dist
 cp ../README.md ../dist
 cp ../LICENSE ../dist
 cp -r ../examples ../dist
+
+
