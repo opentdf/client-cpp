@@ -108,8 +108,8 @@ jobs:
       - name: Collect coverage into one XML report using gcovr
         run: |
           cd src
-          gcovr coverageGcovr.xml
-          gcovr --sonarqube coverageGcovrSonar.xml
+          gcovr > coverageGcovr.xml
+          gcovr --sonarqube > coverageGcovrSonar.xml
           echo "Echo gcovr txt version:"
           echo "$(cat coverageGcovr.xml)"
           echo "Echo gcovr xml version:"
