@@ -33,7 +33,6 @@
 #define GetCurrentDir getcwd
 #endif
 
-#define ETERNOS_SETUP 0
 constexpr auto user = "Alice_1234";//"tdf-user@virtrucanary.com";
 constexpr auto easUrl =  "https://eas.eternos.xyz/";//"https://accounts-develop01.develop.virtru.com/api";
 
@@ -52,15 +51,12 @@ std::string getCurrentWorkingDir() {
 }
 
 
-
-
 BOOST_AUTO_TEST_SUITE(test_client_attribute_suite)
 
     using namespace virtru;
 
     BOOST_AUTO_TEST_CASE(test_client_basic_client) {
 
-#if ETERNOS_SETUP
         try{
             //auto builder = createTDFBuilder(LogLevel::Warn,KeyAccessType::Wrapped,Protocol::Html);
             TDFClient client(easUrl, user);
@@ -78,7 +74,6 @@ BOOST_AUTO_TEST_SUITE(test_client_attribute_suite)
             BOOST_FAIL("Unknown exception...");
             std::cout << "Unknown..." << std::endl;
         }
-#endif
     }
 
 
@@ -106,10 +101,8 @@ BOOST_AUTO_TEST_SUITE(test_client_attribute_suite)
             std::cout << "Unknown..." << std::endl;
         }
     }
-
+#if 0
     BOOST_AUTO_TEST_CASE(test_basic_client_get_ent_attr) {
-
-#if ETERNOS_SETUP
 
         try{
             TDFClient client{easUrl, user};
@@ -137,14 +130,12 @@ BOOST_AUTO_TEST_SUITE(test_client_attribute_suite)
             BOOST_FAIL("Unknown exception...");
             std::cout << "Unknown..." << std::endl;
         }
-
-#endif
     }
+#endif
 
 
     BOOST_AUTO_TEST_CASE(test_client_add_data_attr) {
 
-#if ETERNOS_SETUP
         try{
             TDFClient client{easUrl, user};
             NanoTDFClient nanoTDFClient{easUrl, user};
@@ -162,47 +153,6 @@ BOOST_AUTO_TEST_SUITE(test_client_attribute_suite)
             dataAttributes = nanoTDFClient.getDataAttributes();
             BOOST_TEST(dataAttributes == attributes);
 
-
-            //TODO:
-            //when inspectDataAttributes function inplemented (PLAT-600) include tests to see if dataAttributes for tdf/buffer include those added
-            //need access to policyObject
-//             std::string currentDir = getCurrentWorkingDir();
-
-// #ifdef _WINDOWS
-//             std::string inPathEncrypt {currentDir };
-//             inPathEncrypt.append("\\data\\sample.pdf");
-
-//             std::string outPathEncrypt {currentDir };
-//             outPathEncrypt.append("\\data\\encrypt\\sample.pdf.tdf");
-
-//             std::string inPathDecrypt {currentDir };
-//             inPathDecrypt.append("\\data\\encrypt\\sample.pdf.tdf");
-
-//             std::string outPathDecrypt {currentDir };
-//             outPathDecrypt.append("\\data\\decrypt\\sample.pdf");
-
-// #else
-//             std::string inPathEncrypt{currentDir};
-//             inPathEncrypt.append("/data/sample.pdf");
-
-//             std::string outPathEncrypt{currentDir};
-//             outPathEncrypt.append("/data/encrypt/sample.pdf.tdf");
-
-//             std::string inPathDecrypt{currentDir};
-//             inPathDecrypt.append("/data/encrypt/sample.pdf.tdf");
-
-//             std::string outPathDecrypt{currentDir};
-//             outPathDecrypt.append("/data/decrypt/sample.pdf");
-// #endif
-
-//             //auto tdf = client.encryptFile(inPathEncrypt, outPathEncrypt);
-//             //auto tdfDataAttributes = client.inspectDataAttributes(tdf);
-//             //for(auto& withAttribute : attributes){
-//                 //if(!(std::find(tdfDataAttributes.begin(), tdfDataAttributes.end(), withAttribute) != tdfDataAttributes.end())){
-//                     //ThrowException("Could not find attribute ("+withAttribute+") in the TDF's dataAttributes");
-//                 //}
-//             //}
-
             BOOST_TEST_MESSAGE("TDFClient basic addDataAttribute test passed.");
         }
         catch (const Exception &exception) {
@@ -214,7 +164,39 @@ BOOST_AUTO_TEST_SUITE(test_client_attribute_suite)
             BOOST_FAIL("Unknown exception...");
             std::cout << "Unknown..." << std::endl;
         }
-#endif
+    }
+
+    BOOST_AUTO_TEST_CASE(test_client_add_data_attr_with_different_kas) {
+
+        try{
+            TDFClient client{easUrl, user};
+            NanoTDFClient nanoTDFClient{easUrl, user};
+            std::string anotherUrl = "https://kas.virtrucoin.com";
+
+            std::vector<std::string> attributes = {"https://kas.eternos.xyz/attr/testclassification", "https://kas.eternos.xyz/attr/testotherclassification"};
+            for (const auto &attrUri : attributes) {
+                client.addDataAttribute(attrUri, anotherUrl);
+                nanoTDFClient.addDataAttribute(attrUri, anotherUrl);
+            }
+
+            //check if stored
+            auto dataAttributes = client.getDataAttributes();
+            BOOST_TEST(dataAttributes == attributes);
+
+            dataAttributes = nanoTDFClient.getDataAttributes();
+            BOOST_TEST(dataAttributes == attributes);
+
+            BOOST_TEST_MESSAGE("TDFClient addDataAttribute with different URL test passed.");
+        }
+        catch (const Exception &exception) {
+            BOOST_FAIL(exception.what());
+        } catch (const std::exception &exception) {
+            BOOST_FAIL(exception.what());
+            std::cout << exception.what() << std::endl;
+        } catch (...) {
+            BOOST_FAIL("Unknown exception...");
+            std::cout << "Unknown..." << std::endl;
+        }
     }
 
 
