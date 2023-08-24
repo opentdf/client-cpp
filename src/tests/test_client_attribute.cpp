@@ -25,30 +25,12 @@
 #include <stdio.h>
 #include <iostream>
 
-#ifdef _WINDOWS
-#include <direct.h>
-#define GetCurrentDir _getcwd
-#else
-#include <unistd.h>
-#define GetCurrentDir getcwd
-#endif
-
-constexpr auto theUser = "user1@virtrucoin.com";//"user2@virtrucoin.com";
-constexpr auto theUrl =  "https://url1.virtrucoin.com/";//"https://url2.virtrucoin.com/";
+constexpr auto theUser = "user@virtrucoin.com";
+constexpr auto theUrl =  "https://kas.virtrucoin.com/";
 
 using namespace virtru::network;
 using namespace virtru::crypto;
 using namespace virtru;
-
-
-///returns current working directory
-std::string getCurrentWorkingDir() {
-    char buff[FILENAME_MAX];
-    GetCurrentDir( buff, FILENAME_MAX );
-    std::string current_working_dir(buff);
-    return current_working_dir;
-}
-
 
 BOOST_AUTO_TEST_SUITE(test_client_attribute_suite)
 
@@ -100,38 +82,6 @@ BOOST_AUTO_TEST_SUITE(test_client_attribute_suite)
             std::cout << "Unknown..." << std::endl;
         }
     }
-#if 0
-    BOOST_AUTO_TEST_CASE(test_basic_client_get_ent_attr) {
-
-        try{
-            TDFClient client{theUrl, theUser};
-            NanoTDFClient nanoTDFClient{theUrl, theUser};
-
-            //should just be default attribute
-            std::vector<std::string> correctEntityAttributes = {"https://kas.eternos.xyz/attr/default/value/default"};
-
-            auto entityAttributes = client.getEntityAttributes();
-            BOOST_TEST(entityAttributes == correctEntityAttributes);
-            BOOST_CHECK(entityAttributes.size() == 1);
-
-            entityAttributes = nanoTDFClient.getEntityAttributes();
-            BOOST_TEST(entityAttributes == correctEntityAttributes);
-            BOOST_CHECK(entityAttributes.size() == 1);
-
-            BOOST_TEST_MESSAGE("TDFClient and NanoTDFClient basic getEntityAttributes test passed.");
-        }
-        catch (const Exception &exception) {
-            BOOST_FAIL(exception.what());
-        } catch (const std::exception &exception) {
-            BOOST_FAIL(exception.what());
-            std::cout << exception.what() << std::endl;
-        } catch (...) {
-            BOOST_FAIL("Unknown exception...");
-            std::cout << "Unknown..." << std::endl;
-        }
-    }
-#endif
-
 
     BOOST_AUTO_TEST_CASE(test_client_add_data_attr) {
 
@@ -139,7 +89,7 @@ BOOST_AUTO_TEST_SUITE(test_client_attribute_suite)
             TDFClient client{theUrl, theUser};
             NanoTDFClient nanoTDFClient{theUrl, theUser};
 
-            std::vector<std::string> attributes = {"https://kas.eternos.xyz/attr/testclassification", "https://kas.eternos.xyz/attr/testotherclassification"};
+            std::vector<std::string> attributes = {"https://kas.virtrucoin.com/attr/testclassification", "https://kas.virtrucoin.com/attr/testotherclassification"};
             for (const auto &attrUri : attributes) {
                 client.addDataAttribute(attrUri, "");
                 nanoTDFClient.addDataAttribute(attrUri, "");
@@ -172,7 +122,7 @@ BOOST_AUTO_TEST_SUITE(test_client_attribute_suite)
             NanoTDFClient nanoTDFClient{theUrl, theUser};
             std::string anotherUrl = "https://kas.virtrucoin.com";
 
-            std::vector<std::string> attributes = {"https://kas.eternos.xyz/attr/testclassification", "https://kas.eternos.xyz/attr/testotherclassification"};
+            std::vector<std::string> attributes = {"https://kas.virtrucoin.com/attr/testclassification", "https://kas.virtrucoin.com/attr/testotherclassification"};
             for (const auto &attrUri : attributes) {
                 client.addDataAttribute(attrUri, anotherUrl);
                 nanoTDFClient.addDataAttribute(attrUri, anotherUrl);
