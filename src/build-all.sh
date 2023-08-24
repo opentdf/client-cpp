@@ -28,7 +28,8 @@ fi
 if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
 
     # Generate coverage based on executed tests
-    lcov -b . -c -d . -o .coverage.wtest.run
+    mkdir TEMPDIR
+    lcov -b . -c -d . --tempdir TEMPDIR -o .coverage.wtest.run
     echo "I am here for coverage"
     pwd
     ls -al
@@ -36,6 +37,11 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     find -name "*.gcno"
     echo "find gcda files:"
     find -type f -name "*.gcda"
+    echo "find gcda gcov:"
+    find -type f -name "*.gcov"
+    cd TEMPDIR
+    ls -al
+    cd ..
     pwd
 
     # Merge coverage tracefiles
@@ -51,10 +57,6 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
 
     pwd
     ls -la
-#    cd code-coverage
-#    echo "Look into coverage1 files:"
-#    ls -al
-#    cd ..
 
     # Extra: Clear up previous data, create code-coverage folder
     if [[ -d ./code-coverage/ ]] ; then
