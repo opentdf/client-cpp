@@ -121,6 +121,13 @@ jobs:
           pwd
           ls -al 
 
+      - name: coverage info file
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-info-file
+          path: |
+            src/build/.coverage.total.final
+
       - name: Install sonar-scanner and build-wrapper
         uses: sonarsource/sonarcloud-github-c-cpp@v2
 
