@@ -36,8 +36,6 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     find -name "*.gcno"
     echo "find gcda files:"
     find -type f -name "*.gcda"
-    echo "find gcov"
-    find -type f -name "*.gcov"
     pwd
 
     # Merge coverage tracefiles
@@ -48,17 +46,30 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     lcov -r .coverage.total.step1 "boost/*" -o .coverage.total.step2
     lcov -r .coverage.total.step2 "/home/runner/.conan/data/*" -o .coverage.total.final
 
+    echo "find gcov after lcov commands:"
+    find /home/runner/work/client-cpp/client-cpp -type f -name "*.gcov"
+
+    pwd
+    ls -la
+#    cd code-coverage
+#    echo "Look into coverage1 files:"
+#    ls -al
+#    cd ..
+
     # Extra: Clear up previous data, create code-coverage folder
     if [[ -d ./code-coverage/ ]] ; then
-        cd code-coverage
-        echo "Look into coverage files:"
-        ls -al
-        cd ..
         rm -rf ./code-coverage/*
     else
         mkdir code-coverage
     fi
- 
+
+    pwd
+    ls -la
+    cd code-coverage
+    echo "Look into coverage2 files:"
+    ls -al
+    cd ..
+
     # Generate webpage
     genhtml -o ./code-coverage/ .coverage.total.final
 
