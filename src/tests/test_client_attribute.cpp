@@ -33,9 +33,8 @@
 #define GetCurrentDir getcwd
 #endif
 
-constexpr auto user = "Alice_1234";//"tdf-user@virtrucanary.com";
-constexpr auto easUrl =  "https://eas.eternos.xyz/";//"https://accounts-develop01.develop.virtru.com/api";
-
+constexpr auto theUser = "user1@virtrucoin.com";//"user2@virtrucoin.com";
+constexpr auto theUrl =  "https://url1.virtrucoin.com/";//"https://url2.virtrucoin.com/";
 
 using namespace virtru::network;
 using namespace virtru::crypto;
@@ -59,9 +58,9 @@ BOOST_AUTO_TEST_SUITE(test_client_attribute_suite)
 
         try{
             //auto builder = createTDFBuilder(LogLevel::Warn,KeyAccessType::Wrapped,Protocol::Html);
-            TDFClient client(easUrl, user);
+            TDFClient client(theUrl, theUser);
 
-            NanoTDFClient nanoTDFClient(easUrl, user);
+            NanoTDFClient nanoTDFClient(theUrl, theUser);
 
             BOOST_TEST_MESSAGE("TDFClient and NanoTDFClient basic creation test passed.");
         }
@@ -79,7 +78,7 @@ BOOST_AUTO_TEST_SUITE(test_client_attribute_suite)
 
     BOOST_AUTO_TEST_CASE(test_nano_builder_ecdsa) {
         try{
-            auto builder = NanoTDFBuilder(user);
+            auto builder = NanoTDFBuilder(theUser);
             // default should be gmac, so ecdsa should be false
             BOOST_CHECK(builder.getECDSABinding() == false);
 
@@ -105,8 +104,8 @@ BOOST_AUTO_TEST_SUITE(test_client_attribute_suite)
     BOOST_AUTO_TEST_CASE(test_basic_client_get_ent_attr) {
 
         try{
-            TDFClient client{easUrl, user};
-            NanoTDFClient nanoTDFClient{easUrl, user};
+            TDFClient client{theUrl, theUser};
+            NanoTDFClient nanoTDFClient{theUrl, theUser};
 
             //should just be default attribute
             std::vector<std::string> correctEntityAttributes = {"https://kas.eternos.xyz/attr/default/value/default"};
@@ -137,8 +136,8 @@ BOOST_AUTO_TEST_SUITE(test_client_attribute_suite)
     BOOST_AUTO_TEST_CASE(test_client_add_data_attr) {
 
         try{
-            TDFClient client{easUrl, user};
-            NanoTDFClient nanoTDFClient{easUrl, user};
+            TDFClient client{theUrl, theUser};
+            NanoTDFClient nanoTDFClient{theUrl, theUser};
 
             std::vector<std::string> attributes = {"https://kas.eternos.xyz/attr/testclassification", "https://kas.eternos.xyz/attr/testotherclassification"};
             for (const auto &attrUri : attributes) {
@@ -169,8 +168,8 @@ BOOST_AUTO_TEST_SUITE(test_client_attribute_suite)
     BOOST_AUTO_TEST_CASE(test_client_add_data_attr_with_different_kas) {
 
         try{
-            TDFClient client{easUrl, user};
-            NanoTDFClient nanoTDFClient{easUrl, user};
+            TDFClient client{theUrl, theUser};
+            NanoTDFClient nanoTDFClient{theUrl, theUser};
             std::string anotherUrl = "https://kas.virtrucoin.com";
 
             std::vector<std::string> attributes = {"https://kas.eternos.xyz/attr/testclassification", "https://kas.eternos.xyz/attr/testotherclassification"};
