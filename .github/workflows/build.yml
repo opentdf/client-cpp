@@ -108,11 +108,11 @@ jobs:
       - name: Collect coverage into one XML report using GCOVR
         run: |
           cd src
-          gcovr > coverageGcovr.xml
+          gcovr > coverageGcovr.txt
           gcovr --sonarqube > coverageGcovrSonar.xml
 
           echo "Echo gcovr txt version:"
-          echo "$(cat coverageGcovr.xml)"
+          echo "$(cat coverageGcovr.txt)"
           
           echo "Echo gcovr xml version:"
           echo "$(cat coverageGcovrSonar.xml)"
@@ -122,7 +122,7 @@ jobs:
         with:
           name: coverage-info-file
           path: |
-            src/coverageGcovr.xml
+            src/coverageGcovr.txt
 
       - name: Install sonar-scanner and build-wrapper
         uses: sonarsource/sonarcloud-github-c-cpp@v2
