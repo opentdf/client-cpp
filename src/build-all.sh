@@ -30,6 +30,7 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     # Generate coverage based on executed tests
     mkdir TEMPDIR
     lcov --preserve --tempdir TEMPDIR -b . -c -d . -o .coverage.wtest.run
+    lcov --help
     echo "I am here for coverage"
     pwd
     ls -al
