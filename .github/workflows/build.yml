@@ -59,11 +59,11 @@ jobs:
       - name: install gcovr 5.0
         run: |
           pip install gcovr # ==5.0, 5.1 is not supported
+          pip install lcov
 
-      - name: Install valgrind and code coverage
+      - name: Install code coverage tools
         run: |
           sudo apt-get -y install html2text=1.3.2a-25
-          sudo brew install lcov
 
       - name: Install Conan
         run: pip3 install conan==${{ env.CONAN_VER }} --force
