@@ -38,7 +38,7 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     find -name "*.gcno"
     echo "find gcda files:"
     find -type f -name "*.gcda"
-    echo "find gcda gcov:"
+    echo "find gcov files:"
     find -type f -name "*.gcov"
     cd TEMPDIR
     echo "cd TEMPDIR:"
