@@ -105,10 +105,9 @@ jobs:
           pwd
           tilt ci
 
-      - name: Collect coverage into one XML report using gcovr
+      - name: Collect coverage into one XML report using GCOVR
         run: |
           cd src
-          
           gcovr > coverageGcovr.xml
           gcovr --sonarqube > coverageGcovrSonar.xml
 
@@ -117,9 +116,6 @@ jobs:
           
           echo "Echo gcovr xml version:"
           echo "$(cat coverageGcovrSonar.xml)"
-          
-          pwd
-          ls -al 
 
       - name: Install sonar-scanner and build-wrapper
         uses: sonarsource/sonarcloud-github-c-cpp@v2
@@ -138,6 +134,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: sonar-scanner --define sonar.cfamily.build-wrapper-output="${{ env.BUILD_WRAPPER_OUT_DIR }}"
+
       - name: Get Version
         run: |
           VER=$(cat VERSION)

@@ -29,7 +29,7 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
 
     # Generate coverage based on executed tests
     mkdir TEMPDIR
-    lcov -b . -c -d . --tempdir TEMPDIR -o .coverage.wtest.run
+    lcov -b . -c -d . -o .coverage.wtest.run --preserve --tempdir TEMPDIR
     echo "I am here for coverage"
     pwd
     ls -al
@@ -40,6 +40,7 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     echo "find gcda gcov:"
     find -type f -name "*.gcov"
     cd TEMPDIR
+    echo "cd TEMPDIR:"
     ls -al
     cd ..
     pwd
@@ -52,25 +53,12 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     lcov -r .coverage.total.step1 "boost/*" -o .coverage.total.step2
     lcov -r .coverage.total.step2 "/home/runner/.conan/data/*" -o .coverage.total.final
 
-    echo "find gcov after lcov commands:"
-    find /home/runner/work/client-cpp/client-cpp -type f -name "*.gcov"
-
-    pwd
-    ls -la
-
     # Extra: Clear up previous data, create code-coverage folder
     if [[ -d ./code-coverage/ ]] ; then
         rm -rf ./code-coverage/*
     else
         mkdir code-coverage
     fi
-
-    pwd
-    ls -la
-    cd code-coverage
-    echo "Look into coverage2 files:"
-    ls -al
-    cd ..
 
     # Generate webpage
     genhtml -o ./code-coverage/ .coverage.total.final
@@ -89,9 +77,6 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     sudo chmod -R 777 /home/runner/work/client-cpp/client-cpp/src/folder_with_gcov_files
     cd $LOCATION
     sudo find -name '*.cpp' -exec gcov -bf {} \;
-    ls -la
-    echo "find gcov3"
-    find -type f -name "*.gcov"
 fi
 
 # package the library.
