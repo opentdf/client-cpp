@@ -77,7 +77,9 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     find -name '*.gcda' -exec cp -f -t $LOCATION {} +
     sudo chmod -R 777 /home/runner/work/client-cpp/client-cpp/src/folder_with_gcov_files
     cd $LOCATION
-    sudo find -name '*.cpp' -exec gcov -bf {} \;
+    sudo find -name '*.gcno' -exec gcov -bf {} \;
+    echo "find gcov files4:"
+    find -type f -name "*.gcov"
 fi
 
 # package the library.
