@@ -117,6 +117,13 @@ jobs:
           echo "Echo gcovr xml version:"
           echo "$(cat coverageGcovrSonar.xml)"
 
+      - name: coverage info file
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-info-file
+          path: |
+            src/coverageGcovr.xml
+
       - name: Install sonar-scanner and build-wrapper
         uses: sonarsource/sonarcloud-github-c-cpp@v2
 
