@@ -13,33 +13,6 @@ env:
   BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory # Directory where build-wrapper output will be placed
 jobs:
 
-#  sonarcloud:
-#    runs-on: ubuntu-latest
-#    env:
-#      BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory # Directory where build-wrapper output will be placed
-#      VBUILD_CODE_COVERAGE: true
-#    steps:
-#      - uses: actions/checkout@v3
-#        with:
-#          # Disabling shallow clone is recommended for improving relevancy of reporting
-#          fetch-depth: 0
-#      - name: Install sonar-scanner and build-wrapper
-#        uses: sonarsource/sonarcloud-github-c-cpp@v2
-#      - name: Install Conan
-#        run: pip3 install conan==${{ env.CONAN_VER }} --force
-#      - name: Run build-wrapper
-#        run: |
-#          # here goes your compilation wrapped with build-wrapper; See https://docs.sonarcloud.io/advanced-setup/languages/c-c-objective-c/#analysis-steps-using-build-wrapper for more information
-#          cd ${{ github.workspace }}
-#          cd src
-#          build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} ./build-all.sh
-#          cp -r build_wrapper_output_directory /home/runner/work/client-cpp/client-cpp
-#      - name: Run sonar-scanner
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-#        run: sonar-scanner --define sonar.cfamily.build-wrapper-output="${{ env.BUILD_WRAPPER_OUT_DIR }}"
-
   run-build-ubuntu:
     runs-on: ubuntu-20.04
     timeout-minutes: 75
@@ -129,7 +102,7 @@ jobs:
         with:
           name: coverage-info-file
           path: |
-            src/build/code-coverage
+            src/folder_with_gcov_files
 
       - name: Install sonar-scanner and build-wrapper
         uses: sonarsource/sonarcloud-github-c-cpp@v2
