@@ -39,11 +39,6 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     find -type f -name "*.gcda"
     echo "find gcov files:"
     find -type f -name "*.gcov"
-    cd TEMPDIR
-    echo "cd TEMPDIR:"
-    ls -al
-    cd ..
-    pwd
 
     # Merge coverage tracefiles
     lcov -a .coverage.wtest.base -a .coverage.wtest.run  -o .coverage.total
