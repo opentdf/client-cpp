@@ -96,6 +96,7 @@ jobs:
           name: coverage-info-file
           path: |
             src/coverageGcovr.txt
+            src/coverageGcovrSonar.xml
 
       - name: Install sonar-scanner and build-wrapper
         uses: sonarsource/sonarcloud-github-c-cpp@v2
