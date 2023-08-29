@@ -29,15 +29,6 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
 
     # Generate coverage based on executed tests
     lcov -b . -c -d . -o .coverage.wtest.run
-    echo "I am here for coverage"
-    pwd
-    ls -al
-    echo "find gcno files:"
-    find -name "*.gcno"
-    echo "find gcda files:"
-    find -type f -name "*.gcda"
-    echo "find gcov files:"
-    find -type f -name "*.gcov"
 
     # Merge coverage tracefiles
     lcov -a .coverage.wtest.base -a .coverage.wtest.run  -o .coverage.total
@@ -68,17 +59,8 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     find -name '*.cpp.o' -exec cp -f -t $LOCATION {} +
     find -name '*.gcno' -exec cp -f -t $LOCATION {} +
     find -name '*.gcda' -exec cp -f -t $LOCATION {} +
-    echo "AllFiles:"
     cd $LOCATION
-    ls -al
-    mv attribute_object.cpp.gcno attribute_object.gcno
-    mv attribute_object.cpp.gcda attribute_object.gcda
-    mv attribute_object.cpp.o attribute_object.o
-    echo "AllFiles2:"
-    ls -al
     sudo find -name '*.gcno' -exec gcov -bf {} \;
-    echo "find gcov files4:"
-    find -type f -name "*.gcov"
 fi
 
 # package the library.
