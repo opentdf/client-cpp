@@ -74,6 +74,8 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     mv attribute_object.cpp.gcno attribute_object.gcno
     mv attribute_object.cpp.gcda attribute_object.gcda
     mv attribute_object.cpp.o attribute_object.o
+    echo "AllFiles2:"
+    ls -al
     sudo find -name '*.gcno' -exec gcov -bf {} \;
     echo "find gcov files4:"
     find -type f -name "*.gcov"
