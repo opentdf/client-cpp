@@ -107,14 +107,14 @@ jobs:
           rm -rf /home/runner/work/client-cpp/client-cpp/src/folder_with_gcov_files
           cd ${{ github.workspace }}
           cd src
-          build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} ./build-all.sh
+          build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR_SONAR }} ./build-all.sh
           cp -r build_wrapper_output_directory /home/runner/work/client-cpp/client-cpp
 
       - name: Run sonar-scanner
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: sonar-scanner --define sonar.cfamily.build-wrapper-output="${{ env.BUILD_WRAPPER_OUT_DIR }}"
+        run: sonar-scanner --define sonar.cfamily.build-wrapper-output="${{ env.BUILD_WRAPPER_OUT_DIR_SONAR }}"
 
       - name: Get Version
         run: |
