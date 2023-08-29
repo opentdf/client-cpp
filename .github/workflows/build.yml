@@ -1,12 +1,12 @@
 name: Run build
 on:
-#  pull_request:
-#    types: [opened, synchronize, reopened]
+  pull_request:
+    types: [opened, synchronize, reopened]
   push:
     branches:
-      - 2655_sonar_coverage
-#  schedule:
-#    - cron: "0 7 * * 1,3,5"
+      - main
+  schedule:
+    - cron: "0 7 * * 1,3,5"
 env:
   VBUILD_UNIT_TESTS: true
   CONAN_VER: 1.57.0
@@ -24,14 +24,6 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v3
       - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
-
-#      - name: Set up Python 3.8 for gcovr
-#        uses: actions/setup-python@v4
-#        with:
-#          python-version: 3.8
-#      - name: install gcovr 5.0
-#        run: |
-#          pip install gcovr
 
       - name: Install code coverage tools
         run: |
@@ -77,30 +69,20 @@ jobs:
           cd opentdf/quickstart
           pwd
           tilt ci
-
       - name: Collect coverage into one XML report using GCOVR
         run: |
           cd src
           gcovr > coverageGcovr.txt
           gcovr --sonarqube > coverageGcovrSonar.xml
-
-          echo "Echo gcovr txt version:"
-          echo "$(cat coverageGcovr.txt)"
-          
-          echo "Echo gcovr Sonar-compatible xml version:"
-          echo "$(cat coverageGcovrSonar.xml)"
-
       - name: Upload coverage report from GCOVR
         uses: actions/upload-artifact@v3
         with:
-          name: coverage-info-file
+          name: gcovr-coverage-reports
           path: |
             src/coverageGcovr.txt
             src/coverageGcovrSonar.xml
-
       - name: Install sonar-scanner and build-wrapper
         uses: sonarsource/sonarcloud-github-c-cpp@v2
-
       - name: Run build-wrapper
         run: |
           # remove folder with copied gcov files to avoid unnecessary growth of Duplicated Code
@@ -109,23 +91,19 @@ jobs:
           cd src
           build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR_SONAR }} ./build-all.sh
           cp -r build_wrapper_output_directory /home/runner/work/client-cpp/client-cpp
-
       - name: Run sonar-scanner
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: sonar-scanner --define sonar.cfamily.build-wrapper-output="${{ env.BUILD_WRAPPER_OUT_DIR_SONAR }}"
-
       - name: Get Version
         run: |
           VER=$(cat VERSION)
           echo "V_VERSION=$VER" >> $GITHUB_ENV
-
       - name: Get Timestamp
         run : |
           TSTAMP=$(date +'%Y%m%d%H%M%S')
           echo "V_TIMESTAMP=$TSTAMP" >> $GITHUB_ENV
-
       - name: Save artifacts
         uses: actions/upload-artifact@v3
         if: (github.event_name != 'pull_request') && (github.event_name != 'schedule')
@@ -133,14 +111,12 @@ jobs:
           name: opentdf-client-cpp-lin-${{ env.V_VERSION }}-${{ env.V_TIMESTAMP }}
           path: |
             dist/*
-
       - name: Save code coverage data
         uses: actions/upload-artifact@v3
         with:
           name: code-coverage
           path: |
             code-coverage.tar.gz
-            
       - run: echo "🍏 This job's status is ${{ job.status }}."
 
   run-build-windows:

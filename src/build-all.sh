@@ -71,7 +71,6 @@ else
     exit -1;
 fi
 
-
 # prepare artifact content in dist directory
 cd ..
 rm -rf ../dist
@@ -81,5 +80,3 @@ cp ../VERSION ../dist
 cp ../README.md ../dist
 cp ../LICENSE ../dist
 cp -r ../examples ../dist
-
-
