@@ -64,17 +64,13 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     cd ..
     LOCATION=folder_with_gcov_files
     mkdir $LOCATION
-    chmod -R 777 /home/runner/work/client-cpp/client-cpp/src/folder_with_gcov_files
     find -name '*.cpp' -exec cp -f -t $LOCATION {} +
     find -name '*.cpp.o' -exec cp -f -t $LOCATION {} +
     find -name '*.gcno' -exec cp -f -t $LOCATION {} +
     find -name '*.gcda' -exec cp -f -t $LOCATION {} +
-    sudo chmod -R 777 /home/runner/work/client-cpp/client-cpp/src/folder_with_gcov_files
     echo "AllFiles:"
     cd $LOCATION
     ls -al
-    mv attribute_object.cpp.gcno attribute_object.gcno
-    mv attribute_object.cpp.gcda attribute_object.gcda
     sudo find -name '*.gcno' -exec gcov -bf {} \;
     echo "find gcov files4:"
     find -type f -name "*.gcov"
