@@ -28,7 +28,6 @@ fi
 if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
 
     # Generate coverage based on executed tests
-    mkdir TEMPDIR
     lcov -b . -c -d . -o .coverage.wtest.run
     echo "I am here for coverage"
     pwd
@@ -71,6 +70,14 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     find -name '*.gcda' -exec cp -f -t $LOCATION {} +
     sudo chmod -R 777 /home/runner/work/client-cpp/client-cpp/src/folder_with_gcov_files
     cd $LOCATION
+    cp tdf.cpp.gcno tdf.gcno
+    rm tdf.cpp.gcno
+    cp tdf.cpp.gcda tdf.gcda
+    rm tdf.cpp.gcda
+    cp attribute_object.cpp.gcno attribute_object.gcno
+    rm attribute_object.cpp.gcno
+    cp attribute_object.cpp.gcda attribute_object.gcda
+    rm attribute_object.cpp.gcda
     sudo find -name '*.gcno' -exec gcov -bf {} \;
     echo "find gcov files4:"
     find -type f -name "*.gcov"
