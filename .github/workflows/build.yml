@@ -87,7 +87,7 @@ jobs:
           echo "Echo gcovr txt version:"
           echo "$(cat coverageGcovr.txt)"
           
-          echo "Echo gcovr xml version:"
+          echo "Echo gcovr Sonar-compatible xml version:"
           echo "$(cat coverageGcovrSonar.xml)"
 
       - name: Upload coverage report from GCOVR
@@ -96,13 +96,6 @@ jobs:
           name: coverage-info-file
           path: |
             src/coverageGcovr.txt
-
-      - name: Upload coverage data and notes files
-        uses: actions/upload-artifact@v3
-        with:
-          name: coverage-info-file
-          path: |
-            src/folder_with_gcov_files
 
       - name: Install sonar-scanner and build-wrapper
         uses: sonarsource/sonarcloud-github-c-cpp@v2
