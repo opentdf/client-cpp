@@ -127,7 +127,9 @@ set (TDF_CPP_SDK_SOURCE_FILES_NANOTDF
 set (TDF_CPP_SDK_SOURCE_FILES_C_WRAPPER
         ${TDF_CPP_SDK_SOURCE_DIR}/include/tdf_constants_c.h
         ${TDF_CPP_SDK_SOURCE_DIR}/include/tdf_client_c.h
+        ${TDF_CPP_SDK_SOURCE_DIR}/include/tdf_storage_type_c.h
         ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_client_c.cpp
+        ${TDF_CPP_SDK_SOURCE_DIR}/src/tdf_storage_type_c.cpp
     )
 
 set (TDF_CPP_SDK_SOURCE_FILES

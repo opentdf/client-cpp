@@ -9,6 +9,7 @@
 #define TDF_CLIENT_C_H
 
 #include "tdf_constants_c.h"
+#include "tdf_storage_type_c.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -20,9 +21,6 @@ DLL_PUBLIC TDF_STATUS TDFFreeMemory(void *memoryPtr);
 
 /// Destruct a credentials instance created with TDFCreateCredentialXXX
 DLL_PUBLIC void TDFDestroyCredential(TDFCredsPtr creds);
-
-/// Destruct a credentials instance created with TDFCreateTDFStorageXXX
-DLL_PUBLIC void TDFDestroyStorage(TDFStorageTypePtr storage);
 
 /// Create a new Credential instance configured for PKI authentication.
 /// \param oidcEndpoint - The OIDC server url
@@ -170,34 +168,6 @@ DLL_PUBLIC TDF_STATUS TDFGetEncryptedMetadata(TDFClientPtr clientPtr,
                                               TDFStorageTypePtr storageTypePtr,
                                               TDFBytesPtr *outBytesPtr,
                                               TDFBytesLength *outBytesLength);
-
-/// Create a TDF Storage Type instance of type file
-/// \param filePath - The path to the file
-DLL_PUBLIC TDFStorageTypePtr TDFCreateTDFStorageFileType(const char *filePath);
-
-/// Create a TDF Storage Type instance of type string
-/// \param buffer - The buffer for the data
-DLL_PUBLIC TDFStorageTypePtr TDFCreateTDFStorageStringType(TDFCBytesPtr inBytesPtr,
-                                                           TDFBytesLength inBytesLength);
-
-/// Create a TDF Storage Type instance of type S3
-/// \param S3Url - https-prefixed URL to the object to be read
-/// \param awsAccessKeyID - Access Key ID for the AWS credentials
-/// \param awsSecretAccessKey - Secret access key for AWS credentials
-/// \param awsRegionName - Region name for AWS credentials
-DLL_PUBLIC TDFStorageTypePtr TDFCreateTDFStorageS3Type(const char *S3Url,
-                                                       const char *awsAccessKeyId,
-                                                       const char *awsSecretAccessKey,
-                                                       const char *awsRegionName);
-
-/// Returns the unique storage descriptor (path, bucket/key, etc) of the TDF pointed to
-/// by a given TDFStorageType
-/// \param tdfStorageTypePtr - Pointer to TDF storage type
-/// \param outBytesPtr  - On success, it contains the descriptor string.
-/// \param outBytesLength  - On success, it is length of the descriptor string.
-DLL_PUBLIC TDF_STATUS TDFGetTDFStorageDescriptor(TDFStorageTypePtr storageTypePtr,
-                                                        TDFBytesPtr *outBytesPtr,
-                                                        TDFBytesLength *outBytesLength);
 
 /// Parse the data pointed to by the storage type, to determine if it is
 /// a potentially decryptable TDF or not.
