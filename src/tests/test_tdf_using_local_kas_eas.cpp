@@ -579,11 +579,7 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
             ictdfClient->setXMLFormat();
             TDFStorageType plainTextFile;
             plainTextFile.setTDFStorageFileType(testFile);
-
-            if (!attributes.empty()) {
-                auto attribute = attributes.front();
-                plainTextFile.addAttributeValue(attribute);
-            }
+            plainTextFile.addAttributeValue("https://example.com/attr/classification2");
 
             // Add handling assertion
             Assertion handlingAssertion{AssertionType::Handling, Scope::TDO};
@@ -635,6 +631,7 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
                 statementGroup.setValue("VGhpcyBpcyBhIGJpbmFyeSBzdGF0ZW1lbnQ=");
                 defaultAssertions.setStatementGroup(statementGroup);
                 jsonTDFFile.setAssertion(defaultAssertions);
+                jsonTDFFile.addAttributeValue("https://example.com/attr/classification2");
 
                 jsonTDFClient->encryptFile(jsonTDFFile, "testing-json-2.tdf");
 
