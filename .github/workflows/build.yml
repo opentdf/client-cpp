@@ -10,6 +10,7 @@ on:
 env:
   VBUILD_UNIT_TESTS: true
   CONAN_VER: 1.57.0
+  BUILD_WRAPPER_OUT_DIR_SONAR: build_wrapper_output_directory # Directory where build-wrapper output will be placed
 jobs:
 
   run-build-ubuntu:
@@ -24,9 +25,9 @@ jobs:
         uses: actions/checkout@v3
       - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
 
-      - name: Install valgrind and code coverage
+      - name: Install code coverage tools
         run: |
-          sudo apt-get -y install lcov=1.14-2 html2text=1.3.2a-25
+          sudo apt-get -y install lcov=1.14-2 html2text=1.3.2a-25 gcovr
 
       - name: Install Conan
         run: pip3 install conan==${{ env.CONAN_VER }} --force
@@ -68,17 +69,41 @@ jobs:
           cd opentdf/quickstart
           pwd
           tilt ci
-
+      - name: Collect coverage into one XML report using GCOVR
+        run: |
+          cd src
+          gcovr > coverageGcovr.txt
+          gcovr --sonarqube > coverageGcovrSonar.xml
+      - name: Upload coverage report from GCOVR
+        uses: actions/upload-artifact@v3
+        with:
+          name: gcovr-coverage-reports
+          path: |
+            src/coverageGcovr.txt
+            src/coverageGcovrSonar.xml
+      - name: Install sonar-scanner and build-wrapper
+        uses: sonarsource/sonarcloud-github-c-cpp@v2
+      - name: Run build-wrapper
+        run: |
+          # remove folder with copied gcov files to avoid unnecessary growth of Duplicated Code
+          rm -rf /home/runner/work/client-cpp/client-cpp/src/folder_with_gcov_files
+          cd ${{ github.workspace }}
+          cd src
+          build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR_SONAR }} ./build-all.sh
+          cp -r build_wrapper_output_directory /home/runner/work/client-cpp/client-cpp
+      - name: Run sonar-scanner
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: sonar-scanner --define sonar.cfamily.build-wrapper-output="${{ env.BUILD_WRAPPER_OUT_DIR_SONAR }}"
       - name: Get Version
         run: |
           VER=$(cat VERSION)
           echo "V_VERSION=$VER" >> $GITHUB_ENV
-
       - name: Get Timestamp
         run : |
           TSTAMP=$(date +'%Y%m%d%H%M%S')
           echo "V_TIMESTAMP=$TSTAMP" >> $GITHUB_ENV
-
       - name: Save artifacts
         uses: actions/upload-artifact@v3
         if: (github.event_name != 'pull_request') && (github.event_name != 'schedule')
@@ -86,14 +111,12 @@ jobs:
           name: opentdf-client-cpp-lin-${{ env.V_VERSION }}-${{ env.V_TIMESTAMP }}
           path: |
             dist/*
-
       - name: Save code coverage data
         uses: actions/upload-artifact@v3
         with:
           name: code-coverage
           path: |
             code-coverage.tar.gz
-            
       - run: echo "🍏 This job's status is ${{ job.status }}."
 
   run-build-windows:
@@ -107,17 +130,17 @@ jobs:
       - run: echo "🎉 The job was automatically triggered by a %github.event_name% event."
       - run: echo "🐧 This job is now running on a %runner.os% server hosted by GitHub!"
       - run: echo "🔎 The name of your branch is %github.ref% and your repository is %github.repository%."
-    
+
       - name: Check out repository code
         uses: actions/checkout@v3
       - run: echo "💡 The %github.repository% repository has been cloned to the runner."
-    
+
       - name: Install Conan
         run: pip3 install conan==${{ env.CONAN_VER }} --force
-    
+
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v1
-    
+
       - name: Run build
         run: |
           cd ${{ github.workspace }}
@@ -125,7 +148,7 @@ jobs:
           .\build-all.bat
           cd build
           msbuild RUN_TESTS.vcxproj /p:Configuration=Release
-    
+
       # The windows-specific GITHUB_ENV set is not documented, and it's different than unix flavors.  Must use '$env:GITHUB_ENV'
       # Ref: https://stackoverflow.com/questions/61858388/how-do-i-set-an-enviroment-variable-in-github-action-on-a-windows-server
       - name: Get Version
@@ -133,12 +156,12 @@ jobs:
           chcp 65001 #set code page to utf-8
           $V_VER = Get-Content .\VERSION
           echo "V_VERSION=$V_VER" >> $env:GITHUB_ENV
-    
+
       - name: Get Timestamp
         run : |
           $V_TSTAMP = Get-Date((Get-Date).toUniversalTime()) -Format "yyyyMMddHHmmss"
           echo "V_TIMESTAMP=$V_TSTAMP" >> $env:GITHUB_ENV
-    
+
       - name: Save artifacts
         uses: actions/upload-artifact@v3
         if: (github.event_name != 'pull_request') && (github.event_name != 'schedule')
@@ -148,7 +171,7 @@ jobs:
             dist/*
 
       - run: echo "🍏 This job's status is %job.status%."
-        
+
   run-build-mac:
     runs-on: macos-11
     needs: run-build-ubuntu
@@ -156,35 +179,35 @@ jobs:
       - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
       - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
-    
+
       - name: Check out repository code
         uses: actions/checkout@v3
       - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
-    
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
             python-version: 3.11
-    
+
       - name: Install Conan
         run: pip3 install conan==${{ env.CONAN_VER }} --force
-    
+
       - name: Run build
         run: |
           cd ${{ github.workspace }}
           cd src
           ./build-all.sh
-    
+
       - name: Get Version
         run: |
           VER=$(cat VERSION)
           echo "V_VERSION=$VER" >> $GITHUB_ENV
-    
+
       - name: Get Timestamp
         run : |
           TSTAMP=$(date +'%Y%m%d%H%M%S')
           echo "V_TIMESTAMP=$TSTAMP" >> $GITHUB_ENV
-    
+
       - name: Save artifacts
         uses: actions/upload-artifact@v3
         if: (github.event_name != 'pull_request') && (github.event_name != 'schedule')
@@ -192,9 +215,9 @@ jobs:
           name: opentdf-client-cpp-mac-${{ env.V_VERSION }}-${{ env.V_TIMESTAMP }}
           path: |
             dist/*
-    
+
       - run: echo "🍏 This job's status is ${{ job.status }}."
-    
+
   ci:
     needs:
       - run-build-mac
