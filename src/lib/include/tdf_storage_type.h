@@ -74,6 +74,10 @@ namespace virtru {
         /// \param assertion - The assertion object
         void setAssertion(const Assertion& assertion);
 
+        /// Add the attribute value, which will added as a data attribute to TDF.
+        /// \param attributeValue - The attribute value
+        void addAttributeValue(const std::string& attributeValue);
+
         /// Return the unique, canonical descriptor/location this
         /// StorageType is pointing to.
         ///
@@ -96,6 +100,7 @@ namespace virtru {
         std::string                     m_awsRegionName;
         std::string                     m_S3Url;
         std::vector<Assertion>          m_assertions;
+        std::vector<std::string>        m_dataAttributes;
     };
 }
 #endif //VIRTRU_TDF_STORAGETYPE_H

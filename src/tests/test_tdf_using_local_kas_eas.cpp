@@ -580,6 +580,11 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
             TDFStorageType plainTextFile;
             plainTextFile.setTDFStorageFileType(testFile);
 
+            if (!attributes.empty()) {
+                auto attribute = attributes.front();
+                plainTextFile.addAttributeValue(attribute);
+            }
+
             // Add handling assertion
             Assertion handlingAssertion{AssertionType::Handling, Scope::TDO};
             handlingAssertion.setId("assertion1");

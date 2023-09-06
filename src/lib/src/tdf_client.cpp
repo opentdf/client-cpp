@@ -163,6 +163,13 @@ namespace virtru {
             m_tdfBuilder->setAssertion(assertion);
         }
 
+        std::string displayName;
+        for (const auto &attr : tdfStorageType.m_dataAttributes) {
+            policyObject.addAttributeObject({attr, displayName,
+                                             m_tdfBuilder->m_impl->m_kasPublicKey,
+                                             m_tdfBuilder->m_impl->m_kasUrl});
+        }
+
         auto tdf = m_tdfBuilder->setPolicyObject(policyObject).build();
 
         if (tdfStorageType.m_tdfType == TDFStorageType::StorageType::File) {
@@ -193,6 +200,13 @@ namespace virtru {
         auto policyObject = createPolicyObject();
         for (const auto& assertion: tdfStorageType.m_assertions) {
             m_tdfBuilder->setAssertion(assertion);
+        }
+
+        std::string displayName;
+        for (const auto &attr : tdfStorageType.m_dataAttributes) {
+            policyObject.addAttributeObject({attr, displayName,
+                                             m_tdfBuilder->m_impl->m_kasPublicKey,
+                                             m_tdfBuilder->m_impl->m_kasUrl});
         }
 
         auto tdf = m_tdfBuilder->setPolicyObject(policyObject).build();

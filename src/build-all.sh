@@ -2,7 +2,7 @@
 # minimal build script to be executed from the src directory
 export VBUILD_UNIT_TESTS="true"
 # Run the backend test
-#export VRUN_BACKEND_TESTS="true"
+export VRUN_BACKEND_TESTS="true"
 
 TDF_LIB_OUTPUT="tdf-lib-cpp"
 

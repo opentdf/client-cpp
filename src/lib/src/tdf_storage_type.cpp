@@ -52,6 +52,11 @@ namespace virtru {
         m_awsRegionName = awsRegionName;
     }
 
+    /// Add the attribute value, which will added as a data attribute to TDF.
+    void TDFStorageType::addAttributeValue(const std::string& attributeValue) {
+        m_dataAttributes.push_back(attributeValue);
+    }
+
     /// Add the assertion to the TDF
     /// \param assertion - The assertion object
     void TDFStorageType::setAssertion(const Assertion& assertion) {
