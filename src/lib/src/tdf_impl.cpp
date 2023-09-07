@@ -502,7 +502,7 @@ namespace virtru {
                 // Adjust decrypt buffer size
                 auto outBufferSpan = WriteableBytes{decryptedBuffer};
                 if (segment.segmentSize > 0) {
-                    auto segmentSize = segment.segmentSize;
+                    const int segmentSize = segment.segmentSize;
                     outBufferSpan = WriteableBytes{outBufferSpan.data(), segmentSize};
                 }
 
