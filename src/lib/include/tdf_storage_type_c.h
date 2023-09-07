@@ -1,8 +1,10 @@
 /*
-* Copyright 2023 Virtru Corporation
-*
-* SPDX - License Identifier: BSD-3-Clause-Clear
-*
+ * Copyright 2023 Virtru Corporation
+ *
+ * SPDX - License Identifier: BSD-3-Clause-Clear
+ *
+ * Created by Pat Mancuso on 2023/09/06.
+ *
 */
 
 #ifndef TDF_STORAGE_TYPE_C_H

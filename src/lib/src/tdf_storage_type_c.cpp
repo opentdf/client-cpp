@@ -3,11 +3,16 @@
  *
  * SPDX - License Identifier: BSD-3-Clause-Clear
  *
+ * Created by Pat Mancuso on 2023/09/06.
+ *
  */
 
 #include "logger.h"
 #include "tdf_storage_type.h"
 #include "tdf_constants.h"
+#include "tdf_constants_c.h"
+#include "tdf_exception.h"
+#include "tdf_client_c_errors.h"
 
 #ifdef __cplusplus
 extern "C" {
