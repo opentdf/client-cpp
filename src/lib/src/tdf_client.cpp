@@ -428,10 +428,6 @@ namespace virtru {
             userKasURL = m_tdfBuilder->m_impl->m_kasUrl;
         }
 
-        if (userKasURL != m_tdfBuilder->m_impl->m_kasUrl){
-            LogWarn("Multi KAS is not supported");
-        }
-
         std::string displayName;
         m_dataAttributeObjects.emplace_back(dataAttribute, displayName,
                                             m_tdfBuilder->m_impl->m_kasPublicKey, userKasURL);

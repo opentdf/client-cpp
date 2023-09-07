@@ -226,10 +226,11 @@ namespace virtru {
 
         // Load the xml doc into buffer
         xmlChar* output = nullptr;
-        XMLCharFreePtr xmlCharFreePtr{output};
+        XMLCharFreePtr xmlCharFreePtr;
         int size = 0;
 
         xmlDocDumpMemoryEnc(doc.get(), &output, &size, kXMLEncoding);
+        xmlCharFreePtr.reset(output);
 
         bool valid = m_XmlValidatorPtr.validate(doc.get());
         if (!valid) {
@@ -302,17 +303,14 @@ namespace virtru {
                          reinterpret_cast<const xmlChar *>(kScopeAttribute),
                          reinterpret_cast<const xmlChar *>(scopeAsStr.c_str()));
 
-            if (handlingAssertion.getAppliesToState() == AppliesToState::Unknown) {
-                std::string errorMsg{"Unknown appliesToState for HandlingAssertion"};
-                ThrowException(std::move(errorMsg));
+            if (handlingAssertion.getAppliesToState() != AppliesToState::Unknown) {
+                auto appliesToStateAsStrView = magic_enum::enum_name(handlingAssertion.getAppliesToState());
+                std::string appliesToStateAsStr{appliesToStateAsStrView};
+                xmlNewNsProp(handlingAssertionElement,
+                             ns,
+                             reinterpret_cast<const xmlChar *>(kAppliesToStateAttribute),
+                             reinterpret_cast<const xmlChar *>(appliesToStateAsStr.c_str()));
             }
-
-            auto appliesToStateAsStrView = magic_enum::enum_name(handlingAssertion.getAppliesToState());
-            std::string appliesToStateAsStr{appliesToStateAsStrView};
-            xmlNewNsProp(handlingAssertionElement,
-                         ns,
-                         reinterpret_cast<const xmlChar *>(kAppliesToStateAttribute),
-                         reinterpret_cast<const xmlChar *>(appliesToStateAsStr.c_str()));
 
             if (!handlingAssertion.getId().empty()) {
                 xmlNewNsProp(handlingAssertionElement,

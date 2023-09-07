@@ -225,7 +225,7 @@ namespace virtru {
     /// Return the manifest data to json string.
     std::string ManifestDataModel::toJson() const {
 
-        nlohmann::json manifest;
+        nlohmann::json manifest{};
 
         try {
             // Payload

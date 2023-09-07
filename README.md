@@ -31,6 +31,5 @@ For more details on Conan and publishing, see [OpenTDF/client-conan](https://git
 
 ### Local In-Tree Building+Testing
 
-1. `cd src`
-1. `sh build-all-test.sh`
+1. `sh build-and-run-sanity-test.sh`
 

@@ -29,28 +29,22 @@ static void schemaParseErrorHandler(void *arg, xmlErrorPtr error)
 }
 
 TDFXMLValidator::TDFXMLValidator() {
-    m_valid_ctxt = nullptr;
     m_schemaInitialized = false;
 }
 
 bool TDFXMLValidator::setSchema(const std::string& schemafile) {
-    xmlSchemaPtr schema;
-    xmlSchemaParserCtxtPtr schema_parser_ctxt;
-    m_valid_ctxt = nullptr;
     m_schemaInitialized = true;
-
     xmlInitParser();
 
-    if ((schema_parser_ctxt = xmlSchemaNewParserCtxt(schemafile.c_str())))
-    {
-        schema = xmlSchemaParse(schema_parser_ctxt);
-        xmlSchemaFreeParserCtxt(schema_parser_ctxt);
-        if (schema)
-        {
-            m_valid_ctxt = xmlSchemaNewValidCtxt(schema);
+    XmlSchemaParserCtxtFreePtr schemaParserCtxt(xmlSchemaNewParserCtxt(schemafile.c_str()));
+    if (schemaParserCtxt) {
+        m_schema.reset(xmlSchemaParse(schemaParserCtxt.get()));
+        if (m_schema) {
+            m_valid_ctxt.reset(xmlSchemaNewValidCtxt(m_schema.get()));
         }
     }
-    return isSchemaValid();
+
+    return (m_valid_ctxt.get() != nullptr);
 }
 
 TDFXMLValidator::~TDFXMLValidator() {
@@ -59,32 +53,18 @@ TDFXMLValidator::~TDFXMLValidator() {
 
 /// Verify that the supplied schema loaded without errors
 bool TDFXMLValidator::isSchemaValid() {
-    if (m_valid_ctxt)
-        return true;
-    else
-        return false;
+    return (m_valid_ctxt.get() != nullptr);
 }
 
 bool TDFXMLValidator::validate(const std::string &xmlfile) {
-    xmlTextReaderPtr reader;
-    bool retval = false;
-
-    reader = xmlReaderForFile(xmlfile.c_str(), 0, 0);
-    retval = validate(reader);
-    xmlFreeTextReader(reader);
-
-    return retval;
+    XmlTextReaderFreePtr reader(xmlReaderForFile(xmlfile.c_str(), 0, 0));
+    return validate(reader.get());
 }
 
 bool TDFXMLValidator::validate(xmlDoc* doc) {
-    xmlTextReaderPtr reader;
-    bool retval = false;
 
-    reader = xmlReaderWalker(doc);
-    retval = validate(reader);
-    xmlFreeTextReader(reader);
-
-    return retval;
+    XmlTextReaderFreePtr reader(xmlReaderWalker(doc));
+    return validate(reader.get());
 }
 
 bool TDFXMLValidator::validate(xmlTextReaderPtr reader) {
@@ -103,8 +83,8 @@ bool TDFXMLValidator::validate(xmlTextReaderPtr reader) {
         } else {
             // A setSchema succeeded, use it to validate this xml
             if (reader) {
-                xmlTextReaderSchemaValidateCtxt(reader, m_valid_ctxt, 0);
-                xmlSchemaSetValidStructuredErrors(m_valid_ctxt, schemaParseErrorHandler, &has_schema_errors);
+                xmlTextReaderSchemaValidateCtxt(reader, m_valid_ctxt.get(), 0);
+                xmlSchemaSetValidStructuredErrors(m_valid_ctxt.get(), schemaParseErrorHandler, &has_schema_errors);
 
                 // Returns 1 if more to read, 0 if successfully completed reading, other values indicate errors
                 moreToRead = xmlTextReaderRead(reader);

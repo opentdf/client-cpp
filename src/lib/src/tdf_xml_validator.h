@@ -11,6 +11,7 @@
 #ifndef OPENTDF_CLIENT_TDF_XML_VALIDATOR_H
 #define OPENTDF_CLIENT_TDF_XML_VALIDATOR_H
 
+#include "libxml2_deleters.h"
 #include "libxml/xmlreader.h"
 #include <string>
 
@@ -45,8 +46,9 @@ namespace virtru {
         bool validate(xmlDocPtr doc);
 
       private:
-        bool m_schemaInitialized ;
-        xmlSchemaValidCtxtPtr m_valid_ctxt;
+        bool m_schemaInitialized;
+        XmlSchemaFreePtr m_schema;
+        XmlSchemaValidCtxtFreePtr m_valid_ctxt;
     };
 }
 
