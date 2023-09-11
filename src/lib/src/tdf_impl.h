@@ -90,6 +90,11 @@ namespace virtru {
         /// \return std::string - The string containing the metadata.
         std::string getEncryptedMetadata(IInputProvider& inputProvider);
 
+        /// Extract and return key access objects in TDF
+        /// \param inputProvider - The input provider containing a tdf data.
+        /// \return Json key access objects from a TDF
+        static std::string getKeyAccessObjects(IInputProvider& inputProvider);
+
         /// Extract and return the JSON policy string from the input provider.
         /// \param inputProvider - Input provider interface for reading data
         /// \return std::string - The string containing the policy.
@@ -205,12 +210,12 @@ namespace virtru {
         /// Retrive the policy uuid(id) from the manifest data model.
         /// \param manifestDataModel - The manifest data model
         /// \return String - The policy id.
-        std::string getPolicyFromManifest(const ManifestDataModel& manifestDataModel) const;
+        static std::string getPolicyFromManifest(const ManifestDataModel& manifestDataModel);
 
         /// Return the manifest data model from the tdf input provider.
         /// \param inputProvider - Input provider interface for reading data
         /// \return - Return the manifest data model
-        ManifestDataModel getManifest(IInputProvider& inputProvider) const;
+        static ManifestDataModel getManifest(IInputProvider& inputProvider);
 
         /// Retrive the policy uuid(id) from the manifest data model.
         /// \param manifestDataModel - The manifest data model

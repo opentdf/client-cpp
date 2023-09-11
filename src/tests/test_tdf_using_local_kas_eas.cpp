@@ -122,8 +122,13 @@ void testTDFOperations(TDFClient* client, bool testMetaDataAPI = false) {
         BOOST_TEST(metaData == metaDataFromTDF);
     }
 
+
     TDFStorageType decryptFileType;
     decryptFileType.setTDFStorageFileType(inPathDecrypt);
+
+    auto keyAccessObjs = TDFClient::getKeyAccessObjects(decryptFileType);
+    std::cout << "Key access objects as json:" << keyAccessObjs << std::endl;
+
     client->decryptFile(decryptFileType, outPathDecrypt);
 
     BOOST_TEST_MESSAGE("TDF basic test passed.");

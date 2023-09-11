@@ -696,6 +696,14 @@ namespace virtru {
         return metadata;
     }
 
+    /// Extract and return key access objects in TDF
+    std::string TDFImpl::getKeyAccessObjects(IInputProvider& inputProvider) {
+        LogTrace("TDFImpl::getKeyAccessObjects");
+
+        auto manifestDataModel = getManifest(inputProvider);
+        return ManifestDataModel::keyAccessDataModelAsJson(manifestDataModel);
+    }
+    
     /// Extract and return the JSON policy string from the input provider.
     std::string TDFImpl::getPolicy(IInputProvider& inputProvider) {
 
@@ -1328,7 +1336,7 @@ namespace virtru {
     }
 
     /// Return the manifest data model from the tdf input provider.
-    ManifestDataModel TDFImpl::getManifest(IInputProvider& inputProvider) const {
+    ManifestDataModel TDFImpl::getManifest(IInputProvider& inputProvider) {
         LogTrace("TDFImpl::getManifest from tdf stream");
 
         ManifestDataModel dataModel;
@@ -1366,7 +1374,7 @@ namespace virtru {
     }
 
     /// Retrive the policy from the manifest.
-    std::string TDFImpl::getPolicyFromManifest(const ManifestDataModel& manifestDataModel) const {
+    std::string TDFImpl::getPolicyFromManifest(const ManifestDataModel& manifestDataModel) {
         LogTrace("TDFImpl::getPolicyFromManifest");
 
         // Get policy

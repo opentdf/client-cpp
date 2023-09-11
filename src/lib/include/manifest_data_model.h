@@ -82,9 +82,9 @@ namespace virtru {
         static ManifestDataModel CreateModelFromXML(const std::string& modelAsXMLStr);
 
         /// Return json string representation of key access data model object.
-        /// \param keyAccessDataModel
+        /// \param ManifestDataModel - The manifest data model
         /// \return Json string representation of key access data model object.
-        static std::string keyAccessDataModelAsJson(const KeyAccessDataModel& keyAccessDataModel);
+        static std::string keyAccessDataModelAsJson(const ManifestDataModel& dataModel);
 
         /// Construct encrypted policy object for ICTDF format
         /// \param ManifestDataModel - The manifest data model
