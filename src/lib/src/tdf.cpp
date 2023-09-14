@@ -182,6 +182,13 @@ namespace virtru {
         m_impl->sync(encryptedTdfFilepath);
     }
 
+    /// Extract and return key access objects in TDF
+    std::string TDF::getKeyAccessObjects(IInputProvider& inputProvider) {
+        LogInfo("Get key access objects from tdf:");
+
+        return TDFImpl::getKeyAccessObjects(inputProvider);
+    }
+
     /// Convert the zip formatted TDF to the xml formatted TDF(ICTDF)
     void TDF::convertXmlToJson(const std::string& ictdfFilePath, const std::string& tdfFilePath) {
         LogInfo("Convert ICTDF o TDF");

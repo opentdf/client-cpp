@@ -107,8 +107,10 @@ BOOST_AUTO_TEST_SUITE(test_input_io_provider_suite)
              std::ostringstream oss;
              char xExpected[5];
              char xActual[5];
-             sprintf(xExpected, "%0.2x", static_cast<unsigned int>(expected));
-             sprintf(xActual, "%0.2x", static_cast<unsigned int>(actual));
+             const int bufferSizeExpected = sizeof(xExpected)/sizeof(xExpected[0]) - 1;
+             const int bufferSizeActual = sizeof(xActual)/sizeof(xActual[0]) - 1;
+             snprintf(xExpected, bufferSizeExpected, "%0.2x", static_cast<unsigned int>(expected));
+             snprintf(xActual, bufferSizeActual, "%0.2x", static_cast<unsigned int>(actual));
              oss << "i=" << i << " expected=" << xExpected << " actual=" << xActual;
              LogError("Bad data in read buffer: " + oss.str());
              return false;

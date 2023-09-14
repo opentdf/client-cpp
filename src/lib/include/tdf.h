@@ -135,6 +135,11 @@ namespace virtru {
         /// \param encryptedTdfFilepath - The file path to the tdf.
         void sync(const std::string& encryptedTdfFilepath);
 
+        /// Extract and return key access objects in TDF
+        /// \param inputProvider - The input provider containing a tdf data.
+        /// \return Json key access objects from a TDF
+        static std::string getKeyAccessObjects(IInputProvider& inputProvider);
+
         /// Check if data in the input provider is TDF
         /// \param inputProvider - The input provider containing a tdf data to be decrypted.
         /// \return Return true if data is TDF and false otherwise
