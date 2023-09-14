@@ -36,11 +36,11 @@
 #endif
 
 #define TEST_OIDC 1
-#if RUN_BACKEND_TESTS
-    #define TEST_OIDC 1
-#else
-    #define TEST_OIDC 0
-#endif
+//#if RUN_BACKEND_TESTS
+//    #define TEST_OIDC 1
+//#else
+//    #define TEST_OIDC 0
+//#endif
 
 #define LOCAL_EAS_KAS_SETUP 0
 constexpr auto USER = "user2";
@@ -415,6 +415,7 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
                                                              ORGANIZATION_NAME, OIDC_ENDPOINT);
                 auto oidcClientTDF = std::make_unique<TDFClient>(clientCreds, KAS_URL);
                 oidcClientTDF->enableBenchmark();
+                oidcClientTDF->enableConsoleLogging(LogLevel::Debug);
 
                 auto attributes = oidcClientTDF->getSubjectAttributes();
                 std::cout << "The subject attributes:" << std::endl;
