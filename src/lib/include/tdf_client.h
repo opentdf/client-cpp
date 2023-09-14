@@ -149,6 +149,11 @@ namespace virtru {
         /// \param kasUrl - kas url
         void addDataAttribute(const std::string &dataAttribute, const std::string &kasURL) override;
 
+        /// Extract and return key access objects in TDF
+        /// \param tdfStorageType - The type of TDF
+        /// \return Json key access objects from a TDF
+        static std::string getKeyAccessObjects(const TDFStorageType &tdfStorageType);
+
         /// Check if whatever the TDFStorageType is pointing to is a TDF
         /// \param tdfStorageType - The storage object representing the tdf.
         /// \return - Return true if file is TDF and false otherwise

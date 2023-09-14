@@ -402,26 +402,29 @@ namespace virtru {
     }
 
     /// Return json string representation of key access data model object.
-    std::string ManifestDataModel::keyAccessDataModelAsJson(const KeyAccessDataModel& keyAccessDataModel) {
+    std::string ManifestDataModel::keyAccessDataModelAsJson(const ManifestDataModel& dataModel) {
 
-        nlohmann::json keyAccessJson;
-        keyAccessJson[kKeyAccessType] = keyAccessDataModel.keyType;
-        keyAccessJson[kUrl] = keyAccessDataModel.url;
-        keyAccessJson[kProtocol] = keyAccessDataModel.protocol;
+        nlohmann::json keyAccessObjs;
 
-        if (!keyAccessDataModel.wrappedKey.empty()) {
-            keyAccessJson[kWrappedKey] = keyAccessDataModel.wrappedKey;
+        // 'keyAccess'
+        keyAccessObjs[kKeyAccess] = nlohmann::json::array();
+        for (auto& key : dataModel.encryptionInformation.keyAccessObjects) {
+
+            nlohmann::json keyAccess;
+            keyAccess[kKeyAccessType] = key.keyType;
+            keyAccess[kUrl] = key.url;
+            keyAccess[kProtocol] = key.protocol;
+            keyAccess[kWrappedKey] = key.wrappedKey;
+            keyAccess[kPolicyBinding] = key.policyBinding;
+
+            if (!key.encryptedMetadata.empty()) {
+                keyAccess[kEncryptedMetadata] = key.encryptedMetadata;
+            }
+
+            keyAccessObjs[kKeyAccess].emplace_back(keyAccess);
         }
 
-        if (!keyAccessDataModel.policyBinding.empty()) {
-            keyAccessJson[kPolicyBinding] = keyAccessDataModel.policyBinding;
-        }
-
-        if (!keyAccessDataModel.encryptedMetadata.empty()) {
-            keyAccessJson[kEncryptedMetadata] = keyAccessDataModel.encryptedMetadata;
-        }
-
-        return to_string(keyAccessJson);
+        return to_string(keyAccessObjs);
     }
 
     /// Construct encrypted policy object for ICTDF format

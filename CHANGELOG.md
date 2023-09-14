@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+1.5.1
+ - PLAT-2664 - Add an api to fetch key access objects from TDF
+
 1.5.0
  - PLAT-1589 - Update the C++ SDK crypto use openssl 3.1.1
 

@@ -37,9 +37,9 @@
 
 #define TEST_OIDC 1
 #if RUN_BACKEND_TESTS
-    #define TEST_OIDC 1
+   #define TEST_OIDC 1
 #else
-    #define TEST_OIDC 0
+   #define TEST_OIDC 0
 #endif
 
 #define LOCAL_EAS_KAS_SETUP 0
@@ -122,8 +122,13 @@ void testTDFOperations(TDFClient* client, bool testMetaDataAPI = false) {
         BOOST_TEST(metaData == metaDataFromTDF);
     }
 
+
     TDFStorageType decryptFileType;
     decryptFileType.setTDFStorageFileType(inPathDecrypt);
+
+    auto keyAccessObjs = TDFClient::getKeyAccessObjects(decryptFileType);
+    std::cout << "Key access objects as json:" << keyAccessObjs << std::endl;
+
     client->decryptFile(decryptFileType, outPathDecrypt);
 
     BOOST_TEST_MESSAGE("TDF basic test passed.");
@@ -410,6 +415,7 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
                                                              ORGANIZATION_NAME, OIDC_ENDPOINT);
                 auto oidcClientTDF = std::make_unique<TDFClient>(clientCreds, KAS_URL);
                 oidcClientTDF->enableBenchmark();
+                oidcClientTDF->enableConsoleLogging(LogLevel::Debug);
 
                 auto attributes = oidcClientTDF->getSubjectAttributes();
                 std::cout << "The subject attributes:" << std::endl;
