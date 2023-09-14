@@ -36,11 +36,11 @@
 #endif
 
 #define TEST_OIDC 1
-//#if RUN_BACKEND_TESTS
-//    #define TEST_OIDC 1
-//#else
-//    #define TEST_OIDC 0
-//#endif
+#if RUN_BACKEND_TESTS
+   #define TEST_OIDC 1
+#else
+   #define TEST_OIDC 0
+#endif
 
 #define LOCAL_EAS_KAS_SETUP 0
 constexpr auto USER = "user2";
