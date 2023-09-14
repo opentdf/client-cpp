@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+1.5.2
+ - PLAT-2665 - Move TDFStorageType c interface to separate files
+
 1.5.1
  - PLAT-2664 - Add an api to fetch key access objects from TDF
 
