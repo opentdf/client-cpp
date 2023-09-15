@@ -98,7 +98,9 @@ message(STATUS "Combined lib name: ${TDF_COMBINED_LIB_FILENAME}")
 set(TDF_COMBINED_LIB_FULL_PATH ${TDF_LIB_DIR}/${TDF_COMBINED_LIB_FILENAME})
 message(STATUS "Combined full path: ${TDF_COMBINED_LIB_FULL_PATH}")
 
-if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR ${CMAKE_SYSTEM_NAME} MATCHES "iOS")
+if(TRUE)
+    message(STATUS "Skipping generation of combined static library")
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR ${CMAKE_SYSTEM_NAME} MATCHES "iOS")
 
     FOREACH (LDIR ${CONAN_LIB_DIRS})
         set(V_COMBINED_LIB_DIRS ${V_COMBINED_LIB_DIRS} -L${LDIR})
@@ -154,8 +156,6 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         lib -out:${TDF_LIB_DIR}/${TDF_COMBINED_LIB_FILENAME} ${TDF_LIB_DIR}/${TDF_STATIC_LIB_FILENAME} ${V_COMBINED_LIB_DIRS} ${V_COMBINED_LIB_NAMES}
       )
     )
-else()
-    message(STATUS "${CMAKE_SYSTEM_NAME} - unknown system FIXME........")
 endif()
 
 # generate the shared library from the library sources
@@ -187,19 +187,15 @@ install(DIRECTORY DESTINATION ${TDF_LIB_INSTALL_LOCATION})
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/
     DESTINATION ${TDF_LIB_INSTALL_LOCATION}/include)
         
-install(FILES ${TDF_STATIC_LIB_FULL_PATH}
-    DESTINATION ${TDF_LIB_INSTALL_LOCATION}/lib)
 
-if(${CMAKE_SYSTEM_NAME} MATCHES "Android")
-  message(STATUS "Skipping combined lib on Android")
-else()
-  install(FILES ${TDF_COMBINED_LIB_FULL_PATH}
-    DESTINATION ${TDF_LIB_INSTALL_LOCATION}/lib)
+if(NOT BUILD_SHARED_LIBS)
+  install(FILES $<TARGET_FILE:opentdfstatic>
+      DESTINATION ${TDF_LIB_INSTALL_LOCATION}/lib)
 endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
   message(STATUS "Skipping shared lib on windows")
-else()
-  install(FILES ${TDF_SHARED_LIB_FULL_PATH}
+elseif(BUILD_SHARED_LIBS)
+  install(FILES $<TARGET_FILE:opentdfshared>
     DESTINATION ${TDF_LIB_INSTALL_LOCATION}/lib)
 endif()
