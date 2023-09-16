@@ -8,13 +8,13 @@ export VBUILD_UNIT_TESTS="true"
 cd ../../src && ./build-all.sh
 
 if [[ -z "${VEXPORT_COMBINED_LIB}" ]]; then
+    echo "Skip building the sample"
+else
     echo "Build the sample executable using OpenTDF library"
     cd ../examples && mkdir build && cd build && cmake .. && make
 
     echo "Run the sanity test"
-    ./tdf_sample
-else
-    echo "Skip building the sample"
+    ./tdf_sample    
 fi
 
 
