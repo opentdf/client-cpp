@@ -3,7 +3,7 @@
 echo "Building OpenTDF library and run unittests"
 export VRUN_BACKEND_TESTS="true"
 export VBUILD_UNIT_TESTS="true"
-#export VEXPORT_COMBINED_LIB="true"
+export VEXPORT_COMBINED_LIB="true"
 
 cd ../../src && ./build-all.sh
 

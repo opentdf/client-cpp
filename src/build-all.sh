@@ -3,6 +3,7 @@
 export VBUILD_UNIT_TESTS="true"
 # Run the backend test
 #export VRUN_BACKEND_TESTS="true"
+export VEXPORT_COMBINED_LIB="true"
 
 TDF_LIB_OUTPUT="tdf-lib-cpp"
 
