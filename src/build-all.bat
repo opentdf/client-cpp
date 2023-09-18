@@ -3,6 +3,8 @@ rmdir /s /q build
 mkdir build
 pushd build
 
+set VEXPORT_COMBINED_LIB=true
+
 REM Install the prerequisites
 conan install .. --build=missing
 set builderrorlevel=%errorlevel%

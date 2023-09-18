@@ -66,15 +66,19 @@ include_directories(
     ${CONAN_INCLUDE_DIRS}
     )
 
-# set link info
-link_directories(
-    ${PROJECT_SOURCE_DIR}/../build/lib
+ # set link info
+ link_directories(
+     ${PROJECT_SOURCE_DIR}/../build/lib
+     ${CONAN_LIB_DIRS}
+     )
+ 
+ link_libraries(
+    opentdf_static
+    ${OTHERLIBS}
+    ${CONAN_LIBS}
+    ${CONAN_SYSTEM_LIBS}
     )
 
-link_libraries(
-    opentdf_static_combined
-    ${OTHERLIBS}
-    )
 
 # Collect all the files from the test dir
 file(GLOB TEST_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.cpp)
