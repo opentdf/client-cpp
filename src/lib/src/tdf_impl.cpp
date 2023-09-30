@@ -211,6 +211,8 @@ namespace virtru {
 
         writer.setPayloadSize(actualTDFPayloadSize);
 
+        Benchmark benchmark("Payload encrypt time");
+
         size_t index{};
         while (totalSegment != 0) {
 
@@ -321,6 +323,8 @@ namespace virtru {
         validateCipherType(manifestDataModel);
 
         WrappedKey wrappedKey = unwrapKey(manifestDataModel);
+
+        Benchmark benchmark("Payload decrypt time");
 
         if (!m_tdfBuilder.m_impl->m_kekBase64.empty()) {
             WrappedKey actualWrappedKey;
@@ -433,6 +437,7 @@ namespace virtru {
 
         LogDebug("Obtained the wrappedKey from manifest.");
 
+        Benchmark benchmark("Partial payload decrypt time");
         // Create a split key and the key access object based on access type.
         auto splitKey = SplitKey{CipherType::Aes256GCM};
         splitKey.setWrappedKey(wrappedKey);

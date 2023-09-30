@@ -127,8 +127,7 @@ namespace virtru {
         bool                    m_isZip64 {false};
         std::vector<FileInfo>   m_fileInfo;
         PayloadState            m_payloadState {PayloadState::Initial};
-
-
+        std::vector<std::byte>  m_buffer;
     };
 } // namespace virtru
 

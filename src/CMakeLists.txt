@@ -53,6 +53,12 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux" AND ${VIRTRU_SDK_BUILD_ARCH} MATCHES "x8
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFIPS_BUILD=1")
 endif()
 
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_compile_options(-O0)
+else()
+    add_compile_options(-O3)
+endif()
+
 # Build the tdf library.
 add_subdirectory(lib)
 

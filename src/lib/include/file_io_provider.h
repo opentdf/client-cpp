@@ -55,6 +55,7 @@ namespace virtru {
     private:
         std::unique_ptr<std::ofstream> m_fileStream;
         const std::string& m_filePath;
+        std::vector<char> m_bigBuffer;
     };
 }
 #endif //VIRTRU_FILE_IO_PROVIDER_H
