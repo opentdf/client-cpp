@@ -95,6 +95,11 @@ namespace virtru {
         /// Write archive end of central directory locator for zip64.
         void writeZip64EndOfCentralDirectoryLocator();
 
+        /// Allot memory of size.
+        /// NOTE: It return the chuck of memory from the internal buffer, It's not thread safe
+        /// \param size - The size
+        /// \return Bytes wrapper around internal buffer
+        WriteableBytes allotMemory(size_t size);
 
     private: /// Data
 
