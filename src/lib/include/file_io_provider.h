@@ -7,6 +7,7 @@
 #ifndef VIRTRU_FILE_IO_PROVIDER_H
 #define VIRTRU_FILE_IO_PROVIDER_H
 
+#include <vector>
 #include "io_provider.h"
 
 namespace virtru {
