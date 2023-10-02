@@ -19,6 +19,8 @@
 
 namespace virtru {
 
+    constexpr auto InternalBufferSIze = 2 * 1024 * 1024;
+
     /// Constructor
     TDFArchiveWriter::TDFArchiveWriter(IOutputProvider *outputProvider,
                                        std::string manifestFilename,
@@ -27,6 +29,8 @@ namespace virtru {
               m_manifestFilename(manifestFilename),
               m_payloadFilename(payloadFileName) {
 
+        // Allocate enough memory
+        m_buffer.resize(InternalBufferSIze);
     }
 
     void GetTimeDate(std::time_t rawtime, uint16_t & fileTime, uint16_t & fileDate)
@@ -77,15 +81,13 @@ namespace virtru {
             lfh.filenameLength = m_payloadFilename.length();
 
             // Write LFH Structure
-            std::vector<std::byte> lfhBuffer(sizeof(lfh));
-            WriteableBytes bytes = WriteableBytes{lfhBuffer};
-            std::memcpy(&lfhBuffer[0], &lfh, sizeof(lfh));
+            WriteableBytes bytes = allotMemory(sizeof(lfh));
+            std::memcpy(bytes.data(), &lfh, sizeof(lfh));
             m_outputProvider->writeBytes(bytes);
 
             //Write filename
-            std::vector<std::byte> filename(m_payloadFilename.length());
-            bytes = WriteableBytes{filename};
-            std::memcpy(filename.data(), m_payloadFilename.c_str(), m_payloadFilename.length());
+            bytes = allotMemory(m_payloadFilename.length());
+            std::memcpy(bytes.data(), m_payloadFilename.c_str(), m_payloadFilename.length());
             m_outputProvider->writeBytes(bytes);
 
             if (m_isZip64) {
@@ -95,9 +97,8 @@ namespace virtru {
                 zip64ExtendedLocalInfo.originalSize = m_payloadSize;
                 zip64ExtendedLocalInfo.compressedSize = m_payloadSize;
 
-                std::vector<std::byte> zip64ExtendedLocalInfoBuffer(sizeof(zip64ExtendedLocalInfo));
-                bytes = WriteableBytes{zip64ExtendedLocalInfoBuffer};
-                std::memcpy(&zip64ExtendedLocalInfoBuffer[0], &zip64ExtendedLocalInfo, sizeof(zip64ExtendedLocalInfo));
+                bytes = allotMemory(sizeof(zip64ExtendedLocalInfo));
+                std::memcpy(bytes.data(), &zip64ExtendedLocalInfo, sizeof(zip64ExtendedLocalInfo));
                 m_outputProvider->writeBytes(bytes);
             }
 
@@ -106,10 +107,7 @@ namespace virtru {
 
 
         //Write payload content
-        std::vector<std::byte> datafile(payload.size());
-        auto bytes = WriteableBytes{datafile};
-        std::memcpy(datafile.data(), payload.data(), payload.size());
-        m_outputProvider->writeBytes(bytes);
+        m_outputProvider->writeBytes(payload);
         static uint32_t computed_crc32_ {0};
         computed_crc32_ = crc32(computed_crc32_, reinterpret_cast<const unsigned char *>(payload.data()),
                                                       payload.size());
@@ -129,9 +127,9 @@ namespace virtru {
                 dd64.crc32 = computed_crc32_;
                 dd64.compressedSize = m_payloadSize;
                 dd64.uncompressedSize = m_payloadSize;
-                std::vector<std::byte> dd64Buffer(sizeof(dd64));
-                WriteableBytes bytes = WriteableBytes{dd64Buffer};
-                std::memcpy(&dd64Buffer[0], &dd64, sizeof(dd64));
+
+                WriteableBytes bytes = allotMemory(sizeof(dd64));
+                std::memcpy(bytes.data(), &dd64, sizeof(dd64));
                 m_outputProvider->writeBytes(bytes);
                 m_currentOffset = sizeof(LocalFileHeader) + m_payloadFilename.length() + m_payloadSize + sizeof(DataDescriptor64) + sizeof(Zip64ExtendedLocalInfoExtraField);
             }
@@ -141,9 +139,9 @@ namespace virtru {
                 dd32.crc32 = computed_crc32_;
                 dd32.compressedSize = m_payloadSize;
                 dd32.uncompressedSize = m_payloadSize;
-                std::vector<std::byte> dd32Buffer(sizeof(dd32));
-                WriteableBytes bytes = WriteableBytes{dd32Buffer};
-                std::memcpy(&dd32Buffer[0], &dd32, sizeof(dd32));
+
+                WriteableBytes bytes = allotMemory(sizeof(dd32));
+                std::memcpy(bytes.data(), &dd32, sizeof(dd32));
                 m_outputProvider->writeBytes(bytes);
                 m_currentOffset = sizeof(LocalFileHeader) + m_payloadFilename.length() + m_payloadSize + sizeof(DataDescriptor32);
             }
@@ -169,8 +167,7 @@ namespace virtru {
         lfh.compressionMethod = 0;
         lfh.lastModifiedTime = fileTime;
         lfh.lastModifiedDate = fileDate;
-        std::vector<uint8_t> vec(m_manifest.begin(), m_manifest.end());
-        lfh.crc32 = crc32(0, vec.data(), m_manifest.size());;
+        lfh.crc32 = crc32(0, reinterpret_cast<uint8_t *>(m_manifest.data()), m_manifest.size());;
         lfh.compressedSize = m_manifest.size();
         lfh.uncompressedSize = m_manifest.size();
         lfh.filenameLength = m_manifestFilename.length();
@@ -186,15 +183,14 @@ namespace virtru {
         }
 
         // Write LFH Structure
-        std::vector<std::byte> lfhBuffer(sizeof(lfh));
-        WriteableBytes bytes = WriteableBytes{lfhBuffer};
-        std::memcpy(&lfhBuffer[0], &lfh, sizeof(lfh));
+        WriteableBytes bytes = allotMemory(sizeof(lfh));
+        std::memcpy(bytes.data(), &lfh, sizeof(lfh));
         m_outputProvider->writeBytes(bytes);
 
         //Write filename
-        std::vector<std::byte> filename(m_manifestFilename.length());
-        bytes = WriteableBytes{filename};
-        std::memcpy(filename.data(), m_manifestFilename.c_str(), m_manifestFilename.length());
+        auto fileNameLen = m_manifestFilename.length();
+        bytes = allotMemory(fileNameLen);
+        std::memcpy(bytes.data(), m_manifestFilename.c_str(), m_manifestFilename.length());
         m_outputProvider->writeBytes(bytes);
 
         if (m_isZip64) {
@@ -204,17 +200,13 @@ namespace virtru {
             zip64ExtendedLocalInfo.originalSize = m_manifest.size();;
             zip64ExtendedLocalInfo.compressedSize = m_manifest.size();;
 
-            std::vector<std::byte> zip64ExtendedLocalInfoBuffer(sizeof(zip64ExtendedLocalInfo));
-            bytes = WriteableBytes{zip64ExtendedLocalInfoBuffer};
-            std::memcpy(&zip64ExtendedLocalInfoBuffer[0], &zip64ExtendedLocalInfo, sizeof(zip64ExtendedLocalInfo));
+            bytes = allotMemory(sizeof(zip64ExtendedLocalInfo));
+            std::memcpy(bytes.data(), &zip64ExtendedLocalInfo, sizeof(zip64ExtendedLocalInfo));
             m_outputProvider->writeBytes(bytes);
         }
 
         //Write manifest content
-        std::vector<std::byte> datafile(m_manifest.length());
-        bytes = WriteableBytes{datafile};
-        std::memcpy(datafile.data(), m_manifest.data(), m_manifest.length());
-        m_outputProvider->writeBytes(bytes);
+        m_outputProvider->writeBytes(toBytes(m_manifest));
         m_fileInfo.emplace_back(FileInfo{lfh.crc32, m_manifest.size(),
                                          m_currentOffset, m_manifestFilename,
                                          fileTime, fileDate, 0x0});
@@ -258,16 +250,12 @@ namespace virtru {
             }
 
             // Write CDFH Structure
-            std::vector<std::byte> cdfhBuffer(sizeof(cdfh));
-            auto bytes = WriteableBytes{cdfhBuffer};
-            std::memcpy(&cdfhBuffer[0], &cdfh, sizeof(cdfh));
+            auto bytes = allotMemory(sizeof(cdfh));
+            std::memcpy(bytes.data(), &cdfh, sizeof(cdfh));
             m_outputProvider->writeBytes(bytes);
 
             //Write filename
-            std::vector<std::byte> filename(fileInfo.fileName.size());
-            bytes = WriteableBytes{filename};
-            std::memcpy(filename.data(), fileInfo.fileName.c_str(), fileInfo.fileName.size());
-            m_outputProvider->writeBytes(bytes);
+            m_outputProvider->writeBytes(toBytes(fileInfo.fileName));
 
             if (m_isZip64) {
                 Zip64ExtendedInfoExtraField zip64ExtendedInfo{};
@@ -277,9 +265,8 @@ namespace virtru {
                 zip64ExtendedInfo.compressedSize = fileInfo.size;
                 zip64ExtendedInfo.localFileHeaderOffset = fileInfo.offset;
 
-                std::vector<std::byte> zip64ExtendedInfoBuffer(sizeof(Zip64ExtendedInfoExtraField));
-                bytes = WriteableBytes{zip64ExtendedInfoBuffer};
-                std::memcpy(&zip64ExtendedInfoBuffer[0], &zip64ExtendedInfo, sizeof(zip64ExtendedInfo));
+                bytes = allotMemory(sizeof(Zip64ExtendedInfoExtraField));
+                std::memcpy(bytes.data(), &zip64ExtendedInfo, sizeof(zip64ExtendedInfo));
                 m_outputProvider->writeBytes(bytes);
             }
             m_lastOffsetCDFH +=  sizeof(CentralDirectoryFileHeader) + fileInfo.fileName.size();
@@ -308,9 +295,8 @@ namespace virtru {
             eocd.centralDirectoryOffset = ZIP64_MAGICVAL;
 
         // Write EOCD Structure
-        std::vector<std::byte> eocdBuffer(sizeof(eocd));
-        auto bytes = WriteableBytes{eocdBuffer};
-        std::memcpy(&eocdBuffer[0], &eocd, sizeof(eocd));
+        auto bytes = allotMemory(sizeof(eocd));
+        std::memcpy(bytes.data(), &eocd, sizeof(eocd));
         m_outputProvider->writeBytes(bytes);
     }
 
@@ -329,9 +315,8 @@ namespace virtru {
         zip64eocd.startingDiskCentralDirectoryOffset = m_currentOffset;
 
         // Write Zip64EndOfCentralDirectory Structure
-        std::vector<std::byte> zip64eocdBuffer(sizeof(zip64eocd));
-        auto bytes = WriteableBytes{zip64eocdBuffer};
-        std::memcpy(&zip64eocdBuffer[0], &zip64eocd, sizeof(zip64eocd));
+        auto bytes = allotMemory(sizeof(zip64eocd));
+        std::memcpy(bytes.data(), &zip64eocd, sizeof(zip64eocd));
         m_outputProvider->writeBytes(bytes);
     }
 
@@ -344,9 +329,8 @@ namespace virtru {
         zip64eocdlocator.numberOfDisks = 1;
 
         // Write Zip64EndOfCentralDirectoryLocator Structure
-        std::vector<std::byte> zip64eocdlocatorBuffer(sizeof(zip64eocdlocator));
-        auto bytes = WriteableBytes{zip64eocdlocatorBuffer};
-        std::memcpy(&zip64eocdlocatorBuffer[0], &zip64eocdlocator, sizeof(zip64eocdlocator));
+        auto bytes = allotMemory(sizeof(zip64eocdlocator));
+        std::memcpy(bytes.data(), &zip64eocdlocator, sizeof(zip64eocdlocator));
         m_outputProvider->writeBytes(bytes);
     }
 
@@ -359,6 +343,15 @@ namespace virtru {
     /// Return the manifest stored in TDF
     std::string TDFArchiveWriter::getManifest() const {
         return m_manifest;
+    }
+
+    /// Allot memory of size.
+    WriteableBytes TDFArchiveWriter::allotMemory(size_t size) {
+        if (m_buffer.size() < size) {
+            m_buffer.resize(size);
+        }
+
+        return WriteableBytes{m_buffer.data(), m_buffer.data() + size};
     }
 
 }

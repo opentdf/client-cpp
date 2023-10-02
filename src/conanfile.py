@@ -10,7 +10,6 @@ class TDFLibConan(ConanFile):
     def configure(self):
         self.options["boost"].without_log = True
         if str(self.settings.arch).startswith('arm'):
-            self.options["openssl"].no_asm = True
             self.options["libxml2"].lzma = False
             self.options["libxml2"].zlib = False
 

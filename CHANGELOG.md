@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+1.5.4
+ - PLAT-2737 - Address native C++ SDK performance issues
+
 1.5.3
  - PLAT-2665 - Include CCI fixes for conan2 to avoid needing patches
 
