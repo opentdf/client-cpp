@@ -19,7 +19,8 @@ namespace virtru {
     /// Constructor
     FileInputProvider::FileInputProvider(const std::string& filePath) : m_filePath{filePath} {
         LogTrace("FileInputProvider::FileInputProvider");
-        m_fileStream = std::make_unique<std::ifstream>(m_filePath, std::ios_base::binary | std::ios_base::in);
+        //m_fileStream = std::make_unique<std::ifstream>(m_filePath, std::ios_base::binary | std::ios_base::in);
+        m_fileStream = std::make_unique<boost::iostreams::stream<boost::iostreams::file_source>>(m_filePath);
         if (m_fileStream->fail()) {
             std::string errorMsg{"fileStream create failed"};
             LogDebug(errorMsg);
