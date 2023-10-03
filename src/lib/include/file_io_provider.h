@@ -8,6 +8,8 @@
 #define VIRTRU_FILE_IO_PROVIDER_H
 
 #include <vector>
+#include <boost/iostreams/device/file.hpp>
+#include <boost/iostreams/stream.hpp>
 #include "io_provider.h"
 
 namespace virtru {
@@ -32,7 +34,8 @@ namespace virtru {
         virtual size_t getSize() override;
 
     private:
-        std::unique_ptr<std::ifstream> m_fileStream;
+        //std::unique_ptr<std::ifstream> m_fileStream;
+        std::unique_ptr<boost::iostreams::stream<boost::iostreams::file_source>> m_fileStream;
         const std::string& m_filePath;
     };
 
