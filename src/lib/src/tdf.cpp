@@ -54,13 +54,6 @@ namespace virtru {
         m_impl->encryptIOProvider(inputProvider, outputProvider);
     }
 
-    /// Encrypt data from input provider and write to ITDFWriter
-    void TDF::encryptInputProviderToTDFWriter(IInputProvider& inputProvider, ITDFWriter& writer) {
-        LogInfo("encrypt io provider to");
-
-        m_impl->encryptInputProviderToTDFWriter(inputProvider, writer);
-    }
-
     /// Encrypt the stream data to tdf format.
     void TDF::encryptStream(std::istream& inStream, std::ostream& outStream) {
 
@@ -77,13 +70,6 @@ namespace virtru {
         LogInfo("decrypt using IOProviders...");
 
         m_impl->decryptIOProvider(inputProvider, outputProvider);
-    }
-
-    /// Decrypt data from reader and write to output provider
-    void TDF::decryptTDFReaderToOutputProvider(ITDFReader& reader, IOutputProvider& outputProvider) {
-        LogInfo("decrypt using IOProviders...");
-
-        m_impl->decryptTDFReaderToOutputProvider(reader, outputProvider);
     }
 
     /// Decrypt file.

@@ -95,6 +95,23 @@ namespace virtru {
         /// \return - Return a reference to the entity object
         EntityObject& getEntityObject() const;
 
+        /// Set the encryption state of the TDFs created, by default encryption state is enabled.
+        /// \param encryptionState - The encryption state.
+        /// \return - Return a reference of this instance.
+        TDFBuilder& setEncryptionState(EncryptionState encryptionState);
+
+        /// Set the private key to sign the assertion.
+        /// NOTE: This is only used for unencrypted tdf
+        /// \param privateKeyInPem - Private key in pem format
+        /// \return - Return a reference of this instance.
+        TDFBuilder& setKeyToSignAssertion(const std::string& privateKeyInPem);
+
+        /// Set the public key to verify the assertion.
+        /// NOTE: This is only used for unencrypted tdf
+        /// \param publicKeyInPem - Public key in pem format
+        /// \return - Return a reference of this instance.
+        TDFBuilder& setKeyToVerifyAssertion(const std::string& publicKeyInPem);
+
         /// Return a unique ptr of TDF object. This can be use to exercise operation like
         /// encryption/decryption of the payload.
         /// \return - Unique ptr of the TDF instance.

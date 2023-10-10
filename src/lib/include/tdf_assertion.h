@@ -227,6 +227,30 @@ namespace virtru {
             return m_appliesToState;
         }
 
+        /// Set the assertion has for the assertion.
+        /// \param assertionHash - The assertion hash value.
+        void setAssertionHash(const std::string& assertionHash) {
+            m_assertionHash = assertionHash;
+        }
+
+        /// Return the assertion hash value for the assertion.
+        /// \return assertion hash
+        std::string getAssertionHash() const {
+            return m_assertionHash;
+        }
+
+        /// Set the assertion signature value for the assertion
+        /// \param assertionSignature - The assertion signature(JWS)
+        void setAssertionSignature(const std::string& assertionSignature) {
+            m_assertionSignature = assertionSignature;
+        }
+
+        /// Return the assertion signature value of the assertion.
+        /// \return assertion signature
+        std::string getAssertionSignature() const {
+            return m_assertionSignature;
+        }
+
         /// Set the statement group for the assertion
         /// \param statementGroup
         void setStatementGroup(StatementGroup statementGroup) {
@@ -257,6 +281,8 @@ namespace virtru {
         AppliesToState m_appliesToState{AppliesToState::Unknown};
         std::string m_id;
         std::string m_type;
+        std::string m_assertionHash;
+        std::string m_assertionSignature;
         StatementGroup m_statementGroup{StatementType::Unknown};
         std::vector<std::string> m_statementMetadata;
     };

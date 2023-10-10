@@ -73,6 +73,21 @@ namespace virtru {
         /// Move assignment operator
         TDFClient &operator=(TDFClient &&client) = delete;
 
+    public: /// Interface
+        /// Set the encryption state of the TDFs created, by default encryption state is enabled.
+        /// \param encryptionState - The encryption state.
+        void setEncryptionState(EncryptionState encryptionState);
+
+        /// Set the private key to sign the assertion.
+        /// NOTE: This is only used for unencrypted tdf
+        /// \param privateKeyInPem - Private key in pem format
+        void setKeyToSignAssertion(const std::string& privateKeyInPem);
+
+        /// Set the public key to verify the assertion.
+        /// NOTE: This is only used for unencrypted tdf
+        /// \param publicKeyInPem - Public key in pem format
+        void setKeyToVerifyAssertion(const std::string& publicKeyInPem);
+
     public: /// Meta data
         /// Assign the metadata that will be encrypted and stored in
         /// the TDF, separately from the data.

@@ -25,6 +25,7 @@
 #include "sdk_constants.h"
 #include "crypto/crypto_utils.h"
 
+#include <magic_enum.hpp>
 #include <boost/algorithm/string.hpp>
 #include <numeric>
 
@@ -84,7 +85,8 @@ namespace virtru {
                << "Integrity algorithm: " << ((m_integrityAlgorithm == IntegrityAlgorithm::HS256) ? "HS256" : "GMAC") << '\n'
                << "Segment integrity algorithm: " << ((m_segmentIntegrityAlgorithm == IntegrityAlgorithm::HS256) ? "HS256" : "GMAC") << '\n'
                << "Payload MIME Type: " << m_mimeType << '\n'
-               << "Meta data: " << m_metadataAsJsonStr << '\n';
+               << "Meta data: " << m_metadataAsJsonStr << '\n'
+               << "Encryption state: " << magic_enum::enum_name(m_encryptionState) << '\n';
 
             os << "Protocol:" << ((m_protocol == Protocol::Html) ? " html" : " zip") << '\n';
             if (m_protocol == Protocol::Html) {
@@ -112,6 +114,8 @@ namespace virtru {
         std::string m_requestSignerPrivateKey;
         std::string m_requestSignerPublicKey;
         std::string m_kasPublicKey;
+        std::string m_privateKeyToSignAssertion;
+        std::string m_publicKeyToVerifyAssertion;
         std::string m_metadataAsJsonStr;
         std::string m_rootCAs;
         std::string m_secureReaderUrl;
@@ -136,6 +140,7 @@ namespace virtru {
         WrappedKey m_payloadKey;
         bool m_overrideWrappedKey{false};
         WrappedKey m_wrappedKey = symmetricKey<kKeyLength>();
+        EncryptionState m_encryptionState{EncryptionState::Enable};
     };
 }  // namespace virtru
 
