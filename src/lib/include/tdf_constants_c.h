@@ -72,6 +72,12 @@ typedef enum  {
     TDFLogLevelFatal  /// Least detailed output
 } TDFLogLevel;
 
+/// Defines a encryption state.
+typedef enum {
+    TDFEncryptionStateEnable = 0,
+    TDFEncryptionStateDisable
+} TDFEncryptionState;
+
 // TDF client opaque object.
 typedef void* TDFClientPtr;
 

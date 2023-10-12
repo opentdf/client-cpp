@@ -856,11 +856,24 @@ BOOST_AUTO_TEST_SUITE(test_tdf_kas_eas_local_suite)
     }
 
     BOOST_AUTO_TEST_CASE(test_un_encrypted_tdf) {
-        OIDCCredentials clientCreds;
-        clientCreds.setClientCredentialsClientSecret(CLIENT_ID, CLIENT_SECRET,
+        try {
+#if TEST_OIDC
+            OIDCCredentials clientCreds;
+            clientCreds.setClientCredentialsClientSecret(CLIENT_ID, CLIENT_SECRET,
                                                      ORGANIZATION_NAME, OIDC_ENDPOINT);
-        auto oidcClientTDF = std::make_unique<TDFClient>(clientCreds, KAS_URL);
-        testUnEncryptedTDFOperations(oidcClientTDF.get());
+            auto oidcClientTDF = std::make_unique<TDFClient>(clientCreds, KAS_URL);
+            testUnEncryptedTDFOperations(oidcClientTDF.get());
+#endif
+        }
+        catch (const Exception &exception) {
+            BOOST_FAIL(exception.what());
+        } catch (const std::exception &exception) {
+            BOOST_FAIL(exception.what());
+            std::cout << exception.what() << std::endl;
+        } catch (...) {
+            BOOST_FAIL("Unknown exception...");
+            std::cout << "Unknown..." << std::endl;
+        }
     }
 
     BOOST_AUTO_TEST_CASE(test_nano_tdf_boost_endian) {

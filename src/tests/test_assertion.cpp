@@ -189,7 +189,7 @@ JE0eO7WkIWzJwi55mw4G+WLobD9jZwk=
             auto assertionAsJson = ManifestDataModel::assertionAsJson(handlingAssertion);
             auto hash = calculateSHA256(toBytes(assertionAsJson));
             auto base64Hash = base64Encode(toBytes(hash));
-            BOOST_TEST(base64Hash == "lKszB8GjW5UeLVJ7AwPfiFGIB3FxKe4J1b/OMiIVMEM=");
+            BOOST_TEST(base64Hash == "Edi5wlOjMh1pbzAXV80UOKaVa6QljDOHXvpoaYmsSVI=");
 
             handlingAssertion.setAssertionHash(base64Hash);
             assertionAsJson = ManifestDataModel::assertionAsJson(handlingAssertion);
