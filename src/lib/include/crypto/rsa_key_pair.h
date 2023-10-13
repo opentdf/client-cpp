@@ -14,6 +14,7 @@
 #include "bytes.h"
 
 #include <string>
+#include <vector>
 
 #ifndef VIRTRU_RSA_KEY_PAIR_H
 #define VIRTRU_RSA_KEY_PAIR_H
