@@ -149,6 +149,11 @@ namespace virtru {
         // Run the context - It's blocking call until i/o operation is done.
         ioContext.run();
 
+        // If there's no json returned, there's no point in trying to parse it
+        if (entityObjectJson.size() == 0) {
+          ThrowException("Failed to retrieve entity object from EAS, possibly a bad EAS URL.", VIRTRU_NETWORK_ERROR);
+        }
+
         auto entityObject = EntityObject::createEntityObjectFromJson(entityObjectJson);
         return entityObject;
     }
