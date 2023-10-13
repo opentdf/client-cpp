@@ -16,6 +16,7 @@
 #include "sdk_constants.h"
 
 #include <iostream>
+#include <vector>
 #include <openssl/pem.h>
 #include <openssl/bio.h>
 #include <openssl/x509.h>
