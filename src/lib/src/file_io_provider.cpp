@@ -13,12 +13,13 @@
 
 namespace virtru {
 
-    // 20 mb
-    constexpr auto FileInternalBufferSIze = 20 * 1024 * 1024;
+    // 10 mb
+    constexpr auto FileInternalBufferSIze = 10 * 1024 * 1024;
 
     /// Constructor
     FileInputProvider::FileInputProvider(const std::string& filePath) : m_filePath{filePath} {
         LogTrace("FileInputProvider::FileInputProvider");
+
         m_fileStream = std::make_unique<std::ifstream>(m_filePath, std::ios_base::binary | std::ios_base::in);
         if (m_fileStream->fail()) {
             std::string errorMsg{"fileStream create failed"};
@@ -69,9 +70,8 @@ namespace virtru {
         m_fileStream = std::make_unique<std::ofstream>(m_filePath, std::ios_base::binary | std::ios_base::out);
 
         // Allocate internal buffer for better i/o performance memory
-        m_bigBuffer.resize(FileInternalBufferSIze);
-        m_fileStream->rdbuf()->pubsetbuf(m_bigBuffer.data(), FileInternalBufferSIze);
-
+        m_largeBuffer =  std::make_unique<char[]>(FileInternalBufferSIze);
+        m_fileStream->rdbuf()->pubsetbuf(m_largeBuffer.get(), FileInternalBufferSIze);
 
         if (m_fileStream->fail()) {
             std::string errorMsg{"fileStream create failed"};

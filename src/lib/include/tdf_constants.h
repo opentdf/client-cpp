@@ -64,6 +64,11 @@ namespace virtru {
         ,Failure   /// Operation did not complete successfully
     };
 
+    enum class EncryptionState {
+        Enable,
+        Disable
+    };
+
     struct BufferSpan{
         const std::uint8_t* data;
         std::size_t dataLength;

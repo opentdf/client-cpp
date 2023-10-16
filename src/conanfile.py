@@ -23,9 +23,10 @@ class TDFLibConan(ConanFile):
         self.requires("ms-gsl/2.1.0")
         self.requires("libxml2/2.9.10")
         self.requires("nlohmann_json/3.11.1")
-        self.requires("jwt-cpp/0.4.0")
+        self.requires("jwt-cpp/0.6.0")
         self.requires("zlib/1.2.12")
         self.requires("magic_enum/0.8.2")
+        self.requires("picojson/cci.20210117")
 
     def build(self):
         cmake = CMake(self)

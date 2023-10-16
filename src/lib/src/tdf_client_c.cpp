@@ -182,6 +182,82 @@ DLL_PUBLIC TDF_STATUS TDFEnableConsoleLogging(TDFClientPtr clientPtr, TDFLogLeve
     return TDF_STATUS_FAILURE;
 }
 
+/// Set the encryption state of the TDFs created, by default encryption state is enabled.
+DLL_PUBLIC TDF_STATUS TDFSetEncryptionState(TDFClientPtr clientPtr, TDFEncryptionState encryptionState) {
+
+    if (clientPtr == nullptr) {
+        return TDF_STATUS_INVALID_PARAMS;
+    }
+
+    try {
+        auto *client = static_cast<virtru::TDFClient *>(clientPtr);
+        switch (encryptionState) {
+            case TDFEncryptionStateEnable:
+                client->setEncryptionState(virtru::EncryptionState::Enable);
+                break;
+            case TDFEncryptionStateDisable:
+                client->setEncryptionState(virtru::EncryptionState::Disable);
+                break;
+            default:
+                return TDF_STATUS_INVALID_PARAMS;
+        }
+
+        return TDF_STATUS_SUCCESS;
+    } catch (virtru::Exception &e) {
+        LogError(e.what());
+        return convertVirtruExceptionToTDFStatus(e);
+    } catch (std::exception &e) {
+        LogError(e.what());
+    } catch (...) {
+        LogDefaultError();
+    }
+    return TDF_STATUS_FAILURE;
+
+}
+
+/// Set the private key to sign the assertion.
+DLL_PUBLIC TDF_STATUS TDFSetKeyToSignAssertion(TDFClientPtr clientPtr, const char* privateKeyInPem) {
+    if (clientPtr == nullptr || privateKeyInPem == nullptr) {
+        return TDF_STATUS_INVALID_PARAMS;
+    }
+
+    try {
+        auto *client = static_cast<virtru::TDFClient *>(clientPtr);
+        client->setKeyToSignAssertion(privateKeyInPem);
+        return TDF_STATUS_SUCCESS;
+    } catch (virtru::Exception &e) {
+        LogError(e.what());
+        return convertVirtruExceptionToTDFStatus(e);
+    } catch (std::exception &e) {
+        LogError(e.what());
+    } catch (...) {
+        LogDefaultError();
+    }
+    return TDF_STATUS_FAILURE;
+}
+
+/// Set the public key to verify the assertion.
+DLL_PUBLIC TDF_STATUS TDFSetKeyToVerifyAssertion(TDFClientPtr clientPtr, const char* publicKeyInPem) {
+    if (clientPtr == nullptr || publicKeyInPem == nullptr) {
+        return TDF_STATUS_INVALID_PARAMS;
+    }
+
+    try {
+        auto *client = static_cast<virtru::TDFClient *>(clientPtr);
+        client->setKeyToVerifyAssertion(publicKeyInPem);
+        return TDF_STATUS_SUCCESS;
+    } catch (virtru::Exception &e) {
+        LogError(e.what());
+        return convertVirtruExceptionToTDFStatus(e);
+    } catch (std::exception &e) {
+        LogError(e.what());
+    } catch (...) {
+        LogDefaultError();
+    }
+    return TDF_STATUS_FAILURE;
+}
+
+
 DLL_PUBLIC TDF_STATUS TDFEncryptFile(TDFClientPtr clientPtr, TDFStorageTypePtr data, const char *outFilepath) {
     if (clientPtr == nullptr || data == nullptr || outFilepath == nullptr) {
         return TDF_STATUS_INVALID_PARAMS;

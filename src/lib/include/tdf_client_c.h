@@ -77,6 +77,26 @@ DLL_PUBLIC TDF_STATUS TDFAddDataAttribute(TDFClientPtr clientPtr, const char *da
 /// The default logLevel is 'Warn'
 DLL_PUBLIC TDF_STATUS TDFEnableConsoleLogging(TDFClientPtr clientPtr, TDFLogLevel logLevel);
 
+/// Set the encryption state of the TDFs created, by default encryption state is enabled.
+/// \param clientPtr - The pointer to TDF client opaque object.
+/// \param encryptionState - Enum to set TDFEncryptionState.
+/// \return TDF_STATUS - VSTATUS_SUCCESS on success
+/// The default state is enabled
+DLL_PUBLIC TDF_STATUS TDFSetEncryptionState(TDFClientPtr clientPtr, TDFEncryptionState encryptionState);
+
+/// Set the private key to sign the assertion.
+/// \param clientPtr - The pointer to TDF client opaque object.
+/// \param privateKeyInPem - Private key in pem format
+/// \return TDF_STATUS - VSTATUS_SUCCESS on success
+DLL_PUBLIC TDF_STATUS TDFSetKeyToSignAssertion(TDFClientPtr clientPtr, const char* privateKeyInPem);
+
+/// Set the public key to verify the assertion.
+/// \param clientPtr - The pointer to TDF client opaque object.
+/// \param publicKeyInPem - Public key in pem format
+/// \return TDF_STATUS - VSTATUS_SUCCESS on success
+DLL_PUBLIC TDF_STATUS TDFSetKeyToVerifyAssertion(TDFClientPtr clientPtr, const char* publicKeyInPem);
+
+
 /// Encrypt the contents of the input file into a TDF. In the process of encryption, a policy is
 /// associated with the TDF. The policy has a unique id which can be used to identify the TDF policy.
 /// \param vClientPtr - The pointer to Virtru client opaque object.

@@ -56,60 +56,83 @@ namespace virtru {
                 model.payload.mimeType = manifest[kPayload][kPayloadMimeType];
             }
 
-            // 'encryptionInformation'
-            auto& encryptionInformation = manifest[kEncryptionInformation];
-            model.encryptionInformation.keyAccessType = encryptionInformation[kPayloadReferenceType];
+            if (model.payload.isEncrypted) {
+                // 'encryptionInformation'
+                auto& encryptionInformation = manifest[kEncryptionInformation];
+                model.encryptionInformation.keyAccessType = encryptionInformation[kPayloadReferenceType];
 
-            // 'keyAccess'
-            auto& keyAccess = encryptionInformation[kKeyAccess];
-            for (auto& key : keyAccess) {
+                // 'keyAccess'
+                auto& keyAccess = encryptionInformation[kKeyAccess];
+                for (auto& key : keyAccess) {
 
-                KeyAccessDataModel keyAccessObj;
-                keyAccessObj.keyType = key[kKeyAccessType];
-                keyAccessObj.url =  key[kUrl];
-                keyAccessObj.protocol =  key[kProtocol];
+                    KeyAccessDataModel keyAccessObj;
+                    keyAccessObj.keyType = key[kKeyAccessType];
+                    keyAccessObj.url =  key[kUrl];
+                    keyAccessObj.protocol =  key[kProtocol];
 
-                if (key.find(kWrappedKey) != key.end()) {
-                    keyAccessObj.wrappedKey = key[kWrappedKey];
+                    if (key.find(kWrappedKey) != key.end()) {
+                        keyAccessObj.wrappedKey = key[kWrappedKey];
+                    }
+
+                    if (key.find(kPolicyBinding) != key.end()) {
+                        keyAccessObj.policyBinding = key[kPolicyBinding];
+                    }
+
+                    if (key.find(kEncryptedMetadata) != key.end()) {
+                        keyAccessObj.encryptedMetadata = key[kEncryptedMetadata];
+                    }
+
+                    model.encryptionInformation.keyAccessObjects.emplace_back(keyAccessObj);
                 }
 
-                if (key.find(kPolicyBinding) != key.end()) {
-                    keyAccessObj.policyBinding = key[kPolicyBinding];
+                // 'method'
+                model.encryptionInformation.method.algorithm =  encryptionInformation[kMethod][kAlgorithm];
+                model.encryptionInformation.method.isStreamable =  encryptionInformation[kMethod][kIsStreamable];
+                model.encryptionInformation.method.iv =  encryptionInformation[kMethod][kIV];
+
+                // 'integrityInformation'
+                auto& integrityInformation = encryptionInformation[kIntegrityInformation];
+
+                model.encryptionInformation.integrityInformation.rootSignature.algorithm = integrityInformation[kRootSignature][kRootSignatureAlg];
+                model.encryptionInformation.integrityInformation.rootSignature.signature = integrityInformation[kRootSignature][kRootSignatureSig];
+                model.encryptionInformation.integrityInformation.segmentSizeDefault = integrityInformation[kSegmentSizeDefault];
+                model.encryptionInformation.integrityInformation.segmentHashAlg = integrityInformation[kSegmentHashAlg];
+
+                // 'segments'
+                auto& segments = integrityInformation[kSegments];
+                for (auto& segment : segments) {
+                    SegmentInfoDataModel segmentObj;
+                    segmentObj.hash = segment[kHash];
+                    segmentObj.segmentSize = segment[kSegmentSize];
+                    segmentObj.encryptedSegmentSize = segment[kEncryptedSegmentSize];
+
+                    model.encryptionInformation.integrityInformation.segments.emplace_back(segmentObj);
                 }
 
-                if (key.find(kEncryptedMetadata) != key.end()) {
-                    keyAccessObj.encryptedMetadata = key[kEncryptedMetadata];
+                model.encryptionInformation.integrityInformation.encryptedSegmentSizeDefault = integrityInformation[kEncryptedSegSizeDefault];
+                model.encryptionInformation.policy = encryptionInformation[kPolicy];
+            } else {
+                // 'integrityInformation'
+                auto& integrityInformation =  manifest[kPayload][kIntegrityInformation];
+
+                model.payload.integrityInformation.rootSignature.algorithm = integrityInformation[kRootSignature][kRootSignatureAlg];
+                model.payload.integrityInformation.rootSignature.signature = integrityInformation[kRootSignature][kRootSignatureSig];
+                model.payload.integrityInformation.segmentSizeDefault = integrityInformation[kSegmentSizeDefault];
+                model.payload.integrityInformation.segmentHashAlg = integrityInformation[kSegmentHashAlg];
+
+                // 'segments'
+                auto& segments = integrityInformation[kSegments];
+                for (auto& segment : segments) {
+                    SegmentInfoDataModel segmentObj;
+                    segmentObj.hash = segment[kHash];
+                    segmentObj.segmentSize = segment[kSegmentSize];
+                    segmentObj.encryptedSegmentSize = segment[kEncryptedSegmentSize];
+
+                    model.payload.integrityInformation.segments.emplace_back(segmentObj);
                 }
 
-                model.encryptionInformation.keyAccessObjects.emplace_back(keyAccessObj);
+                model.payload.integrityInformation.encryptedSegmentSizeDefault = integrityInformation[kEncryptedSegSizeDefault];
             }
-
-            // 'method'
-            model.encryptionInformation.method.algorithm =  encryptionInformation[kMethod][kAlgorithm];
-            model.encryptionInformation.method.isStreamable =  encryptionInformation[kMethod][kIsStreamable];
-            model.encryptionInformation.method.iv =  encryptionInformation[kMethod][kIV];
-
-            // 'integrityInformation'
-            auto& integrityInformation = encryptionInformation[kIntegrityInformation];
-
-            model.encryptionInformation.integrityInformation.rootSignature.algorithm = integrityInformation[kRootSignature][kRootSignatureAlg];
-            model.encryptionInformation.integrityInformation.rootSignature.signature = integrityInformation[kRootSignature][kRootSignatureSig];
-            model.encryptionInformation.integrityInformation.segmentSizeDefault = integrityInformation[kSegmentSizeDefault];
-            model.encryptionInformation.integrityInformation.segmentHashAlg = integrityInformation[kSegmentHashAlg];
-
-            // 'segments'
-            auto& segments = integrityInformation[kSegments];
-            for (auto& segment : segments) {
-                SegmentInfoDataModel segmentObj;
-                segmentObj.hash = segment[kHash];
-                segmentObj.segmentSize = segment[kSegmentSize];
-                segmentObj.encryptedSegmentSize = segment[kEncryptedSegmentSize];
-
-                model.encryptionInformation.integrityInformation.segments.emplace_back(segmentObj);
-            }
-
-            model.encryptionInformation.integrityInformation.encryptedSegmentSizeDefault = integrityInformation[kEncryptedSegSizeDefault];
-            model.encryptionInformation.policy = encryptionInformation[kPolicy];
 
             // 'assertions'
             if (manifest.find(kAssertions) != manifest.end()) {
@@ -191,6 +214,14 @@ namespace virtru {
                             handlingAssertion.setId(assertion[kIdAttribute]);
                         }
 
+                        if (assertion.find(kAssertionHash) != assertion.end()) {
+                            handlingAssertion.setAssertionHash(assertion[kAssertionHash]);
+                        }
+
+                        if (assertion.find(kAssertionSignature) != assertion.end()) {
+                            handlingAssertion.setAssertionSignature(assertion[kAssertionSignature]);
+                        }
+
                         const auto& statementGroupJson = assertion[kStatement];
 
                         auto statementGroup = handlingAssertion.getStatementGroup();
@@ -202,7 +233,8 @@ namespace virtru {
                         }
 
                         if (statementGroupJson.find(kStatementValue) != statementGroupJson.end()) {
-                            statementGroup.setValue(statementGroupJson[kStatementValue]);
+                            std::string value = statementGroupJson[kStatementValue];
+                            statementGroup.setValue(base64Decode(value));
                         }
 
                         handlingAssertion.setStatementGroup(statementGroup);
@@ -236,35 +268,6 @@ namespace virtru {
             payloadJson[kIsEncryptedAttribute] = payload.isEncrypted;
             payloadJson[kPayloadMimeType] = payload.mimeType;
 
-            // EncryptionInformation
-            nlohmann::json encryptionInformationJson;
-            encryptionInformationJson[kPayloadReferenceType] = encryptionInformation.keyAccessType;
-
-            // 'keyAccess'
-            encryptionInformationJson[kKeyAccess] = nlohmann::json::array();
-            for (auto& key : encryptionInformation.keyAccessObjects) {
-
-                nlohmann::json keyAccess;
-                keyAccess[kKeyAccessType] = key.keyType;
-                keyAccess[kUrl] = key.url;
-                keyAccess[kProtocol] = key.protocol;
-                keyAccess[kWrappedKey] = key.wrappedKey;
-                keyAccess[kPolicyBinding] = key.policyBinding;
-
-                if (!key.encryptedMetadata.empty()) {
-                    keyAccess[kEncryptedMetadata] = key.encryptedMetadata;
-                }
-
-                encryptionInformationJson[kKeyAccess].emplace_back(keyAccess);
-            }
-
-            // 'method'
-            nlohmann::json method;
-            method[kIsStreamable] = encryptionInformation.method.isStreamable;
-            method[kIV] = encryptionInformation.method.iv;
-            method[kCipherAlgorithm] = encryptionInformation.method.algorithm;
-            encryptionInformationJson[kMethod] = method;
-
             // 'integrityInformation'
             nlohmann::json integrityInformationJson;
             nlohmann::json rootSignatureJson;
@@ -291,11 +294,44 @@ namespace virtru {
                 integrityInformationJson[kSegments].emplace_back(segmentJson);
             }
 
-            encryptionInformationJson[kIntegrityInformation] = integrityInformationJson;
-            encryptionInformationJson[kPolicy] = encryptionInformation.policy;
+            if (payload.isEncrypted) {
+                // EncryptionInformation
+                nlohmann::json encryptionInformationJson;
+                encryptionInformationJson[kPayloadReferenceType] = encryptionInformation.keyAccessType;
 
-            manifest[kEncryptionInformation] = encryptionInformationJson;
-            manifest[kPayload] = payloadJson;
+                // 'keyAccess'
+                encryptionInformationJson[kKeyAccess] = nlohmann::json::array();
+                for (auto& key : encryptionInformation.keyAccessObjects) {
+
+                    nlohmann::json keyAccess;
+                    keyAccess[kKeyAccessType] = key.keyType;
+                    keyAccess[kUrl] = key.url;
+                    keyAccess[kProtocol] = key.protocol;
+                    keyAccess[kWrappedKey] = key.wrappedKey;
+                    keyAccess[kPolicyBinding] = key.policyBinding;
+
+                    if (!key.encryptedMetadata.empty()) {
+                        keyAccess[kEncryptedMetadata] = key.encryptedMetadata;
+                    }
+
+                    encryptionInformationJson[kKeyAccess].emplace_back(keyAccess);
+                }
+                encryptionInformationJson[kIntegrityInformation] = integrityInformationJson;
+
+                // 'method'
+                nlohmann::json method;
+                method[kIsStreamable] = encryptionInformation.method.isStreamable;
+                method[kIV] = encryptionInformation.method.iv;
+                method[kCipherAlgorithm] = encryptionInformation.method.algorithm;
+                encryptionInformationJson[kMethod] = method;
+                encryptionInformationJson[kPolicy] = encryptionInformation.policy;
+
+                manifest[kEncryptionInformation] = encryptionInformationJson;
+                manifest[kPayload] = payloadJson;
+            } else {
+                payloadJson[kIntegrityInformation] = integrityInformationJson;
+                manifest[kPayload] = payloadJson;
+            }
 
             //  assertions array
             auto assertionsJsonArray = nlohmann::json::array();
@@ -372,6 +408,16 @@ namespace virtru {
                     auto id = assertion.getId();
                     if (!id.empty()) {
                         assertionJson[kIdAttribute] = id;
+                    }
+
+                    auto assertionHash = assertion.getAssertionHash();
+                    if (!assertionHash.empty()) {
+                        assertionJson[kAssertionHash] = assertionHash;
+                    }
+
+                    auto assertionSignature = assertion.getAssertionSignature();
+                    if (!assertionSignature.empty()) {
+                        assertionJson[kAssertionSignature] = assertionSignature;
                     }
 
                     auto statementGroup = assertion.getStatementGroup();
@@ -548,5 +594,104 @@ namespace virtru {
             ThrowException("Could not parse manifest in JSON format: " + boost::current_exception_diagnostic_information(),
                            VIRTRU_TDF_FORMAT_ERROR);
         }
+    }
+
+    /// Return assertion as json string(canonicalization)
+    std::string ManifestDataModel::assertionAsJson(const Assertion &assertion) {
+        nlohmann::ordered_json assertionJson;
+
+        if (assertion.getAssertionType() == AssertionType::Base) {
+
+            assertionJson[kAssertionType] = magic_enum::enum_name(AssertionType::Base);
+
+            if (assertion.getScope() != Scope::Unknown) {
+                assertionJson[kScopeAttribute] = magic_enum::enum_name(assertion.getScope());
+            }
+
+            if (!assertion.getId().empty()) {
+                assertionJson[kIdAttribute] = assertion.getId();
+            }
+
+            if (!assertion.getType().empty()) {
+                assertionJson[kTypeAttribute] = assertion.getType();
+            }
+
+            auto statementGroup = assertion.getStatementGroup();
+            if (statementGroup.getStatementType() != StatementType::Unknown) {
+                nlohmann::json statementGroupJson;
+
+                statementGroupJson[kTypeAttribute] = magic_enum::enum_name(statementGroup.getStatementType());
+
+                if (!statementGroup.getFilename().empty()) {
+                    statementGroupJson[kFilenameAttribute] = statementGroup.getFilename();
+                }
+
+                if (!statementGroup.getMediaType().empty()) {
+                    statementGroupJson[kMediaTypeAttribute] = statementGroup.getMediaType();
+                }
+
+                if (!statementGroup.getUri().empty()) {
+                    statementGroupJson[kUriAttribute] = statementGroup.getUri();
+                }
+
+                if (!statementGroup.getValue().empty()) {
+                    statementGroupJson[kStatementValue] = statementGroup.getValue();
+                }
+
+                statementGroupJson[kIsEncryptedAttribute] = statementGroup.getIsEncrypted();
+                assertionJson[kStatement] = statementGroupJson;
+            }
+
+            auto statementMetaDataJsonArray = nlohmann::json::array();
+            for (const auto &metaData: assertion.getStatementMetadata()) {
+                statementMetaDataJsonArray.emplace_back(metaData);
+            }
+            assertionJson[kStatementMetadata] = statementMetaDataJsonArray;
+            assertionJson[kEncryptionInformationElement] = nlohmann::json::object();
+
+        } else if (assertion.getAssertionType() == AssertionType::Handling) {
+
+            auto appliedState = assertion.getAppliesToState();
+            if (appliedState != AppliesToState::Unknown) {
+                assertionJson[kAppliesToStateAttribute] = magic_enum::enum_name(appliedState);
+            }
+
+            auto assertionHash = assertion.getAssertionHash();
+            if (!assertionHash.empty()) {
+                assertionJson[kAssertionHash] = assertionHash;
+            }
+
+            auto assertionSignature = assertion.getAssertionSignature();
+            if (!assertionSignature.empty()) {
+                assertionJson[kAssertionSignature] = assertionSignature;
+            }
+
+            assertionJson[kEncryptionInformationElement] = nlohmann::json::object();
+
+            auto id = assertion.getId();
+            if (!id.empty()) {
+                assertionJson[kIdAttribute] = id;
+            }
+
+            auto statementGroup = assertion.getStatementGroup();
+            if (statementGroup.getStatementType() != StatementType::Unknown) {
+                nlohmann::json statementGroupJson;
+
+                statementGroupJson[kTypeAttribute] = magic_enum::enum_name(statementGroup.getStatementType());
+                statementGroupJson[kStatementValue] = base64Encode(statementGroup.getValue());
+
+                assertionJson[kStatement] = statementGroupJson;
+            }
+
+            auto scope = assertion.getScope();
+            if (scope != Scope::Unknown) {
+                assertionJson[kScopeAttribute] = magic_enum::enum_name(scope);
+            }
+
+            assertionJson[kAssertionType] = magic_enum::enum_name(AssertionType::Handling);
+
+        }
+
+        return assertionJson.dump();
     }
 }

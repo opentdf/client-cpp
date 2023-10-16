@@ -22,10 +22,9 @@
 #include "crypto_utils.h"
 #include "tdf_exception.h"
 #include "asym_encryption.h"
+#include "sdk_constants.h"
 
 namespace virtru::crypto {
-
-    constexpr auto kX509CertTag = "BEGIN CERTIFICATE";
 
     /// Constructor
     AsymEncryption::AsymEncryption(EVP_PKEY_free_ptr publicKey, size_t keySize)

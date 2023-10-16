@@ -122,6 +122,11 @@ namespace virtru {
             m_tdfBuilder.m_impl->m_segmentSize = dataSize;
         }
 
+        if (m_tdfBuilder.m_impl->m_encryptionState == EncryptionState::Disable) {
+            encodeInputProviderToTDFWriter(inputProvider, writer, dataSize);
+            return;
+        }
+
         // Check if there is a policy object
         if (m_tdfBuilder.m_impl->m_policyObject.getUuid().empty()) {
             ThrowException("Policy object is missing.", VIRTRU_TDF_FORMAT_ERROR);
@@ -276,6 +281,119 @@ namespace virtru {
         writer.finish();
     }
 
+    /// Encode data from input provider and write to ITDFWriter
+    void TDFImpl::encodeInputProviderToTDFWriter(IInputProvider& inputProvider, ITDFWriter& writer, size_t dataSize) {
+        LogTrace("TDFImpl::encodeInputProviderToTDFWriter");
+
+        Benchmark benchmark("Payload encode time");
+
+        // NOTE: This need to be exposed as configuration API for the SDK.
+        std::string hashAlgorithm = kSha256Hash;
+
+        ManifestDataModel manifestDataModel;
+        auto protocol = (m_tdfBuilder.m_impl->m_protocol == Protocol::Zip) ? kPayloadZipProtcol : kPayloadHtmlProtcol;
+
+        manifestDataModel.payload.mimeType = m_tdfBuilder.m_impl->m_mimeType;
+        manifestDataModel.payload.protocol = protocol;
+        manifestDataModel.payload.isEncrypted = false;
+
+        auto defaultSegmentSize = m_tdfBuilder.m_impl->m_segmentSize;
+
+        ///
+        ///Create buffers for reading from file and these buffers will be reused.
+        ///
+        std::vector<char> readBuffer(defaultSegmentSize);
+
+        ///
+        /// Read the file in chucks of 'segmentSize'
+        ///
+        std::string aggregateHash{};
+
+        /// Calculate the actual size of the TDF payload.
+        /// Formula totalSegment = quotient + possible one(if the data size is not exactly divisible by segment size)
+        unsigned totalSegment = (dataSize / defaultSegmentSize) + ((dataSize % defaultSegmentSize == 0) ? 0 : 1);
+        if (totalSegment == 0) { // For empty file we still want to create a payload.
+            totalSegment = 1;
+        }
+
+        std::streampos actualTDFPayloadSize = dataSize;
+
+        LogDebug("Total segments:" + std::to_string(totalSegment));
+
+        writer.setPayloadSize(actualTDFPayloadSize);
+
+        size_t index{};
+        while (totalSegment != 0) {
+
+            auto readSize = defaultSegmentSize;
+            if ((dataSize - index) < defaultSegmentSize) {
+                readSize = (dataSize - index);
+            }
+
+            // Read the file in 'defaultSegmentSize' chuck max
+            auto bytes = toWriteableBytes(readBuffer);
+            inputProvider.readBytes(index, readSize, bytes);
+
+            // make sub span of read size.
+            Bytes subSpanBuffer{bytes.data(), static_cast<std::ptrdiff_t>(readSize)};
+
+            // Generate hash for the segment.
+            auto payloadHashStr = hexHashSha256(subSpanBuffer);
+
+            // Append the aggregate hash of payload.
+            aggregateHash.append(payloadHashStr);
+
+            SegmentInfoDataModel segmentInfo;
+            segmentInfo.hash = base64Encode(payloadHashStr);
+            segmentInfo.segmentSize = readSize;
+            segmentInfo.encryptedSegmentSize = readSize;
+            manifestDataModel.encryptionInformation.integrityInformation.segments.emplace_back(segmentInfo);
+
+            // write the data to tdf file.
+            writer.appendPayload(subSpanBuffer);
+
+            totalSegment--;
+            index += readSize;
+        }
+
+        LogDebug("Encoding is completed, preparing the manifest");
+
+        auto aggregateHashStr = hexHashSha256(toBytes(aggregateHash));
+
+        manifestDataModel.encryptionInformation.integrityInformation.rootSignature.signature = base64Encode(aggregateHashStr);
+        manifestDataModel.encryptionInformation.integrityInformation.rootSignature.algorithm = hashAlgorithm;
+
+        manifestDataModel.encryptionInformation.integrityInformation.segmentSizeDefault = defaultSegmentSize;
+        manifestDataModel.encryptionInformation.integrityInformation.encryptedSegmentSizeDefault = defaultSegmentSize;
+        manifestDataModel.encryptionInformation.integrityInformation.segmentHashAlg = hashAlgorithm;
+        manifestDataModel.encryptionInformation.method.isStreamable = true;
+
+        for (auto assertion: m_tdfBuilder.m_impl->m_assertions) {
+
+            if (assertion.getAssertionType() != AssertionType::Handling) {
+                continue;
+            }
+
+            auto assertionAsJson = ManifestDataModel::assertionAsJson(assertion);
+            auto hashOfAssertion = hexHashSha256(toBytes(assertionAsJson));
+            auto concatHash = hashOfAssertion + aggregateHashStr;
+            auto base64Hash = base64Encode(toBytes(concatHash));
+
+            assertion.setAssertionHash(base64Hash);
+
+            auto token = jwt::create()
+                    .set_type("JWT")
+                    .set_payload_claim(kAssertionHash, jwt::claim(base64Hash))
+                    .sign(jwt::algorithm::rs256("", m_tdfBuilder.m_impl->m_privateKeyToSignAssertion));
+
+            assertion.setAssertionSignature(token);
+
+            manifestDataModel.assertions.emplace_back(assertion);
+        }
+
+        writer.appendManifest(manifestDataModel);
+        writer.finish();
+    }
 
     /// Decrypt data from InputProvider and write to IOutputProvider
     void TDFImpl::decryptIOProvider(IInputProvider& inputProvider,
@@ -316,15 +434,20 @@ namespace virtru {
     /// Decrypt data from reader and write to IOutputProvider
     void TDFImpl::decryptTDFReaderToOutputProvider(ITDFReader& reader, IOutputProvider& outputProvider) {
 
+        Benchmark benchmark("Payload decrypt time");
+
         // Parse the manifest
         auto manifestDataModel =  reader.getManifest();
+
+        if (!manifestDataModel.payload.isEncrypted) {
+            decodeTDFReaderToOutputProvider(reader, outputProvider, manifestDataModel);
+            return;
+        }
 
         // Validate the cipher type before creating a split key
         validateCipherType(manifestDataModel);
 
         WrappedKey wrappedKey = unwrapKey(manifestDataModel);
-
-        Benchmark benchmark("Payload decrypt time");
 
         if (!m_tdfBuilder.m_impl->m_kekBase64.empty()) {
             WrappedKey actualWrappedKey;
@@ -542,6 +665,107 @@ namespace virtru {
         auto bytesToWrite = gsl::make_span(reinterpret_cast<const char *>(bufferForRequiredSegments.data() + startOfPlainText),
                                            length);
         outputProvider.writeBytes(toBytes(bytesToWrite));
+    }
+
+    /// Decode data from reader and write to output provider
+    void TDFImpl::decodeTDFReaderToOutputProvider(ITDFReader& reader,
+                                                  IOutputProvider& outputProvider,
+                                                  ManifestDataModel& manifestDataModel) {
+
+        // Validate the root signature from the manifest.
+        auto rootSignatureSig = manifestDataModel.payload.integrityInformation.rootSignature.signature;
+        std::string aggregateHash;
+
+        // Get the hashes from the segments and combine.
+        for (auto segment: manifestDataModel.payload.integrityInformation.segments) {
+            std::string hash = segment.hash;
+            aggregateHash.append(base64Decode(hash));
+        }
+
+        // Check the combined string of hashes
+        auto rootHash = hexHashSha256(toBytes(aggregateHash));
+        if (rootSignatureSig !=  base64Encode(rootHash)) {
+            ThrowException("Failed integrity check on root signature", VIRTRU_CRYPTO_ERROR);
+        }
+
+        LogDebug("RootSignatureSig is validated.");
+
+        for (auto assertion: manifestDataModel.assertions) {
+
+            if (assertion.getAssertionType() != AssertionType::Handling) {
+                continue;
+            }
+
+            auto assertionHash = assertion.getAssertionHash();
+            auto assertionSignature = assertion.getAssertionSignature();
+
+            // Remove signature and hash to calculate the hash value of assertion
+            assertion.setAssertionSignature("");
+            assertion.setAssertionHash("");
+
+            auto assertionAsJson = ManifestDataModel::assertionAsJson(assertion);
+            auto hashOfAssertion = hexHashSha256(toBytes(assertionAsJson));
+            auto concatHash = hashOfAssertion + rootHash;
+            auto base64Hash = base64Encode(toBytes(concatHash));
+
+            if (base64Hash != assertionHash) {
+                ThrowException("Failed integrity check on assertion hash", VIRTRU_CRYPTO_ERROR);
+            }
+
+            try {
+                auto verify = jwt::verify()
+                        .allow_algorithm(jwt::algorithm::rs256(m_tdfBuilder.m_impl->m_publicKeyToVerifyAssertion, ""));
+
+                auto decoded_token = jwt::decode(assertionSignature);
+                verify.verify(decoded_token);
+
+                std::string hashFromJws = decoded_token.get_payload_claim(kAssertionHash).as_string();
+                if (hashFromJws != assertionHash) {
+                    ThrowException("Failed integrity check on assertion hash from JWS", VIRTRU_CRYPTO_ERROR);
+                }
+
+            }  catch ( const std::exception& exception) {
+                std::string errorMsg{"Failed integrity check on assertion signature - "};
+                errorMsg += exception.what();
+                ThrowException(std::move(errorMsg), VIRTRU_CRYPTO_ERROR);
+            } catch ( ... ) {
+                ThrowException("Failed integrity check on assertion signature.", VIRTRU_CRYPTO_ERROR);
+            }
+        }
+
+        size_t segmentSizeDefault = manifestDataModel.payload.integrityInformation.segmentSizeDefault;
+        size_t defaultEncryptedSegmentSize = manifestDataModel.payload.integrityInformation.encryptedSegmentSizeDefault;
+
+        ///
+        /// Create buffers for reading from file/
+        /// These buffers will be reused.
+        ///
+        std::vector<gsl::byte> readBuffer(segmentSizeDefault);
+
+        auto segmentHashAlg = manifestDataModel.payload.integrityInformation.segmentHashAlg;
+        size_t payloadOffset = 0;
+        for (auto &segment : manifestDataModel.payload.integrityInformation.segments) {
+
+            // Adjust read buffer size
+            auto readBufferSpan = WriteableBytes{readBuffer.data(), segment.segmentSize};
+
+            // Read from zip reader.
+            reader.readPayload(payloadOffset, readBufferSpan.size(), readBufferSpan);
+            payloadOffset += readBufferSpan.size();
+
+            // Generate hash for the segment.
+            auto payloadHashStr = hexHashSha256(readBufferSpan);
+            auto hash = segment.hash;
+
+            // Validate the hash.
+            if (hash != base64Encode(payloadHashStr)) {
+                ThrowException("Failed integrity check on segment hash", VIRTRU_CRYPTO_ERROR);
+            }
+
+            outputProvider.writeBytes(readBufferSpan);
+        }
+
+
     }
 
     /// Convert the xml formatted TDF(ICTDF) to the json formatted TDF

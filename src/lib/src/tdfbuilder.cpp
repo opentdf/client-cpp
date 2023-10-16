@@ -326,6 +326,27 @@ namespace virtru {
         return m_impl->m_entityObject;
     }
 
+    /// Set the encryption state of the TDFs created, by default encryption state is enabled.
+    TDFBuilder& TDFBuilder::setEncryptionState(EncryptionState encryptionState) {
+        m_impl->m_encryptionState = encryptionState;
+
+        return *this;
+    }
+
+    /// Set the private key to sign the assertion.
+    TDFBuilder& TDFBuilder::setKeyToSignAssertion(const std::string& privateKeyInPem) {
+        m_impl->m_privateKeyToSignAssertion = privateKeyInPem;
+
+        return *this;
+    }
+
+    /// Set the public key to verify the assertion.
+    TDFBuilder& TDFBuilder::setKeyToVerifyAssertion(const std::string& publicKeyInPem) {
+        m_impl->m_publicKeyToVerifyAssertion = publicKeyInPem;
+
+        return *this;
+    }
+
     /// Set the callback interface which will invoked for all the http network operations.
     TDFBuilder &TDFBuilder::setHTTPServiceProvider(std::weak_ptr<INetwork> httpServiceProvider) {
 

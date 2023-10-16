@@ -59,6 +59,7 @@ namespace virtru {
         std::string protocol{kPayloadZipProtcol};
         std::string mimeType {kDefaultMimeType};
         bool isEncrypted{true};
+        IntegrityInformation integrityInformation;
     };
 
     struct EncryptionInformation {
@@ -96,6 +97,11 @@ namespace virtru {
         /// \param dataModel - The manifest data model
         static void updateDataModelWithEncryptedPolicyObject(const std::string& encryptedPolicyObjectAsJsonStr,
                                                              ManifestDataModel& dataModel);
+
+        /// Return assertion as json string(canonicalization)
+        /// \param assertion - The assertion
+        /// \return assertion as json string(canonicalization)
+        static std::string assertionAsJson(const Assertion& assertion);
 
     public:
         /// Constructor

@@ -76,6 +76,28 @@ namespace virtru {
     /// Destructor
     TDFClient::~TDFClient() = default;
 
+    /// Set the encryption state of the TDFs created, by default encryption state is enabled.
+    void TDFClient::setEncryptionState(EncryptionState encryptionState) {
+
+        LogTrace("TDFClient::setEncryptionState");
+
+        m_tdfBuilder->setEncryptionState(encryptionState);
+    }
+
+    /// Set the private key to sign the assertion.
+    void TDFClient::setKeyToSignAssertion(const std::string& privateKeyInPem) {
+        LogTrace("TDFClient::setKeyToSignAssertion");
+
+        m_tdfBuilder->setKeyToSignAssertion(privateKeyInPem);
+    }
+
+    /// Set the public key to verify the assertion.
+    void TDFClient::setKeyToVerifyAssertion(const std::string& publicKeyInPem) {
+        LogTrace("TDFClient::setKeyToVerifyAssertion");
+
+        m_tdfBuilder->setKeyToVerifyAssertion(publicKeyInPem);
+    }
+
     /// Assign the metadata that will be encrypted and stored in
     /// the TDF, separately from the data.
     void TDFClient::setEncryptedMetadata(const std::string& medata) {

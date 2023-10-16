@@ -45,12 +45,6 @@ namespace virtru {
         /// NOTE: virtru::exception will be thrown if there are issues while performing the decryption process.
         void encryptIOProvider(IInputProvider& inputProvider, IOutputProvider& outputProvider);
 
-        /// Encrypt data from input provider and write to ITDFWriter
-        /// \param inputProvider - Input provider interface for reading data
-        /// \param writer - The writer to which tdf data will write to
-        /// NOTE: virtru::exception will be thrown if there are issues while performing the encryption process.
-        void encryptInputProviderToTDFWriter(IInputProvider& inputProvider, ITDFWriter& writer);
-
 #ifndef SWIG
         /// Encrypt the stream data to tdf format.
         /// \param inStream - The stream containing a data to be encrypted.
@@ -69,11 +63,6 @@ namespace virtru {
         /// \param outputProvider - Out provider interface for writing data
         /// NOTE: virtru::exception will be thrown if there are issues while performing the decryption process.
         void decryptIOProvider(IInputProvider& inputProvider, IOutputProvider& outputProvider);
-
-        /// Decrypt data from reader and write to output provider
-        /// \param reader - TDF reader from which tdf data can be read
-        /// \param outputProvider - The decrypted data will be write to output provider
-        void decryptTDFReaderToOutputProvider(ITDFReader& reader, IOutputProvider& outputProvider);
 
 #ifndef SWIG
         /// Decrypt the tdf stream data.

@@ -27,6 +27,7 @@ namespace virtru {
     static constexpr auto kPolicyBinding            = "policyBinding";
     static constexpr auto kEncryptedMetadata        = "encryptedMetadata";
     static constexpr auto kClientPublicKey          = "clientPublicKey";
+    static constexpr  auto kX509CertTag             = "BEGIN CERTIFICATE";
 
 
     /// Entity Object - Constants
@@ -88,6 +89,8 @@ namespace virtru {
     static constexpr auto kRootSignatureAlgDefault  = "HS256";
     static constexpr auto kHmacIntegrityAlgorithm   = "HS256";
     static constexpr auto kGmacIntegrityAlgorithm   = "GMAC";
+    static constexpr auto kSha256Hash               = "SHA256";
+    static constexpr auto kSha384Hash               = "SHA384";
 
     static constexpr auto kAesBlockSize             = 16;
     static constexpr auto kGcmIvSize                = 12;
@@ -177,6 +180,7 @@ namespace virtru {
     static constexpr auto kReferenceStatementElement = "ReferenceStatement";
     static constexpr auto kStructuredStatementElement = "StructuredStatement";
     static constexpr auto kAssertionElement = "Assertion";
+    static constexpr auto kAssertion = "assertion";
     static constexpr auto kScopeAttribute = "scope";
     static constexpr auto kAppliesToStateAttribute = "appliesToState";
     static constexpr auto kIdAttribute = "id";
@@ -213,6 +217,8 @@ namespace virtru {
     static constexpr auto kTextPlainMediaType = "text/plain";
     static constexpr auto kAttributeValueAsTrue = "true";
     static constexpr auto kKeySize = "32";
+    static constexpr auto kAssertionHash = "assertionHash";
+    static constexpr auto kAssertionSignature = "assertionSignature";
 
 
     // OIDC constants
