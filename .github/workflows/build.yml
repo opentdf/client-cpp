@@ -86,7 +86,7 @@ jobs:
       - name: Run build-wrapper
         run: |
           # remove folder with copied gcov files to avoid unnecessary growth of Duplicated Code
-#          rm -rf /home/runner/work/client-cpp/client-cpp/src/folder_with_gcov_files
+          # rm -rf /home/runner/work/client-cpp/client-cpp/src/folder_with_gcov_files
           cd ${{ github.workspace }}
           cd src
           build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR_SONAR }} ./build-all.sh
