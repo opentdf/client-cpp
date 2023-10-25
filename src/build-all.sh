@@ -62,11 +62,7 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     find ./build/lib/CMakeFiles/opentdfstatic.dir/src -name '*.gcda' -exec cp -f -t $LOCATION {} +
     find ./build/lib/CMakeFiles/opentdfstatic.dir/src -name '*.gcov' -exec cp -f -t $LOCATION {} +
     cd $LOCATION
-    echo "Firstfolderstate:"
-    ls -la
     sudo find -name '*.gcno' -exec gcov -bf {} \;
-    echo "Secondfolderstate:"
-    ls -la
 fi
 
 # package the library.
