@@ -15,6 +15,7 @@
 
 #include <string_view>
 #include <functional>
+#include <cstdint>
 namespace virtru {
 
 #ifdef SWIG_JAVA
