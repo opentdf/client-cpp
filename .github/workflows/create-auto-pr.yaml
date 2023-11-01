@@ -20,7 +20,7 @@ jobs:
         uses: 'google-github-actions/auth@35b0e87d162680511bf346c299f71c9c5c379033' # v1.1.1 - 5/8/23
         with:
           workload_identity_provider: 'projects/1053957112592/locations/global/workloadIdentityPools/github-actions-oidc-pool/providers/github-actions-oidc-provider'
-          service_account: 'sre-sa-for-gha@prj-infra-automation-ktbz.iam.gserviceaccount.com'
+          service_account: 'github-actions-sa@prj-infra-automation-ktbz.iam.gserviceaccount.com'
 
       - name: 'Output GCP secrets'
         id: 'gcp-secrets'
