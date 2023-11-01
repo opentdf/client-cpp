@@ -47,11 +47,13 @@ namespace virtru {
         /// Copy constructor
         OIDCCredentials(const OIDCCredentials &oidcCredentials);
 
+#ifndef SWIG
         /// Move copy constructor
         OIDCCredentials(OIDCCredentials &&oidcCredentials);
 
         /// Move assignment operator
         OIDCCredentials &operator=(OIDCCredentials &&oidcCredentials);
+#endif
 
       public: // Public methods
         /// Set the secret client credentials that will be use for auth with OIDC server

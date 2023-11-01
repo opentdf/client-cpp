@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 1.5.6
  - PLAT-2799 - Fix GCC13 complaint
+ - PLAT-2809 - Fix swig string storage type support
 
 1.5.5
  - PLAT-2676 - OpenTDF SDK created TDF without encryption
