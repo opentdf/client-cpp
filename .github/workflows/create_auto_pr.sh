@@ -1,7 +1,7 @@
 #!/bin/bash
 
 LATEST_VERSION=$(curl -s 'https://api.github.com/repos/opentdf/client-cpp/releases/latest' | jq -r '.tag_name')
-WORKFLOW_FILE=".github/workflows/build.yaml"
+WORKFLOW_FILE=".github/workflows/build.yml"
 CONAN_FILE="conanfile.py"
 
 PAT="$ACCESS_TOKEN"
