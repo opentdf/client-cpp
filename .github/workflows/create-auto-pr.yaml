@@ -24,6 +24,8 @@ jobs:
         with:
           app-id: '416599'
           private-key: '${{ secrets.GH_APP_PRIVATE_KEY }}'
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ matrix.wrapper_repos }}
 
       - name: Checkout the ${{ matrix.wrapper_repos }}
         uses: actions/checkout@master
