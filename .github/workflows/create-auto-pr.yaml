@@ -23,7 +23,7 @@ jobs:
         uses: actions/create-github-app-token@v1
         with:
           app-id: '416599'
-          private-key: '${{ steps.gcp-secrets.outputs.GH_APP_PRIVATE_KEY }}'
+          private-key: '${{ secrets.GH_APP_PRIVATE_KEY }}'
 
       - name: Checkout the ${{ matrix.wrapper_repos }}
         uses: actions/checkout@master
