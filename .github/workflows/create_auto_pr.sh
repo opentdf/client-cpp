@@ -4,7 +4,7 @@ LATEST_VERSION=$(curl -s 'https://api.github.com/repos/opentdf/client-cpp/releas
 WORKFLOW_FILE=".github/workflows/build.yml"
 CONAN_FILE="conanfile.py"
 
-PAT="$ACCESS_TOKEN"
+REPO_NAME="$REPO"
 
 git config --global user.name "${GITHUB_ACTOR}"
 git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
@@ -37,6 +37,7 @@ git push --set-upstream origin "$branch_name" -f
 gh pr create \
     --body "Automated PR created by GitHub Actions" \
     --title "Update to client-cpp $LATEST_VERSION" \
+    --repo $REPO_NAME \
     --head "$branch_name" \
     --base "main"
 
