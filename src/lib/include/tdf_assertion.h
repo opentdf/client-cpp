@@ -60,11 +60,13 @@ namespace virtru {
         /// Copy constructor
         StatementGroup(const StatementGroup &statementGroup) = default;
 
+#ifndef SWIG
         /// Move copy constructor
         StatementGroup(StatementGroup &&statementGroup) = default;
 
         /// Move assignment operator
         StatementGroup &operator=(StatementGroup &&statementGroup) = default;
+#endif
 
     public: /// Interface
         /// Set the statement type for the statement group
@@ -165,11 +167,13 @@ namespace virtru {
         /// Copy constructor
         Assertion(const Assertion &assertion) = default;
 
+#ifndef SWIG
         /// Move copy constructor
         Assertion(Assertion &&assertion) = default;
 
         /// Move assignment operator
         Assertion &operator=(Assertion &&assertion) = default;
+#endif
 
     public: /// Interface
 
@@ -227,7 +231,7 @@ namespace virtru {
             return m_appliesToState;
         }
 
-        /// Set the assertion has for the assertion.
+        /// Set the assertion hash for the assertion.
         /// \param assertionHash - The assertion hash value.
         void setAssertionHash(const std::string& assertionHash) {
             m_assertionHash = assertionHash;

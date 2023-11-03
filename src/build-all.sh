@@ -56,10 +56,11 @@ if [[ "$VBUILD_CODE_COVERAGE" == "true" ]]; then
     cd ..
     LOCATION=folder_with_gcov_files
     mkdir $LOCATION
-    find -name '*.cpp' -exec cp -f -t $LOCATION {} +
-    find -name '*.cpp.o' -exec cp -f -t $LOCATION {} +
-    find -name '*.gcno' -exec cp -f -t $LOCATION {} +
-    find -name '*.gcda' -exec cp -f -t $LOCATION {} +
+    find ./build/lib/CMakeFiles/opentdfstatic.dir/src -name '*.cpp' -exec cp -f -t $LOCATION {} +
+    find ./build/lib/CMakeFiles/opentdfstatic.dir/src -name '*.cpp.o' -exec cp -f -t $LOCATION {} +
+    find ./build/lib/CMakeFiles/opentdfstatic.dir/src -name '*.gcno' -exec cp -f -t $LOCATION {} +
+    find ./build/lib/CMakeFiles/opentdfstatic.dir/src -name '*.gcda' -exec cp -f -t $LOCATION {} +
+    find ./build/lib/CMakeFiles/opentdfstatic.dir/src -name '*.gcov' -exec cp -f -t $LOCATION {} +
     cd $LOCATION
     sudo find -name '*.gcno' -exec gcov -bf {} \;
 fi

@@ -42,22 +42,22 @@ namespace virtru {
         /// Copy constructor
         TDFStorageType(const TDFStorageType &oidcCredentials);
 
+#ifndef SWIG
         /// Move copy constructor
         TDFStorageType(TDFStorageType &&oidcCredentials);
 
         /// Move assignment operator
         TDFStorageType &operator=(TDFStorageType &&oidcCredentials);
+#endif
 
     public:
         /// set the TDF storage type as type file.
         /// \param filePath - The file on which the tdf operations to be performed on
         void setTDFStorageFileType(const std::string& filePath);
 
-#ifndef SWIG
         /// set the TDF storage type as type string.
         /// \param str - The str container containing data to be encrypted or decrypted.
         void setTDFStorageStringType(const std::string& str);
-#endif
 
         /// set the TDF storage type as type buffer.
         /// \param buffer - The buffer container containing data to be encrypted or decrypted.
