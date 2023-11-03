@@ -5,9 +5,11 @@ WORKFLOW_FILE=".github/workflows/build.yml"
 CONAN_FILE="conanfile.py"
 
 REPO_NAME="$REPO"
+echo "repo name"
+echo $REPO_NAME
 
-#git config --global user.name "${GITHUB_ACTOR}"
-#git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+git config --global user.name "${GITHUB_ACTOR}"
+git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
 branch_name="automatic-update-to-$LATEST_VERSION"
 
 cd wrapper_repo
