@@ -13,7 +13,7 @@ git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
 branch_name="automatic-update-to-$LATEST_VERSION"
 
 cd wrapper_repo
-
+ls -al
 git remote set-url --push origin git@github.com:$REPO_NAME.git
 
 git checkout -b $branch_name
