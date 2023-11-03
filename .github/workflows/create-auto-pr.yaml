@@ -33,6 +33,7 @@ jobs:
           repository: ${{ matrix.wrapper_repos }}
           path: wrapper_repo
           fetch-depth: 1
+          token: ${{ steps.generate_token.outputs.token }}
 
       - name: Create PRs for wrapper repositories
         run: |
