@@ -15,7 +15,6 @@ branch_name="automatic-update-to-$LATEST_VERSION"
 cd wrapper_repo
 ls -al
 cat .git/config
-git remote set-url --push origin git@github.com:$REPO_NAME.git
 
 git checkout -b $branch_name
 
