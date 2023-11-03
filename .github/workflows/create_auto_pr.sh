@@ -32,7 +32,7 @@ git add "$build_yml_path"
 # Commit changes
 git commit -m "Automatic update to client-cpp $LATEST_VERSION"
 
-git push --set-upstream origin "$branch_name" -f
+git push --set-upstream origin HEAD:"$branch_name" -f
 sleep 5
 gh pr create \
     --body "Automated PR created by GitHub Actions" \
