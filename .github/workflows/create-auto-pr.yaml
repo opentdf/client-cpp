@@ -9,6 +9,7 @@ jobs:
       matrix:
         wrapper_repos: [ opentdf/client-python, opentdf/client-csharp, opentdf/client-java ]
     permissions:
+      actions: write
       contents: write
       pull-requests: write
       repository-projects: write
