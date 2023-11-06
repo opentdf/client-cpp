@@ -26,7 +26,7 @@ jobs:
         with:
           app-id: '416599'
           private-key: '${{ secrets.GH_APP_PRIVATE_KEY }}'
-          owner: ${{ github.repository_owner }}
+          owner: "virtru-corp"
           repositories: "virtru-tdf3-cpp"
 
       - name: Checkout the ${{ matrix.wrapper_repos }}
