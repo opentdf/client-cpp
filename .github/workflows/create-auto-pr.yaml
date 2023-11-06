@@ -1,0 +1,45 @@
+name: Create Auto PR
+on:
+  create:
+jobs:
+  run-build-ubuntu:
+    if: ${{ contains(github.ref, 'refs/tags/') }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        wrapper_repos: [ opentdf/client-python, opentdf/client-csharp, opentdf/client-java ]
+    permissions:
+      actions: write
+      contents: write
+      pull-requests: write
+      repository-projects: write
+    timeout-minutes: 75
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
+
+      - name: Generate a token
+        id: generate_token
+        uses: actions/create-github-app-token@v1.5.0
+        with:
+          app-id: '416599'
+          private-key: '${{ secrets.GH_APP_PRIVATE_KEY }}'
+          owner: ${{ github.repository_owner }}
+          repositories: "client-python,client-java,client-csharp"
+
+      - name: Checkout the ${{ matrix.wrapper_repos }}
+        uses: actions/checkout@master
+        with:
+          repository: ${{ matrix.wrapper_repos }}
+          path: wrapper_repo
+          fetch-depth: 1
+          token: ${{ steps.generate_token.outputs.token }}
+
+      - name: Create PRs for wrapper repositories
+        run: |
+          ./.github/workflows/create_auto_pr.sh
+        env:
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+          ACCESS_TOKEN: ${{ steps.generate_token.outputs.token }}
+          REPO: ${{ matrix.wrapper_repos }}
