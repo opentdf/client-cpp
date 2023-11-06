@@ -7,7 +7,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        wrapper_repos: [ opentdf/client-python, opentdf/client-csharp, opentdf/client-java ]
+       # wrapper_repos: [ opentdf/client-python, opentdf/client-csharp, opentdf/client-java ]
+        wrapper_repos: [ virtru-corp/virtru-tdf3-cpp ]
     permissions:
       actions: write
       contents: write
@@ -26,7 +27,7 @@ jobs:
           app-id: '416599'
           private-key: '${{ secrets.GH_APP_PRIVATE_KEY }}'
           owner: ${{ github.repository_owner }}
-          repositories: "client-python,client-java,client-csharp"
+          repositories: "virtru-tdf3-cpp"
 
       - name: Checkout the ${{ matrix.wrapper_repos }}
         uses: actions/checkout@master
