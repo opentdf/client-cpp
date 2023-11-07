@@ -26,8 +26,16 @@ jobs:
         with:
           app-id: '416599'
           private-key: '${{ secrets.GH_APP_PRIVATE_KEY }}'
-          owner: virtru-corp
-          repositories: "virtru-tdf3-cpp"
+         # owner: virtru-corp
+         # repositories: "virtru-tdf3-cpp"
+
+      - name: Update Virtru lib versions
+        run: |
+          curl -X POST \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H 'authorization: Bearer ${{ steps.generate_token.outputs.token }}' \
+            https://api.github.com/repos/virtru-corp/virtru-tdf3-cpp/dispatches \
+            -d '{"event_type":"opentdf-release"}'
 
       - name: Checkout the ${{ matrix.wrapper_repos }}
         uses: actions/checkout@master
@@ -45,10 +53,3 @@ jobs:
       #    ACCESS_TOKEN: ${{ steps.generate_token.outputs.token }}
       #    REPO: ${{ matrix.wrapper_repos }}
 
-      - name: Update Virtru lib versions
-        run: |
-          curl -X POST \
-            -H "Accept: application/vnd.github.v3+json" \
-            -H 'authorization: Bearer ${{ steps.generate_token.outputs.token }}' \
-            https://api.github.com/repos/virtru-corp/virtru-tdf3-cpp/dispatches \
-            -d '{"event_type":"opentdf-release"}'
