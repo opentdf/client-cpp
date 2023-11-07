@@ -37,10 +37,18 @@ jobs:
           fetch-depth: 1
           token: ${{ steps.generate_token.outputs.token }}
 
-      - name: Create PRs for wrapper repositories
+      #- name: Create PRs for wrapper repositories
+      #  run: |
+      #    ./.github/workflows/create_auto_pr.sh
+      #  env:
+      #    GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+      #    ACCESS_TOKEN: ${{ steps.generate_token.outputs.token }}
+      #    REPO: ${{ matrix.wrapper_repos }}
+
+      - name: Update Virtru lib versions
         run: |
-          ./.github/workflows/create_auto_pr.sh
-        env:
-          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
-          ACCESS_TOKEN: ${{ steps.generate_token.outputs.token }}
-          REPO: ${{ matrix.wrapper_repos }}
+          curl -X POST \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H 'authorization: Bearer ${{ steps.generate_token.outputs.token }}' \
+            https://api.github.com/repos/virtru-corp/virtru-tdf3-cpp/dispatches \
+            -d '{"event_type":"opentdf-release"}'
