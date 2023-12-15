@@ -154,8 +154,8 @@ namespace virtru {
         // TODO do we need a GetPolicyFile??
         /// Extract and return the JSON policy string from a TDF stream.
 
-        /// \param inStream - The stream containing tdf data.
-        /// \param outStream - The stream containing the JSON policy string.
+        /// \param tdfStorageType - The storage containing tdf data.
+        /// \return std::string - The JSON policy string.
         /// NOTE: virtru::exception will be thrown if there are issues while retrieving the policy.
         std::string getPolicy(const TDFStorageType &tdfStorageType);
 
