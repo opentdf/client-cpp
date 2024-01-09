@@ -40,6 +40,12 @@ namespace virtru::crypto {
         return hex(hash);
     }
 
+    /// Calculate Sha256 of the given buffer and return the hash in base64 format. On error OpensslException is thrown.
+    std::string base64HashSha256(Bytes data) {
+        auto hash = calculateSHA256(data);
+        return base64Encode(hash);
+    }
+
     /// Calculate Sha256 of the given buffer and return the hash in binary format. On error OpensslException is thrown.
     std::array<gsl::byte, 32u> calculateSHA256(Bytes data) {
 

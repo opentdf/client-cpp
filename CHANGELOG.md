@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+1.5.7
+ - PLAT-2826 - OpenTDF Use base64 hash values instead hex hash value for segments and root signature in encoded TDFs
+
 1.5.6
  - PLAT-2799 - Fix GCC13 complaint
  - PLAT-2809 - Fix swig string storage type support

@@ -338,13 +338,13 @@ namespace virtru {
             Bytes subSpanBuffer{bytes.data(), static_cast<std::ptrdiff_t>(readSize)};
 
             // Generate hash for the segment.
-            auto payloadHashStr = hexHashSha256(subSpanBuffer);
+            auto hash  = calculateSHA256(subSpanBuffer);
 
             // Append the aggregate hash of payload.
-            aggregateHash.append(payloadHashStr);
+            aggregateHash.append(reinterpret_cast<const char *>(hash.data()), hash.size());
 
             SegmentInfoDataModel segmentInfo;
-            segmentInfo.hash = base64Encode(payloadHashStr);
+            segmentInfo.hash = base64Encode(hash);
             segmentInfo.segmentSize = readSize;
             segmentInfo.encryptedSegmentSize = readSize;
             manifestDataModel.encryptionInformation.integrityInformation.segments.emplace_back(segmentInfo);
@@ -358,9 +358,9 @@ namespace virtru {
 
         LogDebug("Encoding is completed, preparing the manifest");
 
-        auto aggregateHashStr = hexHashSha256(toBytes(aggregateHash));
+        auto aggregateHashStr = base64HashSha256(toBytes(aggregateHash));
 
-        manifestDataModel.encryptionInformation.integrityInformation.rootSignature.signature = base64Encode(aggregateHashStr);
+        manifestDataModel.encryptionInformation.integrityInformation.rootSignature.signature = aggregateHashStr;
         manifestDataModel.encryptionInformation.integrityInformation.rootSignature.algorithm = hashAlgorithm;
 
         manifestDataModel.encryptionInformation.integrityInformation.segmentSizeDefault = defaultSegmentSize;
@@ -374,9 +374,12 @@ namespace virtru {
                 continue;
             }
 
+            std::string concatHash;
             auto assertionAsJson = ManifestDataModel::assertionAsJson(assertion);
-            auto hashOfAssertion = hexHashSha256(toBytes(assertionAsJson));
-            auto concatHash = hashOfAssertion + aggregateHashStr;
+
+            auto hashOfAssertion = calculateSHA256(toBytes(assertionAsJson));
+            concatHash.append(reinterpret_cast<const char *>(hashOfAssertion.data()), hashOfAssertion.size());
+            concatHash.append(aggregateHash);
             auto base64Hash = base64Encode(toBytes(concatHash));
 
             assertion.setAssertionHash(base64Hash);
@@ -683,7 +686,7 @@ namespace virtru {
         }
 
         // Check the combined string of hashes
-        auto rootHash = hexHashSha256(toBytes(aggregateHash));
+        auto rootHash = calculateSHA256(toBytes(aggregateHash));
         if (rootSignatureSig !=  base64Encode(rootHash)) {
             ThrowException("Failed integrity check on root signature", VIRTRU_CRYPTO_ERROR);
         }
@@ -703,9 +706,11 @@ namespace virtru {
             assertion.setAssertionSignature("");
             assertion.setAssertionHash("");
 
+            std::string concatHash;
             auto assertionAsJson = ManifestDataModel::assertionAsJson(assertion);
-            auto hashOfAssertion = hexHashSha256(toBytes(assertionAsJson));
-            auto concatHash = hashOfAssertion + rootHash;
+            auto hashOfAssertion = calculateSHA256(toBytes(assertionAsJson));
+            concatHash.append(reinterpret_cast<const char*>(hashOfAssertion.data()), hashOfAssertion.size());
+            concatHash.append(aggregateHash);
             auto base64Hash = base64Encode(toBytes(concatHash));
 
             if (base64Hash != assertionHash) {
@@ -754,11 +759,11 @@ namespace virtru {
             payloadOffset += readBufferSpan.size();
 
             // Generate hash for the segment.
-            auto payloadHashStr = hexHashSha256(readBufferSpan);
+            auto hashValue = calculateSHA256(readBufferSpan);
             auto hash = segment.hash;
 
             // Validate the hash.
-            if (hash != base64Encode(payloadHashStr)) {
+            if (hash != base64Encode(hashValue)) {
                 ThrowException("Failed integrity check on segment hash", VIRTRU_CRYPTO_ERROR);
             }
 
