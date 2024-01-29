@@ -1,4 +1,5 @@
 # OpenTDF - client-cpp
+
 Minimal c/c++ client to generate and access TDF files
 
 ## Building
@@ -15,13 +16,15 @@ To build the client the following dependencies are needed
 Using [Hombrew](https://brew.sh) (for Mac and Linux)
 
 ```
-brew install conan cmake
+brew install conan@1 cmake
 ```
 
 ### Installing a published release with Conan (recommended, will prefer prebuilt binaries but build missing deps from source)
-``` sh
+
+```sh
 conan install opentdf-client/1.1.3@ --build=missing
 ```
+
 For more details on Conan and publishing, see [OpenTDF/client-conan](https://github.com/opentdf/client-conan)
 
 ### Local In-Tree Building
@@ -32,4 +35,3 @@ For more details on Conan and publishing, see [OpenTDF/client-conan](https://git
 ### Local In-Tree Building+Testing
 
 1. `sh build-and-run-sanity-test.sh`
-
