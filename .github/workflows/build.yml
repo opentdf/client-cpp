@@ -82,8 +82,10 @@ jobs:
             src/coverageGcovr.txt
             src/coverageGcovrSonar.xml
       - name: Install sonar-scanner and build-wrapper
+        if: github.event.pull_request.head.repo.full_name == github.repository
         uses: sonarsource/sonarcloud-github-c-cpp@v2
       - name: Run build-wrapper
+        if: github.event.pull_request.head.repo.full_name == github.repository
         run: |
           cd ${{ github.workspace }}
           # to be in folder containing conanfile
