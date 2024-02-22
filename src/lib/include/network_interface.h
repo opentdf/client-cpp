@@ -13,13 +13,13 @@
 #ifndef VIRTRU_NETWORK_INTERFACE_H
 #define VIRTRU_NETWORK_INTERFACE_H
 
-#include "map"
-#include "tuple"
+#include <map>
+#include <tuple>
 #include <functional>
 #include <memory>
 #include <string>
 #include <unordered_map>
-#include "numeric"
+#include <numeric>
 
 namespace virtru {
 
