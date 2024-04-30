@@ -31,10 +31,6 @@ jobs:
 
       - name: Install Conan
         run: pip3 install conan==${{ env.CONAN_VER }} --force
-
-      - name: Git clone opentdf 
-        run: |
-          git clone --depth 1 https://github.com/opentdf/opentdf.git
       
       - uses: yokawasa/action-setup-kube-tools@v0.9.2
         with:
@@ -60,13 +56,13 @@ jobs:
 
       - name: Run tilt & C++ build and run sanity test
         env:
-          # This test script is passed to opentdf/quickstart tilt file
-          TEST_SCRIPT: ../../build-and-run-sanity-test.sh
+          # This test script is passed to the tilt file
+          TEST_SCRIPT: ../../../build-and-run-sanity-test.sh
           VBUILD_CODE_COVERAGE: true
         run: |-
           kubectl version
           pwd
-          cd opentdf/quickstart
+          cd .github/workflows/roundtrip
           pwd
           tilt ci
       - name: Collect coverage into one XML report using GCOVR
