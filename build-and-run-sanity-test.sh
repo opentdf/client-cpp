@@ -5,7 +5,9 @@ export VRUN_BACKEND_TESTS="true"
 export VBUILD_UNIT_TESTS="true"
 export VEXPORT_COMBINED_LIB="true"
 
-cd ../../src && ./build-all.sh
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+cd $SCRIPT_DIR/src && ./build-all.sh
 
 if [[ -z "${VEXPORT_COMBINED_LIB}" ]]; then
     echo "Skip building the sample"
