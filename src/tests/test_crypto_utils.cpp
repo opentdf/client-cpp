@@ -33,6 +33,7 @@ BOOST_AUTO_TEST_SUITE(test_crypto_utils_suite)
     // (stdin)= 872e4e50ce9990d8b041330c47c9ddd11bec6b503ae9386a99da8584e9bb12c4
     constexpr std::string_view simpleString = "HelloWorld";
     const auto simpleStringOpenSSLOutput = "872e4e50ce9990d8b041330c47c9ddd11bec6b503ae9386a99da8584e9bb12c4"s;
+    const auto sha256HashAsBase64 = "hy5OUM6ZkNiwQTMMR8nd0Rvsa1A66ThqmdqFhOm7EsQ="s;
 
     // $ ls -la 2MBofXChar.txt -rw-r--r--@ 1 SReddy  staff  2097152 Mar 13 13:56 2MBofXChar.txt
     // $ more 2MBofXChar.txt | openssl dgst -sha256
@@ -55,6 +56,9 @@ BOOST_AUTO_TEST_SUITE(test_crypto_utils_suite)
         // simple test
         auto value = vc::hexHashSha256(vc::toBytes(simpleString));
         BOOST_TEST(value == simpleStringOpenSSLOutput);
+
+        value = vc::base64HashSha256(vc::toBytes(simpleString));
+        BOOST_TEST(value == sha256HashAsBase64);
 
         // advance test
         // Big buffer of 2MB to see if performance is still under 10 milliseconds.

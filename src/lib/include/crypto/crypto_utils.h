@@ -41,17 +41,16 @@ namespace virtru::crypto {
     /// Calculate Sha256 of the given buffer and return the hash in hex format. On error OpensslException is thrown.
     /// \param data - The data buffer.
     /// \return - Return 256-bit (32-byte) hash hex value.
-    /// NOTE: These hash functions take raw pointer instead of c++ objects because we want to
-    /// achieve performance of less than 10 milliseconds when the buffer size of 2MB.
-    /// Don't want to waste time calling new/copy constructors on std::string objects.
     std::string hexHashSha256(Bytes data);
+
+    /// Calculate Sha256 of the given buffer and return the hash in base64 format. On error OpensslException is thrown.
+    /// \param data - The data buffer.
+    /// \return - Return sha256 hash in base64 encoded format.
+    std::string base64HashSha256(Bytes data);
 
     /// Calculate Sha256 of the given buffer and return the hash in binary format. On error OpensslException is thrown.
     /// \param data - The data buffer.
     /// \return - Return 256-bit value.
-    /// NOTE: These hash functions take raw pointer instead of c++ objects because we want to
-    /// achieve performance of less than 10 milliseconds when the buffer size of 2MB.
-    /// Don't want to waste time calling new/copy constructors on std::string objects.
     std::array<gsl::byte, 32u> calculateSHA256(Bytes data);
 
     /// Convert the binary data to Hex format.
