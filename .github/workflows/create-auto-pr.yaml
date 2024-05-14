@@ -7,7 +7,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        wrapper_repos: [ opentdf/client-python, opentdf/client-csharp, opentdf/client-java ]
+       # wrapper_repos: [ opentdf/client-python, opentdf/client-csharp, opentdf/client-java ]
+        wrapper_repos: [ virtru-corp/virtru-tdf3-cpp ]
     permissions:
       actions: write
       contents: write
@@ -25,8 +26,16 @@ jobs:
         with:
           app-id: '416599'
           private-key: '${{ secrets.GH_APP_PRIVATE_KEY }}'
-          owner: ${{ github.repository_owner }}
-          repositories: "client-python,client-java,client-csharp"
+          owner: virtru-corp
+          repositories: "virtru-tdf3-cpp"
+
+      - name: Update Virtru lib versions
+        run: |
+          curl -X POST \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H 'Authorization: Bearer ${{ steps.generate_token.outputs.token }}' \
+            https://api.github.com/repos/virtru-corp/virtru-tdf3-cpp/dispatches \
+            -d '{"event_type":"opentdf-release"}'
 
       - name: Checkout the ${{ matrix.wrapper_repos }}
         uses: actions/checkout@master
@@ -36,10 +45,11 @@ jobs:
           fetch-depth: 1
           token: ${{ steps.generate_token.outputs.token }}
 
-      - name: Create PRs for wrapper repositories
-        run: |
-          ./.github/workflows/create_auto_pr.sh
-        env:
-          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
-          ACCESS_TOKEN: ${{ steps.generate_token.outputs.token }}
-          REPO: ${{ matrix.wrapper_repos }}
+      #- name: Create PRs for wrapper repositories
+      #  run: |
+      #    ./.github/workflows/create_auto_pr.sh
+      #  env:
+      #    GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+      #    ACCESS_TOKEN: ${{ steps.generate_token.outputs.token }}
+      #    REPO: ${{ matrix.wrapper_repos }}
+
