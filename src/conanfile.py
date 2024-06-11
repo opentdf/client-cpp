@@ -18,13 +18,13 @@ class TDFLibConan(ConanFile):
             del self.options.fPIC
         
     def requirements(self):
-        self.requires("openssl/3.1.1")
-        self.requires("boost/1.81.0")
+        self.requires("openssl/[>=3.1 <4]")
+        self.requires("boost/1.83.0")
         self.requires("ms-gsl/2.1.0")
-        self.requires("libxml2/2.9.10")
-        self.requires("nlohmann_json/3.11.1")
+        self.requires("libxml2/2.11.6")
+        self.requires("nlohmann_json/3.11.3")
         self.requires("jwt-cpp/0.6.0")
-        self.requires("zlib/1.2.12")
+        self.requires("zlib/[>=1.2.11 <2]")
         self.requires("magic_enum/0.8.2")
         self.requires("picojson/cci.20210117")
 
