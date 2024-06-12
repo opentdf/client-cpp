@@ -73,12 +73,15 @@ include_directories(
      )
  
  link_libraries(
-    opentdf_static
+    opentdf_static_combined
     ${OTHERLIBS}
     ${CONAN_LIBS}
     ${CONAN_SYSTEM_LIBS}
     )
 
+message(STATUS "NOTE: other_libs: ${OTHER_LIBS}")
+message(STATUS "NOTE: conan_libs: ${CONAN_LIBS}")
+message(STATUS "NOTE: conan__system_libs: ${CONAN_SYSTEM_LIBS}")
 
 # Collect all the files from the test dir
 file(GLOB TEST_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.cpp)
