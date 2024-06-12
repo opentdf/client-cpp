@@ -55,6 +55,10 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux" AND ${VIRTRU_SDK_BUILD_ARCH} MATCHES "x8
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFIPS_BUILD=1")
 endif()
 
+if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    set(VLIBXML "libxml2_a.lib")
+endif
+
 # Include paths
 include_directories(
     ${PROJECT_SOURCE_DIR}/../lib/include
@@ -73,10 +77,11 @@ include_directories(
      )
  
  link_libraries(
-    opentdf_static_combined
+    opentdf_static
     ${OTHERLIBS}
     ${CONAN_LIBS}
     ${CONAN_SYSTEM_LIBS}
+    ${VLIBXML}
     )
 
 message(STATUS "NOTE: other_libs: ${OTHER_LIBS}")
