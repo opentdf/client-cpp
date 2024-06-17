@@ -79,6 +79,9 @@ include_directories(
     ${CONAN_SYSTEM_LIBS}
     )
 
+message(STATUS "TESTS: other_libs: ${OTHER_LIBS}")
+message(STATUS "TESTS: conan_libs: ${CONAN_LIBS}")
+message(STATUS "TESTS: conan__system_libs: ${CONAN_SYSTEM_LIBS}")
 
 # Collect all the files from the test dir
 file(GLOB TEST_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.cpp)
@@ -91,6 +94,7 @@ find_program(MEMORYCHECK_COMMAND valgrind)
 if (MEMORYCHECK_COMMAND AND ${VIRTRU_SDK_BUILD_ARCH} MATCHES "x86_64")
     set(CMAKE_VALGRIND_FOUND ON)
 endif()
+message(STATUS "TESTS: valgrind: ${CMAKE_VALGRIND_FOUND}")
 
 if($ENV{VRUN_BACKEND_TESTS} MATCHES "true")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DRUN_BACKEND_TESTS=1")
