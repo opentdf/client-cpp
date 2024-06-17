@@ -119,7 +119,8 @@ jobs:
 
   run-build-windows:
     runs-on: windows-2019
-    needs: run-build-ubuntu
+# TEMPORARY - don't wait for ubuntu build to get windows results faster
+#    needs: run-build-ubuntu
     env:
       VBUILDRELEASE: Release
       VBUILDDEBUG: Debug
